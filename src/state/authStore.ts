@@ -24,7 +24,7 @@ type AuthStore = AuthState & AuthActions;
 
 const useAuthStore = create<AuthStore>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       // State
       user: null,
       isAuthenticated: false,
@@ -33,28 +33,29 @@ const useAuthStore = create<AuthStore>()(
 
       // Actions
       setUser: (user) => {
-        set({ 
+        set((state) => ({ 
+          ...state,
           user, 
           isAuthenticated: !!user,
           error: null 
-        });
+        }));
       },
 
       setLoading: (isLoading) => {
-        set({ isLoading });
+        set((state) => ({ ...state, isLoading }));
       },
 
       setError: (error) => {
-        set({ error, isLoading: false });
+        set((state) => ({ ...state, error, isLoading: false }));
       },
 
       clearError: () => {
-        set({ error: null });
+        set((state) => ({ ...state, error: null }));
       },
 
-      login: async (email, password) => {
+      login: async (email, _password) => {
         try {
-          set({ isLoading: true, error: null });
+          set((state) => ({ ...state, isLoading: true, error: null }));
           
           // Mock login for development
           const mockUser: User = {
@@ -72,23 +73,25 @@ const useAuthStore = create<AuthStore>()(
           // Simulate API delay
           await new Promise(resolve => setTimeout(resolve, 1000));
           
-          set({ 
+          set((state) => ({ 
+            ...state,
             user: mockUser, 
             isAuthenticated: true, 
             isLoading: false,
             error: null 
-          });
+          }));
         } catch (error) {
-          set({ 
+          set((state) => ({ 
+            ...state,
             error: error instanceof Error ? error.message : "Login failed",
             isLoading: false 
-          });
+          }));
         }
       },
 
-      register: async (email, password, location) => {
+      register: async (email, _password, location) => {
         try {
-          set({ isLoading: true, error: null });
+          set((state) => ({ ...state, isLoading: true, error: null }));
           
           // Mock registration for development
           const mockUser: User = {
@@ -103,17 +106,19 @@ const useAuthStore = create<AuthStore>()(
           // Simulate API delay
           await new Promise(resolve => setTimeout(resolve, 1000));
           
-          set({ 
+          set((state) => ({ 
+            ...state,
             user: mockUser, 
             isAuthenticated: true, 
             isLoading: false,
             error: null 
-          });
+          }));
         } catch (error) {
-          set({ 
+          set((state) => ({ 
+            ...state,
             error: error instanceof Error ? error.message : "Registration failed",
             isLoading: false 
-          });
+          }));
         }
       },
 
