@@ -14,6 +14,8 @@ import { GreenFlag, RedFlag, MediaItem, SocialMediaHandles } from "../types";
 import FormSection from "../components/FormSection";
 import MediaUploadGrid from "../components/MediaUploadGrid";
 import SocialMediaInput from "../components/SocialMediaInput";
+import LocationSelector from "../components/LocationSelector";
+import useAuthStore from "../state/authStore";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const GREEN_FLAGS: { key: GreenFlag; label: string }[] = [
@@ -40,10 +42,20 @@ const RED_FLAGS: { key: RedFlag; label: string }[] = [
 
 const DRAFT_KEY = "create-review-draft";
 
+interface Location {
+  city: string;
+  state: string;
+  fullName: string;
+}
+
 export default function CreateReviewScreen() {
+  const { user } = useAuthStore();
   const [firstName, setFirstName] = useState("");
-  const [city, setCity] = useState("");
-  const [state, setState] = useState("");
+  const [selectedLocation, setSelectedLocation] = useState<Location>({
+    city: user?.location.city || "Washington",
+    state: user?.location.state || "DC",
+    fullName: `${user?.location.city || "Washington"}, ${user?.location.state || "DC"}`
+  });
   const [reviewText, setReviewText] = useState("");
   const [selectedGreenFlags, setSelectedGreenFlags] = useState<GreenFlag[]>([]);
   const [selectedRedFlags, setSelectedRedFlags] = useState<RedFlag[]>([]);
@@ -62,8 +74,16 @@ export default function CreateReviewScreen() {
         if (json) {
           const draft = JSON.parse(json);
           setFirstName(draft.firstName || "");
-          setCity(draft.city || "");
-          setState(draft.state || "");
+          if (draft.selectedLocation) {
+            setSelectedLocation(draft.selectedLocation);
+          } else if (draft.city && draft.state) {
+            // Handle legacy draft format
+            setSelectedLocation({
+              city: draft.city,
+              state: draft.state,
+              fullName: `${draft.city}, ${draft.state}`
+            });
+          }
           setReviewText(draft.reviewText || "");
           setSelectedGreenFlags(draft.selectedGreenFlags || []);
           setSelectedRedFlags(draft.selectedRedFlags || []);
@@ -81,8 +101,7 @@ export default function CreateReviewScreen() {
         DRAFT_KEY,
         JSON.stringify({
           firstName,
-          city,
-          state,
+          selectedLocation,
           reviewText,
           selectedGreenFlags,
           selectedRedFlags,
@@ -92,7 +111,7 @@ export default function CreateReviewScreen() {
       ).catch(() => {});
     }, 400);
     return () => clearTimeout(save);
-  }, [firstName, city, state, reviewText, selectedGreenFlags, selectedRedFlags, media, socialMedia]);
+  }, [firstName, selectedLocation, reviewText, selectedGreenFlags, selectedRedFlags, media, socialMedia]);
 
   const toggleGreenFlag = (flag: GreenFlag) => {
     setSelectedGreenFlags(prev =>
@@ -111,24 +130,23 @@ export default function CreateReviewScreen() {
   };
 
   const imagesCount = useMemo(() => media.filter(m => m.type === "image").length, [media]);
-  const hasRequired = Boolean(firstName.trim() && city.trim() && state.trim() && reviewText.trim() && (selectedGreenFlags.length + selectedRedFlags.length > 0) && imagesCount >= 1);
+  const hasRequired = Boolean(firstName.trim() && selectedLocation.city.trim() && selectedLocation.state.trim() && reviewText.trim() && imagesCount >= 1);
 
   const handleSubmit = async () => {
     setError(null);
     setSuccess(null);
 
     if (!hasRequired) {
-      if (!firstName.trim() || !city.trim() || !state.trim()) setError("Please fill in all required fields");
+      if (!firstName.trim() || !selectedLocation.city.trim() || !selectedLocation.state.trim()) setError("Please fill in all required fields");
       else if (imagesCount < 1) setError("Please add at least one photo");
       else if (!reviewText.trim()) setError("Please write a review");
-      else if ((selectedGreenFlags.length + selectedRedFlags.length) === 0) setError("Please select at least one flag");
       return;
     }
 
     try {
       await createReview({
         reviewedPersonName: firstName.trim(),
-        reviewedPersonLocation: { city: city.trim(), state: state.trim().toUpperCase() },
+        reviewedPersonLocation: { city: selectedLocation.city.trim(), state: selectedLocation.state.trim().toUpperCase() },
         greenFlags: selectedGreenFlags,
         redFlags: selectedRedFlags,
         reviewText: reviewText.trim(),
@@ -138,8 +156,11 @@ export default function CreateReviewScreen() {
 
       // Reset form and draft
       setFirstName("");
-      setCity("");
-      setState("");
+      setSelectedLocation({
+        city: user?.location.city || "Washington",
+        state: user?.location.state || "DC",
+        fullName: `${user?.location.city || "Washington"}, ${user?.location.state || "DC"}`
+      });
       setReviewText("");
       setSelectedGreenFlags([]);
       setSelectedRedFlags([]);
@@ -179,13 +200,13 @@ export default function CreateReviewScreen() {
             )}
 
             {/* Person Info */}
-            <FormSection title="Who are you reviewing?" subtitle="Provide the first name and location" required>
+            <FormSection title="Who are you reviewing?" subtitle="Provide the name and location" required>
               <View className="space-y-4">
                 <View>
-                  <Text className="text-text-secondary font-medium mb-2">First Name</Text>
+                  <Text className="text-text-secondary font-medium mb-2">Name</Text>
                   <TextInput
                     className="bg-surface-800 border border-border rounded-xl px-4 py-3 text-text-primary"
-                    placeholder="Enter first name"
+                    placeholder="Enter name"
                     placeholderTextColor="#9CA3AF"
                     value={firstName}
                     onChangeText={setFirstName}
@@ -193,30 +214,12 @@ export default function CreateReviewScreen() {
                   />
                 </View>
 
-                <View className="flex-row space-x-3">
-                  <View className="flex-1">
-                    <Text className="text-text-secondary font-medium mb-2">City</Text>
-                    <TextInput
-                      className="bg-surface-800 border border-border rounded-xl px-4 py-3 text-text-primary"
-                      placeholder="City"
-                      placeholderTextColor="#9CA3AF"
-                      value={city}
-                      onChangeText={setCity}
-                      autoCapitalize="words"
-                    />
-                  </View>
-                  <View className="flex-1">
-                    <Text className="text-text-secondary font-medium mb-2">State</Text>
-                    <TextInput
-                      className="bg-surface-800 border border-border rounded-xl px-4 py-3 text-text-primary"
-                      placeholder="State"
-                      placeholderTextColor="#9CA3AF"
-                      value={state}
-                      onChangeText={setState}
-                      autoCapitalize="characters"
-                      maxLength={2}
-                    />
-                  </View>
+                <View>
+                  <Text className="text-text-secondary font-medium mb-2">Location</Text>
+                  <LocationSelector
+                    currentLocation={selectedLocation}
+                    onLocationChange={setSelectedLocation}
+                  />
                 </View>
               </View>
             </FormSection>
@@ -227,7 +230,7 @@ export default function CreateReviewScreen() {
             </FormSection>
 
             {/* Flags */}
-            <FormSection title="Green Flags" subtitle="What did you like about them?">
+            <FormSection title="Green Flags" subtitle="">
               <View className="flex-row flex-wrap gap-2">
                 {GREEN_FLAGS.map((flag) => (
                   <Pressable
@@ -247,7 +250,7 @@ export default function CreateReviewScreen() {
               </View>
             </FormSection>
 
-            <FormSection title="Red Flags" subtitle="Any warning signs?">
+            <FormSection title="Red Flags" subtitle="">
               <View className="flex-row flex-wrap gap-2">
                 {RED_FLAGS.map((flag) => (
                   <Pressable
