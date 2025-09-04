@@ -7,6 +7,7 @@ import { firebaseAuth, firebaseUsers } from "../services/firebase";
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
+  isGuestMode: boolean;
   isLoading: boolean;
   error: string | null;
 }
@@ -15,6 +16,7 @@ interface AuthActions {
   setUser: (user: User | null) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
+  setGuestMode: (isGuest: boolean) => void;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, location: { city: string; state: string }, opts?: { genderPreference?: "all" | "men" | "women" | "lgbtq+"; gender?: string }) => Promise<void>;
   logout: () => Promise<void>;
@@ -31,6 +33,7 @@ const useAuthStore = create<AuthStore>()(
       // State
       user: null,
       isAuthenticated: false,
+      isGuestMode: false,
       isLoading: false,
       error: null,
 
@@ -54,6 +57,15 @@ const useAuthStore = create<AuthStore>()(
 
       clearError: () => {
         set((state) => ({ ...state, error: null }));
+      },
+
+      setGuestMode: (isGuest) => {
+        set((state) => ({ 
+          ...state, 
+          isGuestMode: isGuest,
+          isAuthenticated: isGuest,
+          user: null 
+        }));
       },
 
       login: async (email, password) => {
@@ -146,7 +158,8 @@ const useAuthStore = create<AuthStore>()(
           
           set({ 
             user: null, 
-            isAuthenticated: false, 
+            isAuthenticated: false,
+            isGuestMode: false,
             isLoading: false,
             error: null 
           });
@@ -210,7 +223,8 @@ const useAuthStore = create<AuthStore>()(
       // Only persist user data, not loading states
       partialize: (state) => ({ 
         user: state.user,
-        isAuthenticated: state.isAuthenticated 
+        isAuthenticated: state.isAuthenticated,
+        isGuestMode: state.isGuestMode
       }),
     }
   )

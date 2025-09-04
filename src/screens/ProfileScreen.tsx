@@ -8,7 +8,7 @@ import ConfirmationModal from "../components/ConfirmationModal";
 
 export default function ProfileScreen() {
   const navigation = useNavigation<any>();
-  const { user, logout } = useAuthStore();
+  const { user, logout, isGuestMode, setGuestMode } = useAuthStore();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
@@ -105,25 +105,60 @@ export default function ProfileScreen() {
 
       <ScrollView className="flex-1">
         <View className="px-4 py-6">
-          {/* User Info */}
-          <View className="bg-surface-800 rounded-lg p-4 mb-6">
-            <View className="flex-row items-center">
-              <View className="w-16 h-16 bg-brand-red rounded-full items-center justify-center">
-                <Text className="text-black text-xl font-bold">
-                  {user?.email.charAt(0).toUpperCase()}
-                </Text>
+          {/* Guest Mode Banner */}
+          {isGuestMode && (
+            <View className="bg-brand-red/20 border border-brand-red/30 rounded-lg p-4 mb-6">
+              <View className="flex-row items-center mb-3">
+                <Ionicons name="eye-outline" size={20} color="#FF6B6B" />
+                <Text className="text-brand-red font-semibold ml-2">Browsing as Guest</Text>
               </View>
-              <View className="ml-4 flex-1">
-                <Text className="text-lg font-semibold text-text-primary">
-                  Anonymous User
-                </Text>
-                <Text className="text-text-secondary">{user?.email}</Text>
-                <Text className="text-text-muted text-sm">
-                  {user?.location.city}, {user?.location.state}
-                </Text>
+              <Text className="text-text-secondary mb-4">
+                Create an account to share reviews, join chat rooms, and get personalized recommendations.
+              </Text>
+              <View className="flex-row space-x-3">
+                <Pressable 
+                  className="flex-1 bg-brand-red rounded-lg py-3 items-center"
+                  onPress={() => {
+                    setGuestMode(false);
+                    navigation.navigate("SignUp");
+                  }}
+                >
+                  <Text className="text-white font-semibold">Sign Up</Text>
+                </Pressable>
+                <Pressable 
+                  className="flex-1 bg-surface-700 rounded-lg py-3 items-center"
+                  onPress={() => {
+                    setGuestMode(false);
+                    navigation.navigate("SignIn");
+                  }}
+                >
+                  <Text className="text-text-primary font-semibold">Sign In</Text>
+                </Pressable>
               </View>
             </View>
-          </View>
+          )}
+
+          {/* User Info */}
+          {!isGuestMode && (
+            <View className="bg-surface-800 rounded-lg p-4 mb-6">
+              <View className="flex-row items-center">
+                <View className="w-16 h-16 bg-brand-red rounded-full items-center justify-center">
+                  <Text className="text-black text-xl font-bold">
+                    {user?.email.charAt(0).toUpperCase()}
+                  </Text>
+                </View>
+                <View className="ml-4 flex-1">
+                  <Text className="text-lg font-semibold text-text-primary">
+                    Anonymous User
+                  </Text>
+                  <Text className="text-text-secondary">{user?.email}</Text>
+                  <Text className="text-text-muted text-sm">
+                    {user?.location.city}, {user?.location.state}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          )}
 
           {/* Settings Options */}
           <View className="bg-surface-800 rounded-lg mb-6">

@@ -31,7 +31,7 @@ interface Location {
 }
 
 export default function CreateReviewScreen() {
-  const { user } = useAuthStore();
+  const { user, isGuestMode } = useAuthStore();
   const [firstName, setFirstName] = useState("");
   const [selectedLocation, setSelectedLocation] = useState<Location>({
     city: user?.location.city || "Washington",
@@ -137,6 +137,49 @@ export default function CreateReviewScreen() {
       setError("Failed to submit review. Please try again.");
     }
   };
+
+  // Guest mode protection
+  if (isGuestMode) {
+    return (
+      <SafeAreaView className="flex-1 bg-surface-900">
+        <View className="flex-1 justify-center items-center px-6">
+          <View className="bg-surface-800 rounded-2xl p-8 w-full max-w-sm">
+            <View className="items-center mb-6">
+              <View className="w-16 h-16 bg-brand-red/20 rounded-full items-center justify-center mb-4">
+                <Text className="text-brand-red text-2xl">✍️</Text>
+              </View>
+              <Text className="text-2xl font-bold text-text-primary mb-2 text-center">
+                Create Account to Write Reviews
+              </Text>
+              <Text className="text-text-secondary text-center">
+                Join our community to share your dating experiences and help others make informed decisions.
+              </Text>
+            </View>
+            
+            <View className="space-y-3">
+              <Pressable 
+                className="bg-brand-red rounded-lg py-4 items-center"
+                onPress={() => {
+                  // Navigate to sign up
+                }}
+              >
+                <Text className="text-white font-semibold text-lg">Sign Up</Text>
+              </Pressable>
+              
+              <Pressable 
+                className="bg-surface-700 rounded-lg py-4 items-center"
+                onPress={() => {
+                  // Navigate to sign in
+                }}
+              >
+                <Text className="text-text-primary font-semibold text-lg">Sign In</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView className="flex-1 bg-surface-900">

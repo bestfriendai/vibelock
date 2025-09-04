@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
+import { LinearGradient } from "expo-linear-gradient";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -28,6 +29,7 @@ import SegmentedTabs from "../components/SegmentedTabs";
 
 export default function SignUpScreen() {
   const navigation = useNavigation<any>();
+  const [step, setStep] = useState(1); // Progressive disclosure: 1 = basic info, 2 = preferences
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -47,7 +49,6 @@ export default function SignUpScreen() {
   const confirmPasswordRef = useRef<TextInput>(null);
 
   const { register, isLoading, error, clearError } = useAuthStore();
-  const { user } = useAuthStore();
 
   // Animation values
   const logoScale = useSharedValue(0);
@@ -124,10 +125,8 @@ export default function SignUpScreen() {
   //   return "";
   // };
 
-  const handleSubmit = async () => {
-    clearError();
-    
-    // Basic validation
+  const handleNext = () => {
+    // Validate step 1 fields
     if (!email.trim()) {
       setEmailError("Email is required");
       return;
@@ -148,13 +147,30 @@ export default function SignUpScreen() {
       return;
     }
     
-    if (!location) {
-      setLocationError("Please select your location");
-      return;
-    }
+    setStep(2);
+  };
+
+  const handleSubmit = async () => {
+    clearError();
+    
+    // Use default location if not provided
+    const defaultLocation = location || { city: "Washington", state: "DC" };
     
     try {
-      await register(email.trim(), password, { city: location.city, state: location.state }, { genderPreference, gender });
+      await register(email.trim(), password, defaultLocation, { genderPreference, gender });
+    } catch (err) {
+      // Error is handled by the store
+    }
+  };
+
+  const handleSkipPreferences = async () => {
+    clearError();
+    
+    // Use default values and location
+    const defaultLocation = { city: "Washington", state: "DC" };
+    
+    try {
+      await register(email.trim(), password, defaultLocation, { genderPreference: "all", gender: undefined });
     } catch (err) {
       // Error is handled by the store
     }
@@ -187,6 +203,10 @@ export default function SignUpScreen() {
   return (
     <TouchableWithoutFeedback onPress={dismissKeyboard}>
       <SafeAreaView className="flex-1 bg-surface-900">
+        <LinearGradient
+          colors={["#141418", "#1A1A20", "#141418"]}
+          className="absolute inset-0"
+        />
         <TestingBanner />
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -208,145 +228,187 @@ export default function SignUpScreen() {
                     resizeMode="contain"
                   />
                 </View>
-                <Text className="text-3xl font-bold text-text-primary mb-2">
+                <Text className="text-4xl font-bold text-text-primary mb-3 text-center">
                   Join the Community
                 </Text>
-                <Text className="text-text-secondary text-center">
+                <Text className="text-lg text-text-secondary text-center leading-7">
                   Create your account to start sharing experiences
                 </Text>
               </Animated.View>
 
               {/* Form Section */}
               <Animated.View style={formAnimatedStyle} className="space-y-6">
-                <AnimatedInput
-                  label="Email"
-                  placeholder="Enter your email"
-                  value={email}
-                  onChangeText={(text) => {
-                    setEmail(text);
-                    if (emailError) setEmailError("");
-                  }}
-                  error={emailError}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoComplete="email"
-                  returnKeyType="next"
-                  onSubmitEditing={() => passwordRef.current?.focus()}
-                  leftIcon="mail-outline"
-                />
+                {step === 1 ? (
+                  <>
+                    {/* Step 1: Basic Account Info */}
+                    <View className="mb-4">
+                      <Text className="text-text-muted text-center mb-6">
+                        Step 1 of 2: Create your account
+                      </Text>
+                    </View>
 
-                <AnimatedInput
-                  ref={passwordRef}
-                  label="Password"
-                  placeholder="Enter your password"
-                  value={password}
-                  onChangeText={(text) => {
-                    setPassword(text);
-                    if (passwordError) setPasswordError("");
-                    // Validation disabled for testing
-                  }}
-                  error={passwordError}
-                  secureTextEntry={!showPassword}
-                  autoComplete="password-new"
-                  returnKeyType="next"
-                  onSubmitEditing={() => confirmPasswordRef.current?.focus()}
-                  leftIcon="lock-closed-outline"
-                  rightIcon={showPassword ? "eye-off-outline" : "eye-outline"}
-                  onRightIconPress={() => setShowPassword(!showPassword)}
-                />
+                    <AnimatedInput
+                      label="Email"
+                      placeholder="Enter your email"
+                      value={email}
+                      onChangeText={(text) => {
+                        setEmail(text);
+                        if (emailError) setEmailError("");
+                      }}
+                      error={emailError}
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                      autoComplete="email"
+                      returnKeyType="next"
+                      onSubmitEditing={() => passwordRef.current?.focus()}
+                      leftIcon="mail-outline"
+                    />
 
-                <AnimatedInput
-                  ref={confirmPasswordRef}
-                  label="Confirm Password"
-                  placeholder="Confirm your password"
-                  value={confirmPassword}
-                  onChangeText={(text) => {
-                    setConfirmPassword(text);
-                    if (confirmPasswordError) setConfirmPasswordError("");
-                    // Validation disabled for testing
-                  }}
-                  error={confirmPasswordError}
-                  secureTextEntry={!showConfirmPassword}
-                  autoComplete="password-new"
-                  returnKeyType="next"
-                  onSubmitEditing={() => {}}
-                  leftIcon="lock-closed-outline"
-                  rightIcon={showConfirmPassword ? "eye-off-outline" : "eye-outline"}
-                  onRightIconPress={() => setShowConfirmPassword(!showConfirmPassword)}
-                />
+                    <AnimatedInput
+                      ref={passwordRef}
+                      label="Password"
+                      placeholder="Enter your password"
+                      value={password}
+                      onChangeText={(text) => {
+                        setPassword(text);
+                        if (passwordError) setPasswordError("");
+                      }}
+                      error={passwordError}
+                      secureTextEntry={!showPassword}
+                      autoComplete="password-new"
+                      returnKeyType="next"
+                      onSubmitEditing={() => confirmPasswordRef.current?.focus()}
+                      leftIcon="lock-closed-outline"
+                      rightIcon={showPassword ? "eye-off-outline" : "eye-outline"}
+                      onRightIconPress={() => setShowPassword(!showPassword)}
+                    />
 
-                {/* Location Selector */}
-                <View className="space-y-4">
-                  <Text className="text-text-primary font-medium">Location</Text>
-                  <LocationSelector
-                    currentLocation={
-                      (location && { city: location.city, state: location.state, fullName: location.fullName || `${location.city}, ${location.state}` })
-                      || (user?.location && { city: user.location.city, state: user.location.state, fullName: `${user.location.city}, ${user.location.state}` })
-                      || { city: "", state: "", fullName: "" }
-                    }
-                    onLocationChange={(loc) => {
-                      setLocation(loc);
-                      if (locationError) setLocationError("");
-                    }}
-                    
-                  />
-                </View>
+                    <AnimatedInput
+                      ref={confirmPasswordRef}
+                      label="Confirm Password"
+                      placeholder="Confirm your password"
+                      value={confirmPassword}
+                      onChangeText={(text) => {
+                        setConfirmPassword(text);
+                        if (confirmPasswordError) setConfirmPasswordError("");
+                      }}
+                      error={confirmPasswordError}
+                      secureTextEntry={!showConfirmPassword}
+                      autoComplete="password-new"
+                      returnKeyType="done"
+                      onSubmitEditing={handleNext}
+                      leftIcon="lock-closed-outline"
+                      rightIcon={showConfirmPassword ? "eye-off-outline" : "eye-outline"}
+                      onRightIconPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                    />
 
-                {/* Category Preference */}
-                <View>
-                  <Text className="text-text-primary font-medium">Show me</Text>
-                  <SegmentedTabs
-                    tabs={[
-                      { key: "all", label: "All" },
-                      { key: "men", label: "Men" },
-                      { key: "women", label: "Women" },
-                      { key: "lgbtq+", label: "LGBTQ+" }
-                    ]}
-                    value={genderPreference}
-                    onChange={(val) => setGenderPreference(val as any)}
-                  />
-                </View>
+                    <AnimatedButton
+                      title="Continue"
+                      variant="primary"
+                      size="large"
+                      onPress={handleNext}
+                      className="mt-8"
+                    />
 
-                {/* My Gender */}
-                <View>
-                  <Text className="text-text-primary font-medium">I am</Text>
-                  <SegmentedTabs
-                    tabs={[
-                      { key: "man", label: "Man" },
-                      { key: "woman", label: "Woman" },
-                      { key: "nonbinary", label: "Non-binary" },
-                      { key: "lgbtq+", label: "LGBTQ+" }
-                    ]}
-                    value={gender as any}
-                    onChange={(val) => setGender(val as any)}
-                  />
-                </View>
-
-                {/* Global Error */}
-                {error && (
-                  <View className="bg-brand-red/20 border border-brand-red/30 rounded-lg p-4">
-                    <Text className="text-brand-red text-center font-medium">
-                      {error}
+                    <Text className="text-text-muted text-xs text-center leading-5">
+                      By continuing, you agree to our{" "}
+                      <Text className="text-brand-red">Terms of Service</Text> and{" "}
+                      <Text className="text-brand-red">Privacy Policy</Text>
                     </Text>
-                  </View>
+                  </>
+                ) : (
+                  <>
+                    {/* Step 2: Preferences (Optional) */}
+                    <View className="mb-4">
+                      <Text className="text-text-muted text-center mb-2">
+                        Step 2 of 2: Personalize your experience
+                      </Text>
+                      <Text className="text-text-muted text-center text-sm">
+                        These settings help us show you relevant content. You can change them later.
+                      </Text>
+                    </View>
+
+                    {/* Location Selector */}
+                    <View className="space-y-4">
+                      <Text className="text-text-primary font-medium">Location (Optional)</Text>
+                      <LocationSelector
+                        currentLocation={
+                          (location && { city: location.city, state: location.state, fullName: location.fullName || `${location.city}, ${location.state}` })
+                          || { city: "Washington", state: "DC", fullName: "Washington, DC" }
+                        }
+                        onLocationChange={(loc) => {
+                          setLocation(loc);
+                          if (locationError) setLocationError("");
+                        }}
+                      />
+                    </View>
+
+                    {/* Category Preference */}
+                    <View>
+                      <Text className="text-text-primary font-medium">Show me reviews about</Text>
+                      <SegmentedTabs
+                        tabs={[
+                          { key: "all", label: "All" },
+                          { key: "men", label: "Men" },
+                          { key: "women", label: "Women" },
+                          { key: "lgbtq+", label: "LGBTQ+" }
+                        ]}
+                        value={genderPreference}
+                        onChange={(val) => setGenderPreference(val as any)}
+                      />
+                    </View>
+
+                    {/* My Gender */}
+                    <View>
+                      <Text className="text-text-primary font-medium">I identify as (Optional)</Text>
+                      <SegmentedTabs
+                        tabs={[
+                          { key: "man", label: "Man" },
+                          { key: "woman", label: "Woman" },
+                          { key: "nonbinary", label: "Non-binary" },
+                          { key: "lgbtq+", label: "LGBTQ+" }
+                        ]}
+                        value={gender as any}
+                        onChange={(val) => setGender(val as any)}
+                      />
+                    </View>
+
+                    {/* Global Error */}
+                    {error && (
+                      <View className="bg-brand-red/20 border border-brand-red/30 rounded-lg p-4">
+                        <Text className="text-brand-red text-center font-medium">
+                          {error}
+                        </Text>
+                      </View>
+                    )}
+
+                    <View className="space-y-3 mt-8">
+                      <AnimatedButton
+                        title="Create Account"
+                        variant="primary"
+                        size="large"
+                        loading={isLoading}
+                        onPress={handleSubmit}
+                      />
+
+                      <AnimatedButton
+                        title="Skip for Now"
+                        variant="ghost"
+                        size="medium"
+                        onPress={handleSkipPreferences}
+                        textClassName="text-text-muted"
+                      />
+
+                      <AnimatedButton
+                        title="Back"
+                        variant="ghost"
+                        size="small"
+                        onPress={() => setStep(1)}
+                        textClassName="text-text-secondary"
+                      />
+                    </View>
+                  </>
                 )}
-
-                {/* Submit Button */}
-                <AnimatedButton
-                  title="Create Account"
-                  variant="primary"
-                  size="large"
-                  loading={isLoading}
-                  onPress={handleSubmit}
-                  className="mt-8"
-                />
-
-                {/* Terms */}
-                <Text className="text-text-muted text-xs text-center leading-5">
-                  By creating an account, you agree to our{" "}
-                  <Text className="text-brand-red">Terms of Service</Text> and{" "}
-                  <Text className="text-brand-red">Privacy Policy</Text>
-                </Text>
               </Animated.View>
             </View>
 

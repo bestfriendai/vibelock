@@ -12,7 +12,7 @@ import CreateReviewScreen from "../screens/CreateReviewScreen";
 import ChatroomsScreen from "../screens/ChatroomsScreen";
 import ProfileScreen from "../screens/ProfileScreen";
 import PersonProfileScreen from "../screens/PersonProfileScreen";
-import AuthScreen from "../screens/AuthScreen";
+
 import SignInScreen from "../screens/SignInScreen";
 import SignUpScreen from "../screens/SignUpScreen";
 import OnboardingScreen from "../screens/OnboardingScreen";
@@ -25,7 +25,6 @@ import useAuthStore from "../state/authStore";
 
 // Navigation types
 export type RootStackParamList = {
-  Auth: undefined;
   SignIn: undefined;
   SignUp: undefined;
   Onboarding: undefined;
@@ -81,10 +80,21 @@ const SettingsStack = createNativeStackNavigator<SettingsStackParamList>();
 
 function FloatingCreateButton() {
   const navigation = useNavigation<any>();
+  const { isGuestMode } = useAuthStore();
+  
+  const handlePress = () => {
+    if (isGuestMode) {
+      // Show guest mode prompt or navigate to sign up
+      navigation.navigate("SignUp");
+    } else {
+      navigation.navigate("CreateReview");
+    }
+  };
+  
   return (
     <Pressable
       className="absolute bottom-16 self-center w-14 h-14 rounded-full bg-white items-center justify-center shadow-lg"
-      onPress={() => navigation.navigate("CreateReview")}
+      onPress={handlePress}
       hitSlop={10}
     >
       <Ionicons name="add" size={28} color="#000000" />
@@ -231,7 +241,7 @@ function TabNavigator() {
 
 // Main App Navigator
 export default function AppNavigator() {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, isGuestMode } = useAuthStore();
 
   return (
     <Stack.Navigator 
@@ -241,20 +251,13 @@ export default function AppNavigator() {
         animationDuration: 300,
       }}
     >
-      {!isAuthenticated ? (
+      {!isAuthenticated && !isGuestMode ? (
         <>
           <Stack.Screen 
             name="Onboarding" 
             component={OnboardingScreen}
             options={{
               animation: "fade",
-            }}
-          />
-          <Stack.Screen 
-            name="Auth" 
-            component={AuthScreen}
-            options={{
-              animation: "slide_from_bottom",
             }}
           />
           <Stack.Screen 

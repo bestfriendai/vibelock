@@ -1,170 +1,97 @@
-import React, { useState, useEffect } from "react";
-import { View, Dimensions, Image } from "react-native";
+import React, { useEffect } from "react";
+import { View, Text, Image, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
-import { Gesture, GestureDetector, GestureHandlerRootView } from "react-native-gesture-handler";
+import { LinearGradient } from "expo-linear-gradient";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
   withTiming,
   withDelay,
-  runOnJS,
-  interpolate,
 } from "react-native-reanimated";
 import AnimatedButton from "../components/AnimatedButton";
-import ProgressIndicator from "../components/ProgressIndicator";
+import useAuthStore from "../state/authStore";
 
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
-
-const onboardingSteps = [
+const features = [
   {
     icon: "eye-outline" as keyof typeof Ionicons.glyphMap,
     title: "Browse Anonymously",
-    description: "See what others are saying about potential dates in your area. All reviews are completely anonymous.",
-    color: "#FF8A65",
+    description: "See what others are saying about potential dates",
   },
   {
     icon: "chatbubble-outline" as keyof typeof Ionicons.glyphMap,
-    title: "Share Your Experience", 
-    description: "Help others by sharing your dating experiences. Your identity stays protected while helping the community.",
-    color: "#FFCC80",
+    title: "Share Experiences",
+    description: "Help others with your dating insights",
   },
   {
     icon: "people-outline" as keyof typeof Ionicons.glyphMap,
     title: "Connect Safely",
-    description: "Join location-based chat rooms to discuss dating experiences and get advice from your local community.",
-    color: "#F8BBD9",
+    description: "Join location-based community discussions",
   }
 ];
 
 export default function OnboardingScreen() {
   const navigation = useNavigation<any>();
-  const [currentStep, setCurrentStep] = useState(0);
+  const { setGuestMode } = useAuthStore();
   
   // Animation values
-  const translateX = useSharedValue(0);
   const logoScale = useSharedValue(0);
-  const logoRotation = useSharedValue(0);
-  const iconScale = useSharedValue(0);
-  const titleOpacity = useSharedValue(0);
-  const titleTranslateY = useSharedValue(30);
-  const descriptionOpacity = useSharedValue(0);
-  const descriptionTranslateY = useSharedValue(30);
+  const logoOpacity = useSharedValue(0);
+  const heroOpacity = useSharedValue(0);
+  const heroTranslateY = useSharedValue(50);
+  const featuresOpacity = useSharedValue(0);
+  const featuresTranslateY = useSharedValue(30);
   const buttonsOpacity = useSharedValue(0);
-  const buttonsTranslateY = useSharedValue(30);
+  const buttonsTranslateY = useSharedValue(50);
 
   // Initialize entrance animations
   useEffect(() => {
     // Logo entrance
-    logoScale.value = withDelay(200, withSpring(1, { damping: 15, stiffness: 200 }));
-    logoRotation.value = withDelay(200, withSpring(360, { damping: 15, stiffness: 200 }));
-    
-    // Content entrance sequence
-    setTimeout(() => {
-      animateStepContent();
-    }, 800);
+    logoScale.value = withDelay(300, withSpring(1, { damping: 15, stiffness: 200 }));
+    logoOpacity.value = withDelay(300, withTiming(1, { duration: 800 }));
+
+    // Hero section entrance
+    heroOpacity.value = withDelay(600, withTiming(1, { duration: 600 }));
+    heroTranslateY.value = withDelay(600, withSpring(0, { damping: 15, stiffness: 200 }));
+
+    // Features entrance
+    featuresOpacity.value = withDelay(900, withTiming(1, { duration: 600 }));
+    featuresTranslateY.value = withDelay(900, withSpring(0, { damping: 15, stiffness: 200 }));
+
+    // Buttons entrance
+    buttonsOpacity.value = withDelay(1200, withTiming(1, { duration: 600 }));
+    buttonsTranslateY.value = withDelay(1200, withSpring(0, { damping: 15, stiffness: 200 }));
   }, []);
 
-  // Animate step content
-  const animateStepContent = () => {
-    iconScale.value = withSpring(1, { damping: 15, stiffness: 300 });
-    
-    titleOpacity.value = withDelay(100, withTiming(1, { duration: 400 }));
-    titleTranslateY.value = withDelay(100, withSpring(0, { damping: 15, stiffness: 200 }));
-    
-    descriptionOpacity.value = withDelay(200, withTiming(1, { duration: 400 }));
-    descriptionTranslateY.value = withDelay(200, withSpring(0, { damping: 15, stiffness: 200 }));
-    
-    buttonsOpacity.value = withDelay(300, withTiming(1, { duration: 400 }));
-    buttonsTranslateY.value = withDelay(300, withSpring(0, { damping: 15, stiffness: 200 }));
+  const handleSignIn = () => {
+    navigation.navigate("SignIn");
   };
 
-  // Reset animations for step change
-  const resetAnimations = () => {
-    iconScale.value = 0;
-    titleOpacity.value = 0;
-    titleTranslateY.value = 30;
-    descriptionOpacity.value = 0;
-    descriptionTranslateY.value = 30;
-    buttonsOpacity.value = 0;
-    buttonsTranslateY.value = 30;
+  const handleSignUp = () => {
+    navigation.navigate("SignUp");
   };
 
-  const changeStep = (newStep: number) => {
-    if (newStep >= 0 && newStep < onboardingSteps.length) {
-      resetAnimations();
-      setCurrentStep(newStep);
-      setTimeout(() => {
-        animateStepContent();
-      }, 100);
-    }
+  const handleBrowseAsGuest = () => {
+    setGuestMode(true);
+    navigation.navigate("MainTabs");
   };
-
-  const handleNext = () => {
-    if (currentStep < onboardingSteps.length - 1) {
-      changeStep(currentStep + 1);
-    } else {
-      navigation.navigate("Auth");
-    }
-  };
-
-  const handleSkip = () => {
-    navigation.navigate("Auth");
-  };
-
-  const handleBack = () => {
-    if (currentStep > 0) {
-      changeStep(currentStep - 1);
-    }
-  };
-
-  // Pan gesture for swipe navigation
-  const panGesture = Gesture.Pan()
-    .onStart(() => {
-      // Store initial position
-    })
-    .onUpdate((event) => {
-      translateX.value = event.translationX;
-    })
-    .onEnd((event) => {
-      const shouldGoNext = event.translationX < -SCREEN_WIDTH * 0.2 && event.velocityX < -500;
-      const shouldGoBack = event.translationX > SCREEN_WIDTH * 0.2 && event.velocityX > 500;
-
-      if (shouldGoNext && currentStep < onboardingSteps.length - 1) {
-        translateX.value = withSpring(-SCREEN_WIDTH);
-        runOnJS(changeStep)(currentStep + 1);
-      } else if (shouldGoBack && currentStep > 0) {
-        translateX.value = withSpring(SCREEN_WIDTH);
-        runOnJS(changeStep)(currentStep - 1);
-      } else {
-        translateX.value = withSpring(0);
-      }
-    });
-
-  const currentStepData = onboardingSteps[currentStep];
 
   // Animated styles
   const logoAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [
-      { scale: logoScale.value },
-      { rotate: `${logoRotation.value}deg` },
-    ],
+    transform: [{ scale: logoScale.value }],
+    opacity: logoOpacity.value,
   }));
 
-  const iconAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: iconScale.value }],
+  const heroAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: heroOpacity.value,
+    transform: [{ translateY: heroTranslateY.value }],
   }));
 
-  const titleAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: titleOpacity.value,
-    transform: [{ translateY: titleTranslateY.value }],
-  }));
-
-  const descriptionAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: descriptionOpacity.value,
-    transform: [{ translateY: descriptionTranslateY.value }],
+  const featuresAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: featuresOpacity.value,
+    transform: [{ translateY: featuresTranslateY.value }],
   }));
 
   const buttonsAnimatedStyle = useAnimatedStyle(() => ({
@@ -172,109 +99,116 @@ export default function OnboardingScreen() {
     transform: [{ translateY: buttonsTranslateY.value }],
   }));
 
-  const containerAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: translateX.value }],
-  }));
-
-  const backgroundAnimatedStyle = useAnimatedStyle(() => {
-    const progress = currentStep / (onboardingSteps.length - 1);
-    const backgroundOpacity = interpolate(
-      progress,
-      [0, 0.5, 1],
-      [0.1, 0.15, 0.2]
-    );
-    
-    return {
-      backgroundColor: `${currentStepData.color}${Math.round(backgroundOpacity * 255).toString(16).padStart(2, '0')}`,
-    };
-  });
-
   return (
-    <GestureHandlerRootView className="flex-1">
-      <SafeAreaView className="flex-1 bg-surface-900">
-        <Animated.View style={backgroundAnimatedStyle} className="absolute inset-0" />
-        
-        <GestureDetector gesture={panGesture}>
-          <Animated.View style={containerAnimatedStyle} className="flex-1">
-            {/* Skip Button */}
-            <View className="flex-row justify-end px-6 pt-4">
-              <AnimatedButton
-                title="Skip"
-                variant="ghost"
-                size="small"
-                onPress={handleSkip}
+    <SafeAreaView className="flex-1 bg-surface-900">
+      <LinearGradient
+        colors={["#141418", "#1A1A20", "#141418"]}
+        className="absolute inset-0"
+      />
+      
+      <ScrollView 
+        className="flex-1" 
+        contentContainerStyle={{ flexGrow: 1 }}
+        showsVerticalScrollIndicator={false}
+      >
+        <View className="flex-1 px-6 py-8">
+          {/* Logo Section */}
+          <Animated.View style={logoAnimatedStyle} className="items-center mt-8 mb-12">
+            <View className="w-32 h-32 mb-6 shadow-2xl">
+              <Image
+                source={require("../../assets/logo-circular.png")}
+                style={{ width: 128, height: 128 }}
+                resizeMode="contain"
               />
             </View>
-
-            {/* Content */}
-            <View className="flex-1 justify-center items-center px-6">
-              {/* Logo */}
-              <Animated.View style={logoAnimatedStyle}>
-                <View className="w-24 h-24 mb-12 shadow-lg">
-                  <Image
-                    source={require("../../assets/logo-circular.png")}
-                    style={{ width: 96, height: 96 }}
-                    resizeMode="contain"
-                  />
-                </View>
-              </Animated.View>
-
-              {/* Step Icon */}
-              <Animated.View style={iconAnimatedStyle}>
-                <View 
-                  className="w-20 h-20 rounded-full items-center justify-center mb-8 shadow-lg"
-                  style={{ backgroundColor: currentStepData.color }}
-                >
-                  <Ionicons name={currentStepData.icon} size={32} color="#FFFFFF" />
-                </View>
-              </Animated.View>
-
-              {/* Step Content */}
-              <Animated.Text 
-                style={titleAnimatedStyle}
-                className="text-3xl font-bold text-text-primary mb-4 text-center"
-              >
-                {currentStepData.title}
-              </Animated.Text>
-              
-              <Animated.Text 
-                style={descriptionAnimatedStyle}
-                className="text-text-secondary text-center mb-12 text-lg leading-7 px-4"
-              >
-                {currentStepData.description}
-              </Animated.Text>
-
-              {/* Progress Indicators */}
-              <ProgressIndicator
-                steps={onboardingSteps.length}
-                currentStep={currentStep}
-                activeColor={currentStepData.color}
-                className="mb-8"
-              />
-            </View>
-
-            {/* Bottom Actions */}
-            <Animated.View style={buttonsAnimatedStyle} className="px-6 pb-8">
-              <AnimatedButton
-                title={currentStep === onboardingSteps.length - 1 ? "Get Started" : "Next"}
-                variant="primary"
-                size="large"
-                onPress={handleNext}
-                className="mb-4"
-              />
-
-              {currentStep > 0 && (
-                <AnimatedButton
-                  title="Back"
-                  variant="ghost"
-                  size="medium"
-                  onPress={handleBack}
-                />
-              )}
-            </Animated.View>
           </Animated.View>
-        </GestureDetector>
-      </SafeAreaView>
-    </GestureHandlerRootView>
+
+          {/* Hero Section */}
+          <Animated.View style={heroAnimatedStyle} className="items-center mb-16">
+            <Text className="text-5xl font-bold text-text-primary mb-6 text-center leading-tight">
+              Locker Room Talk
+            </Text>
+            <Text className="text-xl text-text-secondary text-center leading-8 px-2 mb-8">
+              Anonymous dating insights from real people in your community
+            </Text>
+            
+            {/* Stats or Social Proof */}
+            <View className="bg-surface-800/50 rounded-2xl p-6 w-full border border-surface-700/50">
+              <View className="flex-row justify-around">
+                <View className="items-center">
+                  <Text className="text-2xl font-bold text-brand-red">10K+</Text>
+                  <Text className="text-text-muted text-sm">Reviews</Text>
+                </View>
+                <View className="items-center">
+                  <Text className="text-2xl font-bold text-brand-red">50+</Text>
+                  <Text className="text-text-muted text-sm">Cities</Text>
+                </View>
+                <View className="items-center">
+                  <Text className="text-2xl font-bold text-brand-red">100%</Text>
+                  <Text className="text-text-muted text-sm">Anonymous</Text>
+                </View>
+              </View>
+            </View>
+          </Animated.View>
+
+          {/* Features Section */}
+          <Animated.View style={featuresAnimatedStyle} className="mb-12">
+            <View className="space-y-6">
+              {features.map((feature, index) => (
+                <View key={index} className="flex-row items-center space-x-4">
+                  <View className="w-12 h-12 rounded-full bg-brand-red/20 items-center justify-center">
+                    <Ionicons name={feature.icon} size={24} color="#FF6B6B" />
+                  </View>
+                  <View className="flex-1">
+                    <Text className="text-lg font-semibold text-text-primary mb-1">
+                      {feature.title}
+                    </Text>
+                    <Text className="text-text-secondary">
+                      {feature.description}
+                    </Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+          </Animated.View>
+
+          {/* Action Buttons */}
+          <Animated.View style={buttonsAnimatedStyle} className="space-y-4 mt-auto">
+            <AnimatedButton
+              title="Create Account"
+              variant="primary"
+              size="large"
+              onPress={handleSignUp}
+              className="w-full"
+            />
+            
+            <AnimatedButton
+              title="Sign In"
+              variant="secondary"
+              size="large"
+              onPress={handleSignIn}
+              className="w-full"
+            />
+
+            <AnimatedButton
+              title="Browse as Guest"
+              variant="ghost"
+              size="medium"
+              onPress={handleBrowseAsGuest}
+              className="w-full"
+              textClassName="text-text-muted"
+            />
+
+            <View className="items-center mt-6">
+              <Text className="text-text-muted text-xs text-center leading-5 px-4">
+                By continuing, you agree to our{" "}
+                <Text className="text-brand-red">Terms of Service</Text> and{" "}
+                <Text className="text-brand-red">Privacy Policy</Text>
+              </Text>
+            </View>
+          </Animated.View>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }

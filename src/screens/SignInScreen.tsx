@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
+import { LinearGradient } from "expo-linear-gradient";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -129,6 +130,10 @@ export default function SignInScreen() {
   return (
     <TouchableWithoutFeedback onPress={dismissKeyboard}>
       <SafeAreaView className="flex-1 bg-surface-900">
+        <LinearGradient
+          colors={["#141418", "#1A1A20", "#141418"]}
+          className="absolute inset-0"
+        />
         <TestingBanner />
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -150,10 +155,10 @@ export default function SignInScreen() {
                     resizeMode="contain"
                   />
                 </View>
-                <Text className="text-3xl font-bold text-text-primary mb-2">
+                <Text className="text-4xl font-bold text-text-primary mb-3 text-center">
                   Welcome Back
                 </Text>
-                <Text className="text-text-secondary text-center">
+                <Text className="text-lg text-text-secondary text-center leading-7">
                   Sign in to continue to Locker Room Talk
                 </Text>
               </Animated.View>
