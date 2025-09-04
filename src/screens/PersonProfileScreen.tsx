@@ -1,115 +1,209 @@
 import React, { useState } from "react";
-import { View, Text, ScrollView, Pressable } from "react-native";
+import { View, Text, ScrollView, Pressable, RefreshControl } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { RouteProp, useRoute, useNavigation } from "@react-navigation/native";
+import { RouteProp, useRoute } from "@react-navigation/native";
 import { RootStackParamList } from "../navigation/AppNavigator";
+import { LinearGradient } from "expo-linear-gradient";
 import ReportModal from "../components/ReportModal";
+import MediaGallery from "../components/MediaGallery";
+import MediaViewer from "../components/MediaViewer";
+import { MediaItem } from "../types";
 
 type PersonProfileRouteProp = RouteProp<RootStackParamList, "PersonProfile">;
 
 export default function PersonProfileScreen() {
   const route = useRoute<PersonProfileRouteProp>();
-  const navigation = useNavigation();
   const { firstName, location } = route.params;
   const [showReportModal, setShowReportModal] = useState(false);
+  const [showMediaViewer, setShowMediaViewer] = useState(false);
+  const [selectedMediaIndex, setSelectedMediaIndex] = useState(0);
+  const [selectedReviewMedia, setSelectedReviewMedia] = useState<MediaItem[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
 
-  // Mock data for now
+  // Mock data with media support
   const mockReviews = [
     {
       id: "1",
+      reviewerAnonymousId: "anon_123",
+      reviewedPersonName: firstName,
+      reviewedPersonLocation: location,
       greenFlags: ["good_communicator", "respectful"],
       redFlags: [],
-      reviewText: "Had a great time! Very respectful and easy to talk to.",
+      reviewText: "Had a great time! Very respectful and easy to talk to. The dinner was amazing and conversation flowed naturally.",
+      media: [
+        {
+          id: "media_1",
+          uri: "https://picsum.photos/400/600?random=1",
+          type: "image" as const,
+          width: 400,
+          height: 600
+        },
+        {
+          id: "media_2", 
+          uri: "https://picsum.photos/600/400?random=2",
+          type: "image" as const,
+          width: 600,
+          height: 400
+        }
+      ],
+      status: "approved" as const,
       likeCount: 12,
-      createdAt: "2024-01-15"
+      createdAt: new Date("2024-01-15"),
+      updatedAt: new Date("2024-01-15")
     },
     {
       id: "2",
-      greenFlags: ["reliable"],
+      reviewerAnonymousId: "anon_456",
+      reviewedPersonName: firstName,
+      reviewedPersonLocation: location,
+      greenFlags: ["reliable", "fun"],
       redFlags: ["poor_communication"],
-      reviewText: "Nice person but communication could be better.",
+      reviewText: "Nice person but communication could be better. Still had a good time overall though!",
+      media: [
+        {
+          id: "media_3",
+          uri: "https://picsum.photos/500/700?random=3",
+          type: "image" as const,
+          width: 500,
+          height: 700
+        }
+      ],
+      status: "approved" as const,
       likeCount: 8,
-      createdAt: "2024-01-10"
+      createdAt: new Date("2024-01-10"),
+      updatedAt: new Date("2024-01-10")
+    },
+    {
+      id: "3",
+      reviewerAnonymousId: "anon_789",
+      reviewedPersonName: firstName,
+      reviewedPersonLocation: location,
+      greenFlags: ["honest", "kind", "ambitious"],
+      redFlags: [],
+      reviewText: "Absolutely wonderful person! Great conversation, very genuine, and has clear goals in life. Would definitely recommend.",
+      status: "approved" as const,
+      likeCount: 15,
+      createdAt: new Date("2024-01-08"),
+      updatedAt: new Date("2024-01-08")
     }
   ];
 
   const totalGreenFlags = mockReviews.reduce((sum, review) => sum + review.greenFlags.length, 0);
   const totalRedFlags = mockReviews.reduce((sum, review) => sum + review.redFlags.length, 0);
 
+  const handleMediaPress = (_media: MediaItem, index: number, reviewMedia: MediaItem[]) => {
+    setSelectedReviewMedia(reviewMedia);
+    setSelectedMediaIndex(index);
+    setShowMediaViewer(true);
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    // Simulate API call
+    setTimeout(() => setRefreshing(false), 1000);
+  };
+
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString("en-US", { 
+      year: "numeric", 
+      month: "short", 
+      day: "numeric" 
+    });
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-surface-900">
-      <ScrollView className="flex-1">
-        {/* Profile Header */}
-        <View className="bg-surface-800 px-4 py-6 border-b border-gray-200">
+      <ScrollView 
+        className="flex-1"
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+        }
+      >
+        {/* Hero Section */}
+        <LinearGradient
+          colors={["#FF6B6B", "#E85757"]}
+          className="px-6 pt-8 pb-6"
+        >
           <View className="items-center">
-            <View className="w-20 h-20 bg-red-500 rounded-full items-center justify-center mb-4">
-              <Text className="text-white text-2xl font-bold">
+            <View className="w-24 h-24 bg-white/20 rounded-full items-center justify-center mb-4 border-2 border-white/30">
+              <Text className="text-white text-3xl font-bold">
                 {firstName.charAt(0).toUpperCase()}
               </Text>
             </View>
-            <Text className="text-2xl font-bold text-gray-900">{firstName}</Text>
-            <Text className="text-gray-600 mt-1">
-              {location.city}, {location.state}
-            </Text>
-          </View>
-
-          {/* Stats */}
-          <View className="flex-row justify-around mt-6 pt-6 border-t border-gray-100">
-            <View className="items-center">
-              <Text className="text-2xl font-bold text-gray-900">
-                {mockReviews.length}
+            <Text className="text-white text-3xl font-bold mb-2">{firstName}</Text>
+            <View className="flex-row items-center">
+              <Ionicons name="location-outline" size={16} color="white" />
+              <Text className="text-white/90 ml-1 text-lg">
+                {location.city}, {location.state}
               </Text>
-              <Text className="text-gray-600 text-sm">Reviews</Text>
-            </View>
-            <View className="items-center">
-              <Text className="text-2xl font-bold text-green-600">
-                {totalGreenFlags}
-              </Text>
-              <Text className="text-gray-600 text-sm">Green Flags</Text>
-            </View>
-            <View className="items-center">
-              <Text className="text-2xl font-bold text-red-600">
-                {totalRedFlags}
-              </Text>
-              <Text className="text-gray-600 text-sm">Red Flags</Text>
             </View>
           </View>
+        </LinearGradient>
 
-          {/* Action Buttons */}
-          <View className="flex-row space-x-3 mt-6">
-            <Pressable className="flex-1 bg-red-500 rounded-lg py-3 items-center">
-              <Text className="text-white font-semibold">Write Review</Text>
+        {/* Stats Cards */}
+        <View className="px-6 -mt-8 mb-6">
+          <View className="bg-surface-800 rounded-2xl p-6 border border-border">
+            <View className="flex-row justify-around">
+              <View className="items-center">
+                <Text className="text-text-primary text-3xl font-bold mb-1">
+                  {mockReviews.length}
+                </Text>
+                <Text className="text-text-secondary text-sm">Reviews</Text>
+              </View>
+              <View className="w-px bg-border" />
+              <View className="items-center">
+                <Text className="text-green-400 text-3xl font-bold mb-1">
+                  {totalGreenFlags}
+                </Text>
+                <Text className="text-text-secondary text-sm">Green Flags</Text>
+              </View>
+              <View className="w-px bg-border" />
+              <View className="items-center">
+                <Text className="text-brand-red text-3xl font-bold mb-1">
+                  {totalRedFlags}
+                </Text>
+                <Text className="text-text-secondary text-sm">Red Flags</Text>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        {/* Action Buttons */}
+        <View className="px-6 mb-8">
+          <View className="flex-row space-x-4">
+            <Pressable className="flex-1 bg-brand-red rounded-xl py-4 items-center">
+              <Text className="text-white font-semibold text-lg">Write Review</Text>
             </Pressable>
             <Pressable 
-              className="px-4 py-3 border border-gray-300 rounded-lg items-center"
+              className="px-6 py-4 bg-surface-800 border border-border rounded-xl items-center"
               onPress={() => setShowReportModal(true)}
             >
-              <Ionicons name="flag-outline" size={20} color="#6B7280" />
+              <Ionicons name="flag-outline" size={20} color="#9CA3AF" />
             </Pressable>
           </View>
         </View>
 
-        {/* Reviews */}
-        <View className="px-4 py-6">
-          <Text className="text-lg font-semibold text-gray-900 mb-4">
+        {/* Reviews Section */}
+        <View className="px-6">
+          <Text className="text-text-primary text-2xl font-bold mb-6">
             Reviews ({mockReviews.length})
           </Text>
 
           {mockReviews.map((review) => (
-            <View key={review.id} className="bg-surface-800 rounded-lg p-4 mb-4">
+            <View key={review.id} className="bg-surface-800 rounded-2xl p-6 mb-6 border border-border">
               {/* Flags */}
-              <View className="flex-row flex-wrap gap-2 mb-3">
+              <View className="flex-row flex-wrap gap-2 mb-4">
                 {review.greenFlags.map((flag) => (
-                  <View key={flag} className="bg-green-100 px-2 py-1 rounded-full">
-                    <Text className="text-green-700 text-xs font-medium">
+                  <View key={flag} className="bg-green-400/20 px-3 py-1.5 rounded-full">
+                    <Text className="text-green-400 text-sm font-medium">
                       {flag.replace("_", " ")}
                     </Text>
                   </View>
                 ))}
                 {review.redFlags.map((flag) => (
-                  <View key={flag} className="bg-red-100 px-2 py-1 rounded-full">
-                    <Text className="text-red-700 text-xs font-medium">
+                  <View key={flag} className="bg-brand-red/20 px-3 py-1.5 rounded-full">
+                    <Text className="text-brand-red text-sm font-medium">
                       {flag.replace("_", " ")}
                     </Text>
                   </View>
@@ -117,14 +211,29 @@ export default function PersonProfileScreen() {
               </View>
 
               {/* Review Text */}
-              <Text className="text-gray-900 mb-3">{review.reviewText}</Text>
+              <Text className="text-text-primary text-base leading-6 mb-4">
+                {review.reviewText}
+              </Text>
+
+              {/* Media Gallery */}
+              {review.media && review.media.length > 0 && (
+                <MediaGallery
+                  media={review.media}
+                  onMediaPress={(media, mediaIndex) => 
+                    handleMediaPress(media, mediaIndex, review.media!)
+                  }
+                  size={100}
+                />
+              )}
 
               {/* Footer */}
-              <View className="flex-row items-center justify-between">
-                <Text className="text-gray-500 text-sm">{review.createdAt}</Text>
+              <View className="flex-row items-center justify-between mt-4 pt-4 border-t border-border">
+                <Text className="text-text-muted text-sm">
+                  {formatDate(review.createdAt)}
+                </Text>
                 <View className="flex-row items-center">
-                  <Ionicons name="heart-outline" size={16} color="#6B7280" />
-                  <Text className="text-gray-500 text-sm ml-1">
+                  <Ionicons name="heart-outline" size={18} color="#9CA3AF" />
+                  <Text className="text-text-muted text-sm ml-2">
                     {review.likeCount}
                   </Text>
                 </View>
@@ -132,7 +241,18 @@ export default function PersonProfileScreen() {
             </View>
           ))}
         </View>
+
+        {/* Bottom Spacing */}
+        <View className="h-8" />
       </ScrollView>
+
+      {/* Media Viewer Modal */}
+      <MediaViewer
+        visible={showMediaViewer}
+        media={selectedReviewMedia}
+        initialIndex={selectedMediaIndex}
+        onClose={() => setShowMediaViewer(false)}
+      />
 
       {/* Report Modal */}
       <ReportModal

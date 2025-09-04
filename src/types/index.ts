@@ -17,6 +17,16 @@ export interface User {
   isBlocked?: boolean;
 }
 
+export interface MediaItem {
+  id: string;
+  uri: string;
+  type: "image" | "video";
+  thumbnailUri?: string;
+  width?: number;
+  height?: number;
+  duration?: number; // for videos, in seconds
+}
+
 export interface Review {
   id: string;
   reviewerAnonymousId: string;
@@ -28,6 +38,7 @@ export interface Review {
   greenFlags: GreenFlag[];
   redFlags: RedFlag[];
   reviewText: string;
+  media?: MediaItem[]; // Optional media attachments
   status: "pending" | "approved" | "rejected";
   likeCount: number;
   createdAt: Date;
