@@ -2,7 +2,7 @@ import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
-import { View, Pressable, Text } from "react-native";
+import { View, Pressable } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 
 // Import screens (we'll create these next)
@@ -37,14 +37,40 @@ export type RootStackParamList = {
 };
 
 export type TabParamList = {
+  BrowseStack: undefined;
+  SearchStack: undefined;
+  ChatroomsStack: undefined;
+  SettingsStack: undefined;
+};
+
+export type BrowseStackParamList = {
   Browse: undefined;
+  ReviewDetail: {
+    review: import("../types").Review;
+  };
+};
+
+export type SearchStackParamList = {
   Search: undefined;
+  ReviewDetail: {
+    review: import("../types").Review;
+  };
+};
+
+export type ChatroomsStackParamList = {
   Chatrooms: undefined;
+};
+
+export type SettingsStackParamList = {
   Settings: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<TabParamList>();
+const BrowseStack = createNativeStackNavigator<BrowseStackParamList>();
+const SearchStack = createNativeStackNavigator<SearchStackParamList>();
+const ChatroomsStack = createNativeStackNavigator<ChatroomsStackParamList>();
+const SettingsStack = createNativeStackNavigator<SettingsStackParamList>();
 
 function FloatingCreateButton() {
   const navigation = useNavigation<any>();
@@ -59,6 +85,80 @@ function FloatingCreateButton() {
   );
 }
 
+// Browse Stack Navigator
+function BrowseStackNavigator() {
+  return (
+    <BrowseStack.Navigator
+      screenOptions={{
+        headerShown: false,
+      }}
+    >
+      <BrowseStack.Screen name="Browse" component={BrowseScreen} />
+      <BrowseStack.Screen 
+        name="ReviewDetail" 
+        component={ReviewDetailScreen}
+        options={{
+          headerShown: true,
+          headerTitle: "Review",
+          headerStyle: { backgroundColor: "#141418" },
+          headerTintColor: "#FFFFFF",
+          headerBackTitle: "Back",
+        }}
+      />
+    </BrowseStack.Navigator>
+  );
+}
+
+// Search Stack Navigator
+function SearchStackNavigator() {
+  return (
+    <SearchStack.Navigator
+      screenOptions={{
+        headerShown: false,
+      }}
+    >
+      <SearchStack.Screen name="Search" component={SearchScreen} />
+      <SearchStack.Screen 
+        name="ReviewDetail" 
+        component={ReviewDetailScreen}
+        options={{
+          headerShown: true,
+          headerTitle: "Review",
+          headerStyle: { backgroundColor: "#141418" },
+          headerTintColor: "#FFFFFF",
+          headerBackTitle: "Back",
+        }}
+      />
+    </SearchStack.Navigator>
+  );
+}
+
+// Chatrooms Stack Navigator
+function ChatroomsStackNavigator() {
+  return (
+    <ChatroomsStack.Navigator
+      screenOptions={{
+        headerShown: false,
+      }}
+    >
+      <ChatroomsStack.Screen name="Chatrooms" component={ChatroomsScreen} />
+    </ChatroomsStack.Navigator>
+  );
+}
+
+// Settings Stack Navigator
+function SettingsStackNavigator() {
+  return (
+    <SettingsStack.Navigator
+      screenOptions={{
+        headerShown: false,
+      }}
+    >
+      <SettingsStack.Screen name="Settings" component={ProfileScreen} />
+    </SettingsStack.Navigator>
+  );
+}
+
 // Tab Navigator Component
 function TabNavigator() {
   return (
@@ -68,16 +168,16 @@ function TabNavigator() {
           tabBarIcon: ({ focused, color, size }) => {
             let iconName: keyof typeof Ionicons.glyphMap;
             switch (route.name) {
-              case "Browse":
+              case "BrowseStack":
                 iconName = focused ? "home" : "home-outline";
                 break;
-              case "Search":
+              case "SearchStack":
                 iconName = focused ? "search" : "search-outline";
                 break;
-              case "Chatrooms":
+              case "ChatroomsStack":
                 iconName = focused ? "chatbubbles" : "chatbubbles-outline";
                 break;
-              case "Settings":
+              case "SettingsStack":
                 iconName = focused ? "person" : "person-outline";
                 break;
               default:
@@ -99,10 +199,10 @@ function TabNavigator() {
           headerShown: false,
         })}
       >
-        <Tab.Screen name="Browse" component={BrowseScreen} options={{ tabBarLabel: "Browse" }} />
-        <Tab.Screen name="Search" component={SearchScreen} options={{ tabBarLabel: "Search" }} />
-        <Tab.Screen name="Chatrooms" component={ChatroomsScreen} options={{ tabBarLabel: "Chatrooms" }} />
-        <Tab.Screen name="Settings" component={ProfileScreen} options={{ tabBarLabel: "Settings" }} />
+        <Tab.Screen name="BrowseStack" component={BrowseStackNavigator} options={{ tabBarLabel: "Browse" }} />
+        <Tab.Screen name="SearchStack" component={SearchStackNavigator} options={{ tabBarLabel: "Search" }} />
+        <Tab.Screen name="ChatroomsStack" component={ChatroomsStackNavigator} options={{ tabBarLabel: "Chatrooms" }} />
+        <Tab.Screen name="SettingsStack" component={SettingsStackNavigator} options={{ tabBarLabel: "Settings" }} />
       </Tab.Navigator>
 
       {/* Floating Create Button */}
@@ -113,7 +213,7 @@ function TabNavigator() {
 
 // Main App Navigator
 export default function AppNavigator() {
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated } = useAuthStore();
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -165,6 +265,7 @@ export default function AppNavigator() {
               headerTitle: "Review",
               headerStyle: { backgroundColor: "#141418" },
               headerTintColor: "#FFFFFF",
+              headerBackTitle: "Back",
             }}
           />
         </>

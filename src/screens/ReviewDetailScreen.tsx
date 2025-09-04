@@ -10,7 +10,7 @@ import Animated, {
   withSpring,
   useAnimatedScrollHandler
 } from "react-native-reanimated";
-import { RootStackParamList } from "../navigation/AppNavigator";
+import { BrowseStackParamList, RootStackParamList, SearchStackParamList } from "../navigation/AppNavigator";
 import ImageCarousel from "../components/ImageCarousel";
 import LikeDislikeButtons from "../components/LikeDislikeButtons";
 import ExpandableText from "../components/ExpandableText";
@@ -20,7 +20,10 @@ import CommentInput from "../components/CommentInput";
 import useReviewsStore from "../state/reviewsStore";
 import { Comment } from "../types";
 
-type ReviewDetailRouteProp = RouteProp<RootStackParamList, "ReviewDetail">;
+type ReviewDetailRouteProp = 
+  | RouteProp<BrowseStackParamList, "ReviewDetail">
+  | RouteProp<SearchStackParamList, "ReviewDetail">
+  | RouteProp<RootStackParamList, "ReviewDetail">;
 
 export default function ReviewDetailScreen() {
   const route = useRoute<ReviewDetailRouteProp>();
@@ -72,11 +75,18 @@ export default function ReviewDetailScreen() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
-      contentScale.value = withSpring(1, { damping: 15, stiffness: 150 });
+      contentScale.value = withSpring(1, { 
+        damping: 20, 
+        stiffness: 200,
+        mass: 0.8,
+        overshootClamping: false,
+        restDisplacementThreshold: 0.01,
+        restSpeedThreshold: 0.01
+      });
       
       // Load mock comments
       loadMockComments();
-    }, 300);
+    }, 200);
     return () => clearTimeout(timer);
   }, []);
 
@@ -148,25 +158,28 @@ export default function ReviewDetailScreen() {
     }, 500);
   };
 
-  // Scroll handler for animations
-  const scrollHandler = useAnimatedScrollHandler({
-    onScroll: (event) => {
-      scrollY.value = event.contentOffset.y;
+  // Scroll handler for animations - optimized for performance
+  const scrollHandler = useAnimatedScrollHandler(
+    {
+      onScroll: (event) => {
+        scrollY.value = event.contentOffset.y;
+      },
     },
-  });
+    []
+  );
 
   const handleLike = () => {
     if (isDisliked) {
       setIsDisliked(false);
-      setDislikeCount(prev => Math.max(0, prev - 1));
+      setDislikeCount((prev: number) => Math.max(0, prev - 1));
     }
     
     if (isLiked) {
       setIsLiked(false);
-      setLikeCount(prev => Math.max(0, prev - 1));
+      setLikeCount((prev: number) => Math.max(0, prev - 1));
     } else {
       setIsLiked(true);
-      setLikeCount(prev => prev + 1);
+      setLikeCount((prev: number) => prev + 1);
       likeReview(review.id);
     }
   };
@@ -174,15 +187,15 @@ export default function ReviewDetailScreen() {
   const handleDislike = () => {
     if (isLiked) {
       setIsLiked(false);
-      setLikeCount(prev => Math.max(0, prev - 1));
+      setLikeCount((prev: number) => Math.max(0, prev - 1));
     }
     
     if (isDisliked) {
       setIsDisliked(false);
-      setDislikeCount(prev => Math.max(0, prev - 1));
+      setDislikeCount((prev: number) => Math.max(0, prev - 1));
     } else {
       setIsDisliked(true);
-      setDislikeCount(prev => prev + 1);
+      setDislikeCount((prev: number) => prev + 1);
       dislikeReview(review.id);
     }
   };
@@ -380,6 +393,10 @@ export default function ReviewDetailScreen() {
         showsVerticalScrollIndicator={false}
         onScroll={scrollHandler}
         scrollEventThrottle={16}
+        removeClippedSubviews={true}
+        keyboardShouldPersistTaps="handled"
+        bounces={true}
+        alwaysBounceVertical={false}
         refreshControl={
           <RefreshControl 
             refreshing={refreshing} 
@@ -467,7 +484,7 @@ export default function ReviewDetailScreen() {
                     Highlights
                   </Text>
                   <View className="flex-row flex-wrap gap-2">
-                    {review.greenFlags.map((flag) => (
+                    {review.greenFlags.map((flag: string) => (
                       <View key={flag} className="bg-green-500/20 border border-green-500/30 px-3 py-2 rounded-full flex-row items-center">
                         <Ionicons name="checkmark-circle" size={14} color="#22C55E" />
                         <Text className="text-green-400 text-sm font-medium ml-1">
@@ -475,7 +492,7 @@ export default function ReviewDetailScreen() {
                         </Text>
                       </View>
                     ))}
-                    {review.redFlags.map((flag) => (
+                    {review.redFlags.map((flag: string) => (
                       <View key={flag} className="bg-brand-red/20 border border-brand-red/30 px-3 py-2 rounded-full flex-row items-center">
                         <Ionicons name="warning" size={14} color="#FF6B6B" />
                         <Text className="text-brand-red text-sm font-medium ml-1">

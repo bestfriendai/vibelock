@@ -8,10 +8,9 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import Animated, { 
   useSharedValue, 
   useAnimatedStyle, 
-  withSpring, 
-  withTiming 
+  withSpring
 } from "react-native-reanimated";
-import { RootStackParamList } from "../navigation/AppNavigator";
+import { BrowseStackParamList } from "../navigation/AppNavigator";
 import { Review } from "../types";
 
 interface Props {
@@ -22,7 +21,7 @@ interface Props {
   isLiked?: boolean;
 }
 
-type Nav = NativeStackNavigationProp<RootStackParamList>;
+type Nav = NativeStackNavigationProp<BrowseStackParamList>;
 
 const { width: screenWidth } = Dimensions.get("window");
 const cardWidth = (screenWidth - 48) / 2; // Account for padding and gap
