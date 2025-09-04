@@ -63,24 +63,24 @@ export default function ReviewCard({ review }: ReviewCardProps) {
   };
 
   return (
-    <View className="bg-white rounded-lg p-4 shadow-sm border border-gray-100">
+    <View className="bg-surface-800 rounded-2xl p-6 mb-4 border border-surface-700">
       {/* Header */}
-      <Pressable onPress={handlePersonPress} className="mb-3">
+      <Pressable onPress={handlePersonPress} className="mb-4">
         <View className="flex-row items-center">
-          <View className="w-12 h-12 bg-red-500 rounded-full items-center justify-center">
+          <View className="w-12 h-12 bg-brand-red rounded-full items-center justify-center">
             <Text className="text-white font-bold text-lg">
               {review.reviewedPersonName.charAt(0).toUpperCase()}
             </Text>
           </View>
           <View className="ml-3 flex-1">
-            <Text className="text-lg font-semibold text-gray-900">
+            <Text className="text-lg font-semibold text-text-primary">
               {review.reviewedPersonName}
             </Text>
-            <Text className="text-gray-600 text-sm">
+            <Text className="text-text-secondary text-sm">
               {review.reviewedPersonLocation.city}, {review.reviewedPersonLocation.state}
             </Text>
           </View>
-          <Text className="text-gray-500 text-sm">
+          <Text className="text-text-muted text-sm">
             {formatDate(review.createdAt)}
           </Text>
         </View>
@@ -88,24 +88,24 @@ export default function ReviewCard({ review }: ReviewCardProps) {
 
       {/* Flags */}
       {(review.greenFlags.length > 0 || review.redFlags.length > 0) && (
-        <View className="flex-row flex-wrap gap-2 mb-3">
+        <View className="flex-row flex-wrap gap-2 mb-4">
           {review.greenFlags.slice(0, 3).map((flag) => (
-            <View key={flag} className="bg-green-100 px-2 py-1 rounded-full">
-              <Text className="text-green-700 text-xs font-medium">
+            <View key={flag} className="bg-green-500/20 border border-green-500/30 px-3 py-1.5 rounded-full">
+              <Text className="text-green-400 text-xs font-medium">
                 {FLAG_LABELS[flag] || flag}
               </Text>
             </View>
           ))}
           {review.redFlags.slice(0, 3).map((flag) => (
-            <View key={flag} className="bg-red-100 px-2 py-1 rounded-full">
-              <Text className="text-red-700 text-xs font-medium">
+            <View key={flag} className="bg-brand-red/20 border border-brand-red/30 px-3 py-1.5 rounded-full">
+              <Text className="text-brand-red text-xs font-medium">
                 {FLAG_LABELS[flag] || flag}
               </Text>
             </View>
           ))}
           {(review.greenFlags.length + review.redFlags.length) > 3 && (
-            <View className="bg-gray-100 px-2 py-1 rounded-full">
-              <Text className="text-gray-600 text-xs font-medium">
+            <View className="bg-surface-700 border border-surface-600 px-3 py-1.5 rounded-full">
+              <Text className="text-text-secondary text-xs font-medium">
                 +{(review.greenFlags.length + review.redFlags.length) - 3} more
               </Text>
             </View>
@@ -114,22 +114,22 @@ export default function ReviewCard({ review }: ReviewCardProps) {
       )}
 
       {/* Review Text */}
-      <Text className="text-gray-900 mb-3 leading-5">
+      <Text className="text-text-primary mb-4 leading-6 text-base">
         {truncateText(review.reviewText)}
       </Text>
 
       {/* Footer */}
-      <View className="flex-row items-center justify-between pt-3 border-t border-gray-100">
-        <View className="flex-row items-center space-x-4">
+      <View className="flex-row items-center justify-between pt-4 border-t border-surface-700">
+        <View className="flex-row items-center space-x-6">
           <View className="flex-row items-center">
-            <View className="w-2 h-2 bg-green-500 rounded-full mr-1" />
-            <Text className="text-gray-600 text-sm font-medium">
+            <Ionicons name="checkmark-circle" size={16} color="#22C55E" />
+            <Text className="text-text-secondary text-sm font-medium ml-1">
               {review.greenFlags.length}
             </Text>
           </View>
           <View className="flex-row items-center">
-            <View className="w-2 h-2 bg-red-500 rounded-full mr-1" />
-            <Text className="text-gray-600 text-sm font-medium">
+            <Ionicons name="warning" size={16} color="#FF6B6B" />
+            <Text className="text-text-secondary text-sm font-medium ml-1">
               {review.redFlags.length}
             </Text>
           </View>
@@ -137,14 +137,14 @@ export default function ReviewCard({ review }: ReviewCardProps) {
 
         <Pressable 
           onPress={handleLike}
-          className="flex-row items-center"
+          className="flex-row items-center bg-brand-red/10 px-3 py-2 rounded-full"
         >
           <Ionicons 
-            name="heart-outline" 
+            name="heart" 
             size={16} 
-            color="#6B7280" 
+            color="#FF6B6B" 
           />
-          <Text className="text-gray-600 text-sm ml-1 font-medium">
+          <Text className="text-brand-red text-sm ml-1 font-medium">
             {review.likeCount}
           </Text>
         </Pressable>
@@ -152,9 +152,9 @@ export default function ReviewCard({ review }: ReviewCardProps) {
 
       {/* Status Badge */}
       {review.status === "pending" && (
-        <View className="absolute top-2 right-2">
-          <View className="bg-yellow-100 px-2 py-1 rounded-full">
-            <Text className="text-yellow-700 text-xs font-medium">Pending</Text>
+        <View className="absolute top-4 right-4">
+          <View className="bg-yellow-500/20 border border-yellow-500/30 px-2 py-1 rounded-full">
+            <Text className="text-yellow-400 text-xs font-medium">Pending</Text>
           </View>
         </View>
       )}

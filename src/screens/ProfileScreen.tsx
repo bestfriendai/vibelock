@@ -1,19 +1,82 @@
-import React from "react";
-import { View, Text, Pressable, ScrollView, Alert } from "react-native";
+import React, { useState } from "react";
+import { View, Text, Pressable, ScrollView, Alert, Switch } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import useAuthStore from "../state/authStore";
+import ConfirmationModal from "../components/ConfirmationModal";
 
 export default function ProfileScreen() {
   const { user, logout } = useAuthStore();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+
 
   const handleLogout = () => {
+    setShowLogoutModal(true);
+  };
+
+  const confirmLogout = () => {
+    setShowLogoutModal(false);
+    logout();
+  };
+
+  const handleLocationSettings = () => {
     Alert.alert(
-      "Sign Out",
-      "Are you sure you want to sign out?",
+      "Location Settings",
+      "Update your location to see reviews and chat rooms in your area.",
       [
         { text: "Cancel", style: "cancel" },
-        { text: "Sign Out", style: "destructive", onPress: logout },
+        { text: "Update Location", onPress: () => console.log("Update location") }
+      ]
+    );
+  };
+
+  const handleNotificationSettings = () => {
+    Alert.alert(
+      "Notification Settings",
+      "Manage your notification preferences for new reviews, messages, and safety alerts.",
+      [
+        { text: "OK", style: "default" }
+      ]
+    );
+  };
+
+  const handlePrivacySettings = () => {
+    Alert.alert(
+      "Privacy Settings",
+      "Control who can see your activity and manage blocked users.",
+      [
+        { text: "OK", style: "default" }
+      ]
+    );
+  };
+
+  const handleHelpSupport = () => {
+    Alert.alert(
+      "Help & Support",
+      "Get help with using the app, report issues, or contact our support team.",
+      [
+        { text: "OK", style: "default" }
+      ]
+    );
+  };
+
+  const handleTermsOfService = () => {
+    Alert.alert(
+      "Terms of Service",
+      "View our terms of service and user agreement.",
+      [
+        { text: "OK", style: "default" }
+      ]
+    );
+  };
+
+  const handlePrivacyPolicy = () => {
+    Alert.alert(
+      "Privacy Policy",
+      "Learn how we protect your privacy and handle your data.",
+      [
+        { text: "OK", style: "default" }
       ]
     );
   };
@@ -54,7 +117,10 @@ export default function ProfileScreen() {
 
           {/* Settings Options */}
           <View className="bg-surface-800 rounded-lg mb-6">
-            <Pressable className="flex-row items-center justify-between p-4 border-b border-surface-700">
+            <Pressable 
+              className="flex-row items-center justify-between p-4 border-b border-surface-700"
+              onPress={handleLocationSettings}
+            >
               <View className="flex-row items-center">
                 <Ionicons name="location-outline" size={20} color="#9CA3AF" />
                 <Text className="text-text-primary font-medium ml-3">Location</Text>
@@ -67,15 +133,28 @@ export default function ProfileScreen() {
               </View>
             </Pressable>
 
-            <Pressable className="flex-row items-center justify-between p-4 border-b border-surface-700">
+            <Pressable 
+              className="flex-row items-center justify-between p-4 border-b border-surface-700"
+              onPress={handleNotificationSettings}
+            >
               <View className="flex-row items-center">
                 <Ionicons name="notifications-outline" size={20} color="#9CA3AF" />
                 <Text className="text-text-primary font-medium ml-3">Notifications</Text>
               </View>
-              <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
+              <View className="flex-row items-center">
+                <Switch
+                  value={notificationsEnabled}
+                  onValueChange={setNotificationsEnabled}
+                  trackColor={{ false: "#374151", true: "#FF6B6B" }}
+                  thumbColor={notificationsEnabled ? "#FFFFFF" : "#9CA3AF"}
+                />
+              </View>
             </Pressable>
 
-            <Pressable className="flex-row items-center justify-between p-4 border-b border-surface-700">
+            <Pressable 
+              className="flex-row items-center justify-between p-4 border-b border-surface-700"
+              onPress={handlePrivacySettings}
+            >
               <View className="flex-row items-center">
                 <Ionicons name="shield-outline" size={20} color="#9CA3AF" />
                 <Text className="text-text-primary font-medium ml-3">Privacy</Text>
@@ -83,7 +162,10 @@ export default function ProfileScreen() {
               <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
             </Pressable>
 
-            <Pressable className="flex-row items-center justify-between p-4">
+            <Pressable 
+              className="flex-row items-center justify-between p-4"
+              onPress={handleHelpSupport}
+            >
               <View className="flex-row items-center">
                 <Ionicons name="help-circle-outline" size={20} color="#9CA3AF" />
                 <Text className="text-text-primary font-medium ml-3">Help & Support</Text>
@@ -94,7 +176,10 @@ export default function ProfileScreen() {
 
           {/* App Info */}
           <View className="bg-surface-800 rounded-lg mb-6">
-            <Pressable className="flex-row items-center justify-between p-4 border-b border-surface-700">
+            <Pressable 
+              className="flex-row items-center justify-between p-4 border-b border-surface-700"
+              onPress={handleTermsOfService}
+            >
               <View className="flex-row items-center">
                 <Ionicons name="document-text-outline" size={20} color="#9CA3AF" />
                 <Text className="text-text-primary font-medium ml-3">Terms of Service</Text>
@@ -102,7 +187,10 @@ export default function ProfileScreen() {
               <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
             </Pressable>
 
-            <Pressable className="flex-row items-center justify-between p-4 border-b border-surface-700">
+            <Pressable 
+              className="flex-row items-center justify-between p-4 border-b border-surface-700"
+              onPress={handlePrivacyPolicy}
+            >
               <View className="flex-row items-center">
                 <Ionicons name="lock-closed-outline" size={20} color="#9CA3AF" />
                 <Text className="text-text-primary font-medium ml-3">Privacy Policy</Text>
@@ -131,6 +219,19 @@ export default function ProfileScreen() {
           </Pressable>
         </View>
       </ScrollView>
+
+      {/* Logout Confirmation Modal */}
+      <ConfirmationModal
+        visible={showLogoutModal}
+        title="Sign Out"
+        message="Are you sure you want to sign out? You'll need to sign in again to access your account."
+        confirmText="Sign Out"
+        cancelText="Cancel"
+        confirmColor="red"
+        icon="log-out-outline"
+        onConfirm={confirmLogout}
+        onCancel={() => setShowLogoutModal(false)}
+      />
     </SafeAreaView>
   );
 }
