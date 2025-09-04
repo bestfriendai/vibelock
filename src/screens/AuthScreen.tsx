@@ -64,13 +64,13 @@ export default function AuthScreen() {
           <View className="flex-1 justify-center py-12">
             {/* Logo/Header */}
             <View className="items-center mb-12">
-              <View className="w-20 h-20 bg-red-500 rounded-full items-center justify-center mb-4">
-                <Text className="text-white text-2xl font-bold">LR</Text>
+              <View className="w-20 h-20 bg-brand-red rounded-full items-center justify-center mb-4">
+                <Text className="text-white text-xl font-bold">LRT</Text>
               </View>
-              <Text className="text-3xl font-bold text-gray-900 mb-2">
-                LockerRoom
+              <Text className="text-3xl font-bold text-text-primary mb-2">
+                Locker Room Talk
               </Text>
-              <Text className="text-gray-600 text-center">
+              <Text className="text-text-secondary text-center">
                 Anonymous dating insights from real people
               </Text>
             </View>
@@ -79,10 +79,11 @@ export default function AuthScreen() {
             <View className="space-y-4">
               {/* Email Input */}
               <View>
-                <Text className="text-gray-700 font-medium mb-2">Email</Text>
+                <Text className="text-text-primary font-medium mb-2">Email</Text>
                 <TextInput
-                  className="border border-gray-300 rounded-lg px-4 py-3 text-gray-900"
+                  className="border border-border bg-surface-800 rounded-lg px-4 py-3 text-text-primary"
                   placeholder="Enter your email"
+                  placeholderTextColor="#9CA3AF"
                   value={email}
                   onChangeText={setEmail}
                   keyboardType="email-address"
@@ -93,11 +94,12 @@ export default function AuthScreen() {
 
               {/* Password Input */}
               <View>
-                <Text className="text-gray-700 font-medium mb-2">Password</Text>
+                <Text className="text-text-primary font-medium mb-2">Password</Text>
                 <View className="relative">
                   <TextInput
-                    className="border border-gray-300 rounded-lg px-4 py-3 pr-12 text-gray-900"
+                    className="border border-border bg-surface-800 rounded-lg px-4 py-3 pr-12 text-text-primary"
                     placeholder="Enter your password"
+                    placeholderTextColor="#9CA3AF"
                     value={password}
                     onChangeText={setPassword}
                     secureTextEntry={!showPassword}
@@ -110,7 +112,7 @@ export default function AuthScreen() {
                     <Ionicons
                       name={showPassword ? "eye-off" : "eye"}
                       size={20}
-                      color="#6B7280"
+                      color="#9CA3AF"
                     />
                   </Pressable>
                 </View>
@@ -120,12 +122,13 @@ export default function AuthScreen() {
               {!isLogin && (
                 <>
                   <View>
-                    <Text className="text-gray-700 font-medium mb-2">
+                    <Text className="text-text-primary font-medium mb-2">
                       Confirm Password
                     </Text>
                     <TextInput
-                      className="border border-gray-300 rounded-lg px-4 py-3 text-gray-900"
+                      className="border border-border bg-surface-800 rounded-lg px-4 py-3 text-text-primary"
                       placeholder="Confirm your password"
+                      placeholderTextColor="#9CA3AF"
                       value={confirmPassword}
                       onChangeText={setConfirmPassword}
                       secureTextEntry={!showPassword}
@@ -135,20 +138,22 @@ export default function AuthScreen() {
 
                   <View className="flex-row space-x-3">
                     <View className="flex-1">
-                      <Text className="text-gray-700 font-medium mb-2">City</Text>
+                      <Text className="text-text-primary font-medium mb-2">City</Text>
                       <TextInput
-                        className="border border-gray-300 rounded-lg px-4 py-3 text-gray-900"
+                        className="border border-border bg-surface-800 rounded-lg px-4 py-3 text-text-primary"
                         placeholder="City"
+                        placeholderTextColor="#9CA3AF"
                         value={city}
                         onChangeText={setCity}
                         autoCapitalize="words"
                       />
                     </View>
                     <View className="flex-1">
-                      <Text className="text-gray-700 font-medium mb-2">State</Text>
+                      <Text className="text-text-primary font-medium mb-2">State</Text>
                       <TextInput
-                        className="border border-gray-300 rounded-lg px-4 py-3 text-gray-900"
+                        className="border border-border bg-surface-800 rounded-lg px-4 py-3 text-text-primary"
                         placeholder="State"
+                        placeholderTextColor="#9CA3AF"
                         value={state}
                         onChangeText={setState}
                         autoCapitalize="characters"
@@ -161,14 +166,14 @@ export default function AuthScreen() {
 
               {/* Error Message */}
               {error && (
-                <View className="bg-red-50 border border-red-200 rounded-lg p-3">
-                  <Text className="text-red-600 text-center">{error}</Text>
+                <View className="bg-brand-red/20 border border-brand-red rounded-lg p-3">
+                  <Text className="text-brand-red text-center">{error}</Text>
                 </View>
               )}
 
               {/* Submit Button */}
               <Pressable
-                className={`bg-red-500 rounded-lg py-4 items-center ${
+                className={`bg-brand-red rounded-lg py-4 items-center ${
                   isLoading ? "opacity-50" : ""
                 }`}
                 onPress={handleSubmit}
@@ -185,11 +190,11 @@ export default function AuthScreen() {
 
               {/* Toggle Auth Mode */}
               <View className="flex-row justify-center items-center mt-6">
-                <Text className="text-gray-600">
+                <Text className="text-text-secondary">
                   {isLogin ? "Don't have an account? " : "Already have an account? "}
                 </Text>
                 <Pressable onPress={() => setIsLogin(!isLogin)}>
-                  <Text className="text-red-500 font-semibold">
+                  <Text className="text-brand-red font-semibold">
                     {isLogin ? "Sign Up" : "Sign In"}
                   </Text>
                 </Pressable>

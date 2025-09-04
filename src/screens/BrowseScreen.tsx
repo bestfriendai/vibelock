@@ -6,7 +6,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
+
 import useReviewsStore from "../state/reviewsStore";
 import useAuthStore from "../state/authStore";
 
@@ -58,34 +58,31 @@ export default function BrowseScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-surface-900">
-      {/* Header with Gradient */}
-      <LinearGradient
-        colors={["#FF8A80", "#FFAB91"]}
-        className="px-4 py-4"
-      >
+      {/* Header with Black Background */}
+      <View className="bg-black px-4 py-4">
         <View className="flex-row items-center justify-between">
           <View className="flex-row items-center">
-            <View className="w-10 h-10 rounded-full bg-white/20 items-center justify-center mr-3">
-              <Text className="text-white text-lg font-bold">🫖</Text>
+            <View className="w-10 h-10 rounded-full bg-surface-700 items-center justify-center mr-3">
+              <Text className="text-text-primary text-lg font-bold">LRT</Text>
             </View>
-            <Text className="text-2xl font-bold text-white">TeaOnHer</Text>
+            <Text className="text-2xl font-bold text-text-primary">Locker Room Talk</Text>
           </View>
-          <View className="bg-white/20 px-3 py-1.5 rounded-full">
-            <Text className="text-white text-sm font-medium">Guest</Text>
+          <View className="bg-surface-700 px-3 py-1.5 rounded-full">
+            <Text className="text-text-primary text-sm font-medium">Guest</Text>
           </View>
         </View>
 
         {/* Location + Radius */}
         <View className="flex-row items-center justify-between mt-4">
-          <Pressable className="flex-row items-center bg-white/20 px-3 py-2 rounded-full">
-            <Ionicons name="location-outline" size={16} color="white" />
-            <Text className="text-white text-sm ml-1 font-medium">
-              {user?.location.city || "Oxon Hill"}, {user?.location.state || "MD"} (50mi)
+          <Pressable className="flex-row items-center bg-surface-700 px-3 py-2 rounded-full">
+            <Ionicons name="location-outline" size={16} color="#F3F4F6" />
+            <Text className="text-text-primary text-sm ml-1 font-medium">
+              {user?.location.city || "Washington"}, {user?.location.state || "DC"} (50mi)
             </Text>
-            <Ionicons name="chevron-down" size={16} color="white" className="ml-1" />
+            <Ionicons name="chevron-down" size={16} color="#F3F4F6" className="ml-1" />
           </Pressable>
           <Pressable 
-            className="bg-white/20 px-3 py-2 rounded-full"
+            className="bg-surface-700 px-3 py-2 rounded-full"
             onPress={() => {
               const order = [10, 25, 50];
               const curr = filters.radius || 50;
@@ -94,10 +91,10 @@ export default function BrowseScreen() {
               setFilters({ radius: next });
             }}
           >
-            <Text className="text-white text-sm font-medium">{filters.radius || 50}mi</Text>
+            <Text className="text-text-primary text-sm font-medium">{filters.radius || 50}mi</Text>
           </Pressable>
         </View>
-      </LinearGradient>
+      </View>
 
       {/* Staggered Grid */}
       <StaggeredGrid
