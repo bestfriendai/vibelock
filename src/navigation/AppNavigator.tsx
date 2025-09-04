@@ -2,12 +2,14 @@ import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
-import { View } from "react-native";
+import { View, Pressable, Text } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 
 // Import screens (we'll create these next)
 import BrowseScreen from "../screens/BrowseScreen";
 import SearchScreen from "../screens/SearchScreen";
 import CreateReviewScreen from "../screens/CreateReviewScreen";
+import ChatroomsScreen from "../screens/ChatroomsScreen";
 import ProfileScreen from "../screens/ProfileScreen";
 import PersonProfileScreen from "../screens/PersonProfileScreen";
 import AuthScreen from "../screens/AuthScreen";
@@ -25,83 +27,81 @@ export type RootStackParamList = {
     firstName: string; 
     location: { city: string; state: string }; 
   };
+  CreateReview: undefined;
 };
 
 export type TabParamList = {
   Browse: undefined;
   Search: undefined;
-  Create: undefined;
+  Chatrooms: undefined;
   Settings: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<TabParamList>();
 
+function FloatingCreateButton() {
+  const navigation = useNavigation<any>();
+  return (
+    <Pressable
+      className="absolute bottom-16 self-center w-14 h-14 rounded-full bg-brand-red items-center justify-center shadow"
+      onPress={() => navigation.navigate("CreateReview")}
+      hitSlop={10}
+    >
+      <Ionicons name="add" size={28} color="#FFFFFF" />
+    </Pressable>
+  );
+}
+
 // Tab Navigator Component
 function TabNavigator() {
   return (
-    <Tab.Navigator
-      screenOptions={({ route }) => ({
-        tabBarIcon: ({ focused, color, size }) => {
-          let iconName: keyof typeof Ionicons.glyphMap;
+    <View className="flex-1 bg-surface-900">
+      <Tab.Navigator
+        screenOptions={({ route }) => ({
+          tabBarIcon: ({ focused, color, size }) => {
+            let iconName: keyof typeof Ionicons.glyphMap;
+            switch (route.name) {
+              case "Browse":
+                iconName = focused ? "home" : "home-outline";
+                break;
+              case "Search":
+                iconName = focused ? "search" : "search-outline";
+                break;
+              case "Chatrooms":
+                iconName = focused ? "chatbubbles" : "chatbubbles-outline";
+                break;
+              case "Settings":
+                iconName = focused ? "person" : "person-outline";
+                break;
+              default:
+                iconName = "home-outline";
+            }
+            return <Ionicons name={iconName} size={size} color={color} />;
+          },
+          tabBarActiveTintColor: "#FF6B6B",
+          tabBarInactiveTintColor: "#9CA3AF",
+          tabBarStyle: {
+            backgroundColor: "#141418",
+            borderTopWidth: 1,
+            borderTopColor: "#2A2A2F",
+            paddingBottom: 8,
+            paddingTop: 8,
+            height: 80,
+          },
+          tabBarLabelStyle: { fontSize: 12, fontWeight: "500" },
+          headerShown: false,
+        })}
+      >
+        <Tab.Screen name="Browse" component={BrowseScreen} options={{ tabBarLabel: "Browse" }} />
+        <Tab.Screen name="Search" component={SearchScreen} options={{ tabBarLabel: "Search" }} />
+        <Tab.Screen name="Chatrooms" component={ChatroomsScreen} options={{ tabBarLabel: "Chatrooms" }} />
+        <Tab.Screen name="Settings" component={ProfileScreen} options={{ tabBarLabel: "Settings" }} />
+      </Tab.Navigator>
 
-          switch (route.name) {
-            case "Browse":
-              iconName = focused ? "home" : "home-outline";
-              break;
-            case "Search":
-              iconName = focused ? "search" : "search-outline";
-              break;
-            case "Create":
-              iconName = focused ? "add-circle" : "add-circle-outline";
-              break;
-            case "Settings":
-              iconName = focused ? "person" : "person-outline";
-              break;
-            default:
-              iconName = "home-outline";
-          }
-
-          return <Ionicons name={iconName} size={size} color={color} />;
-        },
-        tabBarActiveTintColor: "#FF6B6B",
-        tabBarInactiveTintColor: "#8E8E93",
-        tabBarStyle: {
-          backgroundColor: "#FFFFFF",
-          borderTopWidth: 1,
-          borderTopColor: "#E5E5EA",
-          paddingBottom: 8,
-          paddingTop: 8,
-          height: 88,
-        },
-        tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: "500",
-        },
-        headerShown: false,
-      })}
-    >
-      <Tab.Screen 
-        name="Browse" 
-        component={BrowseScreen}
-        options={{ tabBarLabel: "Browse" }}
-      />
-      <Tab.Screen 
-        name="Search" 
-        component={SearchScreen}
-        options={{ tabBarLabel: "Search" }}
-      />
-      <Tab.Screen 
-        name="Create" 
-        component={CreateReviewScreen}
-        options={{ tabBarLabel: "Create" }}
-      />
-      <Tab.Screen 
-        name="Settings" 
-        component={ProfileScreen}
-        options={{ tabBarLabel: "Settings" }}
-      />
-    </Tab.Navigator>
+      {/* Floating Create Button */}
+      <FloatingCreateButton />
+    </View>
   );
 }
 
@@ -120,20 +120,25 @@ export default function AppNavigator() {
         <>
           <Stack.Screen name="MainTabs" component={TabNavigator} />
           <Stack.Screen 
+            name="CreateReview" 
+            component={CreateReviewScreen}
+            options={{
+              presentation: "modal",
+              headerShown: true,
+              headerTitle: "Write Review",
+              headerStyle: { backgroundColor: "#141418" },
+              headerTintColor: "#FFFFFF",
+            }}
+          />
+          <Stack.Screen 
             name="PersonProfile" 
             component={PersonProfileScreen}
             options={{
               presentation: "modal",
               headerShown: true,
               headerTitle: "Profile",
-              headerTitleStyle: {
-                fontSize: 18,
-                fontWeight: "600",
-              },
-              headerStyle: {
-                backgroundColor: "#FFFFFF",
-              },
-              headerTintColor: "#000000",
+              headerStyle: { backgroundColor: "#141418" },
+              headerTintColor: "#FFFFFF",
             }}
           />
         </>

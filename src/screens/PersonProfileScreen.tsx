@@ -38,10 +38,10 @@ export default function PersonProfileScreen() {
   const totalRedFlags = mockReviews.reduce((sum, review) => sum + review.redFlags.length, 0);
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
+    <SafeAreaView className="flex-1 bg-surface-900">
       <ScrollView className="flex-1">
         {/* Profile Header */}
-        <View className="bg-white px-4 py-6 border-b border-gray-200">
+        <View className="bg-surface-800 px-4 py-6 border-b border-gray-200">
           <View className="items-center">
             <View className="w-20 h-20 bg-red-500 rounded-full items-center justify-center mb-4">
               <Text className="text-white text-2xl font-bold">
@@ -97,7 +97,7 @@ export default function PersonProfileScreen() {
           </Text>
 
           {mockReviews.map((review) => (
-            <View key={review.id} className="bg-white rounded-lg p-4 mb-4">
+            <View key={review.id} className="bg-surface-800 rounded-lg p-4 mb-4">
               {/* Flags */}
               <View className="flex-row flex-wrap gap-2 mb-3">
                 {review.greenFlags.map((flag) => (

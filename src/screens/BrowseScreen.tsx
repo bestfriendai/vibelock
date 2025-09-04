@@ -5,14 +5,15 @@ import {
   ScrollView,
   Pressable,
   RefreshControl,
+  FlatList
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import useReviewsStore from "../state/reviewsStore";
 import useAuthStore from "../state/authStore";
 
-// We'll create this component next
-import ReviewCard from "../components/ReviewCard";
+import SegmentedTabs from "../components/SegmentedTabs";
+import ReviewGridCard from "../components/ReviewGridCard";
 
 export default function BrowseScreen() {
   const { user } = useAuthStore();
@@ -44,88 +45,70 @@ export default function BrowseScreen() {
   ];
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
+    <SafeAreaView className="flex-1 bg-surface-900">
       {/* Header */}
-      <View className="bg-white px-4 py-3 border-b border-gray-200">
+      <View className="bg-surface-800 px-4 py-3 border-b border-border">
         <View className="flex-row items-center justify-between">
-          <View>
-            <Text className="text-2xl font-bold text-gray-900">LockerRoom</Text>
-            <View className="flex-row items-center mt-1">
-              <Ionicons name="location-outline" size={14} color="#6B7280" />
-              <Text className="text-gray-600 text-sm ml-1">
-                {user?.location.city}, {user?.location.state} • 50mi
-              </Text>
+          <View className="flex-row items-center">
+            <View className="w-8 h-8 rounded-full bg-surface-600 items-center justify-center mr-3">
+              <Text className="text-text-primary font-semibold">D</Text>
             </View>
+            <Text className="text-2xl font-bold text-text-primary">LockerRoom</Text>
           </View>
           <Pressable className="p-2">
-            <Ionicons name="notifications-outline" size={24} color="#374151" />
+            <Ionicons name="notifications-outline" size={22} color="#9CA3AF" />
           </Pressable>
         </View>
 
-        {/* Filter Tabs */}
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false}
-          className="mt-4"
-        >
-          <View className="flex-row space-x-3">
-            {filterTabs.map((tab) => (
-              <Pressable
-                key={tab.key}
-                className={`px-4 py-2 rounded-full ${
-                  filters.category === tab.key
-                    ? "bg-red-500"
-                    : "bg-gray-100"
-                }`}
-                onPress={() => setFilters({ category: tab.key as any })}
-              >
-                <Text
-                  className={`font-medium ${
-                    filters.category === tab.key
-                      ? "text-white"
-                      : "text-gray-700"
-                  }`}
-                >
-                  {tab.label}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-        </ScrollView>
+        {/* Location + Radius */}
+        <View className="flex-row items-center mt-3 space-x-3">
+          <Pressable className="flex-row items-center bg-surface-700 px-3 py-2 rounded-full">
+            <Ionicons name="location-outline" size={14} color="#9CA3AF" />
+            <Text className="text-text-secondary text-sm ml-1">
+              {user?.location.city}, {user?.location.state}
+            </Text>
+          </Pressable>
+          <Pressable 
+            className="bg-surface-700 px-3 py-2 rounded-full"
+            onPress={() => {
+              const order = [10, 25, 50];
+              const curr = filters.radius || 50;
+              const idx = order.indexOf(curr);
+              const next = order[(idx + 1) % order.length];
+              setFilters({ radius: next });
+            }}
+          >
+            <Text className="text-text-secondary text-sm">{filters.radius || 50}mi</Text>
+          </Pressable>
+        </View>
+
+        {/* Segmented Tabs */}
+        <View className="mt-3">
+          <SegmentedTabs
+            tabs={filterTabs}
+            value={filters.category}
+            onChange={(key) => setFilters({ category: key as any })}
+          />
+        </View>
       </View>
 
-      {/* Reviews Feed */}
-      <ScrollView
-        className="flex-1"
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-        showsVerticalScrollIndicator={false}
-      >
-        <View className="px-4 py-4 space-y-4">
-          {reviews.length === 0 && !isLoading ? (
-            <View className="items-center justify-center py-12">
-              <Ionicons name="chatbubbles-outline" size={48} color="#9CA3AF" />
-              <Text className="text-gray-500 text-lg font-medium mt-4">
-                No reviews yet
-              </Text>
-              <Text className="text-gray-400 text-center mt-2">
-                Be the first to share your dating experience
-              </Text>
-            </View>
-          ) : (
-            reviews.map((review) => (
-              <ReviewCard key={review.id} review={review} />
-            ))
-          )}
-
-          {isLoading && (
-            <View className="items-center py-8">
-              <Text className="text-gray-500">Loading reviews...</Text>
-            </View>
-          )}
-        </View>
-      </ScrollView>
+      {/* Reviews Grid */}
+      <FlatList
+        data={reviews}
+        keyExtractor={(item) => item.id}
+        numColumns={2}
+        contentContainerStyle={{ padding: 16 }}
+        columnWrapperStyle={{ justifyContent: "space-between" }}
+        renderItem={({ item }) => <ReviewGridCard review={item} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        ListEmptyComponent={!isLoading ? (
+          <View className="items-center justify-center py-20">
+            <Ionicons name="chatbubbles-outline" size={48} color="#9CA3AF" />
+            <Text className="text-text-secondary text-lg font-medium mt-4">No reviews yet</Text>
+            <Text className="text-text-muted text-center mt-2">Be the first to share your dating experience</Text>
+          </View>
+        ) : null}
+      />
     </SafeAreaView>
   );
 }

@@ -73,7 +73,7 @@ export default function ReportModal({ visible, onClose, itemId, itemType, itemNa
       presentationStyle="pageSheet"
       onRequestClose={handleClose}
     >
-      <View className="flex-1 bg-white">
+      <View className="flex-1 bg-surface-900">
         {/* Header */}
         <View className="flex-row items-center justify-between p-4 border-b border-gray-200">
           <Pressable onPress={handleClose}>

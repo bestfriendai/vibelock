@@ -19,7 +19,7 @@ export default function ProfileScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
+    <SafeAreaView className="flex-1 bg-surface-900">
       {/* Header */}
       <View className="bg-white px-4 py-3 border-b border-gray-200">
         <Text className="text-2xl font-bold text-gray-900">Settings</Text>
