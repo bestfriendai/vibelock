@@ -88,7 +88,7 @@ function CommentItem({ comment, onLike, onDislike, onReply, onReport, isReply = 
           <Ionicons 
             name={comment.isLiked ? "heart" : "heart-outline"} 
             size={16} 
-            color={comment.isLiked ? "#FF6B6B" : "#9CA3AF"} 
+            color={comment.isLiked ? "#FFFFFF" : "#9CA3AF"} 
           />
           {comment.likeCount > 0 && (
             <Text className="text-text-muted text-xs ml-1">
@@ -105,7 +105,7 @@ function CommentItem({ comment, onLike, onDislike, onReply, onReport, isReply = 
           <Ionicons 
             name={comment.isDisliked ? "thumbs-down" : "thumbs-down-outline"} 
             size={16} 
-            color={comment.isDisliked ? "#FF6B6B" : "#9CA3AF"} 
+            color={comment.isDisliked ? "#FFFFFF" : "#9CA3AF"} 
           />
           {comment.dislikeCount > 0 && (
             <Text className="text-text-muted text-xs ml-1">

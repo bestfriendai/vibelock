@@ -65,7 +65,7 @@ export default function AuthScreen() {
             {/* Logo/Header */}
             <View className="items-center mb-12">
               <View className="w-20 h-20 bg-brand-red rounded-full items-center justify-center mb-4">
-                <Text className="text-white text-xl font-bold">LRT</Text>
+                <Text className="text-black text-xl font-bold">LRT</Text>
               </View>
               <Text className="text-3xl font-bold text-text-primary mb-2">
                 Locker Room Talk
@@ -179,7 +179,7 @@ export default function AuthScreen() {
                 onPress={handleSubmit}
                 disabled={isLoading}
               >
-                <Text className="text-white font-semibold text-lg">
+                <Text className="text-black font-semibold text-lg">
                   {isLoading
                     ? "Loading..."
                     : isLogin

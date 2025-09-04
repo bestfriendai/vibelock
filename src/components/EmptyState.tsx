@@ -38,7 +38,7 @@ export default function EmptyState({
           className="bg-brand-red rounded-xl px-6 py-3"
           onPress={onAction}
         >
-          <Text className="text-white font-semibold">
+          <Text className="text-black font-semibold">
             {actionText}
           </Text>
         </Pressable>

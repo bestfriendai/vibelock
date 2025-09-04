@@ -60,7 +60,7 @@ export default function ConfirmationModal({
   };
 
   const iconColorMap = {
-    red: "#FF6B6B",
+    red: "#FFFFFF",
     green: "#22C55E",
     blue: "#3B82F6"
   };

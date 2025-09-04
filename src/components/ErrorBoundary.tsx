@@ -42,7 +42,7 @@ export default class ErrorBoundary extends Component<Props, State> {
         <View className="flex-1 items-center justify-center px-6 bg-surface-900">
           <View className="items-center">
             <View className="w-20 h-20 bg-brand-red/20 rounded-full items-center justify-center mb-6">
-              <Ionicons name="warning" size={32} color="#FF6B6B" />
+              <Ionicons name="warning" size={32} color="#FFFFFF" />
             </View>
             
             <Text className="text-text-primary text-xl font-bold mb-2 text-center">
@@ -58,7 +58,7 @@ export default class ErrorBoundary extends Component<Props, State> {
                 className="bg-brand-red rounded-xl py-4 items-center"
                 onPress={this.handleRetry}
               >
-                <Text className="text-white font-semibold text-lg">
+                <Text className="text-black font-semibold text-lg">
                   Try Again
                 </Text>
               </Pressable>

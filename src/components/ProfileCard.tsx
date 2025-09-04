@@ -126,7 +126,7 @@ export default function ProfileCard({
             className="bg-black/50 rounded-full p-2"
             hitSlop={8}
           >
-            <Ionicons name="flag" size={16} color="#FF6B6B" />
+            <Ionicons name="flag" size={16} color="#FFFFFF" />
           </Pressable>
         </Animated.View>
 
@@ -140,7 +140,7 @@ export default function ProfileCard({
             <Ionicons 
               name={isLiked ? "heart" : "heart-outline"} 
               size={16} 
-              color={isLiked ? "#FF6B6B" : "#FFFFFF"} 
+              color={isLiked ? "#FFFFFF" : "#FFFFFF"} 
             />
           </Pressable>
         </Animated.View>
@@ -183,7 +183,7 @@ export default function ProfileCard({
         {/* Like Count */}
         {review.likeCount > 0 && (
           <View className="flex-row items-center mt-2">
-            <Ionicons name="heart" size={12} color="#FF6B6B" />
+            <Ionicons name="heart" size={12} color="#FFFFFF" />
             <Text className="text-white/70 text-xs ml-1">
               {review.likeCount}
             </Text>

@@ -208,7 +208,7 @@ export default function ChatInput({
               onPress={handleCamera}
               className="items-center p-3 bg-surface-800 rounded-xl"
             >
-              <Ionicons name="camera" size={24} color="#FF6B6B" />
+              <Ionicons name="camera" size={24} color="#FFFFFF" />
               <Text className="text-text-secondary text-xs mt-1">Camera</Text>
             </Pressable>
             <Pressable
@@ -239,7 +239,7 @@ export default function ChatInput({
           <Ionicons 
             name="add-circle" 
             size={24} 
-            color={showAttachments ? "#FF6B6B" : "#9CA3AF"} 
+            color={showAttachments ? "#FFFFFF" : "#9CA3AF"} 
           />
         </Pressable>
 
@@ -269,7 +269,7 @@ export default function ChatInput({
           <Ionicons 
             name="happy" 
             size={24} 
-            color={showEmojis ? "#FF6B6B" : "#9CA3AF"} 
+            color={showEmojis ? "#FFFFFF" : "#9CA3AF"} 
           />
         </Pressable>
 
@@ -279,7 +279,7 @@ export default function ChatInput({
             className="bg-brand-red rounded-full p-2"
             onPress={handleSend}
           >
-            <Ionicons name="send" size={20} color="#FFF" />
+            <Ionicons name="send" size={20} color="#000" />
           </Pressable>
         ) : (
           <Pressable
@@ -290,7 +290,7 @@ export default function ChatInput({
             <Ionicons 
               name="mic" 
               size={20} 
-              color={isRecording ? "#FFF" : "#9CA3AF"} 
+              color={isRecording ? "#000" : "#9CA3AF"} 
             />
           </Pressable>
         )}

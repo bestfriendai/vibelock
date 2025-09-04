@@ -99,7 +99,7 @@ export default function ProfileScreen() {
           <View className="bg-surface-800 rounded-lg p-4 mb-6">
             <View className="flex-row items-center">
               <View className="w-16 h-16 bg-brand-red rounded-full items-center justify-center">
-                <Text className="text-white text-xl font-bold">
+                <Text className="text-black text-xl font-bold">
                   {user?.email.charAt(0).toUpperCase()}
                 </Text>
               </View>
@@ -145,7 +145,7 @@ export default function ProfileScreen() {
                 <Switch
                   value={notificationsEnabled}
                   onValueChange={setNotificationsEnabled}
-                  trackColor={{ false: "#374151", true: "#FF6B6B" }}
+                  trackColor={{ false: "#374151", true: "#FFFFFF" }}
                   thumbColor={notificationsEnabled ? "#FFFFFF" : "#9CA3AF"}
                 />
               </View>

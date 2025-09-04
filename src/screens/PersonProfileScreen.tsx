@@ -127,7 +127,7 @@ export default function PersonProfileScreen() {
       >
         {/* Hero Section */}
         <LinearGradient
-          colors={["#FF6B6B", "#E85757"]}
+          colors={["#FFFFFF", "#F3F4F6"]}
           className="px-6 pt-8 pb-6"
         >
           <View className="items-center">
@@ -178,7 +178,7 @@ export default function PersonProfileScreen() {
         <View className="px-6 mb-8">
           <View className="flex-row space-x-4">
             <Pressable className="flex-1 bg-brand-red rounded-xl py-4 items-center">
-              <Text className="text-white font-semibold text-lg">Write Review</Text>
+              <Text className="text-black font-semibold text-lg">Write Review</Text>
             </Pressable>
             <Pressable 
               className="px-6 py-4 bg-surface-800 border border-border rounded-xl items-center"

@@ -111,29 +111,29 @@ export default function LikeDislikeButtons({
           disabled={disabled}
           className={`flex-row items-center justify-center px-4 py-3 rounded-xl border ${
             isDisliked 
-              ? "bg-brand-red border-brand-red" 
-              : "bg-brand-red/10 border-brand-red/30"
+              ? "bg-white border-white" 
+              : "bg-white/10 border-white/30"
           } ${disabled ? "opacity-50" : ""}`}
         >
           <Ionicons 
             name={isDisliked ? "thumbs-down" : "thumbs-down-outline"} 
             size={18} 
-            color={isDisliked ? "#FFFFFF" : "#FF6B6B"} 
+            color={isDisliked ? "#000000" : "#FFFFFF"} 
           />
           <Text 
             className={`ml-2 font-semibold ${
-              isDisliked ? "text-white" : "text-brand-red"
+              isDisliked ? "text-black" : "text-white"
             }`}
           >
             Dislike
           </Text>
           {dislikeCount > 0 && (
             <View className={`ml-2 px-2 py-0.5 rounded-full ${
-              isDisliked ? "bg-white/20" : "bg-brand-red/20"
+              isDisliked ? "bg-black/20" : "bg-white/20"
             }`}>
               <Text 
                 className={`text-xs font-bold ${
-                  isDisliked ? "text-white" : "text-brand-red"
+                  isDisliked ? "text-black" : "text-white"
                 }`}
               >
                 {dislikeCount}

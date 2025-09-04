@@ -42,7 +42,7 @@ export default function DistanceFilter({ currentDistance, onDistanceChange }: Di
     >
       <Text className="text-text-primary font-medium">{item.label}</Text>
       {currentDistance === item.value && (
-        <Ionicons name="checkmark" size={20} color="#FF6B6B" />
+        <Ionicons name="checkmark" size={20} color="#FFFFFF" />
       )}
     </Pressable>
   );

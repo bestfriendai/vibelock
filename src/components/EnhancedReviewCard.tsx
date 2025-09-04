@@ -30,7 +30,7 @@ export default function EnhancedReviewCard({
       {/* Header with reviewer info */}
       <View className="flex-row items-center mb-4">
         <View className="w-10 h-10 bg-brand-red/20 rounded-full items-center justify-center mr-3">
-          <Ionicons name="person" size={16} color="#FF6B6B" />
+          <Ionicons name="person" size={16} color="#FFFFFF" />
         </View>
         <View className="flex-1">
           <Text className="text-text-primary font-medium">Anonymous Reviewer</Text>
@@ -42,7 +42,7 @@ export default function EnhancedReviewCard({
           <Ionicons 
             name={isLiked ? "heart" : "heart-outline"} 
             size={18} 
-            color={isLiked ? "#FF6B6B" : "#9CA3AF"} 
+            color={isLiked ? "#FFFFFF" : "#9CA3AF"} 
           />
           <Text className="text-text-muted text-sm ml-1">
             {review.likeCount}
@@ -63,7 +63,7 @@ export default function EnhancedReviewCard({
           ))}
           {review.redFlags.map((flag) => (
             <View key={flag} className="bg-brand-red/20 px-3 py-1.5 rounded-full flex-row items-center">
-              <Ionicons name="warning" size={12} color="#FF6B6B" />
+              <Ionicons name="warning" size={12} color="#FFFFFF" />
               <Text className="text-brand-red text-sm font-medium ml-1">
                 {flag.replace("_", " ")}
               </Text>
@@ -100,7 +100,7 @@ export default function EnhancedReviewCard({
             <Ionicons 
               name={isLiked ? "heart" : "heart-outline"} 
               size={18} 
-              color={isLiked ? "#FF6B6B" : "#9CA3AF"} 
+              color={isLiked ? "#FFFFFF" : "#9CA3AF"} 
             />
             <Text className="text-text-muted text-sm ml-1">
               {isLiked ? "Liked" : "Like"}

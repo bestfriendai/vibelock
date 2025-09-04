@@ -128,7 +128,7 @@ export default function ReviewCard({ review }: ReviewCardProps) {
             </Text>
           </View>
           <View className="flex-row items-center">
-            <Ionicons name="warning" size={16} color="#FF6B6B" />
+            <Ionicons name="warning" size={16} color="#FFFFFF" />
             <Text className="text-text-secondary text-sm font-medium ml-1">
               {review.redFlags.length}
             </Text>
@@ -142,7 +142,7 @@ export default function ReviewCard({ review }: ReviewCardProps) {
           <Ionicons 
             name="heart" 
             size={16} 
-            color="#FF6B6B" 
+            color="#FFFFFF" 
           />
           <Text className="text-brand-red text-sm ml-1 font-medium">
             {review.likeCount}

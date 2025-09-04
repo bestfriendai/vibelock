@@ -56,12 +56,12 @@ export default function OnboardingScreen() {
           <View className="flex-1 justify-center items-center px-6">
             {/* Logo */}
             <View className="w-24 h-24 bg-brand-red rounded-full items-center justify-center mb-8">
-              <Text className="text-white text-2xl font-bold">LRT</Text>
+              <Text className="text-black text-2xl font-bold">LRT</Text>
             </View>
 
             {/* Step Icon */}
             <View className="w-20 h-20 bg-surface-800 rounded-full items-center justify-center mb-8">
-              <Ionicons name={currentStepData.icon as any} size={32} color="#FF6B6B" />
+              <Ionicons name={currentStepData.icon as any} size={32} color="#FFFFFF" />
             </View>
 
             {/* Step Content */}
@@ -92,7 +92,7 @@ export default function OnboardingScreen() {
             className="bg-brand-red rounded-lg py-4 items-center mb-4"
             onPress={handleNext}
           >
-            <Text className="text-white font-semibold text-lg">
+            <Text className="text-black font-semibold text-lg">
               {currentStep === onboardingSteps.length - 1 ? "Get Started" : "Next"}
             </Text>
           </Pressable>

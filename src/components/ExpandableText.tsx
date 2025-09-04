@@ -100,7 +100,7 @@ export default function ExpandableText({
           <Ionicons
             name={isExpanded ? "chevron-up" : "chevron-down"}
             size={16}
-            color="#FF6B6B"
+            color="#FFFFFF"
             style={{ marginLeft: 4 }}
           />
         </Pressable>

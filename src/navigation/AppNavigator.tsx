@@ -76,11 +76,11 @@ function FloatingCreateButton() {
   const navigation = useNavigation<any>();
   return (
     <Pressable
-      className="absolute bottom-16 self-center w-14 h-14 rounded-full bg-brand-red items-center justify-center shadow"
+      className="absolute bottom-16 self-center w-14 h-14 rounded-full bg-white items-center justify-center shadow-lg"
       onPress={() => navigation.navigate("CreateReview")}
       hitSlop={10}
     >
-      <Ionicons name="add" size={28} color="#FFFFFF" />
+      <Ionicons name="add" size={28} color="#000000" />
     </Pressable>
   );
 }
@@ -185,7 +185,7 @@ function TabNavigator() {
             }
             return <Ionicons name={iconName} size={size} color={color} />;
           },
-          tabBarActiveTintColor: "#FF6B6B",
+          tabBarActiveTintColor: "#FFFFFF",
           tabBarInactiveTintColor: "#9CA3AF",
           tabBarStyle: {
             backgroundColor: "#141418",

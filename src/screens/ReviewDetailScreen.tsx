@@ -401,8 +401,8 @@ export default function ReviewDetailScreen() {
           <RefreshControl 
             refreshing={refreshing} 
             onRefresh={handleRefresh}
-            tintColor="#FF6B6B"
-            colors={["#FF6B6B"]}
+            tintColor="#FFFFFF"
+            colors={["#FFFFFF"]}
           />
         }
         contentContainerStyle={{ paddingTop: 20, paddingBottom: 40 }}
@@ -494,7 +494,7 @@ export default function ReviewDetailScreen() {
                     ))}
                     {review.redFlags.map((flag: string) => (
                       <View key={flag} className="bg-brand-red/20 border border-brand-red/30 px-3 py-2 rounded-full flex-row items-center">
-                        <Ionicons name="warning" size={14} color="#FF6B6B" />
+                        <Ionicons name="warning" size={14} color="#FFFFFF" />
                         <Text className="text-brand-red text-sm font-medium ml-1">
                           {flag.replace("_", " ")}
                         </Text>

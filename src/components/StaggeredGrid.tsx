@@ -86,8 +86,8 @@ function StaggeredGrid({
           <RefreshControl 
             refreshing={refreshing} 
             onRefresh={onRefresh}
-            tintColor="#FF6B6B"
-            colors={["#FF6B6B"]}
+            tintColor="#FFFFFF"
+            colors={["#FFFFFF"]}
           />
         ) : undefined
       }

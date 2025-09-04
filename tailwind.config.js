@@ -9,10 +9,10 @@ module.exports = {
     extend: {
       colors: {
         brand: { 
-          red: "#FF6B6B", 
-          redDark: "#E85757",
-          coral: "#FF8A80",
-          warm: "#FFAB91"
+          red: "#FFFFFF", 
+          redDark: "#F3F4F6",
+          coral: "#FFFFFF",
+          warm: "#F3F4F6"
         },
         surface: { 
           900: "#0B0B0F", 

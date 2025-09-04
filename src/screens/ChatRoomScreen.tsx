@@ -162,7 +162,7 @@ export default function ChatRoomScreen() {
             renderItem={({ item }) => (
               <View className="flex-row items-center px-4 py-3 border-b border-surface-700">
                 <View className="w-10 h-10 bg-brand-red rounded-full items-center justify-center mr-3">
-                  <Text className="text-white font-bold">
+                  <Text className="text-black font-bold">
                     {item.userName.charAt(0).toUpperCase()}
                   </Text>
                 </View>

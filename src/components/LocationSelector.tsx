@@ -276,9 +276,9 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
               className="flex-row items-center bg-brand-red/20 border border-brand-red/30 rounded-lg px-4 py-3"
             >
               {isLoadingCurrentLocation ? (
-                <ActivityIndicator size="small" color="#FF6B6B" />
+                <ActivityIndicator size="small" color="#FFFFFF" />
               ) : (
-                <Ionicons name="location" size={20} color="#FF6B6B" />
+                <Ionicons name="location" size={20} color="#FFFFFF" />
               )}
               <Text className="text-brand-red font-medium ml-3">
                 {isLoadingCurrentLocation ? "Getting your location..." : "Use Current Location"}

@@ -120,13 +120,13 @@ export default function MessageBubble({
           delayLongPress={500}
           className={`${isOwn ? "bg-brand-red" : "bg-surface-700"} max-w-[80%] rounded-2xl px-3 py-2 relative`}
         >
-          <Text className={`${isOwn ? "text-white" : "text-text-primary"} text-base leading-5`}>
+          <Text className={`${isOwn ? "text-black" : "text-text-primary"} text-base leading-5`}>
             {message.content}
           </Text>
           
           {/* Message status and timestamp */}
           <View className="flex-row items-center justify-between mt-1">
-            <Text className={`text-[10px] ${isOwn ? "text-white/70" : "text-text-muted"}`}>
+            <Text className={`text-[10px] ${isOwn ? "text-black/70" : "text-text-muted"}`}>
               {formatTime(message.timestamp)}
             </Text>
             

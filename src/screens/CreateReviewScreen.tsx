@@ -292,7 +292,7 @@ export default function CreateReviewScreen() {
               onPress={handleSubmit}
               disabled={isLoading || !hasRequired}
             >
-              <Text className={`font-semibold text-lg ${hasRequired ? "text-white" : "text-text-secondary"}`}>
+              <Text className={`font-semibold text-lg ${hasRequired ? "text-black" : "text-text-secondary"}`}>
                 {isLoading ? "Submitting..." : "Submit Review"}
               </Text>
             </Pressable>

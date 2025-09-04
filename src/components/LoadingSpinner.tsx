@@ -17,7 +17,7 @@ interface Props {
 
 export default function LoadingSpinner({ 
   size = "medium", 
-  color = "#FF6B6B", 
+  color = "#FFFFFF", 
   text,
   className = ""
 }: Props) {
