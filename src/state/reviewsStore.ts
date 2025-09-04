@@ -29,6 +29,7 @@ interface ReviewsActions {
     reviewText: string;
   }) => Promise<void>;
   likeReview: (id: string) => Promise<void>;
+  dislikeReview: (id: string) => Promise<void>;
   clearError: () => void;
 }
 
@@ -288,6 +289,18 @@ const useReviewsStore = create<ReviewsStore>()(
         } catch (error) {
           set({ 
             error: error instanceof Error ? error.message : "Failed to like review"
+          });
+        }
+      },
+
+      dislikeReview: async (id) => {
+        try {
+          // For now, just log the dislike action
+          // In a real app, this would send to the backend
+          console.log(`Disliked review ${id}`);
+        } catch (error) {
+          set({ 
+            error: error instanceof Error ? error.message : "Failed to dislike review"
           });
         }
       }

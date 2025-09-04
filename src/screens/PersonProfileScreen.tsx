@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { View, Text, ScrollView, Pressable, RefreshControl } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { RouteProp, useRoute } from "@react-navigation/native";
+import { RouteProp, useRoute, useNavigation } from "@react-navigation/native";
 import { RootStackParamList } from "../navigation/AppNavigator";
 import { LinearGradient } from "expo-linear-gradient";
 import ReportModal from "../components/ReportModal";
@@ -14,6 +14,7 @@ type PersonProfileRouteProp = RouteProp<RootStackParamList, "PersonProfile">;
 
 export default function PersonProfileScreen() {
   const route = useRoute<PersonProfileRouteProp>();
+  const navigation = useNavigation<any>();
   const { firstName, location } = route.params;
   const [showReportModal, setShowReportModal] = useState(false);
   const [showMediaViewer, setShowMediaViewer] = useState(false);
@@ -104,6 +105,10 @@ export default function PersonProfileScreen() {
     setTimeout(() => setRefreshing(false), 1000);
   };
 
+  const handleReviewPress = (review: any) => {
+    navigation.navigate("ReviewDetail", { review });
+  };
+
   const formatDate = (date: Date) => {
     return date.toLocaleDateString("en-US", { 
       year: "numeric", 
@@ -191,7 +196,11 @@ export default function PersonProfileScreen() {
           </Text>
 
           {mockReviews.map((review) => (
-            <View key={review.id} className="bg-surface-800 rounded-2xl p-6 mb-6 border border-border">
+            <Pressable 
+              key={review.id} 
+              className="bg-surface-800 rounded-2xl p-6 mb-6 border border-border"
+              onPress={() => handleReviewPress(review)}
+            >
               {/* Flags */}
               <View className="flex-row flex-wrap gap-2 mb-4">
                 {review.greenFlags.map((flag) => (
@@ -238,7 +247,7 @@ export default function PersonProfileScreen() {
                   </Text>
                 </View>
               </View>
-            </View>
+            </Pressable>
           ))}
         </View>
 

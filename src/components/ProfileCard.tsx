@@ -48,9 +48,9 @@ export default function ProfileCard({
       scale.value = withSpring(1, { duration: 100 });
     });
     
-    navigation.navigate("PersonProfile", { 
-      firstName: review.reviewedPersonName, 
-      location: review.reviewedPersonLocation 
+    // Navigate to review detail instead of person profile
+    navigation.navigate("ReviewDetail", { 
+      review: review
     });
   };
 

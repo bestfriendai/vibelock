@@ -15,6 +15,7 @@ import PersonProfileScreen from "../screens/PersonProfileScreen";
 import AuthScreen from "../screens/AuthScreen";
 import OnboardingScreen from "../screens/OnboardingScreen";
 import ChatRoomScreen from "../screens/ChatRoomScreen";
+import ReviewDetailScreen from "../screens/ReviewDetailScreen";
 
 // Import stores
 import useAuthStore from "../state/authStore";
@@ -30,6 +31,9 @@ export type RootStackParamList = {
   };
   CreateReview: undefined;
   ChatRoom: { roomId: string };
+  ReviewDetail: {
+    review: import("../types").Review;
+  };
 };
 
 export type TabParamList = {
@@ -151,6 +155,14 @@ export default function AppNavigator() {
               headerTitle: "Chat",
               headerStyle: { backgroundColor: "#141418" },
               headerTintColor: "#FFFFFF",
+            }}
+          />
+          <Stack.Screen
+            name="ReviewDetail"
+            component={ReviewDetailScreen}
+            options={{
+              presentation: "modal",
+              headerShown: false,
             }}
           />
         </>
