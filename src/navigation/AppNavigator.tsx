@@ -14,6 +14,7 @@ import ProfileScreen from "../screens/ProfileScreen";
 import PersonProfileScreen from "../screens/PersonProfileScreen";
 import AuthScreen from "../screens/AuthScreen";
 import OnboardingScreen from "../screens/OnboardingScreen";
+import ChatRoomScreen from "../screens/ChatRoomScreen";
 
 // Import stores
 import useAuthStore from "../state/authStore";
@@ -28,6 +29,7 @@ export type RootStackParamList = {
     location: { city: string; state: string }; 
   };
   CreateReview: undefined;
+  ChatRoom: { roomId: string };
 };
 
 export type TabParamList = {
@@ -137,6 +139,16 @@ export default function AppNavigator() {
               presentation: "modal",
               headerShown: true,
               headerTitle: "Profile",
+              headerStyle: { backgroundColor: "#141418" },
+              headerTintColor: "#FFFFFF",
+            }}
+          />
+          <Stack.Screen
+            name="ChatRoom"
+            component={ChatRoomScreen}
+            options={{
+              headerShown: true,
+              headerTitle: "Chat",
               headerStyle: { backgroundColor: "#141418" },
               headerTintColor: "#FFFFFF",
             }}

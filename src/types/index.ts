@@ -120,3 +120,72 @@ export interface AppSettings {
   blockedUsers: string[];
   theme: "light" | "dark" | "system";
 }
+
+// Chat-related types
+export type ChatRoomType = "local" | "global" | "topic";
+export type MessageType = "text" | "image" | "system" | "join" | "leave";
+export type UserRole = "member" | "moderator" | "admin";
+export type ConnectionStatus = "connecting" | "connected" | "disconnected" | "error";
+
+export interface ChatRoom {
+  id: string;
+  name: string;
+  description: string;
+  type: ChatRoomType;
+  memberCount: number;
+  onlineCount: number;
+  lastMessage?: ChatMessage;
+  lastActivity: Date;
+  isActive: boolean;
+  location?: {
+    city: string;
+    state: string;
+  };
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ChatMessage {
+  id: string;
+  chatRoomId: string;
+  senderId: string;
+  senderName: string;
+  senderAvatar?: string;
+  content: string;
+  messageType: MessageType;
+  timestamp: Date;
+  isRead: boolean;
+  isOwn?: boolean;
+  replyTo?: string;
+}
+
+export interface ChatMember {
+  id: string;
+  chatRoomId: string;
+  userId: string;
+  userName: string;
+  userAvatar?: string;
+  joinedAt: Date;
+  role: UserRole;
+  isOnline: boolean;
+  lastSeen: Date;
+}
+
+export interface TypingUser {
+  userId: string;
+  userName: string;
+  chatRoomId: string;
+  timestamp: Date;
+}
+
+export interface ChatState {
+  chatRooms: ChatRoom[];
+  currentChatRoom: ChatRoom | null;
+  messages: Record<string, ChatMessage[]>;
+  members: Record<string, ChatMember[]>;
+  typingUsers: TypingUser[];
+  onlineUsers: string[];
+  connectionStatus: ConnectionStatus;
+  isLoading: boolean;
+  error: string | null;
+}
