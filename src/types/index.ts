@@ -212,6 +212,7 @@ export interface Comment {
   isDisliked?: boolean;
   parentCommentId?: string; // For replies
   replies?: Comment[];
+  mediaId?: string; // For image-specific comments
   createdAt: Date;
   updatedAt: Date;
   isDeleted?: boolean;
@@ -228,7 +229,15 @@ export interface CommentThread {
 export interface CommentState {
   comments: Record<string, Comment[]>; // reviewId -> comments
   commentThreads: Record<string, CommentThread>; // commentId -> thread
+  mediaComments: Record<string, Comment[]>; // mediaId -> comments
   isLoading: boolean;
   isPosting: boolean;
   error: string | null;
+}
+
+export interface MediaCommentData {
+  mediaId: string;
+  mediaUri: string;
+  commentCount: number;
+  comments: Comment[];
 }

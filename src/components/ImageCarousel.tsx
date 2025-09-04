@@ -20,6 +20,8 @@ interface Props {
   onImagePress?: (media: MediaItem, index: number) => void;
   showCounter?: boolean;
   showFullScreenButton?: boolean;
+  onCommentPress?: (media: MediaItem, index: number) => void;
+  commentCounts?: Record<string, number>; // mediaId -> comment count
 }
 
 export default function ImageCarousel({ 
@@ -27,7 +29,9 @@ export default function ImageCarousel({
   height = 300, 
   onImagePress,
   showCounter = true,
-  showFullScreenButton = true
+  showFullScreenButton = true,
+  onCommentPress,
+  commentCounts = {}
 }: Props) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
@@ -91,6 +95,32 @@ export default function ImageCarousel({
                 </View>
               </View>
             )}
+
+            {/* Comment indicator and button */}
+            <View className="absolute bottom-3 right-3 flex-row items-center space-x-2">
+              {/* Comment count indicator */}
+              {commentCounts[item.id] && commentCounts[item.id] > 0 && (
+                <View className="bg-black/70 rounded-full px-2 py-1 flex-row items-center">
+                  <Ionicons name="chatbubble" size={12} color="#FFFFFF" />
+                  <Text className="text-white text-xs font-medium ml-1">
+                    {commentCounts[item.id]}
+                  </Text>
+                </View>
+              )}
+              
+              {/* Comment button */}
+              {onCommentPress && (
+                <Pressable
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    onCommentPress(item, media.findIndex(m => m.id === item.id));
+                  }}
+                  className="bg-black/70 rounded-full p-2"
+                >
+                  <Ionicons name="chatbubble-outline" size={16} color="#FFFFFF" />
+                </Pressable>
+              )}
+            </View>
           </Pressable>
         ))}
       </ScrollView>

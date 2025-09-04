@@ -2,19 +2,34 @@ import React, { useState } from "react";
 import {
   View,
   Text,
+  Modal,
   Pressable,
-  ScrollView
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform
 } from "react-native";
+import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
-import { Comment } from "../types";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Comment, MediaItem } from "../types";
+import CommentInput from "./CommentInput";
 
-interface CommentSectionProps {
+
+
+interface MediaCommentModalProps {
+  visible: boolean;
+  media: MediaItem;
   comments: Comment[];
   isLoading?: boolean;
+  isPosting?: boolean;
+  onClose: () => void;
+  onPostComment: (content: string) => Promise<void>;
   onLikeComment: (commentId: string) => void;
   onDislikeComment: (commentId: string) => void;
   onReplyToComment: (comment: Comment) => void;
   onReportComment: (commentId: string) => void;
+  replyToComment?: Comment | null;
+  onCancelReply?: () => void;
 }
 
 interface CommentItemProps {
@@ -167,29 +182,21 @@ function CommentItem({ comment, onLike, onDislike, onReply, onReport, isReply = 
   );
 }
 
-export default function CommentSection({ 
-  comments, 
-  isLoading, 
-  onLikeComment, 
-  onDislikeComment, 
-  onReplyToComment, 
-  onReportComment 
-}: CommentSectionProps) {
-  const renderComment = (comment: Comment, index: number) => (
-    <View key={comment.id}>
-      <CommentItem
-        comment={comment}
-        onLike={onLikeComment}
-        onDislike={onDislikeComment}
-        onReply={onReplyToComment}
-        onReport={onReportComment}
-      />
-      {index < comments.length - 1 && (
-        <View className="h-px bg-surface-700 mx-4" />
-      )}
-    </View>
-  );
-
+export default function MediaCommentModal({
+  visible,
+  media,
+  comments,
+  isLoading = false,
+  isPosting = false,
+  onClose,
+  onPostComment,
+  onLikeComment,
+  onDislikeComment,
+  onReplyToComment,
+  onReportComment,
+  replyToComment,
+  onCancelReply
+}: MediaCommentModalProps) {
   const renderCommentSkeleton = () => (
     <View className="py-3">
       <View className="flex-row items-center mb-2">
@@ -209,51 +216,96 @@ export default function CommentSection({
     </View>
   );
 
-  if (isLoading) {
-    return (
-      <View className="bg-surface-800">
-        <View className="px-4 py-3 border-b border-surface-700">
-          <View className="h-5 bg-surface-600 rounded w-24" />
-        </View>
-        <View className="px-4">
-          {[1, 2, 3].map((i) => (
-            <View key={i}>
-              {renderCommentSkeleton()}
-              {i < 3 && <View className="h-px bg-surface-700 mx-4" />}
-            </View>
-          ))}
-        </View>
-      </View>
-    );
-  }
-
-  if (comments.length === 0) {
-    return (
-      <View className="py-8 items-center">
-        <Ionicons name="chatbubbles-outline" size={48} color="#6B7280" />
-        <Text className="text-text-secondary text-lg font-medium mt-4">No comments yet</Text>
-        <Text className="text-text-muted text-center mt-2 px-8">
-          Be the first to share your thoughts on this review
-        </Text>
-      </View>
-    );
-  }
-
   return (
-    <View className="bg-surface-800">
-      <View className="px-4 py-3 border-b border-surface-700">
-        <Text className="text-text-primary font-semibold">
-          Comments ({comments.length})
-        </Text>
-      </View>
-      
-      <ScrollView 
-        showsVerticalScrollIndicator={false}
-        className="px-4"
-        nestedScrollEnabled={true}
-      >
-        {comments.map((comment, index) => renderComment(comment, index))}
-      </ScrollView>
-    </View>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      presentationStyle="pageSheet"
+      onRequestClose={onClose}
+    >
+      <SafeAreaView className="flex-1 bg-surface-900">
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          className="flex-1"
+        >
+          {/* Header */}
+          <View className="flex-row items-center justify-between px-4 py-3 border-b border-surface-700">
+            <Text className="text-text-primary text-lg font-semibold">
+              Image Comments
+            </Text>
+            <Pressable
+              onPress={onClose}
+              className="w-8 h-8 items-center justify-center"
+            >
+              <Ionicons name="close" size={24} color="#F3F4F6" />
+            </Pressable>
+          </View>
+
+          {/* Image Preview */}
+          <View className="px-4 py-3 border-b border-surface-700">
+            <View className="bg-surface-800 rounded-lg overflow-hidden">
+              <Image
+                source={{ uri: media.uri }}
+                style={{ width: "100%", height: 200 }}
+                contentFit="cover"
+              />
+            </View>
+          </View>
+
+          {/* Comments Section */}
+          <View className="flex-1">
+            {isLoading ? (
+              <ScrollView className="px-4">
+                {[1, 2, 3].map((i) => (
+                  <View key={i}>
+                    {renderCommentSkeleton()}
+                    {i < 3 && <View className="h-px bg-surface-700" />}
+                  </View>
+                ))}
+              </ScrollView>
+            ) : comments.length === 0 ? (
+              <View className="flex-1 items-center justify-center px-8">
+                <Ionicons name="chatbubbles-outline" size={48} color="#6B7280" />
+                <Text className="text-text-secondary text-lg font-medium mt-4 text-center">
+                  No comments on this image yet
+                </Text>
+                <Text className="text-text-muted text-center mt-2">
+                  Be the first to share your thoughts
+                </Text>
+              </View>
+            ) : (
+              <ScrollView 
+                className="px-4"
+                showsVerticalScrollIndicator={false}
+              >
+                {comments.map((comment, index) => (
+                  <View key={comment.id}>
+                    <CommentItem
+                      comment={comment}
+                      onLike={onLikeComment}
+                      onDislike={onDislikeComment}
+                      onReply={onReplyToComment}
+                      onReport={onReportComment}
+                    />
+                    {index < comments.length - 1 && (
+                      <View className="h-px bg-surface-700" />
+                    )}
+                  </View>
+                ))}
+              </ScrollView>
+            )}
+          </View>
+
+          {/* Comment Input */}
+          <CommentInput
+            onSubmit={onPostComment}
+            isLoading={isPosting}
+            placeholder="Comment on this image..."
+            replyToComment={replyToComment?.authorName}
+            onCancelReply={onCancelReply}
+          />
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </Modal>
   );
 }

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, Pressable, RefreshControl, StatusBar } from "react-native";
+import { View, Text, Pressable, RefreshControl, StatusBar, KeyboardAvoidingView, Platform, Keyboard, TouchableWithoutFeedback } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { Ionicons } from "@expo/vector-icons";
 import { RouteProp, useRoute, useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
@@ -370,9 +371,15 @@ export default function ReviewDetailScreen() {
     transform: [{ scale: contentScale.value }],
   }));
 
+  const dismissKeyboard = () => {
+    Keyboard.dismiss();
+  };
+
   return (
-    <View className="flex-1 bg-surface-900">
-      <StatusBar barStyle="light-content" backgroundColor="#0B0B0F" />
+    <KeyboardProvider>
+      <TouchableWithoutFeedback onPress={dismissKeyboard}>
+        <View className="flex-1 bg-surface-900">
+          <StatusBar barStyle="light-content" backgroundColor="#0B0B0F" />
       
       {/* Header */}
       <Animated.View 
@@ -576,23 +583,30 @@ export default function ReviewDetailScreen() {
         )}
       </Animated.ScrollView>
 
-      {/* Comment Input */}
-      <CommentInput
-        onSubmit={handlePostComment}
-        isLoading={isPostingComment}
-        replyToComment={replyToComment?.authorName}
-        onCancelReply={handleCancelReply}
-      />
+          {/* Comment Input */}
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+          >
+            <CommentInput
+              onSubmit={handlePostComment}
+              isLoading={isPostingComment}
+              replyToComment={replyToComment?.authorName}
+              onCancelReply={handleCancelReply}
+            />
+          </KeyboardAvoidingView>
 
-      {/* Media Viewer Modal */}
-      {reviewWithMedia.media && (
-        <MediaViewer
-          visible={showMediaViewer}
-          media={reviewWithMedia.media}
-          initialIndex={selectedMediaIndex}
-          onClose={() => setShowMediaViewer(false)}
-        />
-      )}
-    </View>
+          {/* Media Viewer Modal */}
+          {reviewWithMedia.media && (
+            <MediaViewer
+              visible={showMediaViewer}
+              media={reviewWithMedia.media}
+              initialIndex={selectedMediaIndex}
+              onClose={() => setShowMediaViewer(false)}
+            />
+          )}
+        </View>
+      </TouchableWithoutFeedback>
+    </KeyboardProvider>
   );
 }

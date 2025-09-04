@@ -11,7 +11,7 @@ import { Image } from "expo-image";
 import { VideoView, useVideoPlayer } from "expo-video";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { MediaItem } from "../types";
+import { MediaItem, Comment } from "../types";
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 
@@ -20,9 +20,18 @@ interface Props {
   media: MediaItem[];
   initialIndex: number;
   onClose: () => void;
+  onCommentPress?: (media: MediaItem, index: number) => void;
+  commentCounts?: Record<string, number>; // mediaId -> comment count
 }
 
-export default function MediaViewer({ visible, media, initialIndex, onClose }: Props) {
+export default function MediaViewer({ 
+  visible, 
+  media, 
+  initialIndex, 
+  onClose, 
+  onCommentPress,
+  commentCounts = {}
+}: Props) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const currentMedia = media[currentIndex];
   
@@ -126,19 +135,47 @@ export default function MediaViewer({ visible, media, initialIndex, onClose }: P
 
           {/* Bottom Info */}
           <View className="absolute bottom-0 left-0 right-0 bg-black/50 px-4 py-3">
-            <View className="flex-row items-center space-x-2">
-              <Ionicons 
-                name={currentMedia.type === "video" ? "videocam" : "image"} 
-                size={16} 
-                color="white" 
-              />
-              <Text className="text-white text-sm">
-                {currentMedia.type === "video" ? "Video" : "Image"}
-              </Text>
-              {currentMedia.type === "video" && currentMedia.duration && (
-                <Text className="text-white/70 text-sm">
-                  • {formatDuration(currentMedia.duration)}
+            <View className="flex-row items-center justify-between">
+              <View className="flex-row items-center space-x-2">
+                <Ionicons 
+                  name={currentMedia.type === "video" ? "videocam" : "image"} 
+                  size={16} 
+                  color="white" 
+                />
+                <Text className="text-white text-sm">
+                  {currentMedia.type === "video" ? "Video" : "Image"}
                 </Text>
+                {currentMedia.type === "video" && currentMedia.duration && (
+                  <Text className="text-white/70 text-sm">
+                    • {formatDuration(currentMedia.duration)}
+                  </Text>
+                )}
+              </View>
+
+              {/* Comment Button */}
+              {onCommentPress && (
+                <View className="flex-row items-center space-x-3">
+                  {/* Comment count indicator */}
+                  {commentCounts[currentMedia.id] && commentCounts[currentMedia.id] > 0 && (
+                    <View className="flex-row items-center">
+                      <Ionicons name="chatbubble" size={14} color="white" />
+                      <Text className="text-white text-sm ml-1">
+                        {commentCounts[currentMedia.id]}
+                      </Text>
+                    </View>
+                  )}
+                  
+                  {/* Comment button */}
+                  <Pressable
+                    onPress={() => onCommentPress(currentMedia, currentIndex)}
+                    className="bg-white/20 rounded-full px-3 py-2 flex-row items-center"
+                  >
+                    <Ionicons name="chatbubble-outline" size={16} color="white" />
+                    <Text className="text-white text-sm font-medium ml-2">
+                      Comment
+                    </Text>
+                  </Pressable>
+                </View>
               )}
             </View>
           </View>
