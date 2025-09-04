@@ -27,6 +27,13 @@ export interface MediaItem {
   duration?: number; // for videos, in seconds
 }
 
+export interface SocialMediaHandles {
+  instagram?: string;
+  tiktok?: string;
+  snapchat?: string;
+  twitter?: string;
+}
+
 export interface Review {
   id: string;
   reviewerAnonymousId: string;
@@ -40,8 +47,10 @@ export interface Review {
   redFlags: RedFlag[];
   reviewText: string;
   media?: MediaItem[]; // Optional media attachments
+  socialMedia?: SocialMediaHandles; // Optional social media handles
   status: "pending" | "approved" | "rejected";
   likeCount: number;
+  dislikeCount?: number;
   createdAt: Date;
   updatedAt: Date;
 }

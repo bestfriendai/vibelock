@@ -1,18 +1,20 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   View,
   Text,
   TextInput,
   ScrollView,
   Pressable,
-  Alert,
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
 import useReviewsStore from "../state/reviewsStore";
-import { GreenFlag, RedFlag } from "../types";
+import { GreenFlag, RedFlag, MediaItem, SocialMediaHandles } from "../types";
+import FormSection from "../components/FormSection";
+import MediaUploadGrid from "../components/MediaUploadGrid";
+import SocialMediaInput from "../components/SocialMediaInput";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const GREEN_FLAGS: { key: GreenFlag; label: string }[] = [
   { key: "good_communicator", label: "Good Communicator" },
@@ -36,6 +38,8 @@ const RED_FLAGS: { key: RedFlag; label: string }[] = [
   { key: "inconsistent", label: "Inconsistent" },
 ];
 
+const DRAFT_KEY = "create-review-draft";
+
 export default function CreateReviewScreen() {
   const [firstName, setFirstName] = useState("");
   const [city, setCity] = useState("");
@@ -43,8 +47,52 @@ export default function CreateReviewScreen() {
   const [reviewText, setReviewText] = useState("");
   const [selectedGreenFlags, setSelectedGreenFlags] = useState<GreenFlag[]>([]);
   const [selectedRedFlags, setSelectedRedFlags] = useState<RedFlag[]>([]);
+  const [media, setMedia] = useState<MediaItem[]>([]);
+  const [socialMedia, setSocialMedia] = useState<SocialMediaHandles>({});
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   const { createReview, isLoading } = useReviewsStore();
+
+  // Load draft
+  useEffect(() => {
+    (async () => {
+      try {
+        const json = await AsyncStorage.getItem(DRAFT_KEY);
+        if (json) {
+          const draft = JSON.parse(json);
+          setFirstName(draft.firstName || "");
+          setCity(draft.city || "");
+          setState(draft.state || "");
+          setReviewText(draft.reviewText || "");
+          setSelectedGreenFlags(draft.selectedGreenFlags || []);
+          setSelectedRedFlags(draft.selectedRedFlags || []);
+          setMedia(draft.media || []);
+          setSocialMedia(draft.socialMedia || {});
+        }
+      } catch {}
+    })();
+  }, []);
+
+  // Save draft
+  useEffect(() => {
+    const save = setTimeout(() => {
+      AsyncStorage.setItem(
+        DRAFT_KEY,
+        JSON.stringify({
+          firstName,
+          city,
+          state,
+          reviewText,
+          selectedGreenFlags,
+          selectedRedFlags,
+          media,
+          socialMedia,
+        })
+      ).catch(() => {});
+    }, 400);
+    return () => clearTimeout(save);
+  }, [firstName, city, state, reviewText, selectedGreenFlags, selectedRedFlags, media, socialMedia]);
 
   const toggleGreenFlag = (flag: GreenFlag) => {
     setSelectedGreenFlags(prev =>
@@ -62,19 +110,18 @@ export default function CreateReviewScreen() {
     );
   };
 
+  const imagesCount = useMemo(() => media.filter(m => m.type === "image").length, [media]);
+  const hasRequired = Boolean(firstName.trim() && city.trim() && state.trim() && reviewText.trim() && (selectedGreenFlags.length + selectedRedFlags.length > 0) && imagesCount >= 1);
+
   const handleSubmit = async () => {
-    if (!firstName.trim() || !city.trim() || !state.trim()) {
-      Alert.alert("Error", "Please fill in all required fields");
-      return;
-    }
+    setError(null);
+    setSuccess(null);
 
-    if (!reviewText.trim()) {
-      Alert.alert("Error", "Please write a review");
-      return;
-    }
-
-    if (selectedGreenFlags.length === 0 && selectedRedFlags.length === 0) {
-      Alert.alert("Error", "Please select at least one flag");
+    if (!hasRequired) {
+      if (!firstName.trim() || !city.trim() || !state.trim()) setError("Please fill in all required fields");
+      else if (imagesCount < 1) setError("Please add at least one photo");
+      else if (!reviewText.trim()) setError("Please write a review");
+      else if ((selectedGreenFlags.length + selectedRedFlags.length) === 0) setError("Please select at least one flag");
       return;
     }
 
@@ -85,48 +132,61 @@ export default function CreateReviewScreen() {
         greenFlags: selectedGreenFlags,
         redFlags: selectedRedFlags,
         reviewText: reviewText.trim(),
+        media,
+        socialMedia,
       });
 
-      // Reset form
+      // Reset form and draft
       setFirstName("");
       setCity("");
       setState("");
       setReviewText("");
       setSelectedGreenFlags([]);
       setSelectedRedFlags([]);
-
-      Alert.alert("Success", "Your review has been submitted for moderation");
-    } catch (error) {
-      Alert.alert("Error", "Failed to submit review");
+      setMedia([]);
+      setSocialMedia({});
+      await AsyncStorage.removeItem(DRAFT_KEY);
+      setSuccess("Review submitted for moderation");
+    } catch (e) {
+      setError("Failed to submit review. Please try again.");
     }
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView className="flex-1 bg-surface-900">
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         className="flex-1"
       >
         {/* Header */}
-        <View className="px-4 py-3 border-b border-gray-200">
-          <Text className="text-2xl font-bold text-gray-900">Write Review</Text>
-          <Text className="text-gray-600 mt-1">Share your dating experience anonymously</Text>
+        <View className="px-4 py-4 border-b border-border bg-surface-800">
+          <Text className="text-text-primary text-2xl font-bold">Write Review</Text>
+          <Text className="text-text-secondary mt-1">Share your dating experience anonymously</Text>
         </View>
 
         <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-          <View className="px-4 py-6 space-y-6">
+          <View className="px-4 py-6">
+            {/* Error / Success banners */}
+            {error && (
+              <View className="bg-red-500/15 border border-red-500 rounded-xl p-3 mb-4">
+                <Text className="text-red-400">{error}</Text>
+              </View>
+            )}
+            {success && (
+              <View className="bg-emerald-500/15 border border-emerald-500 rounded-xl p-3 mb-4">
+                <Text className="text-emerald-400">{success}</Text>
+              </View>
+            )}
+
             {/* Person Info */}
-            <View>
-              <Text className="text-lg font-semibold text-gray-900 mb-4">
-                Who are you reviewing?
-              </Text>
-              
+            <FormSection title="Who are you reviewing?" subtitle="Provide the first name and location" required>
               <View className="space-y-4">
                 <View>
-                  <Text className="text-gray-700 font-medium mb-2">First Name *</Text>
+                  <Text className="text-text-secondary font-medium mb-2">First Name</Text>
                   <TextInput
-                    className="border border-gray-300 rounded-lg px-4 py-3 text-gray-900"
+                    className="bg-surface-800 border border-border rounded-xl px-4 py-3 text-text-primary"
                     placeholder="Enter first name"
+                    placeholderTextColor="#9CA3AF"
                     value={firstName}
                     onChangeText={setFirstName}
                     autoCapitalize="words"
@@ -135,20 +195,22 @@ export default function CreateReviewScreen() {
 
                 <View className="flex-row space-x-3">
                   <View className="flex-1">
-                    <Text className="text-gray-700 font-medium mb-2">City *</Text>
+                    <Text className="text-text-secondary font-medium mb-2">City</Text>
                     <TextInput
-                      className="border border-gray-300 rounded-lg px-4 py-3 text-gray-900"
+                      className="bg-surface-800 border border-border rounded-xl px-4 py-3 text-text-primary"
                       placeholder="City"
+                      placeholderTextColor="#9CA3AF"
                       value={city}
                       onChangeText={setCity}
                       autoCapitalize="words"
                     />
                   </View>
                   <View className="flex-1">
-                    <Text className="text-gray-700 font-medium mb-2">State *</Text>
+                    <Text className="text-text-secondary font-medium mb-2">State</Text>
                     <TextInput
-                      className="border border-gray-300 rounded-lg px-4 py-3 text-gray-900"
+                      className="bg-surface-800 border border-border rounded-xl px-4 py-3 text-text-primary"
                       placeholder="State"
+                      placeholderTextColor="#9CA3AF"
                       value={state}
                       onChangeText={setState}
                       autoCapitalize="characters"
@@ -157,106 +219,85 @@ export default function CreateReviewScreen() {
                   </View>
                 </View>
               </View>
-            </View>
+            </FormSection>
 
-            {/* Green Flags */}
-            <View>
-              <Text className="text-lg font-semibold text-gray-900 mb-2">
-                Green Flags
-              </Text>
-              <Text className="text-gray-600 mb-4">What did you like about them?</Text>
-              
+            {/* Media */}
+            <FormSection title="Photos & Videos" subtitle="Add at least 1 photo (max 6). Videos up to 60 seconds." required>
+              <MediaUploadGrid media={media} onMediaChange={setMedia} maxItems={6} required />
+            </FormSection>
+
+            {/* Flags */}
+            <FormSection title="Green Flags" subtitle="What did you like about them?">
               <View className="flex-row flex-wrap gap-2">
                 {GREEN_FLAGS.map((flag) => (
                   <Pressable
                     key={flag.key}
                     className={`px-3 py-2 rounded-full border ${
                       selectedGreenFlags.includes(flag.key)
-                        ? "bg-green-100 border-green-500"
-                        : "bg-gray-50 border-gray-300"
+                        ? "bg-green-400/20 border-green-500"
+                        : "bg-surface-800 border-border"
                     }`}
                     onPress={() => toggleGreenFlag(flag.key)}
                   >
-                    <Text
-                      className={`text-sm font-medium ${
-                        selectedGreenFlags.includes(flag.key)
-                          ? "text-green-700"
-                          : "text-gray-700"
-                      }`}
-                    >
+                    <Text className={`text-sm font-medium ${selectedGreenFlags.includes(flag.key) ? "text-green-400" : "text-text-secondary"}`}>
                       {flag.label}
                     </Text>
                   </Pressable>
                 ))}
               </View>
-            </View>
+            </FormSection>
 
-            {/* Red Flags */}
-            <View>
-              <Text className="text-lg font-semibold text-gray-900 mb-2">
-                Red Flags
-              </Text>
-              <Text className="text-gray-600 mb-4">Any warning signs?</Text>
-              
+            <FormSection title="Red Flags" subtitle="Any warning signs?">
               <View className="flex-row flex-wrap gap-2">
                 {RED_FLAGS.map((flag) => (
                   <Pressable
                     key={flag.key}
                     className={`px-3 py-2 rounded-full border ${
                       selectedRedFlags.includes(flag.key)
-                        ? "bg-red-100 border-red-500"
-                        : "bg-gray-50 border-gray-300"
+                        ? "bg-brand-red/20 border-brand-red"
+                        : "bg-surface-800 border-border"
                     }`}
                     onPress={() => toggleRedFlag(flag.key)}
                   >
-                    <Text
-                      className={`text-sm font-medium ${
-                        selectedRedFlags.includes(flag.key)
-                          ? "text-red-700"
-                          : "text-gray-700"
-                      }`}
-                    >
+                    <Text className={`text-sm font-medium ${selectedRedFlags.includes(flag.key) ? "text-brand-red" : "text-text-secondary"}`}>
                       {flag.label}
                     </Text>
                   </Pressable>
                 ))}
               </View>
-            </View>
+            </FormSection>
 
             {/* Review Text */}
-            <View>
-              <Text className="text-lg font-semibold text-gray-900 mb-2">
-                Your Review *
-              </Text>
-              <Text className="text-gray-600 mb-4">
-                Share your experience ({reviewText.length}/500)
-              </Text>
-              
+            <FormSection title="Your Review" subtitle={`Share your experience (${reviewText.length}/500)`} required>
               <TextInput
-                className="border border-gray-300 rounded-lg px-4 py-3 text-gray-900 h-32"
+                className="bg-surface-800 border border-border rounded-xl px-4 py-3 text-text-primary h-32"
                 placeholder="Write your review here..."
+                placeholderTextColor="#9CA3AF"
                 value={reviewText}
                 onChangeText={setReviewText}
                 multiline
                 textAlignVertical="top"
                 maxLength={500}
               />
-            </View>
+            </FormSection>
+
+            {/* Social Media */}
+            <FormSection title="Social Media (Optional)" subtitle="Optionally add handles that will show publicly on the review">
+              <SocialMediaInput socialMedia={socialMedia} onSocialMediaChange={setSocialMedia} />
+            </FormSection>
 
             {/* Submit Button */}
             <Pressable
-              className={`bg-red-500 rounded-lg py-4 items-center ${
-                isLoading ? "opacity-50" : ""
-              }`}
+              className={`rounded-xl py-4 items-center ${hasRequired ? "bg-brand-red" : "bg-surface-700"} ${isLoading ? "opacity-50" : ""}`}
               onPress={handleSubmit}
-              disabled={isLoading}
+              disabled={isLoading || !hasRequired}
             >
-              <Text className="text-white font-semibold text-lg">
+              <Text className={`font-semibold text-lg ${hasRequired ? "text-white" : "text-text-secondary"}`}>
                 {isLoading ? "Submitting..." : "Submit Review"}
               </Text>
             </Pressable>
 
-            <Text className="text-gray-500 text-sm text-center">
+            <Text className="text-text-muted text-sm text-center mt-3">
               Your review will be completely anonymous and screened before publication
             </Text>
           </View>

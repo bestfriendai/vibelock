@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Review, FilterOptions, GreenFlag, RedFlag } from "../types";
+import { Review, FilterOptions, GreenFlag, RedFlag, MediaItem, SocialMediaHandles } from "../types";
 
 interface ReviewsState {
   reviews: Review[];
@@ -27,6 +27,8 @@ interface ReviewsActions {
     greenFlags: GreenFlag[];
     redFlags: RedFlag[];
     reviewText: string;
+    media: MediaItem[];
+    socialMedia?: SocialMediaHandles;
   }) => Promise<void>;
   likeReview: (id: string) => Promise<void>;
   dislikeReview: (id: string) => Promise<void>;
@@ -253,20 +255,34 @@ const useReviewsStore = create<ReviewsStore>()(
             throw new Error("Name and review text are required");
           }
 
+          // Require at least one image in media
+          const hasImage = Array.isArray(data.media) && data.media.some(m => m.type === "image");
+          if (!hasImage) {
+            throw new Error("Please add at least one photo to your review");
+          }
+
+          const firstImage = data.media.find(m => m.type === "image");
+
           // For now, auto-approve reviews (in production, integrate with moderation service)
           const newReview: Review = {
             id: `review_${Date.now()}`,
             reviewerAnonymousId: `anon_${Date.now()}`,
-            ...data,
-            profilePhoto: `https://picsum.photos/400/${Math.floor(Math.random() * 200) + 500}?random=${Date.now()}`, // Random profile photo
-            status: "approved", // Changed from "pending" for demo purposes
+            reviewedPersonName: data.reviewedPersonName,
+            reviewedPersonLocation: data.reviewedPersonLocation,
+            greenFlags: data.greenFlags,
+            redFlags: data.redFlags,
+            reviewText: data.reviewText,
+            media: data.media,
+            socialMedia: data.socialMedia,
+            profilePhoto: firstImage ? firstImage.uri : `https://picsum.photos/400/${Math.floor(Math.random() * 200) + 500}?random=${Date.now()}`,
+            status: "approved",
             likeCount: 0,
             createdAt: new Date(),
             updatedAt: new Date()
           };
 
           // Simulate API delay
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          await new Promise(resolve => setTimeout(resolve, 800));
           
           get().addReview(newReview);
           set({ isLoading: false });
