@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
 import {
   View,
-  Text,
-  Pressable
+  Text
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -14,6 +13,7 @@ import StaggeredGrid from "../components/StaggeredGrid";
 import ReportModal from "../components/ReportModal";
 import SegmentedTabs from "../components/SegmentedTabs";
 import LocationSelector from "../components/LocationSelector";
+import DistanceFilter from "../components/DistanceFilter";
 import { Review } from "../types";
 
 export default function BrowseScreen() {
@@ -83,22 +83,18 @@ export default function BrowseScreen() {
               fullName: `${user?.location.city || "Washington"}, ${user?.location.state || "DC"}`
             }}
             onLocationChange={(location) => {
-              // Update user location in auth store if needed
-              console.log("Location changed to:", location);
+              // Update user location in auth store
+              const { updateUserLocation } = useAuthStore.getState();
+              updateUserLocation({
+                city: location.city,
+                state: location.state
+              });
             }}
           />
-          <Pressable 
-            className="bg-surface-700 px-3 py-2 rounded-full"
-            onPress={() => {
-              const order = [10, 25, 50];
-              const curr = filters.radius || 50;
-              const idx = order.indexOf(curr);
-              const next = order[(idx + 1) % order.length];
-              setFilters({ radius: next });
-            }}
-          >
-            <Text className="text-text-primary text-sm font-medium">{filters.radius || 50}mi</Text>
-          </Pressable>
+          <DistanceFilter
+            currentDistance={filters.radius || 50}
+            onDistanceChange={(distance) => setFilters({ radius: distance === -1 ? undefined : distance })}
+          />
         </View>
 
         {/* Category Filter Tabs */}

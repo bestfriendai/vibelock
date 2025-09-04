@@ -92,7 +92,7 @@ export type RedFlag =
 
 export interface FilterOptions {
   category: "all" | "men" | "women" | "lgbtq+";
-  radius: number; // in miles
+  radius?: number; // in miles, undefined means show all
   sortBy: "recent" | "most_reviewed" | "highest_rated";
 }
 
@@ -196,5 +196,39 @@ export interface ChatState {
   onlineUsers: string[];
   connectionStatus: ConnectionStatus;
   isLoading: boolean;
+  error: string | null;
+}
+
+// Comment-related types
+export interface Comment {
+  id: string;
+  reviewId: string;
+  authorId: string;
+  authorName: string; // Anonymous display name
+  content: string;
+  likeCount: number;
+  dislikeCount: number;
+  isLiked?: boolean;
+  isDisliked?: boolean;
+  parentCommentId?: string; // For replies
+  replies?: Comment[];
+  createdAt: Date;
+  updatedAt: Date;
+  isDeleted?: boolean;
+  isReported?: boolean;
+}
+
+export interface CommentThread {
+  parentComment: Comment;
+  replies: Comment[];
+  totalReplies: number;
+  hasMoreReplies: boolean;
+}
+
+export interface CommentState {
+  comments: Record<string, Comment[]>; // reviewId -> comments
+  commentThreads: Record<string, CommentThread>; // commentId -> thread
+  isLoading: boolean;
+  isPosting: boolean;
   error: string | null;
 }

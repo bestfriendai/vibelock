@@ -18,6 +18,7 @@ interface AuthActions {
   register: (email: string, password: string, location: { city: string; state: string }) => Promise<void>;
   logout: () => Promise<void>;
   clearError: () => void;
+  updateUserLocation: (location: { city: string; state: string; coordinates?: { latitude: number; longitude: number } }) => void;
 }
 
 type AuthStore = AuthState & AuthActions;
@@ -141,6 +142,19 @@ const useAuthStore = create<AuthStore>()(
             isLoading: false 
           });
         }
+      },
+
+      updateUserLocation: (location) => {
+        set((state) => ({
+          ...state,
+          user: state.user ? {
+            ...state.user,
+            location: {
+              ...location,
+              coordinates: location.coordinates
+            }
+          } : null
+        }));
       }
     }),
     {

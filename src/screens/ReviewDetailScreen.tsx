@@ -16,7 +16,10 @@ import ImageCarousel from "../components/ImageCarousel";
 import LikeDislikeButtons from "../components/LikeDislikeButtons";
 import ExpandableText from "../components/ExpandableText";
 import MediaViewer from "../components/MediaViewer";
+import CommentSection from "../components/CommentSection";
+import CommentInput from "../components/CommentInput";
 import useReviewsStore from "../state/reviewsStore";
+import { Comment } from "../types";
 
 type ReviewDetailRouteProp = RouteProp<RootStackParamList, "ReviewDetail">;
 
@@ -33,6 +36,12 @@ export default function ReviewDetailScreen() {
   const [dislikeCount, setDislikeCount] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Comment state
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [isLoadingComments, setIsLoadingComments] = useState(false);
+  const [isPostingComment, setIsPostingComment] = useState(false);
+  const [replyToComment, setReplyToComment] = useState<Comment | null>(null);
 
   // Animation values
   const scrollY = useSharedValue(0);
@@ -62,14 +71,85 @@ export default function ReviewDetailScreen() {
 
   const { likeReview, dislikeReview } = useReviewsStore();
 
-  // Initialize loading state
+  // Initialize loading state and mock comments
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
       contentScale.value = withSpring(1, { damping: 15, stiffness: 150 });
+      
+      // Load mock comments
+      loadMockComments();
     }, 300);
     return () => clearTimeout(timer);
   }, []);
+
+  const loadMockComments = () => {
+    setIsLoadingComments(true);
+    
+    // Mock comment data
+    const mockComments: Comment[] = [
+      {
+        id: "comment_1",
+        reviewId: review.id,
+        authorId: "user_1",
+        authorName: "Anonymous User",
+        content: "This is really helpful, thanks for sharing your experience!",
+        likeCount: 5,
+        dislikeCount: 0,
+        isLiked: false,
+        isDisliked: false,
+        createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
+        updatedAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
+        replies: [
+          {
+            id: "reply_1",
+            reviewId: review.id,
+            authorId: "user_2",
+            authorName: "Another User",
+            content: "I agree! Very detailed review.",
+            likeCount: 2,
+            dislikeCount: 0,
+            isLiked: false,
+            isDisliked: false,
+            parentCommentId: "comment_1",
+            createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000), // 1 hour ago
+            updatedAt: new Date(Date.now() - 1 * 60 * 60 * 1000),
+          }
+        ]
+      },
+      {
+        id: "comment_2",
+        reviewId: review.id,
+        authorId: "user_3",
+        authorName: "Reviewer123",
+        content: "I had a similar experience with this person. The red flags mentioned here are spot on.",
+        likeCount: 8,
+        dislikeCount: 1,
+        isLiked: true,
+        isDisliked: false,
+        createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000), // 4 hours ago
+        updatedAt: new Date(Date.now() - 4 * 60 * 60 * 1000),
+      },
+      {
+        id: "comment_3",
+        reviewId: review.id,
+        authorId: "user_4",
+        authorName: "LocalDater",
+        content: "Thanks for the heads up! This kind of transparency is exactly what the dating scene needs.",
+        likeCount: 12,
+        dislikeCount: 0,
+        isLiked: false,
+        isDisliked: false,
+        createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000), // 6 hours ago
+        updatedAt: new Date(Date.now() - 6 * 60 * 60 * 1000),
+      }
+    ];
+
+    setTimeout(() => {
+      setComments(mockComments);
+      setIsLoadingComments(false);
+    }, 500);
+  };
 
   // Scroll handler for header animations
   const scrollHandler = useAnimatedScrollHandler({
@@ -121,7 +201,143 @@ export default function ReviewDetailScreen() {
     setRefreshing(true);
     // Simulate refresh delay
     await new Promise(resolve => setTimeout(resolve, 1000));
+    loadMockComments();
     setRefreshing(false);
+  };
+
+  const handlePostComment = async (content: string) => {
+    setIsPostingComment(true);
+    
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      const newComment: Comment = {
+        id: `comment_${Date.now()}`,
+        reviewId: review.id,
+        authorId: "current_user",
+        authorName: "You",
+        content,
+        likeCount: 0,
+        dislikeCount: 0,
+        isLiked: false,
+        isDisliked: false,
+        parentCommentId: replyToComment?.id,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      if (replyToComment) {
+        // Add as reply
+        setComments(prevComments => 
+          prevComments.map(comment => 
+            comment.id === replyToComment.id
+              ? {
+                  ...comment,
+                  replies: [...(comment.replies || []), newComment]
+                }
+              : comment
+          )
+        );
+      } else {
+        // Add as new comment
+        setComments(prevComments => [newComment, ...prevComments]);
+      }
+    } catch (error) {
+      // Handle error
+      console.error("Error posting comment:", error);
+    } finally {
+      setIsPostingComment(false);
+    }
+  };
+
+  const handleLikeComment = (commentId: string) => {
+    setComments(prevComments => 
+      prevComments.map(comment => {
+        if (comment.id === commentId) {
+          const wasLiked = comment.isLiked;
+          const wasDisliked = comment.isDisliked;
+          return {
+            ...comment,
+            isLiked: !wasLiked,
+            isDisliked: false,
+            likeCount: wasLiked ? comment.likeCount - 1 : comment.likeCount + 1,
+            dislikeCount: wasDisliked ? comment.dislikeCount - 1 : comment.dislikeCount
+          };
+        }
+        
+        // Handle replies
+        if (comment.replies) {
+          return {
+            ...comment,
+            replies: comment.replies.map(reply => 
+              reply.id === commentId
+                ? {
+                    ...reply,
+                    isLiked: !reply.isLiked,
+                    isDisliked: false,
+                    likeCount: reply.isLiked ? reply.likeCount - 1 : reply.likeCount + 1,
+                    dislikeCount: reply.isDisliked ? reply.dislikeCount - 1 : reply.dislikeCount
+                  }
+                : reply
+            )
+          };
+        }
+        
+        return comment;
+      })
+    );
+  };
+
+  const handleDislikeComment = (commentId: string) => {
+    setComments(prevComments => 
+      prevComments.map(comment => {
+        if (comment.id === commentId) {
+          const wasLiked = comment.isLiked;
+          const wasDisliked = comment.isDisliked;
+          return {
+            ...comment,
+            isLiked: false,
+            isDisliked: !wasDisliked,
+            likeCount: wasLiked ? comment.likeCount - 1 : comment.likeCount,
+            dislikeCount: wasDisliked ? comment.dislikeCount - 1 : comment.dislikeCount + 1
+          };
+        }
+        
+        // Handle replies
+        if (comment.replies) {
+          return {
+            ...comment,
+            replies: comment.replies.map(reply => 
+              reply.id === commentId
+                ? {
+                    ...reply,
+                    isLiked: false,
+                    isDisliked: !reply.isDisliked,
+                    likeCount: reply.isLiked ? reply.likeCount - 1 : reply.likeCount,
+                    dislikeCount: reply.isDisliked ? reply.dislikeCount - 1 : reply.dislikeCount + 1
+                  }
+                : reply
+            )
+          };
+        }
+        
+        return comment;
+      })
+    );
+  };
+
+  const handleReplyToComment = (comment: Comment) => {
+    setReplyToComment(comment);
+  };
+
+  const handleCancelReply = () => {
+    setReplyToComment(null);
+  };
+
+  const handleReportComment = (commentId: string) => {
+    // Handle comment reporting
+    console.log("Report comment:", commentId);
   };
 
   const formatDate = (date: Date) => {
@@ -344,9 +560,29 @@ export default function ReviewDetailScreen() {
                 </View>
               </View>
             </View>
+
+            {/* Comments Section */}
+            <View className="mx-4 mb-8">
+              <CommentSection
+                comments={comments}
+                isLoading={isLoadingComments}
+                onLikeComment={handleLikeComment}
+                onDislikeComment={handleDislikeComment}
+                onReplyToComment={handleReplyToComment}
+                onReportComment={handleReportComment}
+              />
+            </View>
           </>
         )}
       </Animated.ScrollView>
+
+      {/* Comment Input */}
+      <CommentInput
+        onSubmit={handlePostComment}
+        isLoading={isPostingComment}
+        replyToComment={replyToComment?.authorName}
+        onCancelReply={handleCancelReply}
+      />
 
       {/* Media Viewer Modal */}
       {reviewWithMedia.media && (
