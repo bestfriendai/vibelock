@@ -32,13 +32,11 @@ function StaggeredGrid({
       // Calculate height based on text length and other factors
       const baseHeight = 280;
       const textLength = review.reviewText.length;
-      const flagsCount = review.greenFlags.length + review.redFlags.length;
       
       // Add variation based on content
       let height = baseHeight;
       if (textLength > 80) height += 40;
       if (textLength > 120) height += 20;
-      if (flagsCount > 2) height += 20;
       
       // Add some randomness for natural staggered look
       const randomVariation = (index % 3) * 20 - 20; // -20, 0, or 20

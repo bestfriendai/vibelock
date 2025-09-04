@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import useReviewsStore from "../state/reviewsStore";
-import { GreenFlag, RedFlag, MediaItem, SocialMediaHandles } from "../types";
+import { MediaItem, SocialMediaHandles, Sentiment } from "../types";
 import FormSection from "../components/FormSection";
 import MediaUploadGrid from "../components/MediaUploadGrid";
 import SocialMediaInput from "../components/SocialMediaInput";
@@ -18,27 +18,9 @@ import LocationSelector from "../components/LocationSelector";
 import useAuthStore from "../state/authStore";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const GREEN_FLAGS: { key: GreenFlag; label: string }[] = [
-  { key: "good_communicator", label: "Good Communicator" },
-  { key: "respectful", label: "Respectful" },
-  { key: "fun", label: "Fun" },
-  { key: "reliable", label: "Reliable" },
-  { key: "honest", label: "Honest" },
-  { key: "kind", label: "Kind" },
-  { key: "ambitious", label: "Ambitious" },
-  { key: "good_listener", label: "Good Listener" },
-];
 
-const RED_FLAGS: { key: RedFlag; label: string }[] = [
-  { key: "poor_communication", label: "Poor Communication" },
-  { key: "disrespectful", label: "Disrespectful" },
-  { key: "unreliable", label: "Unreliable" },
-  { key: "fake", label: "Fake" },
-  { key: "rude", label: "Rude" },
-  { key: "controlling", label: "Controlling" },
-  { key: "dishonest", label: "Dishonest" },
-  { key: "inconsistent", label: "Inconsistent" },
-];
+
+
 
 const DRAFT_KEY = "create-review-draft";
 
@@ -57,8 +39,7 @@ export default function CreateReviewScreen() {
     fullName: `${user?.location.city || "Washington"}, ${user?.location.state || "DC"}`
   });
   const [reviewText, setReviewText] = useState("");
-  const [selectedGreenFlags, setSelectedGreenFlags] = useState<GreenFlag[]>([]);
-  const [selectedRedFlags, setSelectedRedFlags] = useState<RedFlag[]>([]);
+  const [sentiment, setSentiment] = useState<Sentiment | null>(null);
   const [media, setMedia] = useState<MediaItem[]>([]);
   const [socialMedia, setSocialMedia] = useState<SocialMediaHandles>({});
   const [error, setError] = useState<string | null>(null);
@@ -85,8 +66,7 @@ export default function CreateReviewScreen() {
             });
           }
           setReviewText(draft.reviewText || "");
-          setSelectedGreenFlags(draft.selectedGreenFlags || []);
-          setSelectedRedFlags(draft.selectedRedFlags || []);
+          setSentiment(draft.sentiment ?? null);
           setMedia(draft.media || []);
           setSocialMedia(draft.socialMedia || {});
         }
@@ -99,35 +79,22 @@ export default function CreateReviewScreen() {
     const save = setTimeout(() => {
       AsyncStorage.setItem(
         DRAFT_KEY,
-        JSON.stringify({
-          firstName,
-          selectedLocation,
-          reviewText,
-          selectedGreenFlags,
-          selectedRedFlags,
-          media,
-          socialMedia,
-        })
+          JSON.stringify({
+            firstName,
+            selectedLocation,
+            reviewText,
+            sentiment,
+            media,
+            socialMedia,
+          })
       ).catch(() => {});
     }, 400);
     return () => clearTimeout(save);
-  }, [firstName, selectedLocation, reviewText, selectedGreenFlags, selectedRedFlags, media, socialMedia]);
+  }, [firstName, selectedLocation, reviewText, sentiment, media, socialMedia]);
 
-  const toggleGreenFlag = (flag: GreenFlag) => {
-    setSelectedGreenFlags(prev =>
-      prev.includes(flag)
-        ? prev.filter(f => f !== flag)
-        : [...prev, flag]
-    );
-  };
 
-  const toggleRedFlag = (flag: RedFlag) => {
-    setSelectedRedFlags(prev =>
-      prev.includes(flag)
-        ? prev.filter(f => f !== flag)
-        : [...prev, flag]
-    );
-  };
+
+
 
   const imagesCount = useMemo(() => media.filter(m => m.type === "image").length, [media]);
   const hasRequired = Boolean(firstName.trim() && selectedLocation.city.trim() && selectedLocation.state.trim() && reviewText.trim() && imagesCount >= 1);
@@ -147,8 +114,7 @@ export default function CreateReviewScreen() {
       await createReview({
         reviewedPersonName: firstName.trim(),
         reviewedPersonLocation: { city: selectedLocation.city.trim(), state: selectedLocation.state.trim().toUpperCase() },
-        greenFlags: selectedGreenFlags,
-        redFlags: selectedRedFlags,
+        sentiment: sentiment || undefined,
         reviewText: reviewText.trim(),
         media,
         socialMedia,
@@ -162,8 +128,7 @@ export default function CreateReviewScreen() {
         fullName: `${user?.location.city || "Washington"}, ${user?.location.state || "DC"}`
       });
       setReviewText("");
-      setSelectedGreenFlags([]);
-      setSelectedRedFlags([]);
+      setSentiment(null);
       setMedia([]);
       setSocialMedia({});
       await AsyncStorage.removeItem(DRAFT_KEY);
@@ -229,44 +194,21 @@ export default function CreateReviewScreen() {
               <MediaUploadGrid media={media} onMediaChange={setMedia} maxItems={6} required />
             </FormSection>
 
-            {/* Flags */}
-            <FormSection title="Green Flags" subtitle="">
-              <View className="flex-row flex-wrap gap-2">
-                {GREEN_FLAGS.map((flag) => (
-                  <Pressable
-                    key={flag.key}
-                    className={`px-3 py-2 rounded-full border ${
-                      selectedGreenFlags.includes(flag.key)
-                        ? "bg-green-400/20 border-green-500"
-                        : "bg-surface-800 border-border"
-                    }`}
-                    onPress={() => toggleGreenFlag(flag.key)}
-                  >
-                    <Text className={`text-sm font-medium ${selectedGreenFlags.includes(flag.key) ? "text-green-400" : "text-text-secondary"}`}>
-                      {flag.label}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
-            </FormSection>
-
-            <FormSection title="Red Flags" subtitle="">
-              <View className="flex-row flex-wrap gap-2">
-                {RED_FLAGS.map((flag) => (
-                  <Pressable
-                    key={flag.key}
-                    className={`px-3 py-2 rounded-full border ${
-                      selectedRedFlags.includes(flag.key)
-                        ? "bg-brand-red/20 border-brand-red"
-                        : "bg-surface-800 border-border"
-                    }`}
-                    onPress={() => toggleRedFlag(flag.key)}
-                  >
-                    <Text className={`text-sm font-medium ${selectedRedFlags.includes(flag.key) ? "text-brand-red" : "text-text-secondary"}`}>
-                      {flag.label}
-                    </Text>
-                  </Pressable>
-                ))}
+            {/* Sentiment */}
+            <FormSection title="Sentiment (Optional)" subtitle="Choose one, or skip">
+              <View className="flex-row space-x-3">
+                <Pressable
+                  className={`flex-1 flex-row items-center justify-center rounded-xl border px-3 py-3 ${sentiment === "green" ? "bg-green-500/15 border-green-500" : "bg-surface-800 border-border"}`}
+                  onPress={() => setSentiment(sentiment === "green" ? null : "green")}
+                >
+                  <Text className="text-text-primary font-medium">Green Flag</Text>
+                </Pressable>
+                <Pressable
+                  className={`flex-1 flex-row items-center justify-center rounded-xl border px-3 py-3 ${sentiment === "red" ? "bg-brand-red/20 border-brand-red" : "bg-surface-800 border-border"}`}
+                  onPress={() => setSentiment(sentiment === "red" ? null : "red")}
+                >
+                  <Text className="text-text-primary font-medium">Red Flag</Text>
+                </Pressable>
               </View>
             </FormSection>
 

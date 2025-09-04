@@ -34,6 +34,8 @@ export interface SocialMediaHandles {
   twitter?: string;
 }
 
+export type Sentiment = "green" | "red";
+
 export interface Review {
   id: string;
   reviewerAnonymousId: string;
@@ -45,6 +47,7 @@ export interface Review {
   profilePhoto: string; // URL to profile photo
   greenFlags: GreenFlag[];
   redFlags: RedFlag[];
+  sentiment?: Sentiment;
   reviewText: string;
   media?: MediaItem[]; // Optional media attachments
   socialMedia?: SocialMediaHandles; // Optional social media handles

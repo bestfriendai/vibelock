@@ -147,38 +147,17 @@ export default function ProfileCard({
 
       {/* Content */}
       <View className="absolute bottom-0 left-0 right-0 p-4">
+        {/* Name */}
+        <Text className="text-white font-bold text-xl">
+          {review.reviewedPersonName}
+        </Text>
         {/* Location */}
-        <Text className="text-white font-bold text-lg mb-1">
-          {review.reviewedPersonLocation.city}, {review.reviewedPersonLocation.state}
-        </Text>
-
-        {/* Review Text */}
-        <Text 
-          className="text-white/90 text-sm leading-5" 
-          numberOfLines={3}
-        >
-          "{review.reviewText}"
-        </Text>
-
-        {/* Flags (if any) */}
-        {(review.greenFlags.length > 0 || review.redFlags.length > 0) && (
-          <View className="flex-row flex-wrap gap-1 mt-2">
-            {review.greenFlags.slice(0, 2).map((flag) => (
-              <View key={flag} className="bg-green-400/20 px-2 py-1 rounded-full">
-                <Text className="text-green-400 text-xs font-medium">
-                  {flag.replace("_", " ")}
-                </Text>
-              </View>
-            ))}
-            {review.redFlags.slice(0, 1).map((flag) => (
-              <View key={flag} className="bg-brand-red/20 px-2 py-1 rounded-full">
-                <Text className="text-brand-red text-xs font-medium">
-                  {flag.replace("_", " ")}
-                </Text>
-              </View>
-            ))}
-          </View>
-        )}
+        <View className="flex-row items-center mt-1">
+          <Ionicons name="location" size={12} color="#FFFFFF" />
+          <Text className="text-white/80 text-xs ml-1">
+            {review.reviewedPersonLocation.city}, {review.reviewedPersonLocation.state}
+          </Text>
+        </View>
 
         {/* Like Count */}
         {review.likeCount > 0 && (
@@ -189,7 +168,15 @@ export default function ProfileCard({
             </Text>
           </View>
         )}
+      </View>
+
+      {/* Sentiment Overlay */}
+      {review.sentiment && (
+        <View className="absolute bottom-3 right-3 bg-black/50 rounded-full px-2 py-1 flex-row items-center">
+          <Ionicons name="flag" size={12} color={review.sentiment === "green" ? "#22C55E" : "#FFFFFF"} />
+          <Text className="text-white text-xs ml-1">{review.sentiment === "green" ? "Green" : "Red"}</Text>
         </View>
+      )}
       </Pressable>
     </Animated.View>
   );

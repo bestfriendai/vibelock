@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Review, FilterOptions, GreenFlag, RedFlag, MediaItem, SocialMediaHandles } from "../types";
+import { Review, FilterOptions, GreenFlag, RedFlag, MediaItem, SocialMediaHandles, Sentiment } from "../types";
 
 interface ReviewsState {
   reviews: Review[];
@@ -24,8 +24,9 @@ interface ReviewsActions {
   createReview: (data: {
     reviewedPersonName: string;
     reviewedPersonLocation: { city: string; state: string };
-    greenFlags: GreenFlag[];
-    redFlags: RedFlag[];
+    greenFlags?: GreenFlag[];
+    redFlags?: RedFlag[];
+    sentiment?: Sentiment;
     reviewText: string;
     media: MediaItem[];
     socialMedia?: SocialMediaHandles;
@@ -42,12 +43,13 @@ const mockReviews: Review[] = [
   {
     id: "1",
     reviewerAnonymousId: "anon_123",
-    reviewedPersonName: "Alexandria",
-    reviewedPersonLocation: { city: "Alexandria", state: "VA" },
-    profilePhoto: "https://picsum.photos/400/600?random=1",
-    greenFlags: ["good_communicator", "respectful", "fun"],
+    reviewedPersonName: "Ava",
+    reviewedPersonLocation: { city: "Washington", state: "DC" },
+    profilePhoto: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=800&q=60",
+    greenFlags: ["good_communicator", "respectful"],
     redFlags: [],
-    reviewText: "I just recently followed this girl and she looks nice...",
+    sentiment: "green",
+    reviewText: "Warm, easy to talk to, and very genuine.",
     status: "approved",
     likeCount: 12,
     createdAt: new Date("2024-01-15"),
@@ -56,12 +58,13 @@ const mockReviews: Review[] = [
   {
     id: "2",
     reviewerAnonymousId: "anon_456",
-    reviewedPersonName: "Alexandria",
+    reviewedPersonName: "Jasmine",
     reviewedPersonLocation: { city: "Alexandria", state: "VA" },
-    profilePhoto: "https://picsum.photos/400/500?random=2",
+    profilePhoto: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=800&q=60",
     greenFlags: ["reliable", "honest"],
     redFlags: [],
-    reviewText: "What yall know gunna?...",
+    sentiment: "green",
+    reviewText: "Consistent and honest. Great energy overall.",
     status: "approved",
     likeCount: 8,
     createdAt: new Date("2024-01-14"),
@@ -70,12 +73,13 @@ const mockReviews: Review[] = [
   {
     id: "3",
     reviewerAnonymousId: "anon_789",
-    reviewedPersonName: "Alexandria",
-    reviewedPersonLocation: { city: "Alexandria", state: "VA" },
-    profilePhoto: "https://picsum.photos/400/650?random=3",
+    reviewedPersonName: "Taylor",
+    reviewedPersonLocation: { city: "Arlington", state: "VA" },
+    profilePhoto: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=800&q=60",
     greenFlags: ["fun", "kind", "good_listener"],
     redFlags: [],
-    reviewText: "Her she be get it in trying see if that true any f...",
+    sentiment: "green",
+    reviewText: "Thoughtful and fun to be around.",
     status: "approved",
     likeCount: 15,
     createdAt: new Date("2024-01-13"),
@@ -84,12 +88,13 @@ const mockReviews: Review[] = [
   {
     id: "4",
     reviewerAnonymousId: "anon_101",
-    reviewedPersonName: "Alexandria",
-    reviewedPersonLocation: { city: "Alexandria", state: "VA" },
-    profilePhoto: "https://picsum.photos/400/550?random=4",
-    greenFlags: ["ambitious", "honest"],
-    redFlags: [],
-    reviewText: "She talk a good game try see if what she chatting...",
+    reviewedPersonName: "Morgan",
+    reviewedPersonLocation: { city: "Bethesda", state: "MD" },
+    profilePhoto: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=800&q=60",
+    greenFlags: [],
+    redFlags: ["inconsistent"],
+    sentiment: "red",
+    reviewText: "Plans fall through often. Mixed signals.",
     status: "approved",
     likeCount: 23,
     createdAt: new Date("2024-01-12"),
@@ -98,12 +103,13 @@ const mockReviews: Review[] = [
   {
     id: "5",
     reviewerAnonymousId: "anon_202",
-    reviewedPersonName: "Jasmine",
-    reviewedPersonLocation: { city: "Washington", state: "DC" },
-    profilePhoto: "https://picsum.photos/400/700?random=5",
+    reviewedPersonName: "Jordan",
+    reviewedPersonLocation: { city: "Silver Spring", state: "MD" },
+    profilePhoto: "https://images.unsplash.com/photo-1520813792240-56fc4a3765a7?auto=format&fit=crop&w=800&q=60",
     greenFlags: ["respectful", "kind"],
     redFlags: [],
-    reviewText: "Really sweet person, great conversation and very genuine vibes",
+    sentiment: "green",
+    reviewText: "Kind and respectful, really listens.",
     status: "approved",
     likeCount: 18,
     createdAt: new Date("2024-01-11"),
@@ -112,12 +118,13 @@ const mockReviews: Review[] = [
   {
     id: "6",
     reviewerAnonymousId: "anon_303",
-    reviewedPersonName: "Taylor",
+    reviewedPersonName: "Mia",
     reviewedPersonLocation: { city: "Arlington", state: "VA" },
-    profilePhoto: "https://picsum.photos/400/480?random=6",
-    greenFlags: ["fun", "good_communicator"],
-    redFlags: [],
-    reviewText: "Had an amazing time, definitely someone worth getting to know better",
+    profilePhoto: "https://images.unsplash.com/photo-1527980965255-d3b416303d12?auto=format&fit=crop&w=800&q=60",
+    greenFlags: [],
+    redFlags: ["poor_communication"],
+    sentiment: "red",
+    reviewText: "Hard to reach and rarely follows up.",
     status: "approved",
     likeCount: 31,
     createdAt: new Date("2024-01-10"),
@@ -126,12 +133,13 @@ const mockReviews: Review[] = [
   {
     id: "7",
     reviewerAnonymousId: "anon_404",
-    reviewedPersonName: "Morgan",
-    reviewedPersonLocation: { city: "Bethesda", state: "MD" },
-    profilePhoto: "https://picsum.photos/400/620?random=7",
-    greenFlags: ["reliable", "ambitious"],
+    reviewedPersonName: "Sophia",
+    reviewedPersonLocation: { city: "Washington", state: "DC" },
+    profilePhoto: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=800&q=60",
+    greenFlags: ["ambitious"],
     redFlags: [],
-    reviewText: "Super reliable and has clear goals in life. Great energy!",
+    sentiment: "green",
+    reviewText: "Driven and focused, very inspiring.",
     status: "approved",
     likeCount: 27,
     createdAt: new Date("2024-01-09"),
@@ -140,12 +148,13 @@ const mockReviews: Review[] = [
   {
     id: "8",
     reviewerAnonymousId: "anon_505",
-    reviewedPersonName: "Jordan",
-    reviewedPersonLocation: { city: "Silver Spring", state: "MD" },
-    profilePhoto: "https://picsum.photos/400/580?random=8",
-    greenFlags: ["good_listener", "kind"],
+    reviewedPersonName: "Olivia",
+    reviewedPersonLocation: { city: "Alexandria", state: "VA" },
+    profilePhoto: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=800&q=60",
+    greenFlags: ["good_listener"],
     redFlags: [],
-    reviewText: "Really listens and cares about what you have to say. Rare quality!",
+    sentiment: "green",
+    reviewText: "Listens and engages thoughtfully.",
     status: "approved",
     likeCount: 19,
     createdAt: new Date("2024-01-08"),
@@ -269,8 +278,9 @@ const useReviewsStore = create<ReviewsStore>()(
             reviewerAnonymousId: `anon_${Date.now()}`,
             reviewedPersonName: data.reviewedPersonName,
             reviewedPersonLocation: data.reviewedPersonLocation,
-            greenFlags: data.greenFlags,
-            redFlags: data.redFlags,
+            greenFlags: data.greenFlags || [],
+            redFlags: data.redFlags || [],
+            sentiment: data.sentiment,
             reviewText: data.reviewText,
             media: data.media,
             socialMedia: data.socialMedia,

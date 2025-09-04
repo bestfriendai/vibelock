@@ -13,27 +13,7 @@ interface ReviewCardProps {
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-const FLAG_LABELS: Record<string, string> = {
-  // Green flags
-  good_communicator: "Good Communicator",
-  respectful: "Respectful",
-  fun: "Fun",
-  reliable: "Reliable",
-  honest: "Honest",
-  kind: "Kind",
-  ambitious: "Ambitious",
-  good_listener: "Good Listener",
-  
-  // Red flags
-  poor_communication: "Poor Communication",
-  disrespectful: "Disrespectful",
-  unreliable: "Unreliable",
-  fake: "Fake",
-  rude: "Rude",
-  controlling: "Controlling",
-  dishonest: "Dishonest",
-  inconsistent: "Inconsistent",
-};
+
 
 export default function ReviewCard({ review }: ReviewCardProps) {
   const navigation = useNavigation<NavigationProp>();
@@ -86,64 +66,18 @@ export default function ReviewCard({ review }: ReviewCardProps) {
         </View>
       </Pressable>
 
-      {/* Flags */}
-      {(review.greenFlags.length > 0 || review.redFlags.length > 0) && (
-        <View className="flex-row flex-wrap gap-2 mb-4">
-          {review.greenFlags.slice(0, 3).map((flag) => (
-            <View key={flag} className="bg-green-500/20 border border-green-500/30 px-3 py-1.5 rounded-full">
-              <Text className="text-green-400 text-xs font-medium">
-                {FLAG_LABELS[flag] || flag}
-              </Text>
-            </View>
-          ))}
-          {review.redFlags.slice(0, 3).map((flag) => (
-            <View key={flag} className="bg-brand-red/20 border border-brand-red/30 px-3 py-1.5 rounded-full">
-              <Text className="text-brand-red text-xs font-medium">
-                {FLAG_LABELS[flag] || flag}
-              </Text>
-            </View>
-          ))}
-          {(review.greenFlags.length + review.redFlags.length) > 3 && (
-            <View className="bg-surface-700 border border-surface-600 px-3 py-1.5 rounded-full">
-              <Text className="text-text-secondary text-xs font-medium">
-                +{(review.greenFlags.length + review.redFlags.length) - 3} more
-              </Text>
-            </View>
-          )}
-        </View>
-      )}
-
       {/* Review Text */}
       <Text className="text-text-primary mb-4 leading-6 text-base">
         {truncateText(review.reviewText)}
       </Text>
 
       {/* Footer */}
-      <View className="flex-row items-center justify-between pt-4 border-t border-surface-700">
-        <View className="flex-row items-center space-x-6">
-          <View className="flex-row items-center">
-            <Ionicons name="checkmark-circle" size={16} color="#22C55E" />
-            <Text className="text-text-secondary text-sm font-medium ml-1">
-              {review.greenFlags.length}
-            </Text>
-          </View>
-          <View className="flex-row items-center">
-            <Ionicons name="warning" size={16} color="#FFFFFF" />
-            <Text className="text-text-secondary text-sm font-medium ml-1">
-              {review.redFlags.length}
-            </Text>
-          </View>
-        </View>
-
+      <View className="flex-row items-center justify-end pt-4 border-t border-surface-700">
         <Pressable 
           onPress={handleLike}
           className="flex-row items-center bg-brand-red/10 px-3 py-2 rounded-full"
         >
-          <Ionicons 
-            name="heart" 
-            size={16} 
-            color="#FFFFFF" 
-          />
+          <Ionicons name="heart" size={16} color="#FFFFFF" />
           <Text className="text-brand-red text-sm ml-1 font-medium">
             {review.likeCount}
           </Text>

@@ -50,28 +50,6 @@ export default function EnhancedReviewCard({
         </View>
       </View>
 
-      {/* Flags */}
-      {(review.greenFlags.length > 0 || review.redFlags.length > 0) && (
-        <View className="flex-row flex-wrap gap-2 mb-4">
-          {review.greenFlags.map((flag) => (
-            <View key={flag} className="bg-green-400/20 px-3 py-1.5 rounded-full flex-row items-center">
-              <Ionicons name="checkmark-circle" size={12} color="#4ADE80" />
-              <Text className="text-green-400 text-sm font-medium ml-1">
-                {flag.replace("_", " ")}
-              </Text>
-            </View>
-          ))}
-          {review.redFlags.map((flag) => (
-            <View key={flag} className="bg-brand-red/20 px-3 py-1.5 rounded-full flex-row items-center">
-              <Ionicons name="warning" size={12} color="#FFFFFF" />
-              <Text className="text-brand-red text-sm font-medium ml-1">
-                {flag.replace("_", " ")}
-              </Text>
-            </View>
-          ))}
-        </View>
-      )}
-
       {/* Review Text */}
       <Text className="text-text-primary text-base leading-6 mb-4">
         {review.reviewText}
