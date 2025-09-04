@@ -35,6 +35,7 @@ export interface Review {
     city: string;
     state: string;
   };
+  profilePhoto: string; // URL to profile photo
   greenFlags: GreenFlag[];
   redFlags: RedFlag[];
   reviewText: string;

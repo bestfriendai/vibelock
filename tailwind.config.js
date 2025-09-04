@@ -8,10 +8,31 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        brand: { red: "#FF6B6B", redDark: "#E85757" },
-        surface: { 900: "#0B0B0F", 800: "#141418", 700: "#1D1D22", 600: "#26262C" },
-        text: { primary: "#F3F4F6", secondary: "#9CA3AF", muted: "#6B7280" },
+        brand: { 
+          red: "#FF6B6B", 
+          redDark: "#E85757",
+          coral: "#FF8A80",
+          warm: "#FFAB91"
+        },
+        surface: { 
+          900: "#0B0B0F", 
+          800: "#141418", 
+          700: "#1D1D22", 
+          600: "#26262C",
+          500: "#2F2F35"
+        },
+        text: { 
+          primary: "#F3F4F6", 
+          secondary: "#9CA3AF", 
+          muted: "#6B7280",
+          accent: "#FFB74D"
+        },
         border: { DEFAULT: "#2A2A2F" },
+        accent: {
+          orange: "#FF8A65",
+          peach: "#FFCC80",
+          pink: "#F8BBD9"
+        }
       },
       borderRadius: { xl: "16px", "2xl": "20px" },
       fontSize: { xs: "10px", sm: "12px", base: "14px", lg: "18px", xl: "20px", "2xl": "24px", "3xl": "32px" },

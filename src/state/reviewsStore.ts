@@ -34,16 +34,17 @@ interface ReviewsActions {
 
 type ReviewsStore = ReviewsState & ReviewsActions;
 
-// Mock data for development
+// Mock data for development with realistic profiles
 const mockReviews: Review[] = [
   {
     id: "1",
     reviewerAnonymousId: "anon_123",
-    reviewedPersonName: "Sarah",
+    reviewedPersonName: "Alexandria",
     reviewedPersonLocation: { city: "Alexandria", state: "VA" },
+    profilePhoto: "https://picsum.photos/400/600?random=1",
     greenFlags: ["good_communicator", "respectful", "fun"],
     redFlags: [],
-    reviewText: "Had a great time! Very respectful and easy to talk to. Would definitely recommend.",
+    reviewText: "I just recently followed this girl and she looks nice...",
     status: "approved",
     likeCount: 12,
     createdAt: new Date("2024-01-15"),
@@ -52,11 +53,12 @@ const mockReviews: Review[] = [
   {
     id: "2",
     reviewerAnonymousId: "anon_456",
-    reviewedPersonName: "Mike",
-    reviewedPersonLocation: { city: "Arlington", state: "VA" },
+    reviewedPersonName: "Alexandria",
+    reviewedPersonLocation: { city: "Alexandria", state: "VA" },
+    profilePhoto: "https://picsum.photos/400/500?random=2",
     greenFlags: ["reliable", "honest"],
-    redFlags: ["poor_communication"],
-    reviewText: "Nice guy but communication could be better. Often took a while to respond to messages.",
+    redFlags: [],
+    reviewText: "What yall know gunna?...",
     status: "approved",
     likeCount: 8,
     createdAt: new Date("2024-01-14"),
@@ -65,15 +67,86 @@ const mockReviews: Review[] = [
   {
     id: "3",
     reviewerAnonymousId: "anon_789",
-    reviewedPersonName: "Jessica",
-    reviewedPersonLocation: { city: "Washington", state: "DC" },
+    reviewedPersonName: "Alexandria",
+    reviewedPersonLocation: { city: "Alexandria", state: "VA" },
+    profilePhoto: "https://picsum.photos/400/650?random=3",
     greenFlags: ["fun", "kind", "good_listener"],
     redFlags: [],
-    reviewText: "Amazing person! Really fun to be around and genuinely cares about others.",
+    reviewText: "Her she be get it in trying see if that true any f...",
     status: "approved",
     likeCount: 15,
     createdAt: new Date("2024-01-13"),
     updatedAt: new Date("2024-01-13")
+  },
+  {
+    id: "4",
+    reviewerAnonymousId: "anon_101",
+    reviewedPersonName: "Alexandria",
+    reviewedPersonLocation: { city: "Alexandria", state: "VA" },
+    profilePhoto: "https://picsum.photos/400/550?random=4",
+    greenFlags: ["ambitious", "honest"],
+    redFlags: [],
+    reviewText: "She talk a good game try see if what she chatting...",
+    status: "approved",
+    likeCount: 23,
+    createdAt: new Date("2024-01-12"),
+    updatedAt: new Date("2024-01-12")
+  },
+  {
+    id: "5",
+    reviewerAnonymousId: "anon_202",
+    reviewedPersonName: "Jasmine",
+    reviewedPersonLocation: { city: "Washington", state: "DC" },
+    profilePhoto: "https://picsum.photos/400/700?random=5",
+    greenFlags: ["respectful", "kind"],
+    redFlags: [],
+    reviewText: "Really sweet person, great conversation and very genuine vibes",
+    status: "approved",
+    likeCount: 18,
+    createdAt: new Date("2024-01-11"),
+    updatedAt: new Date("2024-01-11")
+  },
+  {
+    id: "6",
+    reviewerAnonymousId: "anon_303",
+    reviewedPersonName: "Taylor",
+    reviewedPersonLocation: { city: "Arlington", state: "VA" },
+    profilePhoto: "https://picsum.photos/400/480?random=6",
+    greenFlags: ["fun", "good_communicator"],
+    redFlags: [],
+    reviewText: "Had an amazing time, definitely someone worth getting to know better",
+    status: "approved",
+    likeCount: 31,
+    createdAt: new Date("2024-01-10"),
+    updatedAt: new Date("2024-01-10")
+  },
+  {
+    id: "7",
+    reviewerAnonymousId: "anon_404",
+    reviewedPersonName: "Morgan",
+    reviewedPersonLocation: { city: "Bethesda", state: "MD" },
+    profilePhoto: "https://picsum.photos/400/620?random=7",
+    greenFlags: ["reliable", "ambitious"],
+    redFlags: [],
+    reviewText: "Super reliable and has clear goals in life. Great energy!",
+    status: "approved",
+    likeCount: 27,
+    createdAt: new Date("2024-01-09"),
+    updatedAt: new Date("2024-01-09")
+  },
+  {
+    id: "8",
+    reviewerAnonymousId: "anon_505",
+    reviewedPersonName: "Jordan",
+    reviewedPersonLocation: { city: "Silver Spring", state: "MD" },
+    profilePhoto: "https://picsum.photos/400/580?random=8",
+    greenFlags: ["good_listener", "kind"],
+    redFlags: [],
+    reviewText: "Really listens and cares about what you have to say. Rare quality!",
+    status: "approved",
+    likeCount: 19,
+    createdAt: new Date("2024-01-08"),
+    updatedAt: new Date("2024-01-08")
   }
 ];
 
@@ -184,6 +257,7 @@ const useReviewsStore = create<ReviewsStore>()(
             id: `review_${Date.now()}`,
             reviewerAnonymousId: `anon_${Date.now()}`,
             ...data,
+            profilePhoto: `https://picsum.photos/400/${Math.floor(Math.random() * 200) + 500}?random=${Date.now()}`, // Random profile photo
             status: "approved", // Changed from "pending" for demo purposes
             likeCount: 0,
             createdAt: new Date(),
