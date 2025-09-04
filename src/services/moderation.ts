@@ -9,12 +9,24 @@ export interface ModerationResult {
   reason?: string;
 }
 
+// Toggle moderation on/off. Set to false to disable automated moderation checks.
+export const moderationEnabled = false;
+
 /**
  * Moderate review content using OpenAI
  * @param reviewText The review text to moderate
  * @returns Moderation result
  */
 export async function moderateReviewContent(reviewText: string): Promise<ModerationResult> {
+  if (!moderationEnabled) {
+    return {
+      isAppropriate: true,
+      flaggedCategories: [],
+      confidence: 1,
+      reason: "Moderation disabled"
+    };
+  }
+
   try {
     const prompt = `
 You are a content moderator for a dating review platform. Please analyze the following review text and determine if it's appropriate for publication.

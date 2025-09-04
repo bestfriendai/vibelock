@@ -16,7 +16,7 @@ interface AuthActions {
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, location: { city: string; state: string }) => Promise<void>;
+  register: (email: string, password: string, location: { city: string; state: string }, opts?: { genderPreference?: "all" | "men" | "women" | "lgbtq+"; gender?: string }) => Promise<void>;
   logout: () => Promise<void>;
   clearError: () => void;
   updateUserLocation: (location: { city: string; state: string; coordinates?: { latitude: number; longitude: number } }) => void;
@@ -99,7 +99,7 @@ const useAuthStore = create<AuthStore>()(
         }
       },
 
-      register: async (email, password, location) => {
+  register: async (email, password, location, opts) => {
         try {
           set((state) => ({ ...state, isLoading: true, error: null }));
           
@@ -112,7 +112,8 @@ const useAuthStore = create<AuthStore>()(
             email: firebaseUser.email || email,
             anonymousId: `anon_${Date.now()}`,
             location,
-            genderPreference: "all"
+            genderPreference: opts?.genderPreference || "all",
+            gender: opts?.gender
           };
           
           await firebaseUsers.createUserProfile(firebaseUser.uid, userProfile);

@@ -36,6 +36,11 @@ export default function BrowseScreen() {
     loadReviews(true);
   }, []);
 
+  // Reload when filters change (category, radius)
+  useEffect(() => {
+    loadReviews(true);
+  }, [filters.category, filters.radius]);
+
   const onRefresh = async () => {
     setRefreshing(true);
     await loadReviews(true);

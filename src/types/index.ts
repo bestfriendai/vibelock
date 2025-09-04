@@ -12,7 +12,10 @@ export interface User {
       longitude: number;
     };
   };
+  // The user's gender/category preference for filtering content
   genderPreference: "all" | "men" | "women" | "lgbtq+";
+  // The user's own gender/category for tagging their profile (optional)
+  gender?: "man" | "woman" | "nonbinary" | "lgbtq+" | string;
   createdAt: Date;
   isBlocked?: boolean;
 }
@@ -44,6 +47,8 @@ export interface Review {
     city: string;
     state: string;
   };
+  // Category tag for the reviewed person (used for filtering)
+  category?: "men" | "women" | "lgbtq+" | "all";
   profilePhoto: string; // URL to profile photo
   greenFlags: GreenFlag[];
   redFlags: RedFlag[];
@@ -144,6 +149,8 @@ export interface ChatRoom {
   name: string;
   description: string;
   type: ChatRoomType;
+  // Optional category for gender-specific rooms
+  category?: "all" | "men" | "women" | "lgbtq+";
   memberCount: number;
   onlineCount: number;
   lastMessage?: ChatMessage;
@@ -198,6 +205,8 @@ export interface ChatState {
   typingUsers: TypingUser[];
   onlineUsers: string[];
   connectionStatus: ConnectionStatus;
+  // category filter for chat rooms
+  roomCategoryFilter?: "all" | "men" | "women" | "lgbtq+";
   isLoading: boolean;
   error: string | null;
 }

@@ -20,6 +20,7 @@ interface ChatActions {
   
   // Chat rooms
   loadChatRooms: () => Promise<void>;
+  setRoomCategoryFilter: (category: "all" | "men" | "women" | "lgbtq+") => void;
   joinChatRoom: (roomId: string) => Promise<void>;
   leaveChatRoom: (roomId: string) => void;
   setCurrentChatRoom: (room: ChatRoom | null) => void;
@@ -54,13 +55,14 @@ interface ChatActions {
 
 type ChatStore = ChatState & ChatActions;
 
-// Mock data for development
+  // Mock data for development
 const mockChatRooms: ChatRoom[] = [
   {
     id: "room_local_dc",
     name: "Washington DC Local",
     description: "Connect with singles in the Washington DC area",
-    type: "local",
+  type: "local",
+  category: "all",
     memberCount: 127,
     onlineCount: 23,
     lastMessage: {
@@ -83,7 +85,8 @@ const mockChatRooms: ChatRoom[] = [
     id: "room_topic_dating_tips",
     name: "Dating Tips & Advice",
     description: "Share and get advice on dating, relationships, and meeting people",
-    type: "topic",
+  type: "topic",
+  category: "all",
     memberCount: 89,
     onlineCount: 15,
     lastMessage: {
@@ -105,7 +108,8 @@ const mockChatRooms: ChatRoom[] = [
     id: "room_topic_success_stories",
     name: "Success Stories",
     description: "Share your dating success stories and celebrate wins",
-    type: "topic",
+  type: "topic",
+  category: "all",
     memberCount: 156,
     onlineCount: 31,
     lastMessage: {
@@ -127,7 +131,8 @@ const mockChatRooms: ChatRoom[] = [
     id: "room_global",
     name: "Global Chat",
     description: "Open discussion for everyone",
-    type: "global",
+  type: "global",
+  category: "all",
     memberCount: 342,
     onlineCount: 67,
     lastMessage: {
@@ -145,13 +150,54 @@ const mockChatRooms: ChatRoom[] = [
     createdAt: new Date("2024-01-01"),
     updatedAt: new Date()
   }
+  ,
+  {
+    id: "room_men",
+    name: "Men's Room",
+    description: "Space for men to connect and share experiences",
+    type: "topic",
+    category: "men",
+    memberCount: 54,
+    onlineCount: 8,
+    lastActivity: new Date(Date.now() - 600000),
+    isActive: true,
+    createdAt: new Date("2024-01-01"),
+    updatedAt: new Date()
+  },
+  {
+    id: "room_women",
+    name: "Women's Room",
+    description: "Space for women to connect and share experiences",
+    type: "topic",
+    category: "women",
+    memberCount: 78,
+    onlineCount: 12,
+    lastActivity: new Date(Date.now() - 1200000),
+    isActive: true,
+    createdAt: new Date("2024-01-01"),
+    updatedAt: new Date()
+  },
+  {
+    id: "room_lgbtq",
+    name: "LGBTQ+ Room",
+    description: "Inclusive space for LGBTQ+ community members",
+    type: "topic",
+    category: "lgbtq+",
+    memberCount: 33,
+    onlineCount: 5,
+    lastActivity: new Date(Date.now() - 2400000),
+    isActive: true,
+    createdAt: new Date("2024-01-01"),
+    updatedAt: new Date()
+  }
 ];
 
 const useChatStore = create<ChatStore>()(
   persist(
     (set, get) => ({
       // Initial state
-      chatRooms: [],
+  chatRooms: [],
+  roomCategoryFilter: "all",
       currentChatRoom: null,
       messages: {},
       members: {},
@@ -208,7 +254,12 @@ const useChatStore = create<ChatStore>()(
           
           // Try to load from Firebase first
           try {
-            const chatRooms = await firebaseChat.getChatRooms();
+            let chatRooms = await firebaseChat.getChatRooms();
+            // Apply category filter if set
+            const category = get().roomCategoryFilter || "all";
+            if (category && category !== "all") {
+              chatRooms = chatRooms.filter((r: ChatRoom) => (r.category || "all") === category);
+            }
             set({ 
               chatRooms,
               isLoading: false 
@@ -216,8 +267,10 @@ const useChatStore = create<ChatStore>()(
           } catch (firebaseError) {
             // Fallback to mock data if Firebase fails
             console.warn("Firebase failed, using mock data:", firebaseError);
+            const category = get().roomCategoryFilter || "all";
+            const roomsToUse = category && category !== "all" ? mockChatRooms.filter(r => (r.category || "all") === category) : mockChatRooms;
             set({ 
-              chatRooms: mockChatRooms,
+              chatRooms: roomsToUse,
               isLoading: false 
             });
           }
@@ -227,6 +280,10 @@ const useChatStore = create<ChatStore>()(
             isLoading: false 
           });
         }
+      },
+
+      setRoomCategoryFilter: (category) => {
+        set({ roomCategoryFilter: category });
       },
 
       joinChatRoom: async (roomId: string) => {
@@ -513,9 +570,10 @@ const useChatStore = create<ChatStore>()(
       storage: createJSONStorage(() => AsyncStorage),
       // Only persist essential data, not real-time state
       partialize: (state) => ({
-        chatRooms: state.chatRooms,
-        messages: state.messages,
-        members: state.members
+  chatRooms: state.chatRooms,
+  messages: state.messages,
+  members: state.members,
+  roomCategoryFilter: (state as any).roomCategoryFilter
       }),
     }
   )

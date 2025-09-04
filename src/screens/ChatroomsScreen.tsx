@@ -3,19 +3,27 @@ import { View, Text, TextInput, FlatList, RefreshControl } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import useChatStore from "../state/chatStore";
+import SegmentedTabs from "../components/SegmentedTabs";
 import ChatRoomCard from "../components/ChatRoomCard";
 import { ChatRoom } from "../types";
 import { useNavigation } from "@react-navigation/native";
 
 export default function ChatroomsScreen() {
   const navigation = useNavigation<any>();
-  const { chatRooms, loadChatRooms, isLoading, onlineUsers } = useChatStore();
+  const { chatRooms, loadChatRooms, isLoading, onlineUsers, setRoomCategoryFilter } = useChatStore();
+  const { user } = require("../state/authStore").default.getState();
+  const [category, setCategory] = useState<"all" | "men" | "women" | "lgbtq+">(user?.genderPreference || "all");
   const [query, setQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     loadChatRooms();
   }, []);
+
+  useEffect(() => {
+    setRoomCategoryFilter(category);
+    loadChatRooms();
+  }, [category]);
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase();
@@ -52,6 +60,19 @@ export default function ChatroomsScreen() {
             placeholderTextColor="#9CA3AF"
             value={query}
             onChangeText={setQuery}
+          />
+        </View>
+
+        <View className="px-4 mt-3">
+          <SegmentedTabs
+            tabs={[
+              { key: "all", label: "All" },
+              { key: "men", label: "Men" },
+              { key: "women", label: "Women" },
+              { key: "lgbtq+", label: "LGBTQ+" }
+            ]}
+            value={category}
+            onChange={(val) => setCategory(val as any)}
           />
         </View>
       </View>

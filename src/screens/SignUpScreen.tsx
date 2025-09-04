@@ -23,14 +23,17 @@ import AnimatedButton from "../components/AnimatedButton";
 import AnimatedInput from "../components/AnimatedInput";
 import TestingBanner from "../components/TestingBanner";
 import useAuthStore from "../state/authStore";
+import LocationSelector from "../components/LocationSelector";
+import SegmentedTabs from "../components/SegmentedTabs";
 
 export default function SignUpScreen() {
   const navigation = useNavigation<any>();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [city, setCity] = useState("");
-  const [state, setState] = useState("");
+  const [location, setLocation] = useState<{ city: string; state: string; fullName?: string } | null>(null);
+  const [genderPreference, setGenderPreference] = useState<"all" | "men" | "women" | "lgbtq+">("all");
+  const [gender, setGender] = useState<"man" | "woman" | "nonbinary" | "lgbtq+" | string | undefined>(undefined);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -38,15 +41,13 @@ export default function SignUpScreen() {
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [confirmPasswordError, setConfirmPasswordError] = useState("");
-  const [cityError, setCityError] = useState("");
-  const [stateError, setStateError] = useState("");
+  const [locationError, setLocationError] = useState("");
 
   const passwordRef = useRef<TextInput>(null);
   const confirmPasswordRef = useRef<TextInput>(null);
-  const cityRef = useRef<TextInput>(null);
-  const stateRef = useRef<TextInput>(null);
 
   const { register, isLoading, error, clearError } = useAuthStore();
+  const { user } = useAuthStore();
 
   // Animation values
   const logoScale = useSharedValue(0);
@@ -147,18 +148,13 @@ export default function SignUpScreen() {
       return;
     }
     
-    if (!city.trim()) {
-      setCityError("City is required");
-      return;
-    }
-    
-    if (!state.trim() || state.length !== 2) {
-      setStateError("Please enter a valid 2-letter state code");
+    if (!location) {
+      setLocationError("Please select your location");
       return;
     }
     
     try {
-      await register(email.trim(), password, { city: city.trim(), state: state.trim() });
+      await register(email.trim(), password, { city: location.city, state: location.state }, { genderPreference, gender });
     } catch (err) {
       // Error is handled by the store
     }
@@ -273,49 +269,57 @@ export default function SignUpScreen() {
                   secureTextEntry={!showConfirmPassword}
                   autoComplete="password-new"
                   returnKeyType="next"
-                  onSubmitEditing={() => cityRef.current?.focus()}
+                  onSubmitEditing={() => {}}
                   leftIcon="lock-closed-outline"
                   rightIcon={showConfirmPassword ? "eye-off-outline" : "eye-outline"}
                   onRightIconPress={() => setShowConfirmPassword(!showConfirmPassword)}
                 />
 
-                {/* Location Section */}
+                {/* Location Selector */}
                 <View className="space-y-4">
                   <Text className="text-text-primary font-medium">Location</Text>
-                  <View className="flex-row space-x-3">
-                    <View className="flex-1">
-                      <AnimatedInput
-                        ref={cityRef}
-                        placeholder="City"
-                        value={city}
-                        onChangeText={(text) => {
-                          setCity(text);
-                          if (cityError) setCityError("");
-                        }}
-                        error={cityError}
-                        autoCapitalize="words"
-                        returnKeyType="next"
-                        onSubmitEditing={() => stateRef.current?.focus()}
-                        leftIcon="location-outline"
-                      />
-                    </View>
-                    <View className="w-20">
-                      <AnimatedInput
-                        ref={stateRef}
-                        placeholder="ST"
-                        value={state}
-                        onChangeText={(text) => {
-                          setState(text.toUpperCase());
-                          if (stateError) setStateError("");
-                        }}
-                        error={stateError}
-                        autoCapitalize="characters"
-                        maxLength={2}
-                        returnKeyType="done"
-                        onSubmitEditing={handleSubmit}
-                      />
-                    </View>
-                  </View>
+                  <LocationSelector
+                    currentLocation={
+                      (location && { city: location.city, state: location.state, fullName: location.fullName || `${location.city}, ${location.state}` })
+                      || (user?.location && { city: user.location.city, state: user.location.state, fullName: `${user.location.city}, ${user.location.state}` })
+                      || { city: "", state: "", fullName: "" }
+                    }
+                    onLocationChange={(loc) => {
+                      setLocation(loc);
+                      if (locationError) setLocationError("");
+                    }}
+                    
+                  />
+                </View>
+
+                {/* Category Preference */}
+                <View>
+                  <Text className="text-text-primary font-medium">Show me</Text>
+                  <SegmentedTabs
+                    tabs={[
+                      { key: "all", label: "All" },
+                      { key: "men", label: "Men" },
+                      { key: "women", label: "Women" },
+                      { key: "lgbtq+", label: "LGBTQ+" }
+                    ]}
+                    value={genderPreference}
+                    onChange={(val) => setGenderPreference(val as any)}
+                  />
+                </View>
+
+                {/* My Gender */}
+                <View>
+                  <Text className="text-text-primary font-medium">I am</Text>
+                  <SegmentedTabs
+                    tabs={[
+                      { key: "man", label: "Man" },
+                      { key: "woman", label: "Woman" },
+                      { key: "nonbinary", label: "Non-binary" },
+                      { key: "lgbtq+", label: "LGBTQ+" }
+                    ]}
+                    value={gender as any}
+                    onChange={(val) => setGender(val as any)}
+                  />
                 </View>
 
                 {/* Global Error */}

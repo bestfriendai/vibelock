@@ -31,6 +31,7 @@ interface ReviewsActions {
     reviewText: string;
     media: MediaItem[];
     socialMedia?: SocialMediaHandles;
+  category?: "men" | "women" | "lgbtq+" | "all";
   }) => Promise<void>;
   likeReview: (id: string) => Promise<void>;
   dislikeReview: (id: string) => Promise<void>;
@@ -45,7 +46,8 @@ const mockReviews: Review[] = [
     id: "1",
     reviewerAnonymousId: "anon_123",
     reviewedPersonName: "Ava",
-    reviewedPersonLocation: { city: "Washington", state: "DC" },
+  reviewedPersonLocation: { city: "Washington", state: "DC" },
+  category: "women",
     profilePhoto: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=800&q=60",
     greenFlags: ["good_communicator", "respectful"],
     redFlags: [],
@@ -60,7 +62,8 @@ const mockReviews: Review[] = [
     id: "2",
     reviewerAnonymousId: "anon_456",
     reviewedPersonName: "Jasmine",
-    reviewedPersonLocation: { city: "Alexandria", state: "VA" },
+  reviewedPersonLocation: { city: "Alexandria", state: "VA" },
+  category: "women",
     profilePhoto: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=800&q=60",
     greenFlags: ["reliable", "honest"],
     redFlags: [],
@@ -75,7 +78,8 @@ const mockReviews: Review[] = [
     id: "3",
     reviewerAnonymousId: "anon_789",
     reviewedPersonName: "Taylor",
-    reviewedPersonLocation: { city: "Arlington", state: "VA" },
+  reviewedPersonLocation: { city: "Arlington", state: "VA" },
+  category: "all",
     profilePhoto: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=800&q=60",
     greenFlags: ["fun", "kind", "good_listener"],
     redFlags: [],
@@ -90,7 +94,8 @@ const mockReviews: Review[] = [
     id: "4",
     reviewerAnonymousId: "anon_101",
     reviewedPersonName: "Morgan",
-    reviewedPersonLocation: { city: "Bethesda", state: "MD" },
+  reviewedPersonLocation: { city: "Bethesda", state: "MD" },
+  category: "men",
     profilePhoto: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=800&q=60",
     greenFlags: [],
     redFlags: ["inconsistent"],
@@ -105,7 +110,8 @@ const mockReviews: Review[] = [
     id: "5",
     reviewerAnonymousId: "anon_202",
     reviewedPersonName: "Jordan",
-    reviewedPersonLocation: { city: "Silver Spring", state: "MD" },
+  reviewedPersonLocation: { city: "Silver Spring", state: "MD" },
+  category: "men",
     profilePhoto: "https://images.unsplash.com/photo-1520813792240-56fc4a3765a7?auto=format&fit=crop&w=800&q=60",
     greenFlags: ["respectful", "kind"],
     redFlags: [],
@@ -120,7 +126,8 @@ const mockReviews: Review[] = [
     id: "6",
     reviewerAnonymousId: "anon_303",
     reviewedPersonName: "Mia",
-    reviewedPersonLocation: { city: "Arlington", state: "VA" },
+  reviewedPersonLocation: { city: "Arlington", state: "VA" },
+  category: "women",
     profilePhoto: "https://images.unsplash.com/photo-1527980965255-d3b416303d12?auto=format&fit=crop&w=800&q=60",
     greenFlags: [],
     redFlags: ["poor_communication"],
@@ -135,7 +142,8 @@ const mockReviews: Review[] = [
     id: "7",
     reviewerAnonymousId: "anon_404",
     reviewedPersonName: "Sophia",
-    reviewedPersonLocation: { city: "Washington", state: "DC" },
+  reviewedPersonLocation: { city: "Washington", state: "DC" },
+  category: "women",
     profilePhoto: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=800&q=60",
     greenFlags: ["ambitious"],
     redFlags: [],
@@ -150,7 +158,8 @@ const mockReviews: Review[] = [
     id: "8",
     reviewerAnonymousId: "anon_505",
     reviewedPersonName: "Olivia",
-    reviewedPersonLocation: { city: "Alexandria", state: "VA" },
+  reviewedPersonLocation: { city: "Alexandria", state: "VA" },
+  category: "women",
     profilePhoto: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=800&q=60",
     greenFlags: ["good_listener"],
     redFlags: [],
@@ -230,18 +239,38 @@ const useReviewsStore = create<ReviewsStore>()(
           
           const { reviews: newReviews, lastDoc: newLastDoc } = await firebaseReviews.getReviews(20, lastDoc);
           
+          // Apply category filtering based on store filters and user preference
+          const { filters } = get();
+          // Try to get user preference from auth store if available
+          let userPrefCategory: string | undefined;
+          try {
+            // Importing dynamically to avoid circular deps at module load
+            const authStore = require("./authStore").default.getState();
+            userPrefCategory = authStore.user?.genderPreference;
+          } catch (e) {
+            userPrefCategory = undefined;
+          }
+
+          const applyCategoryFilter = (list: Review[]) => {
+            const categoryToFilter = filters.category || userPrefCategory || "all";
+            if (!categoryToFilter || categoryToFilter === "all") return list;
+            return list.filter(r => (r.category || "all") === categoryToFilter);
+          };
+
+          const filteredNewReviews = applyCategoryFilter(newReviews);
+
           if (refresh) {
             set({ 
-              reviews: newReviews,
-              hasMore: newReviews.length === 20,
+              reviews: filteredNewReviews,
+              hasMore: filteredNewReviews.length === 20,
               lastVisible: newLastDoc,
               isLoading: false 
             });
           } else {
             const currentReviews = currentState.reviews;
             set({ 
-              reviews: [...currentReviews, ...newReviews],
-              hasMore: newReviews.length === 20,
+              reviews: [...currentReviews, ...filteredNewReviews],
+              hasMore: filteredNewReviews.length === 20,
               lastVisible: newLastDoc,
               isLoading: false 
             });
@@ -320,7 +349,8 @@ const useReviewsStore = create<ReviewsStore>()(
             media: uploadedMedia,
             socialMedia: data.socialMedia,
             profilePhoto: firstImage ? firstImage.uri : `https://picsum.photos/400/${Math.floor(Math.random() * 200) + 500}?random=${Date.now()}`,
-            status: "approved", // Auto-approve for now
+            status: "approved", // Auto-approve for now (moderation removed)
+            category: data.category || "all",
             likeCount: 0
           };
 
