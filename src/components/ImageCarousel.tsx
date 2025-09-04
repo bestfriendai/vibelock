@@ -97,8 +97,8 @@ export default function ImageCarousel({
 
       {/* Image Counter */}
       {showCounter && media.length > 1 && (
-        <View className="absolute top-3 right-3 bg-black/60 px-2 py-1 rounded-full">
-          <Text className="text-white text-sm font-medium">
+        <View className="absolute top-4 right-4 bg-surface-900/80 backdrop-blur-sm px-3 py-1.5 rounded-full border border-surface-700/50">
+          <Text className="text-text-primary text-sm font-medium">
             {currentIndex + 1} of {media.length}
           </Text>
         </View>
@@ -108,21 +108,23 @@ export default function ImageCarousel({
       {showFullScreenButton && (
         <Pressable
           onPress={handleImagePress}
-          className="absolute top-3 left-3 bg-black/60 rounded-full p-2"
+          className="absolute top-4 left-4 bg-surface-900/80 backdrop-blur-sm rounded-full p-2.5 border border-surface-700/50"
         >
-          <Ionicons name="expand" size={16} color="white" />
+          <Ionicons name="expand" size={16} color="#F3F4F6" />
         </Pressable>
       )}
 
       {/* Page Indicators */}
       {media.length > 1 && (
-        <View className="flex-row justify-center mt-3 space-x-2">
+        <View className="flex-row justify-center mt-4 space-x-2">
           {media.map((_, index) => (
             <Pressable
               key={index}
               onPress={() => scrollToIndex(index)}
-              className={`w-2 h-2 rounded-full ${
-                index === currentIndex ? "bg-brand-red" : "bg-gray-300"
+              className={`w-2 h-2 rounded-full transition-all duration-200 ${
+                index === currentIndex 
+                  ? "bg-brand-red w-6" 
+                  : "bg-surface-600"
               }`}
             />
           ))}
@@ -136,9 +138,9 @@ export default function ImageCarousel({
           {currentIndex > 0 && (
             <Pressable
               onPress={() => scrollToIndex(currentIndex - 1)}
-              className="absolute left-2 top-1/2 -translate-y-4 bg-black/50 rounded-full p-2"
+              className="absolute left-3 top-1/2 -translate-y-4 bg-surface-900/80 backdrop-blur-sm rounded-full p-3 border border-surface-700/50"
             >
-              <Ionicons name="chevron-back" size={20} color="white" />
+              <Ionicons name="chevron-back" size={20} color="#F3F4F6" />
             </Pressable>
           )}
 
@@ -146,9 +148,9 @@ export default function ImageCarousel({
           {currentIndex < media.length - 1 && (
             <Pressable
               onPress={() => scrollToIndex(currentIndex + 1)}
-              className="absolute right-2 top-1/2 -translate-y-4 bg-black/50 rounded-full p-2"
+              className="absolute right-3 top-1/2 -translate-y-4 bg-surface-900/80 backdrop-blur-sm rounded-full p-3 border border-surface-700/50"
             >
-              <Ionicons name="chevron-forward" size={20} color="white" />
+              <Ionicons name="chevron-forward" size={20} color="#F3F4F6" />
             </Pressable>
           )}
         </>

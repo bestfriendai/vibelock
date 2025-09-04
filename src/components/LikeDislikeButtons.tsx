@@ -64,37 +64,37 @@ export default function LikeDislikeButtons({
   }));
 
   return (
-    <View className="flex-row space-x-4 justify-center">
+    <View className="flex-row space-x-3 justify-center">
       {/* Like Button */}
-      <Animated.View style={likeAnimatedStyle}>
+      <Animated.View style={likeAnimatedStyle} className="flex-1">
         <Pressable
           onPress={handleLike}
           disabled={disabled}
-          className={`flex-row items-center px-6 py-3 rounded-full border-2 ${
+          className={`flex-row items-center justify-center px-4 py-3 rounded-xl border ${
             isLiked 
               ? "bg-green-500 border-green-500" 
-              : "bg-green-50 border-green-200"
+              : "bg-green-500/10 border-green-500/30"
           } ${disabled ? "opacity-50" : ""}`}
         >
           <Ionicons 
-            name={isLiked ? "thumbs-up" : "thumbs-up-outline"} 
+            name={isLiked ? "heart" : "heart-outline"} 
             size={18} 
             color={isLiked ? "#FFFFFF" : "#22C55E"} 
           />
           <Text 
             className={`ml-2 font-semibold ${
-              isLiked ? "text-white" : "text-green-600"
+              isLiked ? "text-white" : "text-green-400"
             }`}
           >
             Like
           </Text>
           {likeCount > 0 && (
             <View className={`ml-2 px-2 py-0.5 rounded-full ${
-              isLiked ? "bg-white/20" : "bg-green-100"
+              isLiked ? "bg-white/20" : "bg-green-500/20"
             }`}>
               <Text 
                 className={`text-xs font-bold ${
-                  isLiked ? "text-white" : "text-green-700"
+                  isLiked ? "text-white" : "text-green-400"
                 }`}
               >
                 {likeCount}
@@ -105,35 +105,35 @@ export default function LikeDislikeButtons({
       </Animated.View>
 
       {/* Dislike Button */}
-      <Animated.View style={dislikeAnimatedStyle}>
+      <Animated.View style={dislikeAnimatedStyle} className="flex-1">
         <Pressable
           onPress={handleDislike}
           disabled={disabled}
-          className={`flex-row items-center px-6 py-3 rounded-full border-2 ${
+          className={`flex-row items-center justify-center px-4 py-3 rounded-xl border ${
             isDisliked 
-              ? "bg-red-500 border-red-500" 
-              : "bg-red-50 border-red-200"
+              ? "bg-brand-red border-brand-red" 
+              : "bg-brand-red/10 border-brand-red/30"
           } ${disabled ? "opacity-50" : ""}`}
         >
           <Ionicons 
             name={isDisliked ? "thumbs-down" : "thumbs-down-outline"} 
             size={18} 
-            color={isDisliked ? "#FFFFFF" : "#EF4444"} 
+            color={isDisliked ? "#FFFFFF" : "#FF6B6B"} 
           />
           <Text 
             className={`ml-2 font-semibold ${
-              isDisliked ? "text-white" : "text-red-600"
+              isDisliked ? "text-white" : "text-brand-red"
             }`}
           >
             Dislike
           </Text>
           {dislikeCount > 0 && (
             <View className={`ml-2 px-2 py-0.5 rounded-full ${
-              isDisliked ? "bg-white/20" : "bg-red-100"
+              isDisliked ? "bg-white/20" : "bg-brand-red/20"
             }`}>
               <Text 
                 className={`text-xs font-bold ${
-                  isDisliked ? "text-white" : "text-red-700"
+                  isDisliked ? "text-white" : "text-brand-red"
                 }`}
               >
                 {dislikeCount}

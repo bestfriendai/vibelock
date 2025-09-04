@@ -19,7 +19,7 @@ interface Props {
 export default function ExpandableText({
   text,
   numberOfLines = 3,
-  textStyle = "text-gray-700 text-base leading-6",
+  textStyle = "text-text-primary text-base leading-7",
   linkStyle = "text-brand-red font-medium",
   expandText = "Read full story",
   collapseText = "Show less"
@@ -92,13 +92,13 @@ export default function ExpandableText({
       {shouldShowReadMore && (
         <Pressable
           onPress={toggleExpanded}
-          className="flex-row items-center mt-2"
+          className="flex-row items-center mt-3 bg-brand-red/10 px-3 py-2 rounded-lg self-start"
         >
           <Text className={linkStyle}>
             {isExpanded ? collapseText : expandText}
           </Text>
           <Ionicons
-            name={isExpanded ? "chevron-up" : "chevron-forward"}
+            name={isExpanded ? "chevron-up" : "chevron-down"}
             size={16}
             color="#FF6B6B"
             style={{ marginLeft: 4 }}
