@@ -14,20 +14,20 @@ interface SegmentedTabsProps {
 
 export default function SegmentedTabs({ tabs, value, onChange }: SegmentedTabsProps) {
   return (
-    <View className="flex-row items-center space-x-4 px-2">
+    <View className="flex-row items-center justify-between px-4">
       {tabs.map((t) => {
         const active = value === t.key;
         return (
           <Pressable
             key={t.key}
             onPress={() => onChange(t.key)}
-            className="py-2"
-            hitSlop={6}
+            className="flex-1 py-3 items-center"
+            hitSlop={8}
           >
-            <Text className={active ? "text-brand-red font-semibold" : "text-text-secondary font-medium"}>
+            <Text className={active ? "text-white font-semibold text-sm" : "text-gray-400 font-medium text-sm"}>
               {t.label}
             </Text>
-            <View className={`h-0.5 mt-1 ${active ? "bg-brand-red" : "bg-transparent"}`} />
+            <View className={`h-0.5 mt-2 w-full ${active ? "bg-white" : "bg-transparent"}`} />
           </Pressable>
         );
       })}

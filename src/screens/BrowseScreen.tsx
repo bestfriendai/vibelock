@@ -12,6 +12,8 @@ import useAuthStore from "../state/authStore";
 
 import StaggeredGrid from "../components/StaggeredGrid";
 import ReportModal from "../components/ReportModal";
+import SegmentedTabs from "../components/SegmentedTabs";
+import LocationSelector from "../components/LocationSelector";
 import { Review } from "../types";
 
 export default function BrowseScreen() {
@@ -74,13 +76,17 @@ export default function BrowseScreen() {
 
         {/* Location + Radius */}
         <View className="flex-row items-center justify-between mt-4">
-          <Pressable className="flex-row items-center bg-surface-700 px-3 py-2 rounded-full">
-            <Ionicons name="location-outline" size={16} color="#F3F4F6" />
-            <Text className="text-text-primary text-sm ml-1 font-medium">
-              {user?.location.city || "Washington"}, {user?.location.state || "DC"} (50mi)
-            </Text>
-            <Ionicons name="chevron-down" size={16} color="#F3F4F6" className="ml-1" />
-          </Pressable>
+          <LocationSelector
+            currentLocation={{
+              city: user?.location.city || "Washington",
+              state: user?.location.state || "DC",
+              fullName: `${user?.location.city || "Washington"}, ${user?.location.state || "DC"}`
+            }}
+            onLocationChange={(location) => {
+              // Update user location in auth store if needed
+              console.log("Location changed to:", location);
+            }}
+          />
           <Pressable 
             className="bg-surface-700 px-3 py-2 rounded-full"
             onPress={() => {
@@ -93,6 +99,20 @@ export default function BrowseScreen() {
           >
             <Text className="text-text-primary text-sm font-medium">{filters.radius || 50}mi</Text>
           </Pressable>
+        </View>
+
+        {/* Category Filter Tabs */}
+        <View className="mt-4">
+          <SegmentedTabs
+            tabs={[
+              { key: "all", label: "All" },
+              { key: "men", label: "Men" },
+              { key: "women", label: "Women" },
+              { key: "lgbtq+", label: "LGBTQ+" }
+            ]}
+            value={filters.category}
+            onChange={(category) => setFilters({ category: category as "all" | "men" | "women" | "lgbtq+" })}
+          />
         </View>
       </View>
 
