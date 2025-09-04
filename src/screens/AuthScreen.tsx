@@ -1,208 +1,113 @@
-import React, { useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  Pressable,
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-} from "react-native";
+import React, { useEffect } from "react";
+import { View, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Ionicons } from "@expo/vector-icons";
-import useAuthStore from "../state/authStore";
+import { useNavigation } from "@react-navigation/native";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+  withDelay,
+} from "react-native-reanimated";
+import AnimatedButton from "../components/AnimatedButton";
 
 export default function AuthScreen() {
-  const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [city, setCity] = useState("");
-  const [state, setState] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
+  const navigation = useNavigation<any>();
 
-  const { login, register, isLoading, error, clearError } = useAuthStore();
+  // Animation values
+  const logoScale = useSharedValue(0);
+  const logoOpacity = useSharedValue(0);
+  const titleOpacity = useSharedValue(0);
+  const titleTranslateY = useSharedValue(30);
+  const buttonsOpacity = useSharedValue(0);
+  const buttonsTranslateY = useSharedValue(50);
 
-  const handleSubmit = async () => {
-    clearError();
+  // Initialize entrance animations
+  useEffect(() => {
+    // Logo entrance
+    logoScale.value = withDelay(300, withSpring(1, { damping: 15, stiffness: 200 }));
+    logoOpacity.value = withDelay(300, withTiming(1, { duration: 800 }));
 
-    if (!email || !password) {
-      Alert.alert("Error", "Please fill in all fields");
-      return;
-    }
+    // Title entrance
+    titleOpacity.value = withDelay(600, withTiming(1, { duration: 600 }));
+    titleTranslateY.value = withDelay(600, withSpring(0, { damping: 15, stiffness: 200 }));
 
-    if (!isLogin) {
-      if (password !== confirmPassword) {
-        Alert.alert("Error", "Passwords do not match");
-        return;
-      }
-      if (!city || !state) {
-        Alert.alert("Error", "Please enter your location");
-        return;
-      }
-    }
+    // Buttons entrance
+    buttonsOpacity.value = withDelay(900, withTiming(1, { duration: 600 }));
+    buttonsTranslateY.value = withDelay(900, withSpring(0, { damping: 15, stiffness: 200 }));
+  }, []);
 
-    try {
-      if (isLogin) {
-        await login(email, password);
-      } else {
-        await register(email, password, { city, state });
-      }
-    } catch (err) {
-      // Error is handled by the store
-    }
+  const handleSignIn = () => {
+    navigation.navigate("SignIn");
   };
+
+  const handleSignUp = () => {
+    navigation.navigate("SignUp");
+  };
+
+  // Animated styles
+  const logoAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: logoScale.value }],
+    opacity: logoOpacity.value,
+  }));
+
+  const titleAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: titleOpacity.value,
+    transform: [{ translateY: titleTranslateY.value }],
+  }));
+
+  const buttonsAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: buttonsOpacity.value,
+    transform: [{ translateY: buttonsTranslateY.value }],
+  }));
 
   return (
     <SafeAreaView className="flex-1 bg-surface-900">
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        className="flex-1"
-      >
-        <ScrollView className="flex-1 px-6">
-          <View className="flex-1 justify-center py-12">
-            {/* Logo/Header */}
-            <View className="items-center mb-12">
-              <View className="w-20 h-20 bg-brand-red rounded-full items-center justify-center mb-4">
-                <Text className="text-black text-xl font-bold">LRT</Text>
-              </View>
-              <Text className="text-3xl font-bold text-text-primary mb-2">
-                Locker Room Talk
-              </Text>
-              <Text className="text-text-secondary text-center">
-                Anonymous dating insights from real people
-              </Text>
-            </View>
-
-            {/* Form */}
-            <View className="space-y-4">
-              {/* Email Input */}
-              <View>
-                <Text className="text-text-primary font-medium mb-2">Email</Text>
-                <TextInput
-                  className="border border-border bg-surface-800 rounded-lg px-4 py-3 text-text-primary"
-                  placeholder="Enter your email"
-                  placeholderTextColor="#9CA3AF"
-                  value={email}
-                  onChangeText={setEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoComplete="email"
-                />
-              </View>
-
-              {/* Password Input */}
-              <View>
-                <Text className="text-text-primary font-medium mb-2">Password</Text>
-                <View className="relative">
-                  <TextInput
-                    className="border border-border bg-surface-800 rounded-lg px-4 py-3 pr-12 text-text-primary"
-                    placeholder="Enter your password"
-                    placeholderTextColor="#9CA3AF"
-                    value={password}
-                    onChangeText={setPassword}
-                    secureTextEntry={!showPassword}
-                    autoComplete="password"
-                  />
-                  <Pressable
-                    className="absolute right-3 top-3"
-                    onPress={() => setShowPassword(!showPassword)}
-                  >
-                    <Ionicons
-                      name={showPassword ? "eye-off" : "eye"}
-                      size={20}
-                      color="#9CA3AF"
-                    />
-                  </Pressable>
-                </View>
-              </View>
-
-              {/* Registration Fields */}
-              {!isLogin && (
-                <>
-                  <View>
-                    <Text className="text-text-primary font-medium mb-2">
-                      Confirm Password
-                    </Text>
-                    <TextInput
-                      className="border border-border bg-surface-800 rounded-lg px-4 py-3 text-text-primary"
-                      placeholder="Confirm your password"
-                      placeholderTextColor="#9CA3AF"
-                      value={confirmPassword}
-                      onChangeText={setConfirmPassword}
-                      secureTextEntry={!showPassword}
-                      autoComplete="password"
-                    />
-                  </View>
-
-                  <View className="flex-row space-x-3">
-                    <View className="flex-1">
-                      <Text className="text-text-primary font-medium mb-2">City</Text>
-                      <TextInput
-                        className="border border-border bg-surface-800 rounded-lg px-4 py-3 text-text-primary"
-                        placeholder="City"
-                        placeholderTextColor="#9CA3AF"
-                        value={city}
-                        onChangeText={setCity}
-                        autoCapitalize="words"
-                      />
-                    </View>
-                    <View className="flex-1">
-                      <Text className="text-text-primary font-medium mb-2">State</Text>
-                      <TextInput
-                        className="border border-border bg-surface-800 rounded-lg px-4 py-3 text-text-primary"
-                        placeholder="State"
-                        placeholderTextColor="#9CA3AF"
-                        value={state}
-                        onChangeText={setState}
-                        autoCapitalize="characters"
-                        maxLength={2}
-                      />
-                    </View>
-                  </View>
-                </>
-              )}
-
-              {/* Error Message */}
-              {error && (
-                <View className="bg-brand-red/20 border border-brand-red rounded-lg p-3">
-                  <Text className="text-brand-red text-center">{error}</Text>
-                </View>
-              )}
-
-              {/* Submit Button */}
-              <Pressable
-                className={`bg-brand-red rounded-lg py-4 items-center ${
-                  isLoading ? "opacity-50" : ""
-                }`}
-                onPress={handleSubmit}
-                disabled={isLoading}
-              >
-                <Text className="text-black font-semibold text-lg">
-                  {isLoading
-                    ? "Loading..."
-                    : isLogin
-                    ? "Sign In"
-                    : "Create Account"}
-                </Text>
-              </Pressable>
-
-              {/* Toggle Auth Mode */}
-              <View className="flex-row justify-center items-center mt-6">
-                <Text className="text-text-secondary">
-                  {isLogin ? "Don't have an account? " : "Already have an account? "}
-                </Text>
-                <Pressable onPress={() => setIsLogin(!isLogin)}>
-                  <Text className="text-brand-red font-semibold">
-                    {isLogin ? "Sign Up" : "Sign In"}
-                  </Text>
-                </Pressable>
-              </View>
-            </View>
+      <View className="flex-1 justify-center items-center px-6">
+        {/* Logo Section */}
+        <Animated.View style={logoAnimatedStyle} className="items-center mb-16">
+          <View className="w-32 h-32 bg-brand-red rounded-full items-center justify-center mb-8 shadow-2xl">
+            <Text className="text-black text-4xl font-bold">LRT</Text>
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+        </Animated.View>
+
+        {/* Title Section */}
+        <Animated.View style={titleAnimatedStyle} className="items-center mb-16">
+          <Text className="text-4xl font-bold text-text-primary mb-4 text-center">
+            Locker Room Talk
+          </Text>
+          <Text className="text-text-secondary text-center text-lg leading-7 px-4">
+            Anonymous dating insights from real people in your community
+          </Text>
+        </Animated.View>
+
+        {/* Action Buttons */}
+        <Animated.View style={buttonsAnimatedStyle} className="w-full space-y-4">
+          <AnimatedButton
+            title="Sign In"
+            variant="primary"
+            size="large"
+            onPress={handleSignIn}
+            className="w-full"
+          />
+          
+          <AnimatedButton
+            title="Create Account"
+            variant="secondary"
+            size="large"
+            onPress={handleSignUp}
+            className="w-full"
+          />
+
+          <View className="items-center mt-8">
+            <Text className="text-text-muted text-sm text-center leading-6">
+              By continuing, you agree to our{" "}
+              <Text className="text-brand-red">Terms of Service</Text> and{" "}
+              <Text className="text-brand-red">Privacy Policy</Text>
+            </Text>
+          </View>
+        </Animated.View>
+      </View>
     </SafeAreaView>
   );
 }

@@ -5,7 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { View, Pressable } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 
-// Import screens (we'll create these next)
+// Import screens
 import BrowseScreen from "../screens/BrowseScreen";
 import SearchScreen from "../screens/SearchScreen";
 import CreateReviewScreen from "../screens/CreateReviewScreen";
@@ -13,6 +13,8 @@ import ChatroomsScreen from "../screens/ChatroomsScreen";
 import ProfileScreen from "../screens/ProfileScreen";
 import PersonProfileScreen from "../screens/PersonProfileScreen";
 import AuthScreen from "../screens/AuthScreen";
+import SignInScreen from "../screens/SignInScreen";
+import SignUpScreen from "../screens/SignUpScreen";
 import OnboardingScreen from "../screens/OnboardingScreen";
 import ChatRoomScreen from "../screens/ChatRoomScreen";
 import ReviewDetailScreen from "../screens/ReviewDetailScreen";
@@ -23,6 +25,8 @@ import useAuthStore from "../state/authStore";
 // Navigation types
 export type RootStackParamList = {
   Auth: undefined;
+  SignIn: undefined;
+  SignUp: undefined;
   Onboarding: undefined;
   MainTabs: undefined;
   PersonProfile: { 
@@ -216,11 +220,43 @@ export default function AppNavigator() {
   const { isAuthenticated } = useAuthStore();
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator 
+      screenOptions={{ 
+        headerShown: false,
+        animation: "slide_from_right",
+        animationDuration: 300,
+      }}
+    >
       {!isAuthenticated ? (
         <>
-          <Stack.Screen name="Auth" component={AuthScreen} />
-          <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+          <Stack.Screen 
+            name="Onboarding" 
+            component={OnboardingScreen}
+            options={{
+              animation: "fade",
+            }}
+          />
+          <Stack.Screen 
+            name="Auth" 
+            component={AuthScreen}
+            options={{
+              animation: "slide_from_bottom",
+            }}
+          />
+          <Stack.Screen 
+            name="SignIn" 
+            component={SignInScreen}
+            options={{
+              animation: "slide_from_right",
+            }}
+          />
+          <Stack.Screen 
+            name="SignUp" 
+            component={SignUpScreen}
+            options={{
+              animation: "slide_from_right",
+            }}
+          />
         </>
       ) : (
         <>

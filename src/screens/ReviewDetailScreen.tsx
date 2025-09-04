@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, Pressable, RefreshControl, StatusBar, KeyboardAvoidingView, Platform, Keyboard, TouchableWithoutFeedback } from "react-native";
-
-import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { Ionicons } from "@expo/vector-icons";
 import { RouteProp, useRoute } from "@react-navigation/native";
 import Animated, { 
@@ -379,34 +377,29 @@ export default function ReviewDetailScreen() {
   };
 
   return (
-    <KeyboardProvider>
-      <TouchableWithoutFeedback onPress={dismissKeyboard}>
-        <View className="flex-1 bg-surface-900">
-          <StatusBar barStyle="light-content" backgroundColor="#141418" />
-      
-
-
-      {/* Main Content */}
-      <Animated.ScrollView 
-        style={[contentAnimatedStyle]}
-        className="flex-1"
-        showsVerticalScrollIndicator={false}
-        onScroll={scrollHandler}
-        scrollEventThrottle={16}
-        removeClippedSubviews={true}
-        keyboardShouldPersistTaps="handled"
-        bounces={true}
-        alwaysBounceVertical={false}
-        refreshControl={
-          <RefreshControl 
-            refreshing={refreshing} 
-            onRefresh={handleRefresh}
-            tintColor="#FFFFFF"
-            colors={["#FFFFFF"]}
-          />
-        }
-        contentContainerStyle={{ paddingTop: 20, paddingBottom: 40 }}
-      >
+    <TouchableWithoutFeedback onPress={dismissKeyboard}>
+      <View className="flex-1 bg-surface-900">
+        <StatusBar barStyle="light-content" backgroundColor="#141418" />
+        
+        {/* Main Content */}
+        <Animated.ScrollView 
+          style={[contentAnimatedStyle]}
+          className="flex-1"
+          showsVerticalScrollIndicator={false}
+          onScroll={scrollHandler}
+          scrollEventThrottle={16}
+          keyboardShouldPersistTaps="handled"
+          bounces={true}
+          refreshControl={
+            <RefreshControl 
+              refreshing={refreshing} 
+              onRefresh={handleRefresh}
+              tintColor="#FFFFFF"
+              colors={["#FFFFFF"]}
+            />
+          }
+          contentContainerStyle={{ paddingBottom: 120 }}
+        >
         {/* Loading State */}
         {isLoading && (
           <View className="items-center justify-center py-8">
@@ -557,32 +550,31 @@ export default function ReviewDetailScreen() {
             </View>
           </>
         )}
-      </Animated.ScrollView>
+        </Animated.ScrollView>
 
-          {/* Comment Input */}
-          <KeyboardAvoidingView
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
-            keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
-          >
-            <CommentInput
-              onSubmit={handlePostComment}
-              isLoading={isPostingComment}
-              replyToComment={replyToComment?.authorName}
-              onCancelReply={handleCancelReply}
-            />
-          </KeyboardAvoidingView>
+        {/* Comment Input - Fixed at bottom */}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+        >
+          <CommentInput
+            onSubmit={handlePostComment}
+            isLoading={isPostingComment}
+            replyToComment={replyToComment?.authorName}
+            onCancelReply={handleCancelReply}
+          />
+        </KeyboardAvoidingView>
 
-          {/* Media Viewer Modal */}
-          {reviewWithMedia.media && (
-            <MediaViewer
-              visible={showMediaViewer}
-              media={reviewWithMedia.media}
-              initialIndex={selectedMediaIndex}
-              onClose={() => setShowMediaViewer(false)}
-            />
-          )}
-        </View>
-      </TouchableWithoutFeedback>
-    </KeyboardProvider>
+        {/* Media Viewer Modal */}
+        {reviewWithMedia.media && (
+          <MediaViewer
+            visible={showMediaViewer}
+            media={reviewWithMedia.media}
+            initialIndex={selectedMediaIndex}
+            onClose={() => setShowMediaViewer(false)}
+          />
+        )}
+      </View>
+    </TouchableWithoutFeedback>
   );
 }
