@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, Pressable, RefreshControl, StatusBar, KeyboardAvoidingView, Platform, Keyboard, TouchableWithoutFeedback } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { Ionicons } from "@expo/vector-icons";
-import { RouteProp, useRoute, useNavigation } from "@react-navigation/native";
-import { LinearGradient } from "expo-linear-gradient";
+import { RouteProp, useRoute } from "@react-navigation/native";
 import Animated, { 
   useSharedValue, 
   useAnimatedStyle, 
   withSpring,
-  interpolate,
   useAnimatedScrollHandler
 } from "react-native-reanimated";
 import { RootStackParamList } from "../navigation/AppNavigator";
@@ -26,7 +24,6 @@ type ReviewDetailRouteProp = RouteProp<RootStackParamList, "ReviewDetail">;
 
 export default function ReviewDetailScreen() {
   const route = useRoute<ReviewDetailRouteProp>();
-  const navigation = useNavigation();
   const { review } = route.params;
   
   const [showMediaViewer, setShowMediaViewer] = useState(false);
@@ -46,7 +43,6 @@ export default function ReviewDetailScreen() {
 
   // Animation values
   const scrollY = useSharedValue(0);
-  const headerOpacity = useSharedValue(1);
   const contentScale = useSharedValue(0.95);
 
   // Add mock media if review doesn't have any for demo purposes
@@ -152,12 +148,10 @@ export default function ReviewDetailScreen() {
     }, 500);
   };
 
-  // Scroll handler for header animations
+  // Scroll handler for animations
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: (event) => {
       scrollY.value = event.contentOffset.y;
-      const opacity = interpolate(scrollY.value, [0, 100], [1, 0.8], 'clamp');
-      headerOpacity.value = opacity;
     },
   });
 
@@ -363,10 +357,6 @@ export default function ReviewDetailScreen() {
   };
 
   // Animated styles
-  const headerAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: headerOpacity.value,
-  }));
-
   const contentAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: contentScale.value }],
   }));
@@ -379,40 +369,9 @@ export default function ReviewDetailScreen() {
     <KeyboardProvider>
       <TouchableWithoutFeedback onPress={dismissKeyboard}>
         <View className="flex-1 bg-surface-900">
-          <StatusBar barStyle="light-content" backgroundColor="#0B0B0F" />
+          <StatusBar barStyle="light-content" backgroundColor="#141418" />
       
-      {/* Header */}
-      <Animated.View 
-        style={[headerAnimatedStyle]}
-        className="absolute top-0 left-0 right-0 z-10"
-      >
-        <LinearGradient
-          colors={["rgba(11,11,15,0.95)", "rgba(11,11,15,0.8)", "transparent"]}
-          className="pt-12 pb-4"
-        >
-          <SafeAreaView edges={['top']}>
-            <View className="flex-row items-center justify-between px-4 py-2">
-              <Pressable 
-                onPress={() => navigation.goBack()}
-                className="w-10 h-10 items-center justify-center rounded-full bg-surface-800/80"
-              >
-                <Ionicons name="chevron-back" size={20} color="#F3F4F6" />
-              </Pressable>
-              
-              <View className="flex-1 items-center">
-                <Text className="text-text-primary text-lg font-semibold">Review</Text>
-              </View>
-              
-              <Pressable 
-                onPress={() => navigation.goBack()}
-                className="px-4 py-2 rounded-full bg-brand-red/20"
-              >
-                <Text className="text-brand-red font-medium">Done</Text>
-              </Pressable>
-            </View>
-          </SafeAreaView>
-        </LinearGradient>
-      </Animated.View>
+
 
       {/* Main Content */}
       <Animated.ScrollView 
@@ -429,7 +388,7 @@ export default function ReviewDetailScreen() {
             colors={["#FF6B6B"]}
           />
         }
-        contentContainerStyle={{ paddingTop: 120, paddingBottom: 40 }}
+        contentContainerStyle={{ paddingTop: 20, paddingBottom: 40 }}
       >
         {/* Loading State */}
         {isLoading && (

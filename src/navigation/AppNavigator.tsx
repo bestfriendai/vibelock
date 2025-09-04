@@ -161,8 +161,10 @@ export default function AppNavigator() {
             name="ReviewDetail"
             component={ReviewDetailScreen}
             options={{
-              presentation: "modal",
-              headerShown: false,
+              headerShown: true,
+              headerTitle: "Review",
+              headerStyle: { backgroundColor: "#141418" },
+              headerTintColor: "#FFFFFF",
             }}
           />
         </>
