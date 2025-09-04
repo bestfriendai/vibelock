@@ -1,49 +1,61 @@
 // Firebase configuration for LockerRoom MVP
-// Using demo configuration for development
+import { initializeApp, getApps, getApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
 
-// Mock Firebase configuration for development
+// Firebase configuration from environment variables
 const firebaseConfig = {
-  apiKey: "demo-api-key",
-  authDomain: "lockerroom-demo.firebaseapp.com",
-  projectId: "lockerroom-demo",
-  storageBucket: "lockerroom-demo.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "1:123456789:web:abcdef123456"
+  apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
 };
 
-// For now, we'll create mock implementations
-// These will be replaced with actual Firebase imports once the build system is properly configured
+// Validate configuration
+const requiredKeys = [
+  "EXPO_PUBLIC_FIREBASE_API_KEY",
+  "EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN", 
+  "EXPO_PUBLIC_FIREBASE_PROJECT_ID",
+  "EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET",
+  "EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID",
+  "EXPO_PUBLIC_FIREBASE_APP_ID"
+];
 
-export const db = {
-  collection: (path: string) => ({
-    add: async (data: any) => ({ id: `mock_${Date.now()}` }),
-    doc: (id: string) => ({
-      set: async (data: any) => {},
-      get: async () => ({ exists: true, data: () => ({}) }),
-      update: async (data: any) => {},
-      delete: async () => {}
-    }),
-    where: (field: string, operator: string, value: any) => ({
-      get: async () => ({ docs: [] })
-    }),
-    orderBy: (field: string, direction?: string) => ({
-      limit: (count: number) => ({
-        get: async () => ({ docs: [] })
-      })
-    }),
-    get: async () => ({ docs: [] })
-  })
-};
+const missingKeys = requiredKeys.filter(key => !process.env[key]);
+if (missingKeys.length > 0) {
+  console.error("Missing Firebase configuration keys:", missingKeys);
+  throw new Error(`Missing Firebase configuration: ${missingKeys.join(", ")}`);
+}
 
-export const auth = {
-  currentUser: null,
-  signInWithEmailAndPassword: async (email: string, password: string) => ({ user: { uid: "mock_user" } }),
-  createUserWithEmailAndPassword: async (email: string, password: string) => ({ user: { uid: "mock_user" } }),
-  signOut: async () => {},
-  onAuthStateChanged: (callback: (user: any) => void) => {
-    // Mock auth state
-    return () => {};
-  }
-};
+// Initialize Firebase app
+let app;
+if (getApps().length === 0) {
+  app = initializeApp(firebaseConfig);
+} else {
+  app = getApp();
+}
 
-export default { firebaseConfig };
+// Initialize Firebase Auth
+const auth = getAuth(app);
+
+// Initialize Firestore
+const db = getFirestore(app);
+
+// Initialize Firebase Storage
+const storage = getStorage(app);
+
+// Connect to Firestore emulator in development (optional)
+// Uncomment the following lines if you want to use the Firestore emulator
+// if (__DEV__ && !db._delegate._databaseId.projectId.includes("demo")) {
+//   try {
+//     connectFirestoreEmulator(db, "localhost", 8080);
+//   } catch (error) {
+//     console.log("Firestore emulator connection failed:", error);
+//   }
+// }
+
+export { auth, db, storage };
+export default app;

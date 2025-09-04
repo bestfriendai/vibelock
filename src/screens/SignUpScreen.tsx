@@ -126,10 +126,39 @@ export default function SignUpScreen() {
   const handleSubmit = async () => {
     clearError();
     
-    // For testing purposes, bypass form validation and auto-register
+    // Basic validation
+    if (!email.trim()) {
+      setEmailError("Email is required");
+      return;
+    }
+    
+    if (!password.trim()) {
+      setPasswordError("Password is required");
+      return;
+    }
+    
+    if (!confirmPassword.trim()) {
+      setConfirmPasswordError("Please confirm your password");
+      return;
+    }
+    
+    if (password !== confirmPassword) {
+      setConfirmPasswordError("Passwords do not match");
+      return;
+    }
+    
+    if (!city.trim()) {
+      setCityError("City is required");
+      return;
+    }
+    
+    if (!state.trim() || state.length !== 2) {
+      setStateError("Please enter a valid 2-letter state code");
+      return;
+    }
+    
     try {
-      // Use mock credentials for testing
-      await register("test@example.com", "password123", { city: "Alexandria", state: "VA" });
+      await register(email.trim(), password, { city: city.trim(), state: state.trim() });
     } catch (err) {
       // Error is handled by the store
     }

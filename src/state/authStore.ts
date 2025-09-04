@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { User } from "../types";
+import { firebaseAuth, firebaseUsers } from "../services/firebase";
 
 interface AuthState {
   user: User | null;
@@ -19,6 +20,7 @@ interface AuthActions {
   logout: () => Promise<void>;
   clearError: () => void;
   updateUserLocation: (location: { city: string; state: string; coordinates?: { latitude: number; longitude: number } }) => void;
+  initializeAuthListener: () => () => void;
 }
 
 type AuthStore = AuthState & AuthActions;
@@ -54,29 +56,36 @@ const useAuthStore = create<AuthStore>()(
         set((state) => ({ ...state, error: null }));
       },
 
-      login: async (email, _password) => {
+      login: async (email, password) => {
         try {
           set((state) => ({ ...state, isLoading: true, error: null }));
           
-          // Mock login for development
-          const mockUser: User = {
-            id: "mock_user_id",
-            email,
-            anonymousId: `anon_${Date.now()}`,
-            location: {
-              city: "Alexandria",
-              state: "VA"
-            },
-            genderPreference: "all",
-            createdAt: new Date()
-          };
-
-          // Simulate API delay
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          // Sign in with Firebase
+          const firebaseUser = await firebaseAuth.signIn(email, password);
+          
+          // Get user profile from Firestore
+          let userProfile = await firebaseUsers.getUserProfile(firebaseUser.uid);
+          
+          // If no profile exists, create a basic one
+          if (!userProfile) {
+            const basicProfile: Partial<User> = {
+              id: firebaseUser.uid,
+              email: firebaseUser.email || email,
+              anonymousId: `anon_${Date.now()}`,
+              location: {
+                city: "Unknown",
+                state: "Unknown"
+              },
+              genderPreference: "all"
+            };
+            
+            await firebaseUsers.createUserProfile(firebaseUser.uid, basicProfile);
+            userProfile = await firebaseUsers.getUserProfile(firebaseUser.uid);
+          }
           
           set((state) => ({ 
             ...state,
-            user: mockUser, 
+            user: userProfile, 
             isAuthenticated: true, 
             isLoading: false,
             error: null 
@@ -90,26 +99,30 @@ const useAuthStore = create<AuthStore>()(
         }
       },
 
-      register: async (email, _password, location) => {
+      register: async (email, password, location) => {
         try {
           set((state) => ({ ...state, isLoading: true, error: null }));
           
-          // Mock registration for development
-          const mockUser: User = {
-            id: `user_${Date.now()}`,
-            email,
+          // Create Firebase user
+          const firebaseUser = await firebaseAuth.signUp(email, password);
+          
+          // Create user profile in Firestore
+          const userProfile: Partial<User> = {
+            id: firebaseUser.uid,
+            email: firebaseUser.email || email,
             anonymousId: `anon_${Date.now()}`,
             location,
-            genderPreference: "all",
-            createdAt: new Date()
+            genderPreference: "all"
           };
-
-          // Simulate API delay
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          await firebaseUsers.createUserProfile(firebaseUser.uid, userProfile);
+          
+          // Get the created profile
+          const createdProfile = await firebaseUsers.getUserProfile(firebaseUser.uid);
           
           set((state) => ({ 
             ...state,
-            user: mockUser, 
+            user: createdProfile, 
             isAuthenticated: true, 
             isLoading: false,
             error: null 
@@ -127,8 +140,8 @@ const useAuthStore = create<AuthStore>()(
         try {
           set({ isLoading: true });
           
-          // Simulate API delay
-          await new Promise(resolve => setTimeout(resolve, 500));
+          // Sign out from Firebase
+          await firebaseAuth.signOut();
           
           set({ 
             user: null, 
@@ -155,6 +168,39 @@ const useAuthStore = create<AuthStore>()(
             }
           } : null
         }));
+      },
+
+      initializeAuthListener: () => {
+        return firebaseAuth.onAuthStateChanged(async (firebaseUser) => {
+          if (firebaseUser) {
+            try {
+              // Get user profile from Firestore
+              const userProfile = await firebaseUsers.getUserProfile(firebaseUser.uid);
+              if (userProfile) {
+                set((state) => ({
+                  ...state,
+                  user: userProfile,
+                  isAuthenticated: true,
+                  isLoading: false
+                }));
+              }
+            } catch (error) {
+              console.error("Error loading user profile:", error);
+              set((state) => ({
+                ...state,
+                error: "Failed to load user profile",
+                isLoading: false
+              }));
+            }
+          } else {
+            set((state) => ({
+              ...state,
+              user: null,
+              isAuthenticated: false,
+              isLoading: false
+            }));
+          }
+        });
       }
     }),
     {

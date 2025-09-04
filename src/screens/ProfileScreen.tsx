@@ -2,10 +2,12 @@ import React, { useState } from "react";
 import { View, Text, Pressable, ScrollView, Alert, Switch, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
 import useAuthStore from "../state/authStore";
 import ConfirmationModal from "../components/ConfirmationModal";
 
 export default function ProfileScreen() {
+  const navigation = useNavigation<any>();
   const { user, logout } = useAuthStore();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
@@ -79,6 +81,10 @@ export default function ProfileScreen() {
         { text: "OK", style: "default" }
       ]
     );
+  };
+
+  const handleFirebaseTest = () => {
+    navigation.navigate("FirebaseTest");
   };
 
   return (
@@ -198,6 +204,17 @@ export default function ProfileScreen() {
               <View className="flex-row items-center">
                 <Ionicons name="lock-closed-outline" size={20} color="#9CA3AF" />
                 <Text className="text-text-primary font-medium ml-3">Privacy Policy</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
+            </Pressable>
+
+            <Pressable 
+              className="flex-row items-center justify-between p-4 border-b border-surface-700"
+              onPress={handleFirebaseTest}
+            >
+              <View className="flex-row items-center">
+                <Ionicons name="server-outline" size={20} color="#9CA3AF" />
+                <Text className="text-text-primary font-medium ml-3">Firebase Test</Text>
               </View>
               <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
             </Pressable>

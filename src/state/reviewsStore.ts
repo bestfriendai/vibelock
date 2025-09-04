@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Review, FilterOptions, GreenFlag, RedFlag, MediaItem, SocialMediaHandles, Sentiment } from "../types";
+import { firebaseReviews, firebaseStorage } from "../services/firebase";
 
 interface ReviewsState {
   reviews: Review[];
@@ -9,7 +10,7 @@ interface ReviewsState {
   error: string | null;
   filters: FilterOptions;
   hasMore: boolean;
-  lastVisible: string | null;
+  lastVisible: any | null;
 }
 
 interface ReviewsActions {
@@ -224,34 +225,43 @@ const useReviewsStore = create<ReviewsStore>()(
         try {
           set({ isLoading: true, error: null });
           
-          // Simulate API delay
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          const currentState = get();
+          const lastDoc = refresh ? null : currentState.lastVisible;
+          
+          const { reviews: newReviews, lastDoc: newLastDoc } = await firebaseReviews.getReviews(20, lastDoc);
           
           if (refresh) {
             set({ 
-              reviews: mockReviews,
-              hasMore: true,
-              lastVisible: null,
+              reviews: newReviews,
+              hasMore: newReviews.length === 20,
+              lastVisible: newLastDoc,
               isLoading: false 
             });
           } else {
-            // Simulate pagination
-            const currentReviews = get().reviews;
-            const newReviews = mockReviews.filter(
-              review => !currentReviews.find(r => r.id === review.id)
-            );
-            
+            const currentReviews = currentState.reviews;
             set({ 
               reviews: [...currentReviews, ...newReviews],
-              hasMore: newReviews.length > 0,
+              hasMore: newReviews.length === 20,
+              lastVisible: newLastDoc,
               isLoading: false 
             });
           }
         } catch (error) {
-          set({ 
-            error: error instanceof Error ? error.message : "Failed to load reviews",
-            isLoading: false 
-          });
+          // Fallback to mock data if Firebase fails
+          console.warn("Firebase failed, using mock data:", error);
+          if (refresh || get().reviews.length === 0) {
+            set({ 
+              reviews: mockReviews,
+              hasMore: false,
+              lastVisible: null,
+              isLoading: false 
+            });
+          } else {
+            set({ 
+              error: error instanceof Error ? error.message : "Failed to load reviews",
+              isLoading: false 
+            });
+          }
         }
       },
 
@@ -272,9 +282,34 @@ const useReviewsStore = create<ReviewsStore>()(
 
           const firstImage = data.media.find(m => m.type === "image");
 
-          // For now, auto-approve reviews (in production, integrate with moderation service)
-          const newReview: Review = {
-            id: `review_${Date.now()}`,
+          // Upload media files to Firebase Storage if they are local files
+          const uploadedMedia: MediaItem[] = [];
+          for (const mediaItem of data.media) {
+            if (mediaItem.uri.startsWith("file://") || mediaItem.uri.startsWith("content://")) {
+              try {
+                // Convert URI to blob for upload
+                const response = await fetch(mediaItem.uri);
+                const blob = await response.blob();
+                
+                // Create unique filename
+                const filename = `reviews/${Date.now()}_${Math.random().toString(36).substring(7)}`;
+                const downloadURL = await firebaseStorage.uploadFile(filename, blob);
+                
+                uploadedMedia.push({
+                  ...mediaItem,
+                  uri: downloadURL
+                });
+              } catch (uploadError) {
+                console.warn("Failed to upload media, using original URI:", uploadError);
+                uploadedMedia.push(mediaItem);
+              }
+            } else {
+              uploadedMedia.push(mediaItem);
+            }
+          }
+
+          // Create review data for Firebase
+          const reviewData: Omit<Review, "id" | "createdAt" | "updatedAt"> = {
             reviewerAnonymousId: `anon_${Date.now()}`,
             reviewedPersonName: data.reviewedPersonName,
             reviewedPersonLocation: data.reviewedPersonLocation,
@@ -282,17 +317,23 @@ const useReviewsStore = create<ReviewsStore>()(
             redFlags: data.redFlags || [],
             sentiment: data.sentiment,
             reviewText: data.reviewText,
-            media: data.media,
+            media: uploadedMedia,
             socialMedia: data.socialMedia,
             profilePhoto: firstImage ? firstImage.uri : `https://picsum.photos/400/${Math.floor(Math.random() * 200) + 500}?random=${Date.now()}`,
-            status: "approved",
-            likeCount: 0,
+            status: "approved", // Auto-approve for now
+            likeCount: 0
+          };
+
+          // Create review in Firebase
+          const reviewId = await firebaseReviews.createReview(reviewData);
+          
+          // Create the full review object for local state
+          const newReview: Review = {
+            ...reviewData,
+            id: reviewId,
             createdAt: new Date(),
             updatedAt: new Date()
           };
-
-          // Simulate API delay
-          await new Promise(resolve => setTimeout(resolve, 800));
           
           get().addReview(newReview);
           set({ isLoading: false });
@@ -308,9 +349,13 @@ const useReviewsStore = create<ReviewsStore>()(
         try {
           const review = get().reviews.find(r => r.id === id);
           if (review) {
-            get().updateReview(id, { 
-              likeCount: review.likeCount + 1 
-            });
+            const newLikeCount = review.likeCount + 1;
+            
+            // Update in Firebase
+            await firebaseReviews.updateReview(id, { likeCount: newLikeCount });
+            
+            // Update local state
+            get().updateReview(id, { likeCount: newLikeCount });
           }
         } catch (error) {
           set({ 

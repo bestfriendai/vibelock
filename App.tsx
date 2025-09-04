@@ -1,9 +1,11 @@
+import React, { useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { NavigationContainer } from "@react-navigation/native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import AppNavigator from "./src/navigation/AppNavigator";
 import ErrorBoundary from "./src/components/ErrorBoundary";
+import useAuthStore from "./src/state/authStore";
 
 /*
 IMPORTANT NOTICE: DO NOT REMOVE
@@ -27,6 +29,18 @@ const openai_api_key = Constants.expoConfig.extra.apikey;
 */
 
 export default function App() {
+  const { initializeAuthListener } = useAuthStore();
+
+  useEffect(() => {
+    // Initialize Firebase auth state listener
+    const unsubscribe = initializeAuthListener();
+    
+    // Cleanup listener on unmount
+    return () => {
+      unsubscribe();
+    };
+  }, [initializeAuthListener]);
+
   return (
     <ErrorBoundary>
       <GestureHandlerRootView className="flex-1">

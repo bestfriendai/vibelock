@@ -10,6 +10,7 @@ import {
   ChatState 
 } from "../types";
 import { webSocketService } from "../services/websocketService";
+import { firebaseChat } from "../services/firebase";
 
 interface ChatActions {
   // Connection management
@@ -28,6 +29,7 @@ interface ChatActions {
   sendMessage: (roomId: string, content: string) => void;
   addMessage: (message: ChatMessage) => void;
   markMessagesAsRead: (roomId: string) => void;
+  startListeningToMessages: (roomId: string) => () => void;
   
   // Typing indicators
   setTyping: (roomId: string, isTyping: boolean) => void;
@@ -168,7 +170,7 @@ const useChatStore = create<ChatStore>()(
           onTyping: (typingUser: TypingUser) => {
             get().addTypingUser(typingUser);
           },
-          onUserJoin: (userId: string, userName: string, chatRoomId: string) => {
+          onUserJoin: (_userId: string, userName: string, chatRoomId: string) => {
             // Handle user join
             console.log(`${userName} joined ${chatRoomId}`);
           },
@@ -204,13 +206,21 @@ const useChatStore = create<ChatStore>()(
         try {
           set({ isLoading: true, error: null });
           
-          // Simulate API delay
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          
-          set({ 
-            chatRooms: mockChatRooms,
-            isLoading: false 
-          });
+          // Try to load from Firebase first
+          try {
+            const chatRooms = await firebaseChat.getChatRooms();
+            set({ 
+              chatRooms,
+              isLoading: false 
+            });
+          } catch (firebaseError) {
+            // Fallback to mock data if Firebase fails
+            console.warn("Firebase failed, using mock data:", firebaseError);
+            set({ 
+              chatRooms: mockChatRooms,
+              isLoading: false 
+            });
+          }
         } catch (error) {
           set({ 
             error: error instanceof Error ? error.message : "Failed to load chat rooms",
@@ -302,27 +312,46 @@ const useChatStore = create<ChatStore>()(
         }
       },
 
-      sendMessage: (roomId: string, content: string) => {
-        const message: Omit<ChatMessage, 'id' | 'timestamp'> = {
-          chatRoomId: roomId,
-          senderId: "current_user",
-          senderName: "You",
-          content,
-          messageType: "text",
-          isRead: true,
-          isOwn: true
-        };
+      sendMessage: async (roomId: string, content: string) => {
+        try {
+          const message: Omit<ChatMessage, 'id' | 'timestamp'> = {
+            chatRoomId: roomId,
+            senderId: "current_user",
+            senderName: "You",
+            content,
+            messageType: "text",
+            isRead: true,
+            isOwn: true
+          };
 
-        webSocketService.sendChatMessage(message);
-        
-        // Optimistically add message to local state
-        const newMessage: ChatMessage = {
-          ...message,
-          id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-          timestamp: new Date()
-        };
-        
-        get().addMessage(newMessage);
+          // Send to Firebase
+          await firebaseChat.sendMessage(roomId, message);
+          
+          // Also send via WebSocket for real-time updates (fallback)
+          webSocketService.sendChatMessage(message);
+        } catch (error) {
+          // Fallback to WebSocket only
+          const message: Omit<ChatMessage, 'id' | 'timestamp'> = {
+            chatRoomId: roomId,
+            senderId: "current_user",
+            senderName: "You",
+            content,
+            messageType: "text",
+            isRead: true,
+            isOwn: true
+          };
+
+          webSocketService.sendChatMessage(message);
+          
+          // Optimistically add message to local state
+          const newMessage: ChatMessage = {
+            ...message,
+            id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+            timestamp: new Date()
+          };
+          
+          get().addMessage(newMessage);
+        }
       },
 
       addMessage: (message: ChatMessage) => {
@@ -465,6 +494,18 @@ const useChatStore = create<ChatStore>()(
 
       setLoading: (loading: boolean) => {
         set({ isLoading: loading });
+      },
+
+      // Firebase real-time message listener
+      startListeningToMessages: (roomId: string) => {
+        return firebaseChat.onMessagesSnapshot(roomId, (messages: ChatMessage[]) => {
+          set(state => ({
+            messages: {
+              ...state.messages,
+              [roomId]: messages
+            }
+          }));
+        });
       }
     }),
     {

@@ -84,10 +84,19 @@ export default function SignInScreen() {
   const handleSubmit = async () => {
     clearError();
     
-    // For testing purposes, bypass form validation and auto-login
+    // Basic validation
+    if (!email.trim()) {
+      setEmailError("Email is required");
+      return;
+    }
+    
+    if (!password.trim()) {
+      setPasswordError("Password is required");
+      return;
+    }
+    
     try {
-      // Use mock credentials for testing
-      await login("test@example.com", "password123");
+      await login(email.trim(), password);
     } catch (err) {
       // Error is handled by the store
     }

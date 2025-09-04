@@ -18,6 +18,7 @@ import SignUpScreen from "../screens/SignUpScreen";
 import OnboardingScreen from "../screens/OnboardingScreen";
 import ChatRoomScreen from "../screens/ChatRoomScreen";
 import ReviewDetailScreen from "../screens/ReviewDetailScreen";
+import FirebaseExample from "../components/FirebaseExample";
 
 // Import stores
 import useAuthStore from "../state/authStore";
@@ -38,6 +39,7 @@ export type RootStackParamList = {
   ReviewDetail: {
     review: import("../types").Review;
   };
+  FirebaseTest: undefined;
 };
 
 export type TabParamList = {
@@ -67,6 +69,7 @@ export type ChatroomsStackParamList = {
 
 export type SettingsStackParamList = {
   Settings: undefined;
+  FirebaseTest: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -159,6 +162,17 @@ function SettingsStackNavigator() {
       }}
     >
       <SettingsStack.Screen name="Settings" component={ProfileScreen} />
+      <SettingsStack.Screen 
+        name="FirebaseTest" 
+        component={FirebaseExample}
+        options={{
+          headerShown: true,
+          headerTitle: "Firebase Test",
+          headerStyle: { backgroundColor: "#141418" },
+          headerTintColor: "#FFFFFF",
+          headerBackTitle: "Back",
+        }}
+      />
     </SettingsStack.Navigator>
   );
 }
