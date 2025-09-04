@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, Dimensions } from "react-native";
+import { View, Dimensions, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
@@ -210,8 +210,12 @@ export default function OnboardingScreen() {
             <View className="flex-1 justify-center items-center px-6">
               {/* Logo */}
               <Animated.View style={logoAnimatedStyle}>
-                <View className="w-24 h-24 bg-brand-red rounded-full items-center justify-center mb-12 shadow-lg">
-                  <Text className="text-black text-2xl font-bold">LRT</Text>
+                <View className="w-24 h-24 mb-12 shadow-lg">
+                  <Image
+                    source={require("../../assets/logo-circular.png")}
+                    style={{ width: 96, height: 96 }}
+                    resizeMode="contain"
+                  />
                 </View>
               </Animated.View>
 

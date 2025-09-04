@@ -8,6 +8,7 @@ import {
   ScrollView,
   Keyboard,
   TouchableWithoutFeedback,
+  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
@@ -20,6 +21,7 @@ import Animated, {
 } from "react-native-reanimated";
 import AnimatedButton from "../components/AnimatedButton";
 import AnimatedInput from "../components/AnimatedInput";
+import TestingBanner from "../components/TestingBanner";
 import useAuthStore from "../state/authStore";
 
 export default function SignInScreen() {
@@ -57,42 +59,35 @@ export default function SignInScreen() {
     footerTranslateY.value = withDelay(600, withSpring(0, { damping: 15, stiffness: 200 }));
   }, []);
 
-  const validateEmail = (email: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!email) {
-      return "Email is required";
-    }
-    if (!emailRegex.test(email)) {
-      return "Please enter a valid email address";
-    }
-    return "";
-  };
+  // Validation functions kept for future use but not used in testing mode
+  // const validateEmail = (email: string) => {
+  //   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  //   if (!email) {
+  //     return "Email is required";
+  //   }
+  //   if (!emailRegex.test(email)) {
+  //     return "Please enter a valid email address";
+  //   }
+  //   return "";
+  // };
 
-  const validatePassword = (password: string) => {
-    if (!password) {
-      return "Password is required";
-    }
-    if (password.length < 6) {
-      return "Password must be at least 6 characters";
-    }
-    return "";
-  };
+  // const validatePassword = (password: string) => {
+  //   if (!password) {
+  //     return "Password is required";
+  //   }
+  //   if (password.length < 6) {
+  //     return "Password must be at least 6 characters";
+  //   }
+  //   return "";
+  // };
 
   const handleSubmit = async () => {
     clearError();
     
-    const emailValidation = validateEmail(email);
-    const passwordValidation = validatePassword(password);
-
-    setEmailError(emailValidation);
-    setPasswordError(passwordValidation);
-
-    if (emailValidation || passwordValidation) {
-      return;
-    }
-
+    // For testing purposes, bypass form validation and auto-login
     try {
-      await login(email, password);
+      // Use mock credentials for testing
+      await login("test@example.com", "password123");
     } catch (err) {
       // Error is handled by the store
     }
@@ -125,6 +120,7 @@ export default function SignInScreen() {
   return (
     <TouchableWithoutFeedback onPress={dismissKeyboard}>
       <SafeAreaView className="flex-1 bg-surface-900">
+        <TestingBanner />
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           className="flex-1"
@@ -138,8 +134,12 @@ export default function SignInScreen() {
             <View className="flex-1 justify-center px-6 py-12">
               {/* Logo Section */}
               <Animated.View style={logoAnimatedStyle} className="items-center mb-12">
-                <View className="w-20 h-20 bg-brand-red rounded-full items-center justify-center mb-4 shadow-lg">
-                  <Text className="text-black text-xl font-bold">LRT</Text>
+                <View className="w-20 h-20 mb-4 shadow-lg">
+                  <Image
+                    source={require("../../assets/logo-circular.png")}
+                    style={{ width: 80, height: 80 }}
+                    resizeMode="contain"
+                  />
                 </View>
                 <Text className="text-3xl font-bold text-text-primary mb-2">
                   Welcome Back

@@ -1,17 +1,29 @@
 {
   "expo": {
-    "name": "vibecode",
-    "slug": "vibecode",
-    "scheme": "vibecode",
+    "name": "Locker Room Talk",
+    "slug": "locker-room-talk",
+    "scheme": "locker-room-talk",
     "version": "1.0.0",
     "orientation": "portrait",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
     "newArchEnabled": true,
+    "icon": "./assets/app-icon.png",
+    "splash": {
+      "image": "./assets/logo-circular.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0B0B0F"
+    },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "icon": "./assets/app-icon.png"
     },
     "android": {
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "icon": "./assets/app-icon.png",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/app-icon.png",
+        "backgroundColor": "#0B0B0F"
+      }
     }
   }
 }

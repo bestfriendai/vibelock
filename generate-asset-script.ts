@@ -47,31 +47,72 @@ async function logImageGeneration(prompt: string, imageUrl: string): Promise<voi
   fs.appendFileSync(logFile, logEntry);
 }
 
+async function generateMultipleAssets() {
+  const assets = [
+    {
+      prompt: "Modern minimalist app icon for 'Locker Room Talk' dating app. Clean circular design with bold 'LRT' letters in white on a vibrant red background (#FFFFFF text on red). Professional, trustworthy, and contemporary look. Simple geometric design suitable for iOS/Android app icon.",
+      filename: "app-icon.png",
+      size: "1024x1024" as const
+    },
+    {
+      prompt: "Horizontal logo for 'Locker Room Talk' dating insights app. Modern typography with 'LRT' prominently featured, clean white text on transparent background. Professional and trustworthy design for dark app interfaces. Minimalist style with subtle dating/conversation theme elements.",
+      filename: "logo-horizontal.png", 
+      size: "1536x1024" as const
+    },
+    {
+      prompt: "Circular logo badge for 'Locker Room Talk' app. Bold 'LRT' letters in white on vibrant red circular background. Clean, modern design with subtle shadow effects. Perfect for profile pictures and branding elements in dark UI themes.",
+      filename: "logo-circular.png",
+      size: "1024x1024" as const
+    }
+  ];
+
+  const promises = assets.map(async (asset) => {
+    try {
+      console.log(`Generating ${asset.filename} with prompt:`, asset.prompt);
+      const imageUrl = await generateImage(asset.prompt, {
+        size: asset.size,
+        quality: "high",
+        format: "png",
+        background: asset.filename.includes('horizontal') ? "transparent" : undefined
+      });
+
+      console.log(`${asset.filename} generated successfully. URL:`, imageUrl);
+      
+      // Log the image generation
+      await logImageGeneration(asset.prompt, imageUrl);
+
+      const outputPath = path.join(__dirname, "assets", asset.filename);
+      await downloadImage(imageUrl, outputPath);
+      
+      console.log(`${asset.filename} saved to:`, outputPath);
+      return { filename: asset.filename, url: imageUrl, path: outputPath };
+    } catch (error) {
+      console.error(`Error generating ${asset.filename}:`, error);
+      return null;
+    }
+  });
+
+  return Promise.all(promises);
+}
+
 async function main() {
   try {
-    //update this to
-    const prompt = "describe the asset you want to generate";
-
-    console.log("Generating image with prompt:", prompt);
-    const imageUrl = await generateImage(prompt, {
-      size: "1024x1024",
-      quality: "high",
-      format: "png",
+    console.log("Starting asset generation for Locker Room Talk app...");
+    const results = await generateMultipleAssets();
+    
+    const successful = results.filter(result => result !== null);
+    const failed = results.filter(result => result === null);
+    
+    console.log(`\n=== Asset Generation Complete ===`);
+    console.log(`Successfully generated: ${successful.length} assets`);
+    console.log(`Failed: ${failed.length} assets`);
+    
+    successful.forEach(result => {
+      console.log(`✅ ${result!.filename}: ${result!.path}`);
     });
-
-    console.log("Image generated successfully. URL:", imageUrl);
-
-    // Log the image generation
-    await logImageGeneration(prompt, imageUrl);
-
-    const outputPath = path.join(__dirname, "assets", "japanese-art-logo.png");
-    await downloadImage(imageUrl, outputPath);
-
-    console.log("Process completed successfully");
-    console.log("Image URL:", imageUrl);
-    console.log("Image saved to:", outputPath);
+    
   } catch (error) {
-    console.error("Error:", error);
+    console.error("Error in main process:", error);
   }
 }
 

@@ -8,6 +8,7 @@ import {
   ScrollView,
   Keyboard,
   TouchableWithoutFeedback,
+  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
@@ -20,6 +21,7 @@ import Animated, {
 } from "react-native-reanimated";
 import AnimatedButton from "../components/AnimatedButton";
 import AnimatedInput from "../components/AnimatedInput";
+import TestingBanner from "../components/TestingBanner";
 import useAuthStore from "../state/authStore";
 
 export default function SignUpScreen() {
@@ -69,78 +71,65 @@ export default function SignUpScreen() {
     footerTranslateY.value = withDelay(600, withSpring(0, { damping: 15, stiffness: 200 }));
   }, []);
 
-  const validateEmail = (email: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!email) {
-      return "Email is required";
-    }
-    if (!emailRegex.test(email)) {
-      return "Please enter a valid email address";
-    }
-    return "";
-  };
+  // Validation functions kept for future use but not used in testing mode
+  // const validateEmail = (email: string) => {
+  //   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  //   if (!email) {
+  //     return "Email is required";
+  //   }
+  //   if (!emailRegex.test(email)) {
+  //     return "Please enter a valid email address";
+  //   }
+  //   return "";
+  // };
 
-  const validatePassword = (password: string) => {
-    if (!password) {
-      return "Password is required";
-    }
-    if (password.length < 6) {
-      return "Password must be at least 6 characters";
-    }
-    return "";
-  };
+  // const validatePassword = (password: string) => {
+  //   if (!password) {
+  //     return "Password is required";
+  //   }
+  //   if (password.length < 6) {
+  //     return "Password must be at least 6 characters";
+  //   }
+  //   return "";
+  // };
 
-  const validateConfirmPassword = (password: string, confirmPassword: string) => {
-    if (!confirmPassword) {
-      return "Please confirm your password";
-    }
-    if (password !== confirmPassword) {
-      return "Passwords do not match";
-    }
-    return "";
-  };
+  // const validateConfirmPassword = (password: string, confirmPassword: string) => {
+  //   if (!confirmPassword) {
+  //     return "Please confirm your password";
+  //   }
+  //   if (password !== confirmPassword) {
+  //     return "Passwords do not match";
+  //   }
+  //   return "";
+  // };
 
-  const validateCity = (city: string) => {
-    if (!city) {
-      return "City is required";
-    }
-    if (city.length < 2) {
-      return "Please enter a valid city name";
-    }
-    return "";
-  };
+  // const validateCity = (city: string) => {
+  //   if (!city) {
+  //     return "City is required";
+  //   }
+  //   if (city.length < 2) {
+  //     return "Please enter a valid city name";
+  //   }
+  //   return "";
+  // };
 
-  const validateState = (state: string) => {
-    if (!state) {
-      return "State is required";
-    }
-    if (state.length !== 2) {
-      return "Please enter a valid 2-letter state code";
-    }
-    return "";
-  };
+  // const validateState = (state: string) => {
+  //   if (!state) {
+  //     return "State is required";
+  //   }
+  //   if (state.length !== 2) {
+  //     return "Please enter a valid 2-letter state code";
+  //   }
+  //   return "";
+  // };
 
   const handleSubmit = async () => {
     clearError();
     
-    const emailValidation = validateEmail(email);
-    const passwordValidation = validatePassword(password);
-    const confirmPasswordValidation = validateConfirmPassword(password, confirmPassword);
-    const cityValidation = validateCity(city);
-    const stateValidation = validateState(state);
-
-    setEmailError(emailValidation);
-    setPasswordError(passwordValidation);
-    setConfirmPasswordError(confirmPasswordValidation);
-    setCityError(cityValidation);
-    setStateError(stateValidation);
-
-    if (emailValidation || passwordValidation || confirmPasswordValidation || cityValidation || stateValidation) {
-      return;
-    }
-
+    // For testing purposes, bypass form validation and auto-register
     try {
-      await register(email, password, { city, state: state.toUpperCase() });
+      // Use mock credentials for testing
+      await register("test@example.com", "password123", { city: "Alexandria", state: "VA" });
     } catch (err) {
       // Error is handled by the store
     }
@@ -173,6 +162,7 @@ export default function SignUpScreen() {
   return (
     <TouchableWithoutFeedback onPress={dismissKeyboard}>
       <SafeAreaView className="flex-1 bg-surface-900">
+        <TestingBanner />
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           className="flex-1"
@@ -186,8 +176,12 @@ export default function SignUpScreen() {
             <View className="flex-1 justify-center px-6 py-12">
               {/* Logo Section */}
               <Animated.View style={logoAnimatedStyle} className="items-center mb-12">
-                <View className="w-20 h-20 bg-brand-red rounded-full items-center justify-center mb-4 shadow-lg">
-                  <Text className="text-black text-xl font-bold">LRT</Text>
+                <View className="w-20 h-20 mb-4 shadow-lg">
+                  <Image
+                    source={require("../../assets/logo-circular.png")}
+                    style={{ width: 80, height: 80 }}
+                    resizeMode="contain"
+                  />
                 </View>
                 <Text className="text-3xl font-bold text-text-primary mb-2">
                   Join the Community
@@ -224,9 +218,7 @@ export default function SignUpScreen() {
                   onChangeText={(text) => {
                     setPassword(text);
                     if (passwordError) setPasswordError("");
-                    if (confirmPasswordError && confirmPassword) {
-                      setConfirmPasswordError(validateConfirmPassword(text, confirmPassword));
-                    }
+                    // Validation disabled for testing
                   }}
                   error={passwordError}
                   secureTextEntry={!showPassword}
@@ -245,9 +237,8 @@ export default function SignUpScreen() {
                   value={confirmPassword}
                   onChangeText={(text) => {
                     setConfirmPassword(text);
-                    if (confirmPasswordError) {
-                      setConfirmPasswordError(validateConfirmPassword(password, text));
-                    }
+                    if (confirmPasswordError) setConfirmPasswordError("");
+                    // Validation disabled for testing
                   }}
                   error={confirmPasswordError}
                   secureTextEntry={!showConfirmPassword}

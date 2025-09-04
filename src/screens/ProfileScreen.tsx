@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, Pressable, ScrollView, Alert, Switch } from "react-native";
+import { View, Text, Pressable, ScrollView, Alert, Switch, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import useAuthStore from "../state/authStore";
@@ -86,8 +86,12 @@ export default function ProfileScreen() {
       {/* Header */}
       <View className="bg-black px-4 py-4">
         <View className="flex-row items-center">
-          <View className="w-10 h-10 rounded-full bg-surface-700 items-center justify-center mr-3">
-            <Text className="text-text-primary text-lg font-bold">LRT</Text>
+          <View className="w-10 h-10 mr-3">
+            <Image
+              source={require("../../assets/logo-circular.png")}
+              style={{ width: 40, height: 40 }}
+              resizeMode="contain"
+            />
           </View>
           <Text className="text-2xl font-bold text-text-primary">Settings</Text>
         </View>
