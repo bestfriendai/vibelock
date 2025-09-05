@@ -1,9 +1,10 @@
 import React, { useState, useRef } from "react";
-import { View, TextInput, Pressable, Text, Alert } from "react-native";
+import { View, TextInput, Pressable, Text, Alert, KeyboardAvoidingView, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming } from "react-native-reanimated";
 import * as ImagePicker from "expo-image-picker";
 import * as DocumentPicker from "expo-document-picker";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 interface Props {
   onSend: (text: string) => void;
@@ -42,6 +43,7 @@ export default function ChatInput({ onSend, onTyping, onSendMedia, replyingTo, o
   const [showAttachments, setShowAttachments] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
 
+  const insets = useSafeAreaInsets();
   const typingTimeout = useRef<NodeJS.Timeout | null>(null);
   const inputHeight = useSharedValue(40);
   const emojiScale = useSharedValue(0);
@@ -166,21 +168,25 @@ export default function ChatInput({ onSend, onTyping, onSendMedia, replyingTo, o
   }));
 
   return (
-    <View className="bg-surface-800 border-t border-border">
-      {/* Reply indicator */}
-      {replyingTo && (
-        <View className="flex-row items-center justify-between px-4 py-2 bg-surface-700/50 border-b border-border">
-          <View className="flex-1">
-            <Text className="text-text-secondary text-xs font-medium">Replying to {replyingTo.senderName}</Text>
-            <Text className="text-text-muted text-sm" numberOfLines={1}>
-              {replyingTo.content}
-            </Text>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+    >
+      <View className="bg-surface-800 border-t border-border" style={{ paddingBottom: insets.bottom }}>
+        {/* Reply indicator */}
+        {replyingTo && (
+          <View className="flex-row items-center justify-between px-4 py-2 bg-surface-700/50 border-b border-border">
+            <View className="flex-1">
+              <Text className="text-text-secondary text-xs font-medium">Replying to {replyingTo.senderName}</Text>
+              <Text className="text-text-muted text-sm" numberOfLines={1}>
+                {replyingTo.content}
+              </Text>
+            </View>
+            <Pressable onPress={onCancelReply} className="p-1">
+              <Ionicons name="close" size={16} color="#9CA3AF" />
+            </Pressable>
           </View>
-          <Pressable onPress={onCancelReply} className="p-1">
-            <Ionicons name="close" size={16} color="#9CA3AF" />
-          </Pressable>
-        </View>
-      )}
+        )}
 
       {/* Emoji picker */}
       {showEmojis && (
@@ -260,6 +266,6 @@ export default function ChatInput({ onSend, onTyping, onSendMedia, replyingTo, o
           </Pressable>
         )}
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }

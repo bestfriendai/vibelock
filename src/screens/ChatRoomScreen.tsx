@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { View, Text, Pressable, Modal } from "react-native";
+import { View, Text, Pressable, Modal, KeyboardAvoidingView, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRoute, RouteProp } from "@react-navigation/native";
 import { FlashList } from "@shopify/flash-list";
@@ -67,73 +67,79 @@ export default function ChatRoomScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-surface-900">
-      {/* Enhanced Room Header */}
-      <View className="px-4 py-3 border-b border-border bg-surface-800">
-        <View className="flex-row items-center justify-between">
-          <View className="flex-1">
-            <Text className="text-text-primary text-lg font-bold">{currentChatRoom?.name || "Chat"}</Text>
-            <Text className="text-text-secondary text-xs">
-              {currentChatRoom?.onlineCount || 0} online • {roomMembers.length} members
-            </Text>
-          </View>
-
-          <View className="flex-row items-center space-x-3">
-            <Pressable onPress={() => setShowMemberList(true)} className="p-2 rounded-full bg-surface-700">
-              <Ionicons name="people" size={18} color="#9CA3AF" />
-            </Pressable>
-
-            <Pressable onPress={scrollToBottom} className="p-2 rounded-full bg-surface-700">
-              <Ionicons name="arrow-down" size={18} color="#9CA3AF" />
-            </Pressable>
-          </View>
-        </View>
-      </View>
-
-      <FlashList
-        ref={listRef}
-        data={roomMessages}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <MessageBubble message={item} onReply={handleReply} onReact={handleReact} />}
-        estimatedItemSize={64}
-        contentContainerStyle={{ padding: 12 }}
-        showsVerticalScrollIndicator={false}
-      />
-
-      {/* Typing indicator */}
-      {typingUsers.filter((t) => t.chatRoomId === roomId).length > 0 && (
-        <View className="px-4 pb-1">
-          <View className="flex-row items-center">
-            <View className="flex-row space-x-1 mr-2">
-              <View className="w-1 h-1 bg-text-muted rounded-full animate-pulse" />
-              <View className="w-1 h-1 bg-text-muted rounded-full animate-pulse" />
-              <View className="w-1 h-1 bg-text-muted rounded-full animate-pulse" />
+      <KeyboardAvoidingView
+        className="flex-1"
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+      >
+        {/* Enhanced Room Header */}
+        <View className="px-4 py-3 border-b border-border bg-surface-800">
+          <View className="flex-row items-center justify-between">
+            <View className="flex-1">
+              <Text className="text-text-primary text-lg font-bold">{currentChatRoom?.name || "Chat"}</Text>
+              <Text className="text-text-secondary text-xs">
+                {currentChatRoom?.onlineCount || 0} online • {roomMembers.length} members
+              </Text>
             </View>
-            <Text className="text-text-muted text-xs">
-              {typingUsers
-                .filter((t) => t.chatRoomId === roomId)
-                .slice(0, 2)
-                .map((t) => t.userName)
-                .join(", ")}
-              {typingUsers.filter((t) => t.chatRoomId === roomId).length > 2 ? " and others" : ""} typing...
-            </Text>
+
+            <View className="flex-row items-center space-x-3">
+              <Pressable onPress={() => setShowMemberList(true)} className="p-2 rounded-full bg-surface-700">
+                <Ionicons name="people" size={18} color="#9CA3AF" />
+              </Pressable>
+
+              <Pressable onPress={scrollToBottom} className="p-2 rounded-full bg-surface-700">
+                <Ionicons name="arrow-down" size={18} color="#9CA3AF" />
+              </Pressable>
+            </View>
           </View>
         </View>
-      )}
 
-      <ChatInput
-        onSend={onSend}
-        onTyping={(v) => setTyping(roomId, v)}
-        replyingTo={
-          replyingTo
-            ? {
-                id: replyingTo.id,
-                content: replyingTo.content,
-                senderName: replyingTo.senderName,
-              }
-            : null
-        }
-        onCancelReply={() => setReplyingTo(null)}
-      />
+        <FlashList
+          ref={listRef}
+          data={roomMessages}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => <MessageBubble message={item} onReply={handleReply} onReact={handleReact} />}
+          estimatedItemSize={64}
+          contentContainerStyle={{ padding: 12 }}
+          showsVerticalScrollIndicator={false}
+        />
+
+        {/* Typing indicator */}
+        {typingUsers.filter((t) => t.chatRoomId === roomId).length > 0 && (
+          <View className="px-4 pb-1">
+            <View className="flex-row items-center">
+              <View className="flex-row space-x-1 mr-2">
+                <View className="w-1 h-1 bg-text-muted rounded-full animate-pulse" />
+                <View className="w-1 h-1 bg-text-muted rounded-full animate-pulse" />
+                <View className="w-1 h-1 bg-text-muted rounded-full animate-pulse" />
+              </View>
+              <Text className="text-text-muted text-xs">
+                {typingUsers
+                  .filter((t) => t.chatRoomId === roomId)
+                  .slice(0, 2)
+                  .map((t) => t.userName)
+                  .join(", ")}
+                {typingUsers.filter((t) => t.chatRoomId === roomId).length > 2 ? " and others" : ""} typing...
+              </Text>
+            </View>
+          </View>
+        )}
+
+        <ChatInput
+          onSend={onSend}
+          onTyping={(v) => setTyping(roomId, v)}
+          replyingTo={
+            replyingTo
+              ? {
+                  id: replyingTo.id,
+                  content: replyingTo.content,
+                  senderName: replyingTo.senderName,
+                }
+              : null
+          }
+          onCancelReply={() => setReplyingTo(null)}
+        />
+      </KeyboardAvoidingView>
 
       {/* Member List Modal */}
       <Modal

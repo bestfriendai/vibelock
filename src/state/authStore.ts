@@ -196,6 +196,44 @@ const useAuthStore = create<AuthStore>()(
       },
 
       initializeAuthListener: () => {
+        // First, check if we have a current session on app start
+        const initializeSession = async () => {
+          try {
+            const session = await supabaseAuth.getCurrentSession();
+            if (session?.user) {
+              const userProfile = await supabaseUsers.getUserProfile(session.user.id);
+              if (userProfile) {
+                set((state) => ({
+                  ...state,
+                  user: userProfile,
+                  isAuthenticated: true,
+                  isLoading: false,
+                }));
+              }
+            } else {
+              // No session, clear any persisted auth state
+              set((state) => ({
+                ...state,
+                user: null,
+                isAuthenticated: false,
+                isLoading: false,
+              }));
+            }
+          } catch (error) {
+            console.error("Error initializing session:", error);
+            set((state) => ({
+              ...state,
+              user: null,
+              isAuthenticated: false,
+              isLoading: false,
+            }));
+          }
+        };
+
+        // Initialize session immediately
+        initializeSession();
+
+        // Then set up the auth state change listener
         const {
           data: { subscription },
         } = supabaseAuth.onAuthStateChanged(async (supabaseUser) => {

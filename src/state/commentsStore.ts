@@ -295,7 +295,7 @@ const useCommentsStore = create<CommentsStore>()(
         }
       },
     };
-  }),
+    },
     {
       name: "comments-storage",
       storage: createJSONStorage(() => AsyncStorage),
@@ -305,8 +305,8 @@ const useCommentsStore = create<CommentsStore>()(
         commentThreads: state.commentThreads,
         mediaComments: state.mediaComments,
       }),
-    },
-  ),
+    }
+  )
 );
 
 export default useCommentsStore;

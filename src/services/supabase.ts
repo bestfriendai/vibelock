@@ -123,12 +123,21 @@ export const supabaseUsers = {
   // Create user profile document
   createUserProfile: async (userId: string, userData: Partial<User>): Promise<void> => {
     try {
-      const { error } = await supabase.from("users").insert({
+      // Map camelCase to snake_case for database
+      const dbData: any = {
         id: userId,
-        ...userData,
+        email: userData.email,
+        anonymous_id: userData.anonymousId,
+        city: userData.location?.city,
+        state: userData.location?.state,
+        gender_preference: userData.genderPreference,
+        gender: userData.gender,
+        is_blocked: userData.isBlocked || false,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-      });
+      };
+
+      const { error } = await supabase.from("users").insert(dbData);
 
       if (error) throw error;
     } catch (error: any) {
@@ -149,8 +158,18 @@ export const supabaseUsers = {
         throw error;
       }
 
+      // Map snake_case to camelCase for TypeScript interface
       return {
-        ...data,
+        id: data.id,
+        email: data.email,
+        anonymousId: data.anonymous_id,
+        location: {
+          city: data.city || "Unknown",
+          state: data.state || "Unknown",
+        },
+        genderPreference: data.gender_preference || "all",
+        gender: data.gender,
+        isBlocked: data.is_blocked || false,
         createdAt: new Date(data.created_at),
       } as User;
     } catch (error: any) {
@@ -161,12 +180,22 @@ export const supabaseUsers = {
   // Update user profile
   updateUserProfile: async (userId: string, updates: Partial<User>): Promise<void> => {
     try {
+      // Map camelCase to snake_case for database
+      const dbUpdates: any = {
+        updated_at: new Date().toISOString(),
+      };
+
+      if (updates.email) dbUpdates.email = updates.email;
+      if (updates.anonymousId) dbUpdates.anonymous_id = updates.anonymousId;
+      if (updates.location?.city) dbUpdates.city = updates.location.city;
+      if (updates.location?.state) dbUpdates.state = updates.location.state;
+      if (updates.genderPreference) dbUpdates.gender_preference = updates.genderPreference;
+      if (updates.gender) dbUpdates.gender = updates.gender;
+      if (updates.isBlocked !== undefined) dbUpdates.is_blocked = updates.isBlocked;
+
       const { error } = await supabase
         .from("users")
-        .update({
-          ...updates,
-          updated_at: new Date().toISOString(),
-        })
+        .update(dbUpdates)
         .eq("id", userId);
 
       if (error) throw error;

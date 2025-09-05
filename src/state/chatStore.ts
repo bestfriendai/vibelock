@@ -3,7 +3,8 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ChatRoom, ChatMessage, ChatMember, TypingUser, ConnectionStatus, ChatState } from "../types";
 import { webSocketService } from "../services/websocketService";
-import { supabaseChat } from "../services/supabase";
+import { supabaseChat, supabaseAuth } from "../services/supabase";
+import { realtimeChatService } from "../services/realtimeChat";
 
 interface ChatActions {
   // Connection management
@@ -244,48 +245,48 @@ const useChatStore = create<ChatStore>()(
         try {
           set({ isLoading: true, error: null });
 
-          // If no chat rooms exist, immediately show mock data for better UX
-          const currentState = get();
-          if (currentState.chatRooms.length === 0) {
-            const category = currentState.roomCategoryFilter || "all";
-            const roomsToUse =
-              category && category !== "all"
-                ? mockChatRooms.filter((r) => (r.category || "all") === category)
-                : mockChatRooms;
-            set({
-              chatRooms: roomsToUse,
-              isLoading: false,
-            });
-            return;
-          }
+          console.log("🔄 Loading chat rooms...");
 
-          // Try to load from Supabase
-          try {
-            let chatRooms = await supabaseChat.getChatRooms();
-            // Apply category filter if set
-            const category = get().roomCategoryFilter || "all";
-            if (category && category !== "all") {
-              chatRooms = chatRooms.filter((r: ChatRoom) => (r.category || "all") === category);
-            }
-            set({
-              chatRooms,
-              isLoading: false,
-            });
-          } catch (firebaseError) {
-            // Fallback to mock data if Firebase fails
-            console.warn("Firebase failed, using mock data:", firebaseError);
-            const category = get().roomCategoryFilter || "all";
-            const roomsToUse =
-              category && category !== "all"
-                ? mockChatRooms.filter((r) => (r.category || "all") === category)
-                : mockChatRooms;
-            set({
-              chatRooms: roomsToUse,
-              isLoading: false,
-            });
-          }
-        } catch (error) {
+          // Initialize real-time service if not already done
+          await realtimeChatService.initialize();
+
+          // Load chat rooms from Supabase with real-time
+          const chatRooms = await realtimeChatService.getChatRooms();
+
+          // Apply category filter if set
+          const category = get().roomCategoryFilter || "all";
+          const filteredRooms = category && category !== "all"
+            ? chatRooms.filter((r: ChatRoom) => (r.category || "all").toLowerCase() === category.toLowerCase())
+            : chatRooms;
+
+          console.log(`✅ Loaded ${filteredRooms.length} chat rooms (filtered by: ${category})`);
+
           set({
+            chatRooms: filteredRooms,
+            isLoading: false,
+          });
+
+          // Subscribe to real-time room updates
+          realtimeChatService.subscribeToRooms((updatedRooms) => {
+            const currentCategory = get().roomCategoryFilter || "all";
+            const filtered = currentCategory && currentCategory !== "all"
+              ? updatedRooms.filter((r: ChatRoom) => (r.category || "all").toLowerCase() === currentCategory.toLowerCase())
+              : updatedRooms;
+
+            set({ chatRooms: filtered });
+          });
+
+        } catch (error) {
+          console.error("💥 Failed to load chat rooms:", error);
+
+          // Fallback to mock data on error
+          const category = get().roomCategoryFilter || "all";
+          const roomsToUse = category && category !== "all"
+            ? mockChatRooms.filter((r) => (r.category || "all").toLowerCase() === category.toLowerCase())
+            : mockChatRooms;
+
+          set({
+            chatRooms: roomsToUse,
             error: error instanceof Error ? error.message : "Failed to load chat rooms",
             isLoading: false,
           });
@@ -298,24 +299,73 @@ const useChatStore = create<ChatStore>()(
 
       joinChatRoom: async (roomId: string) => {
         try {
+          console.log(`🚪 Joining chat room: ${roomId}`);
+
           const room = get().chatRooms.find((r) => r.id === roomId);
-          if (room) {
-            set({ currentChatRoom: room });
-            webSocketService.joinRoom(roomId);
-            await get().loadMessages(roomId);
-            await get().loadMembers(roomId);
+          if (!room) {
+            throw new Error("Chat room not found");
           }
+
+          set({ currentChatRoom: room });
+
+          // Get current user for real-time presence
+          const currentUser = await supabaseAuth.getCurrentUser();
+          if (!currentUser) {
+            throw new Error("Must be signed in to join chat room");
+          }
+
+          // Join room with real-time service
+          await realtimeChatService.joinRoom(roomId, currentUser.id, currentUser.email?.split("@")[0] || "User");
+
+          // Subscribe to messages for this room
+          realtimeChatService.subscribeToMessages(roomId, (messages) => {
+            set((state) => ({
+              messages: {
+                ...state.messages,
+                [roomId]: messages,
+              },
+            }));
+          });
+
+          // Subscribe to presence for this room
+          realtimeChatService.subscribeToPresence(roomId, (members) => {
+            set((state) => ({
+              members: {
+                ...state.members,
+                [roomId]: members,
+              },
+            }));
+          });
+
+          console.log(`✅ Successfully joined room: ${room.name}`);
         } catch (error) {
+          console.error("💥 Failed to join chat room:", error);
           set({ error: error instanceof Error ? error.message : "Failed to join chat room" });
         }
       },
 
-      leaveChatRoom: (roomId: string) => {
-        webSocketService.leaveRoom(roomId);
+      leaveChatRoom: async (roomId: string) => {
+        console.log(`🚪 Leaving chat room: ${roomId}`);
+
+        await realtimeChatService.leaveRoom(roomId);
+
         const currentRoom = get().currentChatRoom;
         if (currentRoom && currentRoom.id === roomId) {
           set({ currentChatRoom: null });
         }
+
+        // Clean up local state
+        set((state) => {
+          const newMessages = { ...state.messages };
+          const newMembers = { ...state.members };
+          delete newMessages[roomId];
+          delete newMembers[roomId];
+
+          return {
+            messages: newMessages,
+            members: newMembers,
+          };
+        });
       },
 
       setCurrentChatRoom: (room: ChatRoom | null) => {
@@ -385,33 +435,48 @@ const useChatStore = create<ChatStore>()(
       },
 
       sendMessage: async (roomId: string, content: string) => {
-        const message: Omit<ChatMessage, "id" | "timestamp"> = {
-          chatRoomId: roomId,
-          senderId: "current_user",
-          senderName: "You",
-          content,
-          messageType: "text",
-          isRead: true,
-          isOwn: true,
-        };
-
-        // Always add message to local state immediately (optimistic update)
-        const newMessage: ChatMessage = {
-          ...message,
-          id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-          timestamp: new Date(),
-        };
-
-        get().addMessage(newMessage);
-
-        // Try to send to Supabase in background
         try {
-          await supabaseChat.sendMessage(roomId, message);
-          webSocketService.sendChatMessage(message);
+          console.log(`📤 Sending message to room ${roomId}:`, content);
+
+          // Get current authenticated user
+          const currentUser = await supabaseAuth.getCurrentUser();
+          if (!currentUser) {
+            throw new Error("Must be signed in to send messages");
+          }
+
+          const senderName = currentUser.email?.split("@")[0] || "Anonymous";
+
+          // Optimistic update - add message locally first
+          const optimisticMessage: ChatMessage = {
+            id: `temp_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+            chatRoomId: roomId,
+            senderId: currentUser.id,
+            senderName,
+            content,
+            messageType: "text",
+            timestamp: new Date(),
+            isRead: true,
+            isOwn: true,
+          };
+
+          get().addMessage(optimisticMessage);
+
+          // Send to Supabase via real-time service
+          await realtimeChatService.sendMessage(roomId, content, currentUser.id, senderName);
+
+          console.log("✅ Message sent successfully");
         } catch (error) {
-          // Even if Supabase fails, we already added it locally
-          console.warn("Failed to send message to Supabase (but it's still visible locally):", error);
-          webSocketService.sendChatMessage(message);
+          console.error("💥 Failed to send message:", error);
+
+          // Remove the optimistic message on error
+          set((state) => ({
+            messages: {
+              ...state.messages,
+              [roomId]: (state.messages[roomId] || []).filter(msg => !msg.id.startsWith('temp_')),
+            },
+          }));
+
+          throw error;
         }
       },
 
