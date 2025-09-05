@@ -42,6 +42,8 @@ export type ReviewCategory = "all" | "men" | "women" | "lgbtq+";
 
 export interface Review {
   id: string;
+  // The authenticated user who authored the review
+  authorId: string;
   reviewerAnonymousId: string;
   reviewedPersonName: string;
   reviewedPersonLocation: {

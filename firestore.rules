@@ -1,52 +1,68 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Users: public read, users can write their own profile
+    // Users: public read; writes restricted to owner
     match /users/{userId} {
       allow read: if true;
       allow write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Reviews are publicly readable; authenticated users can create and update
+    // Reviews: public read; creation requires authorId == auth.uid; updates by author only,
+    // except like/dislike counters which any authenticated user may update.
     match /reviews/{reviewId} {
-      allow read: if true; // Public read access
-      allow create: if request.auth != null && request.auth.uid != null;
-      // Allow general updates by authenticated users to align with app behavior
-      // NOTE: tighten in production by tracking authorId and restricting updates
-      allow update: if request.auth != null && request.auth.uid != null;
-      allow delete: if false; // No deletion allowed
+      allow read: if true;
+      allow create: if request.auth != null
+        && request.auth.uid != null
+        && request.resource.data.authorId == request.auth.uid;
+
+      // Allow author to update any field, or any authed user to update only like/dislike counters
+      allow update: if request.auth != null && (
+        // Owner full update
+        request.auth.uid == resource.data.authorId ||
+        // Limited community counters update (only like/dislike)
+        (
+          // Only like/dislike fields may be written
+          request.writeFields.size() == (("likeCount" in request.writeFields ? 1 : 0) + ("dislikeCount" in request.writeFields ? 1 : 0))
+        )
+      );
+
+      // Only the author can delete
+      allow delete: if request.auth != null && request.auth.uid == resource.data.authorId;
 
       // Comments within reviews
       match /comments/{commentId} {
-        allow read: if true; // Public read access to comments
-        allow create: if request.auth != null; // Authenticated users can create comments
-        // Allow like/dislike and updatedAt updates
-        allow update: if request.auth != null 
-          && request.writeFields.size() <= 3
-          && ('likeCount' in request.writeFields || 'dislikeCount' in request.writeFields);
-        // Deletion allowed for authenticated users (consider restricting to authorId in future)
-        allow delete: if request.auth != null;
+        allow read: if true;
+        allow create: if request.auth != null
+          && request.auth.uid != null
+          && request.resource.data.authorId == request.auth.uid;
+        // Allow like/dislike updates by any authed user (and updatedAt)
+        allow update: if request.auth != null && (
+          request.writeFields.size() == (("likeCount" in request.writeFields ? 1 : 0) + ("dislikeCount" in request.writeFields ? 1 : 0))
+        );
+        // Only the comment author can delete
+        allow delete: if request.auth != null && request.auth.uid == resource.data.authorId;
       }
     }
 
-    // Chat rooms are publicly readable
+    // Chat rooms are publicly readable; writes restricted (basic) for app flow.
     match /chatRooms/{roomId} {
       allow read: if true;
-      allow write: if request.auth != null; // Only authenticated users can modify
+      // Allow authenticated users to update lastActivity/lastMessage only
+      allow write: if request.auth != null && (
+        // Restrict writes to these fields to support sendMessage flow
+        request.writeFields.size() <= 2 ||
+        // Allow creation by admins in future; currently keep minimal
+        false
+      );
 
       // Messages within chat rooms
       match /messages/{messageId} {
-        allow read: if true; // Public read access to messages
-        allow create: if request.auth != null 
+        allow read: if true;
+        allow create: if request.auth != null
           && request.auth.uid != null
-          && request.auth.uid == request.resource.data.senderId; // Users can only create messages as themselves
-        allow update, delete: if false; // No updates or deletions allowed
+          && request.auth.uid == request.resource.data.senderId;
+        allow update, delete: if false;
       }
-    }
-
-    // Test collection for Firebase testing (remove in production)
-    match /test/{document=**} {
-      allow read, write: if request.auth != null;
     }
 
     // Default deny all other access

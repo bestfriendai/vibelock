@@ -344,9 +344,14 @@ export const firebaseReviews = {
   // Create a review
   createReview: async (reviewData: Omit<Review, "id" | "createdAt" | "updatedAt">): Promise<string> => {
     try {
+      const uid = auth.currentUser?.uid;
+      if (!uid) throw new Error("Must be signed in to create a review");
       const reviewsRef = collection(db, "reviews");
       const docRef = await addDoc(reviewsRef, {
         ...reviewData,
+        authorId: uid,
+        likeCount: (reviewData as any).likeCount ?? 0,
+        dislikeCount: (reviewData as any).dislikeCount ?? 0,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
@@ -479,12 +484,15 @@ export const firebaseChat = {
     });
   },
 
-  // Send message
+// Send message
   sendMessage: async (chatRoomId: string, messageData: Omit<ChatMessage, "id" | "timestamp">): Promise<void> => {
     try {
+      const uid = auth.currentUser?.uid;
+      if (!uid) throw new Error("Must be signed in to send messages");
       const messagesRef = collection(db, "chatRooms", chatRoomId, "messages");
       await addDoc(messagesRef, {
         ...messageData,
+        senderId: uid,
         timestamp: serverTimestamp()
       });
 
@@ -509,9 +517,14 @@ export const firebaseComments = {
   // Create a comment
   createComment: async (reviewId: string, commentData: Omit<Comment, "id" | "createdAt" | "updatedAt">): Promise<string> => {
     try {
+      const uid = auth.currentUser?.uid;
+      if (!uid) throw new Error("Must be signed in to comment");
       const commentsRef = collection(db, "reviews", reviewId, "comments");
       const docRef = await addDoc(commentsRef, {
         ...commentData,
+        authorId: uid,
+        likeCount: (commentData as any).likeCount ?? 0,
+        dislikeCount: (commentData as any).dislikeCount ?? 0,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       });
