@@ -148,7 +148,7 @@ export default function FirebaseExample() {
         likeCount: 0
       };
 
-      const reviewId = await firebaseReviews.createReview(reviewData);
+const reviewId = await firebaseReviews.createReview(reviewData as any);
       addTestResult(`✅ Review created successfully: ${reviewId}`);
 
       // Test get reviews

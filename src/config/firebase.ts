@@ -1,9 +1,13 @@
 // Firebase configuration for LockerRoom MVP
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { initializeAuth, getAuth, connectAuthEmulator, getReactNativePersistence } from "firebase/auth";
-import { initializeFirestore, getFirestore, connectFirestoreEmulator } from "firebase/firestore";
+import { initializeAuth, getAuth, connectAuthEmulator } from "firebase/auth";
+import { getReactNativePersistence } from "firebase/auth/react-native";
+import { initializeFirestore, connectFirestoreEmulator } from "firebase/firestore";
 import { getStorage, connectStorageEmulator } from "firebase/storage";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import type { Auth } from "firebase/auth";
+import type { Firestore } from "firebase/firestore";
+import type { FirebaseStorage } from "firebase/storage";
 
 // Firebase configuration from environment variables
 const firebaseConfig = {
@@ -45,7 +49,7 @@ if (getApps().length === 0) {
 }
 
 // Initialize Auth with React Native persistence
-let auth;
+let auth: Auth;
 try {
   auth = initializeAuth(app, {
     persistence: getReactNativePersistence(AsyncStorage),
@@ -56,15 +60,13 @@ try {
 }
 
 // Initialize Firestore with RN-friendly settings
-const db = initializeFirestore(app, {
+const db: Firestore = initializeFirestore(app, {
   ignoreUndefinedProperties: true,
   experimentalAutoDetectLongPolling: true,
-  // useFetchStreams can cause issues in some RN environments; disable if needed
-  useFetchStreams: false as unknown as undefined,
 });
 
 // Initialize Firebase Storage
-const storage = getStorage(app);
+const storage: FirebaseStorage = getStorage(app);
 
 // Optional: connect to local emulators when enabled
 const useEmulators = process.env.EXPO_PUBLIC_USE_FIREBASE_EMULATORS === "true";

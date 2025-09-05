@@ -42,8 +42,9 @@ type ReviewsStore = ReviewsState & ReviewsActions;
 
 // Mock data for development with realistic profiles
 const mockReviews: Review[] = [
-  {
+{
     id: "1",
+    authorId: "seed_user",
     reviewerAnonymousId: "anon_123",
     reviewedPersonName: "Ava",
   reviewedPersonLocation: { city: "Washington", state: "DC" },
@@ -58,8 +59,9 @@ const mockReviews: Review[] = [
     createdAt: new Date("2024-01-15"),
     updatedAt: new Date("2024-01-15")
   },
-  {
+{
     id: "2",
+    authorId: "seed_user",
     reviewerAnonymousId: "anon_456",
     reviewedPersonName: "Jasmine",
   reviewedPersonLocation: { city: "Alexandria", state: "VA" },
@@ -74,8 +76,9 @@ const mockReviews: Review[] = [
     createdAt: new Date("2024-01-14"),
     updatedAt: new Date("2024-01-14")
   },
-  {
+{
     id: "3",
+    authorId: "seed_user",
     reviewerAnonymousId: "anon_789",
     reviewedPersonName: "Taylor",
   reviewedPersonLocation: { city: "Arlington", state: "VA" },
@@ -90,8 +93,9 @@ const mockReviews: Review[] = [
     createdAt: new Date("2024-01-13"),
     updatedAt: new Date("2024-01-13")
   },
-  {
+{
     id: "4",
+    authorId: "seed_user",
     reviewerAnonymousId: "anon_101",
     reviewedPersonName: "Morgan",
   reviewedPersonLocation: { city: "Bethesda", state: "MD" },
@@ -106,8 +110,9 @@ const mockReviews: Review[] = [
     createdAt: new Date("2024-01-12"),
     updatedAt: new Date("2024-01-12")
   },
-  {
+{
     id: "5",
+    authorId: "seed_user",
     reviewerAnonymousId: "anon_202",
     reviewedPersonName: "Jordan",
   reviewedPersonLocation: { city: "Silver Spring", state: "MD" },
@@ -122,8 +127,9 @@ const mockReviews: Review[] = [
     createdAt: new Date("2024-01-11"),
     updatedAt: new Date("2024-01-11")
   },
-  {
+{
     id: "6",
+    authorId: "seed_user",
     reviewerAnonymousId: "anon_303",
     reviewedPersonName: "Mia",
   reviewedPersonLocation: { city: "Arlington", state: "VA" },
@@ -138,8 +144,9 @@ const mockReviews: Review[] = [
     createdAt: new Date("2024-01-10"),
     updatedAt: new Date("2024-01-10")
   },
-  {
+{
     id: "7",
+    authorId: "seed_user",
     reviewerAnonymousId: "anon_404",
     reviewedPersonName: "Sophia",
   reviewedPersonLocation: { city: "Washington", state: "DC" },
@@ -154,8 +161,9 @@ const mockReviews: Review[] = [
     createdAt: new Date("2024-01-09"),
     updatedAt: new Date("2024-01-09")
   },
-  {
+{
     id: "8",
+    authorId: "seed_user",
     reviewerAnonymousId: "anon_505",
     reviewedPersonName: "Olivia",
   reviewedPersonLocation: { city: "Alexandria", state: "VA" },
@@ -365,7 +373,7 @@ const useReviewsStore = create<ReviewsStore>()(
           }
 
           // Create review data for Firebase - remove undefined fields
-          const reviewData: Omit<Review, "id" | "createdAt" | "updatedAt"> = {
+const reviewData: Omit<Review, "id" | "createdAt" | "updatedAt" | "authorId"> = {
             reviewerAnonymousId: `anon_${Date.now()}`,
             reviewedPersonName: data.reviewedPersonName,
             reviewedPersonLocation: data.reviewedPersonLocation,
@@ -384,7 +392,8 @@ const useReviewsStore = create<ReviewsStore>()(
 
           // Create the full review object for immediate local display
           const newReview: Review = {
-            ...reviewData,
+...reviewData,
+            authorId: (() => { try { return require("./authStore").default.getState().user?.id || "local_seed"; } catch { return "local_seed"; } })(),
             id: `review_${Date.now()}_${Math.random().toString(36).substring(7)}`,
             createdAt: new Date(),
             updatedAt: new Date()

@@ -342,7 +342,7 @@ export const firebaseStorage = {
 // Reviews Services
 export const firebaseReviews = {
   // Create a review
-  createReview: async (reviewData: Omit<Review, "id" | "createdAt" | "updatedAt">): Promise<string> => {
+createReview: async (reviewData: Omit<Review, "id" | "createdAt" | "updatedAt" | "authorId">): Promise<string> => {
     try {
       const uid = auth.currentUser?.uid;
       if (!uid) throw new Error("Must be signed in to create a review");
