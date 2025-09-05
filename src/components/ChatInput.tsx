@@ -131,7 +131,7 @@ export default function ChatInput({ onSend, onTyping, onSendMedia, replyingTo, o
     try {
       const result = await DocumentPicker.getDocumentAsync({
         // Use SDK constant to avoid JSX parser confusion with "/*"
-        type: DocumentPicker.types.allFiles,
+        type: '*/*',
         copyToCacheDirectory: true,
       });
 

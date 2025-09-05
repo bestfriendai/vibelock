@@ -70,7 +70,7 @@ const useNotificationStore = create<NotificationStore>()(
             console.log('Notification received:', notification);
             // Handle foreground notifications
             const notificationData: NotificationData = {
-              type: notification.request.content.data?.type || 'new_message',
+              type: (notification.request.content.data?.type as 'new_review' | 'new_comment' | 'new_message' | 'review_approved' | 'review_rejected' | 'safety_alert') || 'new_message',
               title: notification.request.content.title || 'New Notification',
               body: notification.request.content.body || '',
               data: notification.request.content.data,

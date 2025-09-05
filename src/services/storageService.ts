@@ -1,6 +1,7 @@
 import { supabase } from '../config/supabase';
 import * as FileSystem from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { decode } from 'base64-arraybuffer';
 
 export interface UploadResult {
@@ -235,10 +236,10 @@ class StorageService {
    */
   async compressImage(uri: string, quality: number = 0.8): Promise<string> {
     try {
-      const manipResult = await ImagePicker.manipulateAsync(
+      const manipResult = await ImageManipulator.manipulateAsync(
         uri,
         [{ resize: { width: 1024 } }], // Resize to max width of 1024px
-        { compress: quality, format: ImagePicker.SaveFormat.JPEG }
+        { compress: quality, format: ImageManipulator.SaveFormat.JPEG }
       );
 
       return manipResult.uri;

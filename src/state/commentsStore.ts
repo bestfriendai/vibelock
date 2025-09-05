@@ -3,6 +3,7 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Comment, CommentState } from "../types";
 import { supabaseComments } from "../services/supabase";
+import { supabase } from "../config/supabase";
 import { RealtimeChannel } from '@supabase/supabase-js';
 
 interface CommentsStore extends CommentState {
@@ -232,7 +233,7 @@ const useCommentsStore = create<CommentsStore>()(
           return subscriptions.get(reviewId)!.unsubscribe;
         }
 
-        const channel = supabaseComments.supabase
+        const channel = supabase
           .channel(`comments-${reviewId}`)
           .on(
             'postgres_changes',
@@ -242,7 +243,7 @@ const useCommentsStore = create<CommentsStore>()(
               table: 'comments_firebase',
               filter: `review_id=eq.${reviewId}`,
             },
-            (payload) => {
+            (payload: any) => {
               console.log('Comment change received:', payload);
 
               if (payload.eventType === 'INSERT') {
