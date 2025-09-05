@@ -1,7 +1,6 @@
 // Firebase configuration for LockerRoom MVP
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { initializeAuth, getAuth, connectAuthEmulator } from "firebase/auth";
-import { getReactNativePersistence } from "firebase/auth/react-native";
 import { initializeFirestore, connectFirestoreEmulator } from "firebase/firestore";
 import { getStorage, connectStorageEmulator } from "firebase/storage";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -51,8 +50,13 @@ if (getApps().length === 0) {
 // Initialize Auth with React Native persistence
 let auth: Auth;
 try {
+  // Use react-native persistence if available
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+// @ts-ignore: react-native subpath may not have bundled types in this version
+  const { getReactNativePersistence: getRNP } = require("firebase/auth/react-native");
   auth = initializeAuth(app, {
-    persistence: getReactNativePersistence(AsyncStorage),
+// @ts-ignore: type narrowed at runtime
+    persistence: getRNP(AsyncStorage),
   });
 } catch (e) {
   // Fallback if already initialized or in environments where initializeAuth isn't applicable
