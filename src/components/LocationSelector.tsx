@@ -1,16 +1,7 @@
 import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  Pressable,
-  Modal,
-  TextInput,
-  FlatList,
-  Keyboard,
-  ActivityIndicator
-} from "react-native";
+import { View, Text, Pressable, Modal, TextInput, FlatList, Keyboard, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import * as Haptics from 'expo-haptics';
+import * as Haptics from "expo-haptics";
 import { getCurrentLocation, reverseGeocodeLocation, searchLocations } from "../utils/location";
 
 interface Location {
@@ -45,7 +36,7 @@ const mockLocations: Location[] = [
   { city: "Baltimore", state: "MD", fullName: "Baltimore, MD" },
   { city: "Richmond", state: "VA", fullName: "Richmond, VA" },
   { city: "Virginia Beach", state: "VA", fullName: "Virginia Beach, VA" },
-  
+
   // Major US Cities
   { city: "New York", state: "NY", fullName: "New York, NY" },
   { city: "Los Angeles", state: "CA", fullName: "Los Angeles, CA" },
@@ -93,7 +84,7 @@ const mockLocations: Location[] = [
   { city: "Tulsa", state: "OK", fullName: "Tulsa, OK" },
   { city: "Tampa", state: "FL", fullName: "Tampa, FL" },
   { city: "New Orleans", state: "LA", fullName: "New Orleans, LA" },
-  
+
   // College Towns
   { city: "Ann Arbor", state: "MI", fullName: "Ann Arbor, MI" },
   { city: "Berkeley", state: "CA", fullName: "Berkeley, CA" },
@@ -107,7 +98,7 @@ const mockLocations: Location[] = [
   { city: "State College", state: "PA", fullName: "State College, PA" },
   { city: "Tempe", state: "AZ", fullName: "Tempe, AZ" },
   { city: "Tuscaloosa", state: "AL", fullName: "Tuscaloosa, AL" },
-  
+
   // Popular Suburbs and Mid-size Cities
   { city: "Plano", state: "TX", fullName: "Plano, TX" },
   { city: "Irvine", state: "CA", fullName: "Irvine, CA" },
@@ -118,7 +109,7 @@ const mockLocations: Location[] = [
   { city: "Cary", state: "NC", fullName: "Cary, NC" },
   { city: "Boulder", state: "CO", fullName: "Boulder, CO" },
   { city: "Stamford", state: "CT", fullName: "Stamford, CT" },
-  { city: "Jersey City", state: "NJ", fullName: "Jersey City, NJ" }
+  { city: "Jersey City", state: "NJ", fullName: "Jersey City, NJ" },
 ];
 
 export default function LocationSelector({ currentLocation, onLocationChange }: LocationSelectorProps) {
@@ -134,10 +125,11 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
         setFilteredLocations(mockLocations);
       } else {
         // First filter local mock data
-        const localFiltered = mockLocations.filter(location =>
-          location.fullName.toLowerCase().includes(searchText.toLowerCase()) ||
-          location.city.toLowerCase().includes(searchText.toLowerCase()) ||
-          location.state.toLowerCase().includes(searchText.toLowerCase())
+        const localFiltered = mockLocations.filter(
+          (location) =>
+            location.fullName.toLowerCase().includes(searchText.toLowerCase()) ||
+            location.city.toLowerCase().includes(searchText.toLowerCase()) ||
+            location.state.toLowerCase().includes(searchText.toLowerCase()),
         );
 
         // If we have local results, use them
@@ -147,10 +139,10 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
           // Try geocoding search for broader results
           try {
             const searchResults = await searchLocations(searchText);
-            const formattedResults: Location[] = searchResults.map(result => ({
+            const formattedResults: Location[] = searchResults.map((result) => ({
               city: result.city,
               state: result.state,
-              fullName: `${result.city}, ${result.state}`
+              fullName: `${result.city}, ${result.state}`,
             }));
             setFilteredLocations(formattedResults);
           } catch (error) {
@@ -176,7 +168,7 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
   const handleCurrentLocation = async () => {
     setIsLoadingCurrentLocation(true);
     setLocationError(null);
-    
+
     try {
       const coordinates = await getCurrentLocation();
       if (!coordinates) {
@@ -191,7 +183,7 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
         const location: Location = {
           city: locationData.city,
           state: locationData.state,
-          fullName: `${locationData.city}, ${locationData.state}`
+          fullName: `${locationData.city}, ${locationData.state}`,
         };
         // Haptic feedback for successful location detection
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -209,17 +201,14 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
   };
 
   const renderLocationItem = ({ item }: { item: Location }) => (
-    <Pressable
-      onPress={() => handleLocationSelect(item)}
-      className="px-4 py-3 border-b border-surface-700"
-    >
+    <Pressable onPress={() => handleLocationSelect(item)} className="px-4 py-3 border-b border-surface-700">
       <Text className="text-text-primary font-medium">{item.fullName}</Text>
     </Pressable>
   );
 
   return (
     <>
-      <Pressable 
+      <Pressable
         className="flex-row items-center bg-surface-700 px-3 py-2 rounded-full"
         onPress={() => setModalVisible(true)}
       >
@@ -240,10 +229,7 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
           {/* Header */}
           <View className="flex-row items-center justify-between px-4 py-4 border-b border-surface-700">
             <Text className="text-text-primary text-lg font-semibold">Select Location</Text>
-            <Pressable
-              onPress={() => setModalVisible(false)}
-              className="w-8 h-8 items-center justify-center"
-            >
+            <Pressable onPress={() => setModalVisible(false)} className="w-8 h-8 items-center justify-center">
               <Ionicons name="close" size={24} color="#F3F4F6" />
             </Pressable>
           </View>
@@ -284,11 +270,7 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
                 {isLoadingCurrentLocation ? "Getting your location..." : "Use Current Location"}
               </Text>
             </Pressable>
-            {locationError && (
-              <Text className="text-red-400 text-sm mt-2 px-1">
-                {locationError}
-              </Text>
-            )}
+            {locationError && <Text className="text-red-400 text-sm mt-2 px-1">{locationError}</Text>}
           </View>
 
           {/* Location List */}
@@ -305,9 +287,7 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
             <View className="flex-1 items-center justify-center">
               <Ionicons name="location-outline" size={48} color="#6B7280" />
               <Text className="text-text-secondary text-lg font-medium mt-4">No locations found</Text>
-              <Text className="text-text-muted text-center mt-2 px-8">
-                Try searching for a different city or state
-              </Text>
+              <Text className="text-text-muted text-center mt-2 px-8">Try searching for a different city or state</Text>
             </View>
           )}
         </View>

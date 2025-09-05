@@ -1,13 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  ScrollView,
-  Pressable,
-  KeyboardAvoidingView,
-  Platform,
-} from "react-native";
+import { View, Text, TextInput, ScrollView, Pressable, KeyboardAvoidingView, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import useReviewsStore from "../state/reviewsStore";
@@ -18,10 +10,6 @@ import SocialMediaInput from "../components/SocialMediaInput";
 import LocationSelector from "../components/LocationSelector";
 import useAuthStore from "../state/authStore";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
-
-
-
 
 const DRAFT_KEY = "create-review-draft";
 
@@ -38,7 +26,7 @@ export default function CreateReviewScreen() {
   const [selectedLocation, setSelectedLocation] = useState<Location>({
     city: user?.location.city || "Washington",
     state: user?.location.state || "DC",
-    fullName: `${user?.location.city || "Washington"}, ${user?.location.state || "DC"}`
+    fullName: `${user?.location.city || "Washington"}, ${user?.location.state || "DC"}`,
   });
   const [reviewText, setReviewText] = useState("");
   const [sentiment, setSentiment] = useState<Sentiment | null>(null);
@@ -65,7 +53,7 @@ export default function CreateReviewScreen() {
             setSelectedLocation({
               city: draft.city,
               state: draft.state,
-              fullName: `${draft.city}, ${draft.state}`
+              fullName: `${draft.city}, ${draft.state}`,
             });
           }
           setReviewText(draft.reviewText || "");
@@ -83,33 +71,36 @@ export default function CreateReviewScreen() {
     const save = setTimeout(() => {
       AsyncStorage.setItem(
         DRAFT_KEY,
-          JSON.stringify({
-            firstName,
-            selectedLocation,
-            reviewText,
-            sentiment,
-            category,
-            media,
-            socialMedia,
-          })
+        JSON.stringify({
+          firstName,
+          selectedLocation,
+          reviewText,
+          sentiment,
+          category,
+          media,
+          socialMedia,
+        }),
       ).catch(() => {});
     }, 400);
     return () => clearTimeout(save);
   }, [firstName, selectedLocation, reviewText, sentiment, category, media, socialMedia]);
 
-
-
-
-
-  const imagesCount = useMemo(() => media.filter(m => m.type === "image").length, [media]);
-  const hasRequired = Boolean(firstName.trim() && selectedLocation.city.trim() && selectedLocation.state.trim() && reviewText.trim() && imagesCount >= 1);
+  const imagesCount = useMemo(() => media.filter((m) => m.type === "image").length, [media]);
+  const hasRequired = Boolean(
+    firstName.trim() &&
+      selectedLocation.city.trim() &&
+      selectedLocation.state.trim() &&
+      reviewText.trim() &&
+      imagesCount >= 1,
+  );
 
   const handleSubmit = async () => {
     setError(null);
     setSuccess(null);
 
     if (!hasRequired) {
-      if (!firstName.trim() || !selectedLocation.city.trim() || !selectedLocation.state.trim()) setError("Please fill in all required fields");
+      if (!firstName.trim() || !selectedLocation.city.trim() || !selectedLocation.state.trim())
+        setError("Please fill in all required fields");
       else if (imagesCount < 1) setError("Please add at least one photo");
       else if (!reviewText.trim()) setError("Please write a review");
       return;
@@ -118,14 +109,17 @@ export default function CreateReviewScreen() {
     try {
       const reviewData = {
         reviewedPersonName: firstName.trim(),
-        reviewedPersonLocation: { city: selectedLocation.city.trim(), state: selectedLocation.state.trim().toUpperCase() },
+        reviewedPersonLocation: {
+          city: selectedLocation.city.trim(),
+          state: selectedLocation.state.trim().toUpperCase(),
+        },
         sentiment: sentiment || undefined,
         reviewText: reviewText.trim(),
         category,
         media,
         socialMedia,
       };
-      
+
       await createReview(reviewData);
 
       // Reset form and draft
@@ -133,7 +127,7 @@ export default function CreateReviewScreen() {
       setSelectedLocation({
         city: user?.location.city || "Washington",
         state: user?.location.state || "DC",
-        fullName: `${user?.location.city || "Washington"}, ${user?.location.state || "DC"}`
+        fullName: `${user?.location.city || "Washington"}, ${user?.location.state || "DC"}`,
       });
       setReviewText("");
       setSentiment(null);
@@ -141,10 +135,10 @@ export default function CreateReviewScreen() {
       setMedia([]);
       setSocialMedia({});
       await AsyncStorage.removeItem(DRAFT_KEY);
-      
+
       // Show success message and navigate back
       setSuccess("Review posted successfully!");
-      
+
       // Navigate back to browse screen after a short delay
       setTimeout(() => {
         navigation.goBack();
@@ -171,9 +165,9 @@ export default function CreateReviewScreen() {
                 Join our community to share your dating experiences and help others make informed decisions.
               </Text>
             </View>
-            
+
             <View className="space-y-3">
-              <Pressable 
+              <Pressable
                 className="bg-brand-red rounded-lg py-4 items-center"
                 onPress={() => {
                   // Navigate to sign up
@@ -181,8 +175,8 @@ export default function CreateReviewScreen() {
               >
                 <Text className="text-white font-semibold text-lg">Sign Up</Text>
               </Pressable>
-              
-              <Pressable 
+
+              <Pressable
                 className="bg-surface-700 rounded-lg py-4 items-center"
                 onPress={() => {
                   // Navigate to sign in
@@ -199,10 +193,7 @@ export default function CreateReviewScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-surface-900">
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        className="flex-1"
-      >
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
         {/* Header */}
         <View className="px-4 py-4 border-b border-border bg-surface-800">
           <Text className="text-text-primary text-2xl font-bold">Write Review</Text>
@@ -240,10 +231,7 @@ export default function CreateReviewScreen() {
 
                 <View>
                   <Text className="text-text-secondary font-medium mb-2">Location</Text>
-                  <LocationSelector
-                    currentLocation={selectedLocation}
-                    onLocationChange={setSelectedLocation}
-                  />
+                  <LocationSelector currentLocation={selectedLocation} onLocationChange={setSelectedLocation} />
                 </View>
               </View>
             </FormSection>
@@ -255,25 +243,35 @@ export default function CreateReviewScreen() {
                   className={`flex-1 items-center justify-center rounded-xl border px-3 py-3 ${category === "men" ? "bg-blue-500/15 border-blue-500" : "bg-surface-800 border-border"}`}
                   onPress={() => setCategory("men")}
                 >
-                  <Text className={`font-medium ${category === "men" ? "text-blue-400" : "text-text-primary"}`}>Men</Text>
+                  <Text className={`font-medium ${category === "men" ? "text-blue-400" : "text-text-primary"}`}>
+                    Men
+                  </Text>
                 </Pressable>
                 <Pressable
                   className={`flex-1 items-center justify-center rounded-xl border px-3 py-3 ${category === "women" ? "bg-pink-500/15 border-pink-500" : "bg-surface-800 border-border"}`}
                   onPress={() => setCategory("women")}
                 >
-                  <Text className={`font-medium ${category === "women" ? "text-pink-400" : "text-text-primary"}`}>Women</Text>
+                  <Text className={`font-medium ${category === "women" ? "text-pink-400" : "text-text-primary"}`}>
+                    Women
+                  </Text>
                 </Pressable>
                 <Pressable
                   className={`flex-1 items-center justify-center rounded-xl border px-3 py-3 ${category === "lgbtq+" ? "bg-purple-500/15 border-purple-500" : "bg-surface-800 border-border"}`}
                   onPress={() => setCategory("lgbtq+")}
                 >
-                  <Text className={`font-medium ${category === "lgbtq+" ? "text-purple-400" : "text-text-primary"}`}>LGBTQ+</Text>
+                  <Text className={`font-medium ${category === "lgbtq+" ? "text-purple-400" : "text-text-primary"}`}>
+                    LGBTQ+
+                  </Text>
                 </Pressable>
               </View>
             </FormSection>
 
             {/* Media */}
-            <FormSection title="Photos & Videos" subtitle="Add at least 1 photo (max 6). Videos up to 60 seconds." required>
+            <FormSection
+              title="Photos & Videos"
+              subtitle="Add at least 1 photo (max 6). Videos up to 60 seconds."
+              required
+            >
               <MediaUploadGrid media={media} onMediaChange={setMedia} maxItems={6} required />
             </FormSection>
 
@@ -310,7 +308,10 @@ export default function CreateReviewScreen() {
             </FormSection>
 
             {/* Social Media */}
-            <FormSection title="Social Media (Optional)" subtitle="Optionally add handles that will show publicly on the review">
+            <FormSection
+              title="Social Media (Optional)"
+              subtitle="Optionally add handles that will show publicly on the review"
+            >
               <SocialMediaInput socialMedia={socialMedia} onSocialMediaChange={setSocialMedia} />
             </FormSection>
 

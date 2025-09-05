@@ -1,7 +1,7 @@
 import { ChatMessage, ConnectionStatus, TypingUser } from "../types";
 
 export interface WebSocketMessage {
-  type: 'message' | 'typing' | 'join' | 'leave' | 'online_status' | 'error';
+  type: "message" | "typing" | "join" | "leave" | "online_status" | "error";
   data: any;
   timestamp: Date;
 }
@@ -29,7 +29,7 @@ class WebSocketService {
   private currentChatRoomId: string | null = null;
 
   // Mock WebSocket URL - in production this would be your actual WebSocket server
-  private readonly WS_URL = 'ws://localhost:8080/chat';
+  private readonly WS_URL = "ws://localhost:8080/chat";
 
   constructor() {
     // For development, we'll simulate WebSocket behavior
@@ -44,8 +44,8 @@ class WebSocketService {
     this.currentUserId = userId;
     this.callbacks = callbacks;
     this.isConnecting = true;
-    
-    callbacks.onConnectionStatusChange('connecting');
+
+    callbacks.onConnectionStatusChange("connecting");
 
     // In development, simulate connection
     this.simulateConnection();
@@ -56,7 +56,7 @@ class WebSocketService {
       this.ws.close();
       this.ws = null;
     }
-    
+
     if (this.heartbeatInterval) {
       clearInterval(this.heartbeatInterval);
       this.heartbeatInterval = null;
@@ -65,39 +65,39 @@ class WebSocketService {
     this.isConnecting = false;
     this.reconnectAttempts = 0;
     this.messageQueue = [];
-    this.callbacks?.onConnectionStatusChange('disconnected');
+    this.callbacks?.onConnectionStatusChange("disconnected");
   }
 
   joinRoom(chatRoomId: string) {
     this.currentChatRoomId = chatRoomId;
     this.sendMessage({
-      type: 'join',
+      type: "join",
       data: { chatRoomId, userId: this.currentUserId },
-      timestamp: new Date()
+      timestamp: new Date(),
     });
   }
 
   leaveRoom(chatRoomId: string) {
     this.sendMessage({
-      type: 'leave',
+      type: "leave",
       data: { chatRoomId, userId: this.currentUserId },
-      timestamp: new Date()
+      timestamp: new Date(),
     });
-    
+
     if (this.currentChatRoomId === chatRoomId) {
       this.currentChatRoomId = null;
     }
   }
 
-  sendChatMessage(message: Omit<ChatMessage, 'id' | 'timestamp'>) {
+  sendChatMessage(message: Omit<ChatMessage, "id" | "timestamp">) {
     const wsMessage: WebSocketMessage = {
-      type: 'message',
+      type: "message",
       data: {
         ...message,
         id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        timestamp: new Date()
+        timestamp: new Date(),
       },
-      timestamp: new Date()
+      timestamp: new Date(),
     };
 
     this.sendMessage(wsMessage);
@@ -105,14 +105,14 @@ class WebSocketService {
 
   sendTypingIndicator(chatRoomId: string, isTyping: boolean) {
     this.sendMessage({
-      type: 'typing',
+      type: "typing",
       data: {
         chatRoomId,
         userId: this.currentUserId,
         isTyping,
-        timestamp: new Date()
+        timestamp: new Date(),
       },
-      timestamp: new Date()
+      timestamp: new Date(),
     });
   }
 
@@ -134,10 +134,10 @@ class WebSocketService {
     // Simulate connection delay
     setTimeout(() => {
       this.isConnecting = false;
-      this.callbacks?.onConnectionStatusChange('connected');
+      this.callbacks?.onConnectionStatusChange("connected");
       this.startHeartbeat();
       this.processMessageQueue();
-      
+
       // Simulate receiving some initial data
       this.simulateInitialData();
     }, 1000);
@@ -146,14 +146,14 @@ class WebSocketService {
   private simulateInitialData() {
     // Simulate online users
     setTimeout(() => {
-      this.callbacks?.onOnlineStatusChange(['user1', 'user2', 'user3']);
+      this.callbacks?.onOnlineStatusChange(["user1", "user2", "user3"]);
     }, 500);
   }
 
   private startHeartbeat() {
     this.heartbeatInterval = setInterval(() => {
       if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-        this.ws.send(JSON.stringify({ type: 'ping', timestamp: new Date() }));
+        this.ws.send(JSON.stringify({ type: "ping", timestamp: new Date() }));
       }
     }, 30000); // Send heartbeat every 30 seconds
   }
@@ -171,15 +171,15 @@ class WebSocketService {
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts++;
       const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1);
-      
+
       setTimeout(() => {
         if (this.currentUserId && this.callbacks) {
           this.connect(this.currentUserId, this.callbacks);
         }
       }, delay);
     } else {
-      this.callbacks?.onConnectionStatusChange('error');
-      this.callbacks?.onError('Failed to reconnect after maximum attempts');
+      this.callbacks?.onConnectionStatusChange("error");
+      this.callbacks?.onError("Failed to reconnect after maximum attempts");
     }
   }
 
@@ -201,18 +201,18 @@ class WebSocketService {
   }
 
   getConnectionStatus(): ConnectionStatus {
-    if (!this.ws) return 'disconnected';
-    
+    if (!this.ws) return "disconnected";
+
     switch (this.ws.readyState) {
       case WebSocket.CONNECTING:
-        return 'connecting';
+        return "connecting";
       case WebSocket.OPEN:
-        return 'connected';
+        return "connected";
       case WebSocket.CLOSING:
       case WebSocket.CLOSED:
-        return 'disconnected';
+        return "disconnected";
       default:
-        return 'error';
+        return "error";
     }
   }
 

@@ -14,16 +14,16 @@ interface Props {
   showValidation?: boolean;
 }
 
-export default function FormSection({ 
-  title, 
-  subtitle, 
-  children, 
+export default function FormSection({
+  title,
+  subtitle,
+  children,
   required = false,
   className = "",
   error,
   success,
   isValid,
-  showValidation = false
+  showValidation = false,
 }: Props) {
   const getValidationColor = () => {
     if (error) return "text-red-400";
@@ -43,44 +43,28 @@ export default function FormSection({
       <View className="mb-4">
         <View className="flex-row items-center justify-between">
           <View className="flex-row items-center">
-            <Text className="text-text-primary text-xl font-bold">
-              {title}
-            </Text>
-            {required && (
-              <Text className="text-brand-red text-xl font-bold ml-1">*</Text>
-            )}
+            <Text className="text-text-primary text-xl font-bold">{title}</Text>
+            {required && <Text className="text-brand-red text-xl font-bold ml-1">*</Text>}
           </View>
-          
+
           {/* Validation Icon */}
           {showValidation && getValidationIcon() && (
-            <Ionicons 
-              name={getValidationIcon()!} 
-              size={20} 
-              color={error ? "#EF4444" : "#22C55E"} 
-            />
+            <Ionicons name={getValidationIcon()!} size={20} color={error ? "#EF4444" : "#22C55E"} />
           )}
         </View>
-        
-        {subtitle && (
-          <Text className={`text-base mt-1 leading-5 ${getValidationColor()}`}>
-            {subtitle}
-          </Text>
-        )}
+
+        {subtitle && <Text className={`text-base mt-1 leading-5 ${getValidationColor()}`}>{subtitle}</Text>}
       </View>
 
       {/* Section Content */}
-      <View>
-        {children}
-      </View>
+      <View>{children}</View>
 
       {/* Error Message */}
       {error && (
         <View className="mt-3 p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
           <View className="flex-row items-center">
             <Ionicons name="alert-circle" size={16} color="#EF4444" />
-            <Text className="text-red-400 text-sm font-medium ml-2">
-              {error}
-            </Text>
+            <Text className="text-red-400 text-sm font-medium ml-2">{error}</Text>
           </View>
         </View>
       )}
@@ -90,9 +74,7 @@ export default function FormSection({
         <View className="mt-3 p-3 bg-green-500/10 border border-green-500/20 rounded-xl">
           <View className="flex-row items-center">
             <Ionicons name="checkmark-circle" size={16} color="#22C55E" />
-            <Text className="text-green-400 text-sm font-medium ml-2">
-              {success}
-            </Text>
+            <Text className="text-green-400 text-sm font-medium ml-2">{success}</Text>
           </View>
         </View>
       )}

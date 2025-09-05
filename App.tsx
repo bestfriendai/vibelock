@@ -34,7 +34,7 @@ export default function App() {
   useEffect(() => {
     // Initialize Firebase auth state listener
     const unsubscribe = initializeAuthListener();
-    
+
     // Cleanup listener on unmount
     return () => {
       unsubscribe();

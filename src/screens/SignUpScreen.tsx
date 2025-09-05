@@ -13,13 +13,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  withTiming,
-  withDelay,
-} from "react-native-reanimated";
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming, withDelay } from "react-native-reanimated";
 import AnimatedButton from "../components/AnimatedButton";
 import AnimatedInput from "../components/AnimatedInput";
 import TestingBanner from "../components/TestingBanner";
@@ -131,31 +125,31 @@ export default function SignUpScreen() {
       setEmailError("Email is required");
       return;
     }
-    
+
     if (!password.trim()) {
       setPasswordError("Password is required");
       return;
     }
-    
+
     if (!confirmPassword.trim()) {
       setConfirmPasswordError("Please confirm your password");
       return;
     }
-    
+
     if (password !== confirmPassword) {
       setConfirmPasswordError("Passwords do not match");
       return;
     }
-    
+
     setStep(2);
   };
 
   const handleSubmit = async () => {
     clearError();
-    
+
     // Use default location if not provided
     const defaultLocation = location || { city: "Washington", state: "DC" };
-    
+
     try {
       await register(email.trim(), password, defaultLocation, { genderPreference, gender });
     } catch (err) {
@@ -165,10 +159,10 @@ export default function SignUpScreen() {
 
   const handleSkipPreferences = async () => {
     clearError();
-    
+
     // Use default values and location
     const defaultLocation = { city: "Washington", state: "DC" };
-    
+
     try {
       await register(email.trim(), password, defaultLocation, { genderPreference: "all", gender: undefined });
     } catch (err) {
@@ -203,15 +197,9 @@ export default function SignUpScreen() {
   return (
     <TouchableWithoutFeedback onPress={dismissKeyboard}>
       <SafeAreaView className="flex-1 bg-surface-900">
-        <LinearGradient
-          colors={["#141418", "#1A1A20", "#141418"]}
-          className="absolute inset-0"
-        />
+        <LinearGradient colors={["#141418", "#1A1A20", "#141418"]} className="absolute inset-0" />
         <TestingBanner />
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          className="flex-1"
-        >
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
           <ScrollView
             className="flex-1"
             contentContainerStyle={{ flexGrow: 1 }}
@@ -228,9 +216,7 @@ export default function SignUpScreen() {
                     resizeMode="contain"
                   />
                 </View>
-                <Text className="text-4xl font-bold text-text-primary mb-3 text-center">
-                  Join the Community
-                </Text>
+                <Text className="text-4xl font-bold text-text-primary mb-3 text-center">Join the Community</Text>
                 <Text className="text-lg text-text-secondary text-center leading-7">
                   Create your account to start sharing experiences
                 </Text>
@@ -242,9 +228,7 @@ export default function SignUpScreen() {
                   <>
                     {/* Step 1: Basic Account Info */}
                     <View className="mb-4">
-                      <Text className="text-text-muted text-center mb-6">
-                        Step 1 of 2: Create your account
-                      </Text>
+                      <Text className="text-text-muted text-center mb-6">Step 1 of 2: Create your account</Text>
                     </View>
 
                     <AnimatedInput
@@ -311,8 +295,7 @@ export default function SignUpScreen() {
                     />
 
                     <Text className="text-text-muted text-xs text-center leading-5">
-                      By continuing, you agree to our{" "}
-                      <Text className="text-brand-red">Terms of Service</Text> and{" "}
+                      By continuing, you agree to our <Text className="text-brand-red">Terms of Service</Text> and{" "}
                       <Text className="text-brand-red">Privacy Policy</Text>
                     </Text>
                   </>
@@ -320,9 +303,7 @@ export default function SignUpScreen() {
                   <>
                     {/* Step 2: Preferences (Optional) */}
                     <View className="mb-4">
-                      <Text className="text-text-muted text-center mb-2">
-                        Step 2 of 2: Personalize your experience
-                      </Text>
+                      <Text className="text-text-muted text-center mb-2">Step 2 of 2: Personalize your experience</Text>
                       <Text className="text-text-muted text-center text-sm">
                         These settings help us show you relevant content. You can change them later.
                       </Text>
@@ -333,8 +314,11 @@ export default function SignUpScreen() {
                       <Text className="text-text-primary font-medium">Location (Optional)</Text>
                       <LocationSelector
                         currentLocation={
-                          (location && { city: location.city, state: location.state, fullName: location.fullName || `${location.city}, ${location.state}` })
-                          || { city: "Washington", state: "DC", fullName: "Washington, DC" }
+                          (location && {
+                            city: location.city,
+                            state: location.state,
+                            fullName: location.fullName || `${location.city}, ${location.state}`,
+                          }) || { city: "Washington", state: "DC", fullName: "Washington, DC" }
                         }
                         onLocationChange={(loc) => {
                           setLocation(loc);
@@ -351,7 +335,7 @@ export default function SignUpScreen() {
                           { key: "all", label: "All" },
                           { key: "men", label: "Men" },
                           { key: "women", label: "Women" },
-                          { key: "lgbtq+", label: "LGBTQ+" }
+                          { key: "lgbtq+", label: "LGBTQ+" },
                         ]}
                         value={genderPreference}
                         onChange={(val) => setGenderPreference(val as any)}
@@ -366,7 +350,7 @@ export default function SignUpScreen() {
                           { key: "man", label: "Man" },
                           { key: "woman", label: "Woman" },
                           { key: "nonbinary", label: "Non-binary" },
-                          { key: "lgbtq+", label: "LGBTQ+" }
+                          { key: "lgbtq+", label: "LGBTQ+" },
                         ]}
                         value={gender as any}
                         onChange={(val) => setGender(val as any)}
@@ -376,9 +360,7 @@ export default function SignUpScreen() {
                     {/* Global Error */}
                     {error && (
                       <View className="bg-brand-red/20 border border-brand-red/30 rounded-lg p-4">
-                        <Text className="text-brand-red text-center font-medium">
-                          {error}
-                        </Text>
+                        <Text className="text-brand-red text-center font-medium">{error}</Text>
                       </View>
                     )}
 
@@ -415,9 +397,7 @@ export default function SignUpScreen() {
             {/* Footer */}
             <Animated.View style={footerAnimatedStyle} className="px-6 pb-8">
               <View className="flex-row justify-center items-center">
-                <Text className="text-text-secondary">
-                  Already have an account?{" "}
-                </Text>
+                <Text className="text-text-secondary">Already have an account? </Text>
                 <AnimatedButton
                   title="Sign In"
                   variant="ghost"

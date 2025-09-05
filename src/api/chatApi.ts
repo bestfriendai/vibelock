@@ -23,13 +23,13 @@ class ChatApiService {
   private baseDelay = 500; // Simulate network delay
 
   private async simulateNetworkDelay(delay = this.baseDelay): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, delay));
+    return new Promise((resolve) => setTimeout(resolve, delay));
   }
 
   // Chat Rooms API
   async getChatRooms(): Promise<ChatApiResponse<ChatRoom[]>> {
     await this.simulateNetworkDelay();
-    
+
     try {
       const rooms: ChatRoom[] = [
         {
@@ -47,13 +47,13 @@ class ChatApiService {
             content: "Anyone been to that new rooftop bar in Adams Morgan?",
             messageType: "text",
             timestamp: new Date(Date.now() - 300000),
-            isRead: false
+            isRead: false,
           },
           lastActivity: new Date(Date.now() - 300000),
           isActive: true,
           location: { city: "Washington", state: "DC" },
           createdAt: new Date("2024-01-01"),
-          updatedAt: new Date()
+          updatedAt: new Date(),
         },
         {
           id: "room_local_alexandria",
@@ -70,13 +70,13 @@ class ChatApiService {
             content: "Great coffee shop recommendations in Old Town?",
             messageType: "text",
             timestamp: new Date(Date.now() - 600000),
-            isRead: false
+            isRead: false,
           },
           lastActivity: new Date(Date.now() - 600000),
           isActive: true,
           location: { city: "Alexandria", state: "VA" },
           createdAt: new Date("2024-01-01"),
-          updatedAt: new Date()
+          updatedAt: new Date(),
         },
         {
           id: "room_topic_dating_tips",
@@ -93,12 +93,12 @@ class ChatApiService {
             content: "What's everyone's take on first date locations?",
             messageType: "text",
             timestamp: new Date(Date.now() - 900000),
-            isRead: false
+            isRead: false,
           },
           lastActivity: new Date(Date.now() - 900000),
           isActive: true,
           createdAt: new Date("2024-01-01"),
-          updatedAt: new Date()
+          updatedAt: new Date(),
         },
         {
           id: "room_topic_success_stories",
@@ -115,12 +115,12 @@ class ChatApiService {
             content: "Just wanted to thank everyone for the advice! Had an amazing third date last night 💕",
             messageType: "text",
             timestamp: new Date(Date.now() - 1800000),
-            isRead: false
+            isRead: false,
           },
           lastActivity: new Date(Date.now() - 1800000),
           isActive: true,
           createdAt: new Date("2024-01-01"),
-          updatedAt: new Date()
+          updatedAt: new Date(),
         },
         {
           id: "room_topic_red_flags",
@@ -137,12 +137,12 @@ class ChatApiService {
             content: "Trust your gut feeling - it's usually right",
             messageType: "text",
             timestamp: new Date(Date.now() - 2700000),
-            isRead: false
+            isRead: false,
           },
           lastActivity: new Date(Date.now() - 2700000),
           isActive: true,
           createdAt: new Date("2024-01-01"),
-          updatedAt: new Date()
+          updatedAt: new Date(),
         },
         {
           id: "room_global",
@@ -159,60 +159,60 @@ class ChatApiService {
             content: "Good morning everyone! Hope you all have a great day ☀️",
             messageType: "text",
             timestamp: new Date(Date.now() - 3600000),
-            isRead: false
+            isRead: false,
           },
           lastActivity: new Date(Date.now() - 3600000),
           isActive: true,
           createdAt: new Date("2024-01-01"),
-          updatedAt: new Date()
-        }
+          updatedAt: new Date(),
+        },
       ];
 
       return {
         data: rooms,
-        success: true
+        success: true,
       };
     } catch (error) {
       return {
         data: [],
         success: false,
-        message: "Failed to fetch chat rooms"
+        message: "Failed to fetch chat rooms",
       };
     }
   }
 
   async getChatRoom(roomId: string): Promise<ChatApiResponse<ChatRoom | null>> {
     await this.simulateNetworkDelay();
-    
+
     try {
       const rooms = await this.getChatRooms();
-      const room = rooms.data.find(r => r.id === roomId);
-      
+      const room = rooms.data.find((r) => r.id === roomId);
+
       return {
         data: room || null,
-        success: true
+        success: true,
       };
     } catch (error) {
       return {
         data: null,
         success: false,
-        message: "Failed to fetch chat room"
+        message: "Failed to fetch chat room",
       };
     }
   }
 
   // Messages API
   async getChatMessages(
-    roomId: string, 
-    page = 1, 
-    limit = 50
+    roomId: string,
+    page = 1,
+    limit = 50,
   ): Promise<ChatApiResponse<PaginatedResponse<ChatMessage>>> {
     await this.simulateNetworkDelay();
-    
+
     try {
       // Generate mock messages for the room
       const mockMessages: ChatMessage[] = this.generateMockMessages(roomId, limit);
-      
+
       return {
         data: {
           data: mockMessages,
@@ -220,31 +220,31 @@ class ChatApiService {
             page,
             limit,
             total: mockMessages.length,
-            hasMore: false
-          }
+            hasMore: false,
+          },
         },
-        success: true
+        success: true,
       };
     } catch (error) {
       return {
         data: {
           data: [],
-          pagination: { page, limit, total: 0, hasMore: false }
+          pagination: { page, limit, total: 0, hasMore: false },
         },
         success: false,
-        message: "Failed to fetch messages"
+        message: "Failed to fetch messages",
       };
     }
   }
 
   async sendMessage(
-    roomId: string, 
-    content: string, 
-    senderId: string, 
-    senderName: string
+    roomId: string,
+    content: string,
+    senderId: string,
+    senderName: string,
   ): Promise<ChatApiResponse<ChatMessage>> {
     await this.simulateNetworkDelay(200);
-    
+
     try {
       const message: ChatMessage = {
         id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
@@ -255,18 +255,18 @@ class ChatApiService {
         messageType: "text",
         timestamp: new Date(),
         isRead: true,
-        isOwn: true
+        isOwn: true,
       };
 
       return {
         data: message,
-        success: true
+        success: true,
       };
     } catch (error) {
       return {
         data: {} as ChatMessage,
         success: false,
-        message: "Failed to send message"
+        message: "Failed to send message",
       };
     }
   }
@@ -274,7 +274,7 @@ class ChatApiService {
   // Members API
   async getChatMembers(roomId: string): Promise<ChatApiResponse<ChatMember[]>> {
     await this.simulateNetworkDelay();
-    
+
     try {
       const mockMembers: ChatMember[] = [
         {
@@ -286,7 +286,7 @@ class ChatApiService {
           joinedAt: new Date(Date.now() - 86400000),
           role: "member",
           isOnline: true,
-          lastSeen: new Date()
+          lastSeen: new Date(),
         },
         {
           id: "member_2",
@@ -297,7 +297,7 @@ class ChatApiService {
           joinedAt: new Date(Date.now() - 172800000),
           role: "member",
           isOnline: false,
-          lastSeen: new Date(Date.now() - 3600000)
+          lastSeen: new Date(Date.now() - 3600000),
         },
         {
           id: "member_3",
@@ -308,7 +308,7 @@ class ChatApiService {
           joinedAt: new Date(Date.now() - 259200000),
           role: "moderator",
           isOnline: true,
-          lastSeen: new Date()
+          lastSeen: new Date(),
         },
         {
           id: "member_4",
@@ -319,57 +319,57 @@ class ChatApiService {
           joinedAt: new Date(Date.now() - 345600000),
           role: "member",
           isOnline: false,
-          lastSeen: new Date(Date.now() - 7200000)
-        }
+          lastSeen: new Date(Date.now() - 7200000),
+        },
       ];
 
       return {
         data: mockMembers,
-        success: true
+        success: true,
       };
     } catch (error) {
       return {
         data: [],
         success: false,
-        message: "Failed to fetch members"
+        message: "Failed to fetch members",
       };
     }
   }
 
   async joinChatRoom(roomId: string, userId: string): Promise<ChatApiResponse<boolean>> {
     await this.simulateNetworkDelay();
-    
+
     try {
       // Simulate joining room
       return {
         data: true,
         success: true,
-        message: "Successfully joined chat room"
+        message: "Successfully joined chat room",
       };
     } catch (error) {
       return {
         data: false,
         success: false,
-        message: "Failed to join chat room"
+        message: "Failed to join chat room",
       };
     }
   }
 
   async leaveChatRoom(roomId: string, userId: string): Promise<ChatApiResponse<boolean>> {
     await this.simulateNetworkDelay();
-    
+
     try {
       // Simulate leaving room
       return {
         data: true,
         success: true,
-        message: "Successfully left chat room"
+        message: "Successfully left chat room",
       };
     } catch (error) {
       return {
         data: false,
         success: false,
-        message: "Failed to leave chat room"
+        message: "Failed to leave chat room",
       };
     }
   }
@@ -386,7 +386,7 @@ class ChatApiService {
       "Looking forward to chatting with you all",
       "Thanks for the warm welcome!",
       "Hope everyone is having a great day",
-      "This community is so supportive, love it here"
+      "This community is so supportive, love it here",
     ];
 
     const sampleUsers = [
@@ -395,16 +395,16 @@ class ChatApiService {
       { id: "user_321", name: "Jessica L." },
       { id: "user_654", name: "Alex T." },
       { id: "user_987", name: "Taylor K." },
-      { id: "user_111", name: "Jordan P." }
+      { id: "user_111", name: "Jordan P." },
     ];
 
     const messages: ChatMessage[] = [];
-    
+
     for (let i = 0; i < Math.min(count, 20); i++) {
       const user = sampleUsers[Math.floor(Math.random() * sampleUsers.length)];
       const content = sampleMessages[Math.floor(Math.random() * sampleMessages.length)];
-      const timestamp = new Date(Date.now() - (i * 300000) - Math.random() * 300000);
-      
+      const timestamp = new Date(Date.now() - i * 300000 - Math.random() * 300000);
+
       messages.unshift({
         id: `msg_${roomId}_${i}`,
         chatRoomId: roomId,
@@ -415,7 +415,7 @@ class ChatApiService {
         messageType: "text",
         timestamp,
         isRead: true,
-        isOwn: user.id === "current_user"
+        isOwn: user.id === "current_user",
       });
     }
 

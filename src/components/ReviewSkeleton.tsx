@@ -1,31 +1,23 @@
 import React, { useEffect } from "react";
 import { View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import Animated, { 
-  useSharedValue, 
-  useAnimatedStyle, 
-  withRepeat, 
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
   withTiming,
-  interpolate
+  interpolate,
 } from "react-native-reanimated";
 
-const ShimmerView = ({ className, style }: { className?: string, style?: any }) => {
+const ShimmerView = ({ className, style }: { className?: string; style?: any }) => {
   const shimmerTranslate = useSharedValue(-1);
 
   useEffect(() => {
-    shimmerTranslate.value = withRepeat(
-      withTiming(1, { duration: 1500 }),
-      -1,
-      false
-    );
+    shimmerTranslate.value = withRepeat(withTiming(1, { duration: 1500 }), -1, false);
   }, []);
 
   const animatedStyle = useAnimatedStyle(() => {
-    const translateX = interpolate(
-      shimmerTranslate.value,
-      [-1, 1],
-      [-100, 100]
-    );
+    const translateX = interpolate(shimmerTranslate.value, [-1, 1], [-100, 100]);
 
     return {
       transform: [{ translateX }],
@@ -33,16 +25,13 @@ const ShimmerView = ({ className, style }: { className?: string, style?: any }) 
   });
 
   return (
-    <View 
-      className={`bg-surface-700 rounded overflow-hidden ${className || ''}`}
-      style={style}
-    >
-      <Animated.View style={[animatedStyle, { width: '100%', height: '100%' }]}>
+    <View className={`bg-surface-700 rounded overflow-hidden ${className || ""}`} style={style}>
+      <Animated.View style={[animatedStyle, { width: "100%", height: "100%" }]}>
         <LinearGradient
-          colors={['transparent', 'rgba(255,255,255,0.1)', 'transparent']}
+          colors={["transparent", "rgba(255,255,255,0.1)", "transparent"]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
-          style={{ width: '100%', height: '100%' }}
+          style={{ width: "100%", height: "100%" }}
         />
       </Animated.View>
     </View>
@@ -71,9 +60,9 @@ export default function ReviewSkeleton() {
 
       {/* Text skeleton */}
       <View className="mb-4">
-        <ShimmerView className="mb-2" style={{ width: '100%', height: 16 }} />
-        <ShimmerView className="mb-2" style={{ width: '100%', height: 16 }} />
-        <ShimmerView style={{ width: '75%', height: 16 }} />
+        <ShimmerView className="mb-2" style={{ width: "100%", height: 16 }} />
+        <ShimmerView className="mb-2" style={{ width: "100%", height: 16 }} />
+        <ShimmerView style={{ width: "75%", height: 16 }} />
       </View>
 
       {/* Media skeleton */}

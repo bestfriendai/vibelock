@@ -30,6 +30,7 @@
       "expo-build-properties",
       "expo-font",
       "expo-mail-composer",
+      "expo-notifications",
       "expo-secure-store",
       "expo-sqlite",
       "expo-video",

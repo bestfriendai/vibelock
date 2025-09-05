@@ -42,25 +42,25 @@ const useSafetyStore = create<SafetyStore>()(
       // Actions
       blockUser: (userId) => {
         set((state) => ({
-          blockedUsers: [...new Set([...state.blockedUsers, userId])]
+          blockedUsers: [...new Set([...state.blockedUsers, userId])],
         }));
       },
 
       unblockUser: (userId) => {
         set((state) => ({
-          blockedUsers: state.blockedUsers.filter(id => id !== userId)
+          blockedUsers: state.blockedUsers.filter((id) => id !== userId),
         }));
       },
 
       blockProfile: (profileId) => {
         set((state) => ({
-          blockedProfiles: [...new Set([...state.blockedProfiles, profileId])]
+          blockedProfiles: [...new Set([...state.blockedProfiles, profileId])],
         }));
       },
 
       unblockProfile: (profileId) => {
         set((state) => ({
-          blockedProfiles: state.blockedProfiles.filter(id => id !== profileId)
+          blockedProfiles: state.blockedProfiles.filter((id) => id !== profileId),
         }));
       },
 
@@ -76,21 +76,20 @@ const useSafetyStore = create<SafetyStore>()(
             reason: data.reason,
             description: data.description,
             status: "pending",
-            createdAt: new Date()
+            createdAt: new Date(),
           };
 
           // Simulate API delay
-          await new Promise(resolve => setTimeout(resolve, 500));
+          await new Promise((resolve) => setTimeout(resolve, 500));
 
           set((state) => ({
             reports: [...state.reports, newReport],
-            isLoading: false
+            isLoading: false,
           }));
-
         } catch (error) {
           set({
             error: error instanceof Error ? error.message : "Failed to submit report",
-            isLoading: false
+            isLoading: false,
           });
         }
       },
@@ -105,7 +104,7 @@ const useSafetyStore = create<SafetyStore>()(
 
       clearError: () => {
         set({ error: null });
-      }
+      },
     }),
     {
       name: "safety-storage",
@@ -113,10 +112,10 @@ const useSafetyStore = create<SafetyStore>()(
       // Persist blocked users and profiles, but not reports or loading states
       partialize: (state) => ({
         blockedUsers: state.blockedUsers,
-        blockedProfiles: state.blockedProfiles
+        blockedProfiles: state.blockedProfiles,
       }),
-    }
-  )
+    },
+  ),
 );
 
 export default useSafetyStore;

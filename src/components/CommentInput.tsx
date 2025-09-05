@@ -1,12 +1,5 @@
 import React, { useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  Pressable,
-  ActivityIndicator,
-  Keyboard
-} from "react-native";
+import { View, Text, TextInput, Pressable, ActivityIndicator, Keyboard } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 interface CommentInputProps {
@@ -17,12 +10,12 @@ interface CommentInputProps {
   onCancelReply?: () => void;
 }
 
-export default function CommentInput({ 
-  onSubmit, 
-  placeholder = "Add a comment...", 
+export default function CommentInput({
+  onSubmit,
+  placeholder = "Add a comment...",
   isLoading = false,
   replyToComment,
-  onCancelReply
+  onCancelReply,
 }: CommentInputProps) {
   const [comment, setComment] = useState("");
   const [isFocused, setIsFocused] = useState(false);
@@ -51,9 +44,7 @@ export default function CommentInput({
         <View className="flex-row items-center justify-between px-4 py-2 bg-surface-700/50">
           <View className="flex-row items-center">
             <Ionicons name="return-down-forward" size={16} color="#9CA3AF" />
-            <Text className="text-text-secondary text-sm ml-2">
-              Replying to {replyToComment}
-            </Text>
+            <Text className="text-text-secondary text-sm ml-2">Replying to {replyToComment}</Text>
           </View>
           <Pressable onPress={onCancelReply} className="p-1">
             <Ionicons name="close" size={16} color="#9CA3AF" />
@@ -79,9 +70,7 @@ export default function CommentInput({
             style={{ textAlignVertical: "top" }}
           />
           {comment.length > 400 && (
-            <Text className="text-text-muted text-xs mt-1 text-right">
-              {comment.length}/500
-            </Text>
+            <Text className="text-text-muted text-xs mt-1 text-right">{comment.length}/500</Text>
           )}
         </View>
 
@@ -90,19 +79,13 @@ export default function CommentInput({
           onPress={handleSubmit}
           disabled={!canSubmit}
           className={`w-10 h-10 rounded-full items-center justify-center ${
-            canSubmit 
-              ? "bg-brand-red" 
-              : "bg-surface-600"
+            canSubmit ? "bg-brand-red" : "bg-surface-600"
           }`}
         >
           {isLoading ? (
             <ActivityIndicator size="small" color="#FFFFFF" />
           ) : (
-            <Ionicons 
-              name="send" 
-              size={18} 
-              color={canSubmit ? "#FFFFFF" : "#6B7280"} 
-            />
+            <Ionicons name="send" size={18} color={canSubmit ? "#FFFFFF" : "#6B7280"} />
           )}
         </Pressable>
       </View>

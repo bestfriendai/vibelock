@@ -1,12 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  FlatList,
-  Pressable,
-  Image,
-} from "react-native";
+import { View, Text, TextInput, FlatList, Pressable, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
@@ -23,10 +16,10 @@ const mockProfiles: Profile[] = [
     redFlagCount: 0,
     averageRating: 4.5,
     createdAt: new Date("2024-01-10"),
-    updatedAt: new Date("2024-01-15")
+    updatedAt: new Date("2024-01-15"),
   },
   {
-    id: "profile_2", 
+    id: "profile_2",
     firstName: "Jasmine",
     location: { city: "Washington", state: "DC" },
     totalReviews: 1,
@@ -34,18 +27,18 @@ const mockProfiles: Profile[] = [
     redFlagCount: 0,
     averageRating: 5.0,
     createdAt: new Date("2024-01-11"),
-    updatedAt: new Date("2024-01-11")
+    updatedAt: new Date("2024-01-11"),
   },
   {
     id: "profile_3",
-    firstName: "Taylor", 
+    firstName: "Taylor",
     location: { city: "Arlington", state: "VA" },
     totalReviews: 1,
     greenFlagCount: 2,
     redFlagCount: 0,
     averageRating: 5.0,
     createdAt: new Date("2024-01-10"),
-    updatedAt: new Date("2024-01-10")
+    updatedAt: new Date("2024-01-10"),
   },
   {
     id: "profile_4",
@@ -56,7 +49,7 @@ const mockProfiles: Profile[] = [
     redFlagCount: 0,
     averageRating: 5.0,
     createdAt: new Date("2024-01-09"),
-    updatedAt: new Date("2024-01-09")
+    updatedAt: new Date("2024-01-09"),
   },
   {
     id: "profile_5",
@@ -67,8 +60,8 @@ const mockProfiles: Profile[] = [
     redFlagCount: 0,
     averageRating: 5.0,
     createdAt: new Date("2024-01-08"),
-    updatedAt: new Date("2024-01-08")
-  }
+    updatedAt: new Date("2024-01-08"),
+  },
 ];
 
 export default function SearchScreen() {
@@ -83,8 +76,8 @@ export default function SearchScreen() {
     if (searchQuery.trim().length >= 2) {
       setIsSearching(true);
       const timer = setTimeout(() => {
-        const filtered = mockProfiles.filter(profile =>
-          profile.firstName.toLowerCase().includes(searchQuery.toLowerCase())
+        const filtered = mockProfiles.filter((profile) =>
+          profile.firstName.toLowerCase().includes(searchQuery.toLowerCase()),
         );
         setSearchResults(filtered);
         setIsSearching(false);
@@ -99,7 +92,7 @@ export default function SearchScreen() {
   const handleProfilePress = (profile: Profile) => {
     navigation.navigate("PersonProfile", {
       firstName: profile.firstName,
-      location: profile.location
+      location: profile.location,
     });
   };
 
@@ -110,9 +103,7 @@ export default function SearchScreen() {
     >
       <View className="flex-row items-center justify-between">
         <View className="flex-1">
-          <Text className="text-text-primary text-lg font-semibold">
-            {item.firstName}
-          </Text>
+          <Text className="text-text-primary text-lg font-semibold">{item.firstName}</Text>
           <Text className="text-text-secondary text-sm mt-1">
             {item.location.city}, {item.location.state}
           </Text>
@@ -125,24 +116,18 @@ export default function SearchScreen() {
             </View>
             <View className="flex-row items-center">
               <Ionicons name="star" size={14} color="#FFB74D" />
-              <Text className="text-text-secondary text-sm ml-1">
-                {item.averageRating?.toFixed(1) || "N/A"}
-              </Text>
+              <Text className="text-text-secondary text-sm ml-1">{item.averageRating?.toFixed(1) || "N/A"}</Text>
             </View>
           </View>
         </View>
         <View className="items-end">
           <View className="flex-row items-center">
             <View className="bg-green-500/20 px-2 py-1 rounded-full mr-2">
-              <Text className="text-green-400 text-xs font-medium">
-                {item.greenFlagCount}
-              </Text>
+              <Text className="text-green-400 text-xs font-medium">{item.greenFlagCount}</Text>
             </View>
             {item.redFlagCount > 0 && (
               <View className="bg-brand-red/20 px-2 py-1 rounded-full">
-                <Text className="text-brand-red text-xs font-medium">
-                  {item.redFlagCount}
-                </Text>
+                <Text className="text-brand-red text-xs font-medium">{item.redFlagCount}</Text>
               </View>
             )}
           </View>
@@ -186,44 +171,32 @@ export default function SearchScreen() {
                 autoCapitalize="words"
               />
               <View className="absolute right-3 top-3">
-                <Ionicons
-                  name={isSearching ? "hourglass" : "search"}
-                  size={20}
-                  color="#9CA3AF"
-                />
+                <Ionicons name={isSearching ? "hourglass" : "search"} size={20} color="#9CA3AF" />
               </View>
             </View>
           </View>
 
           {/* Radius Filter */}
           <View className="mb-6">
-            <Text className="text-text-primary font-medium mb-2">
-              Search Radius: {radius} miles
-            </Text>
+            <Text className="text-text-primary font-medium mb-2">Search Radius: {radius} miles</Text>
             <View className="flex-row items-center justify-between">
               <Pressable
                 className={`bg-surface-700 rounded-lg px-4 py-2 ${radius === 10 ? "border border-white" : ""}`}
                 onPress={() => setRadius(10)}
               >
-                <Text className={radius === 10 ? "text-white font-medium" : "text-text-secondary"}>
-                  10mi
-                </Text>
+                <Text className={radius === 10 ? "text-white font-medium" : "text-text-secondary"}>10mi</Text>
               </Pressable>
               <Pressable
                 className={`bg-surface-700 rounded-lg px-4 py-2 ${radius === 25 ? "border border-white" : ""}`}
                 onPress={() => setRadius(25)}
               >
-                <Text className={radius === 25 ? "text-white font-medium" : "text-text-secondary"}>
-                  25mi
-                </Text>
+                <Text className={radius === 25 ? "text-white font-medium" : "text-text-secondary"}>25mi</Text>
               </Pressable>
               <Pressable
                 className={`bg-surface-700 rounded-lg px-4 py-2 ${radius === 50 ? "border border-white" : ""}`}
                 onPress={() => setRadius(50)}
               >
-                <Text className={radius === 50 ? "text-white font-medium" : "text-text-secondary"}>
-                  50mi
-                </Text>
+                <Text className={radius === 50 ? "text-white font-medium" : "text-text-secondary"}>50mi</Text>
               </Pressable>
             </View>
           </View>
@@ -241,9 +214,7 @@ export default function SearchScreen() {
               !isSearching ? (
                 <View className="items-center justify-center py-12">
                   <Ionicons name="person-outline" size={48} color="#6B7280" />
-                  <Text className="text-text-secondary text-lg font-medium mt-4">
-                    No profiles found
-                  </Text>
+                  <Text className="text-text-secondary text-lg font-medium mt-4">No profiles found</Text>
                   <Text className="text-text-muted text-center mt-2">
                     Try a different name or expand your search radius
                   </Text>
@@ -254,12 +225,8 @@ export default function SearchScreen() {
         ) : (
           <View className="flex-1 items-center justify-center px-4">
             <Ionicons name="search-outline" size={48} color="#6B7280" />
-            <Text className="text-text-secondary text-lg font-medium mt-4">
-              Search for someone
-            </Text>
-            <Text className="text-text-muted text-center mt-2">
-              Enter at least 2 characters to find reviews
-            </Text>
+            <Text className="text-text-secondary text-lg font-medium mt-4">Search for someone</Text>
+            <Text className="text-text-muted text-center mt-2">Enter at least 2 characters to find reviews</Text>
           </View>
         )}
       </View>

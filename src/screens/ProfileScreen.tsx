@@ -12,7 +12,6 @@ export default function ProfileScreen() {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
-
   const handleLogout = () => {
     setShowLogoutModal(true);
   };
@@ -23,64 +22,42 @@ export default function ProfileScreen() {
   };
 
   const handleLocationSettings = () => {
-    Alert.alert(
-      "Location Settings",
-      "Update your location to see reviews and chat rooms in your area.",
-      [
-        { text: "Cancel", style: "cancel" },
-        { text: "Update Location", onPress: () => console.log("Update location") }
-      ]
-    );
+    Alert.alert("Location Settings", "Update your location to see reviews and chat rooms in your area.", [
+      { text: "Cancel", style: "cancel" },
+      { text: "Update Location", onPress: () => console.log("Update location") },
+    ]);
   };
 
   const handleNotificationSettings = () => {
     Alert.alert(
       "Notification Settings",
       "Manage your notification preferences for new reviews, messages, and safety alerts.",
-      [
-        { text: "OK", style: "default" }
-      ]
+      [{ text: "OK", style: "default" }],
     );
   };
 
   const handlePrivacySettings = () => {
-    Alert.alert(
-      "Privacy Settings",
-      "Control who can see your activity and manage blocked users.",
-      [
-        { text: "OK", style: "default" }
-      ]
-    );
+    Alert.alert("Privacy Settings", "Control who can see your activity and manage blocked users.", [
+      { text: "OK", style: "default" },
+    ]);
   };
 
   const handleHelpSupport = () => {
-    Alert.alert(
-      "Help & Support",
-      "Get help with using the app, report issues, or contact our support team.",
-      [
-        { text: "OK", style: "default" }
-      ]
-    );
+    Alert.alert("Help & Support", "Get help with using the app, report issues, or contact our support team.", [
+      { text: "OK", style: "default" },
+    ]);
   };
 
   const handleTermsOfService = () => {
-    Alert.alert(
-      "Terms of Service",
-      "View our terms of service and user agreement.",
-      [
-        { text: "OK", style: "default" }
-      ]
-    );
+    Alert.alert("Terms of Service", "View our terms of service and user agreement.", [
+      { text: "OK", style: "default" },
+    ]);
   };
 
   const handlePrivacyPolicy = () => {
-    Alert.alert(
-      "Privacy Policy",
-      "Learn how we protect your privacy and handle your data.",
-      [
-        { text: "OK", style: "default" }
-      ]
-    );
+    Alert.alert("Privacy Policy", "Learn how we protect your privacy and handle your data.", [
+      { text: "OK", style: "default" },
+    ]);
   };
 
   const handleFirebaseTest = () => {
@@ -116,7 +93,7 @@ export default function ProfileScreen() {
                 Create an account to share reviews, join chat rooms, and get personalized recommendations.
               </Text>
               <View className="flex-row space-x-3">
-                <Pressable 
+                <Pressable
                   className="flex-1 bg-brand-red rounded-lg py-3 items-center"
                   onPress={() => {
                     setGuestMode(false);
@@ -125,7 +102,7 @@ export default function ProfileScreen() {
                 >
                   <Text className="text-white font-semibold">Sign Up</Text>
                 </Pressable>
-                <Pressable 
+                <Pressable
                   className="flex-1 bg-surface-700 rounded-lg py-3 items-center"
                   onPress={() => {
                     setGuestMode(false);
@@ -143,14 +120,10 @@ export default function ProfileScreen() {
             <View className="bg-surface-800 rounded-lg p-4 mb-6">
               <View className="flex-row items-center">
                 <View className="w-16 h-16 bg-brand-red rounded-full items-center justify-center">
-                  <Text className="text-black text-xl font-bold">
-                    {user?.email.charAt(0).toUpperCase()}
-                  </Text>
+                  <Text className="text-black text-xl font-bold">{user?.email.charAt(0).toUpperCase()}</Text>
                 </View>
                 <View className="ml-4 flex-1">
-                  <Text className="text-lg font-semibold text-text-primary">
-                    Anonymous User
-                  </Text>
+                  <Text className="text-lg font-semibold text-text-primary">Anonymous User</Text>
                   <Text className="text-text-secondary">{user?.email}</Text>
                   <Text className="text-text-muted text-sm">
                     {user?.location.city}, {user?.location.state}
@@ -162,7 +135,7 @@ export default function ProfileScreen() {
 
           {/* Settings Options */}
           <View className="bg-surface-800 rounded-lg mb-6">
-            <Pressable 
+            <Pressable
               className="flex-row items-center justify-between p-4 border-b border-surface-700"
               onPress={handleLocationSettings}
             >
@@ -178,7 +151,7 @@ export default function ProfileScreen() {
               </View>
             </Pressable>
 
-            <Pressable 
+            <Pressable
               className="flex-row items-center justify-between p-4 border-b border-surface-700"
               onPress={handleNotificationSettings}
             >
@@ -196,7 +169,7 @@ export default function ProfileScreen() {
               </View>
             </Pressable>
 
-            <Pressable 
+            <Pressable
               className="flex-row items-center justify-between p-4 border-b border-surface-700"
               onPress={handlePrivacySettings}
             >
@@ -207,10 +180,7 @@ export default function ProfileScreen() {
               <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
             </Pressable>
 
-            <Pressable 
-              className="flex-row items-center justify-between p-4"
-              onPress={handleHelpSupport}
-            >
+            <Pressable className="flex-row items-center justify-between p-4" onPress={handleHelpSupport}>
               <View className="flex-row items-center">
                 <Ionicons name="help-circle-outline" size={20} color="#9CA3AF" />
                 <Text className="text-text-primary font-medium ml-3">Help & Support</Text>
@@ -221,7 +191,7 @@ export default function ProfileScreen() {
 
           {/* App Info */}
           <View className="bg-surface-800 rounded-lg mb-6">
-            <Pressable 
+            <Pressable
               className="flex-row items-center justify-between p-4 border-b border-surface-700"
               onPress={handleTermsOfService}
             >
@@ -232,7 +202,7 @@ export default function ProfileScreen() {
               <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
             </Pressable>
 
-            <Pressable 
+            <Pressable
               className="flex-row items-center justify-between p-4 border-b border-surface-700"
               onPress={handlePrivacyPolicy}
             >
@@ -243,7 +213,7 @@ export default function ProfileScreen() {
               <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
             </Pressable>
 
-            <Pressable 
+            <Pressable
               className="flex-row items-center justify-between p-4 border-b border-surface-700"
               onPress={handleFirebaseTest}
             >
@@ -264,10 +234,7 @@ export default function ProfileScreen() {
           </View>
 
           {/* Sign Out */}
-          <Pressable
-            className="bg-surface-800 rounded-lg p-4"
-            onPress={handleLogout}
-          >
+          <Pressable className="bg-surface-800 rounded-lg p-4" onPress={handleLogout}>
             <View className="flex-row items-center justify-center">
               <Ionicons name="log-out-outline" size={20} color="#EF4444" />
               <Text className="text-red-500 font-medium ml-3">Sign Out</Text>

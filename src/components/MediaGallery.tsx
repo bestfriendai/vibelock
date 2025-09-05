@@ -10,12 +10,7 @@ interface Props {
   size?: number;
 }
 
-export default function MediaGallery({ 
-  media, 
-  onMediaPress, 
-  maxVisible = 4,
-  size = 80 
-}: Props) {
+export default function MediaGallery({ media, onMediaPress, maxVisible = 4, size = 80 }: Props) {
   if (!media || media.length === 0) return null;
 
   const visibleMedia = media.slice(0, maxVisible);
@@ -23,8 +18,8 @@ export default function MediaGallery({
 
   return (
     <View className="mt-3">
-      <ScrollView 
-        horizontal 
+      <ScrollView
+        horizontal
         showsHorizontalScrollIndicator={false}
         className="space-x-2"
         contentContainerStyle={{ paddingHorizontal: 0 }}
@@ -37,23 +32,13 @@ export default function MediaGallery({
                 className="relative overflow-hidden rounded-xl"
                 style={{ width: size, height: size }}
               >
-                <MediaThumbnail
-                  media={item}
-                  size={size}
-                  showPlayIcon={false}
-                />
+                <MediaThumbnail media={item} size={size} showPlayIcon={false} />
                 <View className="absolute inset-0 bg-black/60 items-center justify-center">
-                  <Text className="text-white font-bold text-lg">
-                    +{remainingCount + 1}
-                  </Text>
+                  <Text className="text-white font-bold text-lg">+{remainingCount + 1}</Text>
                 </View>
               </Pressable>
             ) : (
-              <MediaThumbnail
-                media={item}
-                size={size}
-                onPress={() => onMediaPress(item, index)}
-              />
+              <MediaThumbnail media={item} size={size} onPress={() => onMediaPress(item, index)} />
             )}
           </View>
         ))}

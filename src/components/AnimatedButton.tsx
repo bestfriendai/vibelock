@@ -1,12 +1,6 @@
 import React from "react";
 import { Pressable, Text, PressableProps } from "react-native";
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  withTiming,
-  runOnJS,
-} from "react-native-reanimated";
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming, runOnJS } from "react-native-reanimated";
 import { cn } from "../utils/cn";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -122,7 +116,7 @@ export default function AnimatedButton({
         getVariantStyles(),
         getSizeStyles(),
         (loading || disabled) && "opacity-50",
-        className
+        className,
       )}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
@@ -133,16 +127,7 @@ export default function AnimatedButton({
       {loading ? (
         <Animated.View className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
       ) : (
-        <Text
-          className={cn(
-            "font-semibold",
-            getTextVariantStyles(),
-            getTextSizeStyles(),
-            textClassName
-          )}
-        >
-          {title}
-        </Text>
+        <Text className={cn("font-semibold", getTextVariantStyles(), getTextSizeStyles(), textClassName)}>{title}</Text>
       )}
     </AnimatedPressable>
   );

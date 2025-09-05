@@ -1,13 +1,5 @@
 import React, { useState, useRef } from "react";
-import { 
-  View, 
-  ScrollView, 
-  Dimensions, 
-  NativeScrollEvent, 
-  NativeSyntheticEvent,
-  Text,
-  Pressable
-} from "react-native";
+import { View, ScrollView, Dimensions, NativeScrollEvent, NativeSyntheticEvent, Text, Pressable } from "react-native";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { MediaItem } from "../types";
@@ -24,14 +16,14 @@ interface Props {
   commentCounts?: Record<string, number>; // mediaId -> comment count
 }
 
-export default function ImageCarousel({ 
-  media, 
-  height = 300, 
+export default function ImageCarousel({
+  media,
+  height = 300,
   onImagePress,
   showCounter = true,
   showFullScreenButton = true,
   onCommentPress,
-  commentCounts = {}
+  commentCounts = {},
 }: Props) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
@@ -51,7 +43,7 @@ export default function ImageCarousel({
     if (scrollViewRef.current) {
       scrollViewRef.current.scrollTo({
         x: index * screenWidth,
-        animated: true
+        animated: true,
       });
     }
   };
@@ -86,7 +78,7 @@ export default function ImageCarousel({
               transition={200}
               placeholder="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
             />
-            
+
             {/* Video play overlay */}
             {item.type === "video" && (
               <View className="absolute inset-0 bg-black/30 items-center justify-center">
@@ -102,18 +94,19 @@ export default function ImageCarousel({
               {commentCounts[item.id] && commentCounts[item.id] > 0 && (
                 <View className="bg-black/70 rounded-full px-2 py-1 flex-row items-center">
                   <Ionicons name="chatbubble" size={12} color="#FFFFFF" />
-                  <Text className="text-white text-xs font-medium ml-1">
-                    {commentCounts[item.id]}
-                  </Text>
+                  <Text className="text-white text-xs font-medium ml-1">{commentCounts[item.id]}</Text>
                 </View>
               )}
-              
+
               {/* Comment button */}
               {onCommentPress && (
                 <Pressable
                   onPress={(e) => {
                     e.stopPropagation();
-                    onCommentPress(item, media.findIndex(m => m.id === item.id));
+                    onCommentPress(
+                      item,
+                      media.findIndex((m) => m.id === item.id),
+                    );
                   }}
                   className="bg-black/70 rounded-full p-2"
                 >
@@ -152,9 +145,7 @@ export default function ImageCarousel({
               key={index}
               onPress={() => scrollToIndex(index)}
               className={`w-2 h-2 rounded-full transition-all duration-200 ${
-                index === currentIndex 
-                  ? "bg-brand-red w-6" 
-                  : "bg-surface-600"
+                index === currentIndex ? "bg-brand-red w-6" : "bg-surface-600"
               }`}
             />
           ))}

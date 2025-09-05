@@ -41,10 +41,7 @@ export default function ProgressIndicator({
     <View className={cn("space-y-4", className)}>
       {/* Progress Bar */}
       <View className="h-1 bg-surface-700 rounded-full overflow-hidden">
-        <Animated.View
-          style={[progressBarStyle, { backgroundColor: activeColor }]}
-          className="h-full rounded-full"
-        />
+        <Animated.View style={[progressBarStyle, { backgroundColor: activeColor }]} className="h-full rounded-full" />
       </View>
 
       {/* Step Indicators */}
@@ -70,12 +67,7 @@ interface StepIndicatorProps {
   inactiveColor: string;
 }
 
-function StepIndicator({
-  isActive,
-  isCompleted,
-  activeColor,
-  inactiveColor,
-}: StepIndicatorProps) {
+function StepIndicator({ isActive, isCompleted, activeColor, inactiveColor }: StepIndicatorProps) {
   const scale = useSharedValue(0.8);
   const opacity = useSharedValue(0.5);
 

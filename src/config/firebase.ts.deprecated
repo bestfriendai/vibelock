@@ -1,4 +1,6 @@
-// Firebase configuration for LockerRoom MVP
+// DEPRECATED: Firebase configuration for LockerRoom MVP
+// This file is kept for reference only - the app now uses Supabase
+// DO NOT IMPORT THIS FILE - it will cause Firebase to initialize
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { initializeAuth, getAuth, connectAuthEmulator } from "firebase/auth";
 import { initializeFirestore, connectFirestoreEmulator } from "firebase/firestore";
@@ -51,11 +53,11 @@ if (getApps().length === 0) {
 let auth: Auth;
 try {
   // Use react-native persistence if available
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-// @ts-ignore: react-native subpath may not have bundled types in this version
+
+  // @ts-ignore: react-native subpath may not have bundled types in this version
   const { getReactNativePersistence: getRNP } = require("firebase/auth/react-native");
   auth = initializeAuth(app, {
-// @ts-ignore: type narrowed at runtime
+    // @ts-ignore: type narrowed at runtime
     persistence: getRNP(AsyncStorage),
   });
 } catch (e) {

@@ -2,7 +2,8 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Comment, CommentState } from "../types";
-import { firebaseComments } from "../services/firebase";
+import { supabaseComments } from "../services/supabase";
+import { RealtimeChannel } from '@supabase/supabase-js';
 
 interface CommentsStore extends CommentState {
   // Actions
@@ -11,6 +12,12 @@ interface CommentsStore extends CommentState {
   likeComment: (reviewId: string, commentId: string) => Promise<void>;
   dislikeComment: (reviewId: string, commentId: string) => Promise<void>;
   deleteComment: (reviewId: string, commentId: string) => Promise<void>;
+
+  // Real-time subscriptions
+  subscribeToComments: (reviewId: string) => () => void;
+  unsubscribeFromComments: (reviewId: string) => void;
+
+  // State management
   setLoading: (isLoading: boolean) => void;
   setPosting: (isPosting: boolean) => void;
   setError: (error: string | null) => void;
@@ -19,33 +26,37 @@ interface CommentsStore extends CommentState {
 
 const useCommentsStore = create<CommentsStore>()(
   persist(
-    (set, get) => ({
-      // State
-      comments: {},
-      commentThreads: {},
-      mediaComments: {},
-      isLoading: false,
-      isPosting: false,
-      error: null,
+    (set, get) => {
+      // Store real-time subscriptions
+      const subscriptions = new Map<string, RealtimeChannel>();
+
+      return {
+        // State
+        comments: {},
+        commentThreads: {},
+        mediaComments: {},
+        isLoading: false,
+        isPosting: false,
+        error: null,
 
       // Actions
       loadComments: async (reviewId: string) => {
         try {
           set({ isLoading: true, error: null });
-          
-          const comments = await firebaseComments.getComments(reviewId);
-          
+
+          const comments = await supabaseComments.getComments(reviewId);
+
           set((state) => ({
             comments: {
               ...state.comments,
-              [reviewId]: comments
+              [reviewId]: comments,
             },
-            isLoading: false
+            isLoading: false,
           }));
         } catch (error) {
           set({
             error: error instanceof Error ? error.message : "Failed to load comments",
-            isLoading: false
+            isLoading: false,
           });
         }
       },
@@ -53,7 +64,7 @@ const useCommentsStore = create<CommentsStore>()(
       createComment: async (reviewId: string, content: string, mediaId?: string) => {
         try {
           set({ isPosting: true, error: null });
-          
+
           const commentData: Omit<Comment, "id" | "createdAt" | "updatedAt"> = {
             reviewId,
             authorId: `anon_${Date.now()}`,
@@ -61,7 +72,7 @@ const useCommentsStore = create<CommentsStore>()(
             content: content.trim(),
             likeCount: 0,
             dislikeCount: 0,
-            ...(mediaId && { mediaId })
+            ...(mediaId && { mediaId }),
           };
 
           // Create the comment with timestamp for optimistic update
@@ -69,27 +80,27 @@ const useCommentsStore = create<CommentsStore>()(
             ...commentData,
             id: `temp_${Date.now()}`,
             createdAt: new Date(),
-            updatedAt: new Date()
+            updatedAt: new Date(),
           };
 
           // Optimistically add to local state
           set((state) => ({
             comments: {
               ...state.comments,
-              [reviewId]: [...(state.comments[reviewId] || []), optimisticComment]
+              [reviewId]: [...(state.comments[reviewId] || []), optimisticComment],
             },
-            isPosting: false
+            isPosting: false,
           }));
 
-          // Save to Firebase in background
-          firebaseComments.createComment(reviewId, commentData).catch(error => {
-            console.warn('Failed to save comment to Firebase:', error);
+          // Save to Supabase in background
+          supabaseComments.createComment(reviewId, commentData).catch((error) => {
+            console.warn("Failed to save comment to Supabase:", error);
             // Could remove the optimistic comment here if needed
           });
         } catch (error) {
           set({
             error: error instanceof Error ? error.message : "Failed to create comment",
-            isPosting: false
+            isPosting: false,
           });
         }
       },
@@ -97,8 +108,8 @@ const useCommentsStore = create<CommentsStore>()(
       likeComment: async (reviewId: string, commentId: string) => {
         try {
           const currentComments = get().comments[reviewId] || [];
-          const comment = currentComments.find(c => c.id === commentId);
-          
+          const comment = currentComments.find((c) => c.id === commentId);
+
           if (comment) {
             const newLikeCount = comment.likeCount + 1;
             const wasDisliked = comment.isDisliked;
@@ -108,29 +119,30 @@ const useCommentsStore = create<CommentsStore>()(
             set((state) => ({
               comments: {
                 ...state.comments,
-                [reviewId]: state.comments[reviewId]?.map(c =>
-                  c.id === commentId
-                    ? {
-                        ...c,
-                        likeCount: newLikeCount,
-                        dislikeCount: newDislikeCount,
-                        isLiked: true,
-                        isDisliked: false
-                      }
-                    : c
-                ) || []
-              }
+                [reviewId]:
+                  state.comments[reviewId]?.map((c) =>
+                    c.id === commentId
+                      ? {
+                          ...c,
+                          likeCount: newLikeCount,
+                          dislikeCount: newDislikeCount,
+                          isLiked: true,
+                          isDisliked: false,
+                        }
+                      : c,
+                  ) || [],
+              },
             }));
 
-            // Update in Firebase
-            await firebaseComments.updateComment(reviewId, commentId, {
+            // Update in Supabase
+            await supabaseComments.updateComment(commentId, {
               likeCount: newLikeCount,
-              dislikeCount: newDislikeCount
+              dislikeCount: newDislikeCount,
             });
           }
         } catch (error) {
           set({
-            error: error instanceof Error ? error.message : "Failed to like comment"
+            error: error instanceof Error ? error.message : "Failed to like comment",
           });
         }
       },
@@ -138,8 +150,8 @@ const useCommentsStore = create<CommentsStore>()(
       dislikeComment: async (reviewId: string, commentId: string) => {
         try {
           const currentComments = get().comments[reviewId] || [];
-          const comment = currentComments.find(c => c.id === commentId);
-          
+          const comment = currentComments.find((c) => c.id === commentId);
+
           if (comment) {
             const newDislikeCount = comment.dislikeCount + 1;
             const wasLiked = comment.isLiked;
@@ -149,29 +161,30 @@ const useCommentsStore = create<CommentsStore>()(
             set((state) => ({
               comments: {
                 ...state.comments,
-                [reviewId]: state.comments[reviewId]?.map(c =>
-                  c.id === commentId
-                    ? {
-                        ...c,
-                        likeCount: newLikeCount,
-                        dislikeCount: newDislikeCount,
-                        isLiked: false,
-                        isDisliked: true
-                      }
-                    : c
-                ) || []
-              }
+                [reviewId]:
+                  state.comments[reviewId]?.map((c) =>
+                    c.id === commentId
+                      ? {
+                          ...c,
+                          likeCount: newLikeCount,
+                          dislikeCount: newDislikeCount,
+                          isLiked: false,
+                          isDisliked: true,
+                        }
+                      : c,
+                  ) || [],
+              },
             }));
 
-            // Update in Firebase
-            await firebaseComments.updateComment(reviewId, commentId, {
+            // Update in Supabase
+            await supabaseComments.updateComment(commentId, {
               likeCount: newLikeCount,
-              dislikeCount: newDislikeCount
+              dislikeCount: newDislikeCount,
             });
           }
         } catch (error) {
           set({
-            error: error instanceof Error ? error.message : "Failed to dislike comment"
+            error: error instanceof Error ? error.message : "Failed to dislike comment",
           });
         }
       },
@@ -182,15 +195,15 @@ const useCommentsStore = create<CommentsStore>()(
           set((state) => ({
             comments: {
               ...state.comments,
-              [reviewId]: state.comments[reviewId]?.filter(c => c.id !== commentId) || []
-            }
+              [reviewId]: state.comments[reviewId]?.filter((c) => c.id !== commentId) || [],
+            },
           }));
 
-          // Delete from Firebase
-          await firebaseComments.deleteComment(reviewId, commentId);
+          // Delete from Supabase
+          await supabaseComments.deleteComment(commentId);
         } catch (error) {
           set({
-            error: error instanceof Error ? error.message : "Failed to delete comment"
+            error: error instanceof Error ? error.message : "Failed to delete comment",
           });
           // Could reload comments here to restore state
         }
@@ -210,8 +223,79 @@ const useCommentsStore = create<CommentsStore>()(
 
       clearError: () => {
         set({ error: null });
-      }
-    }),
+      },
+
+      // Real-time subscription methods
+      subscribeToComments: (reviewId: string) => {
+        // Don't create duplicate subscriptions
+        if (subscriptions.has(reviewId)) {
+          return subscriptions.get(reviewId)!.unsubscribe;
+        }
+
+        const channel = supabaseComments.supabase
+          .channel(`comments-${reviewId}`)
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'comments_firebase',
+              filter: `review_id=eq.${reviewId}`,
+            },
+            (payload) => {
+              console.log('Comment change received:', payload);
+
+              if (payload.eventType === 'INSERT') {
+                const newComment = payload.new as Comment;
+                set((state) => ({
+                  comments: {
+                    ...state.comments,
+                    [reviewId]: [...(state.comments[reviewId] || []), newComment],
+                  },
+                }));
+              } else if (payload.eventType === 'UPDATE') {
+                const updatedComment = payload.new as Comment;
+                set((state) => ({
+                  comments: {
+                    ...state.comments,
+                    [reviewId]: (state.comments[reviewId] || []).map((comment) =>
+                      comment.id === updatedComment.id ? updatedComment : comment
+                    ),
+                  },
+                }));
+              } else if (payload.eventType === 'DELETE') {
+                const deletedComment = payload.old as Comment;
+                set((state) => ({
+                  comments: {
+                    ...state.comments,
+                    [reviewId]: (state.comments[reviewId] || []).filter(
+                      (comment) => comment.id !== deletedComment.id
+                    ),
+                  },
+                }));
+              }
+            }
+          )
+          .subscribe();
+
+        subscriptions.set(reviewId, channel);
+
+        // Return unsubscribe function
+        return () => {
+          channel.unsubscribe();
+          subscriptions.delete(reviewId);
+        };
+      },
+
+      unsubscribeFromComments: (reviewId: string) => {
+        const channel = subscriptions.get(reviewId);
+        if (channel) {
+          channel.unsubscribe();
+          subscriptions.delete(reviewId);
+        }
+      },
+    };
+  }),
     {
       name: "comments-storage",
       storage: createJSONStorage(() => AsyncStorage),
@@ -219,10 +303,10 @@ const useCommentsStore = create<CommentsStore>()(
       partialize: (state) => ({
         comments: state.comments,
         commentThreads: state.commentThreads,
-        mediaComments: state.mediaComments
-      })
-    }
-  )
+        mediaComments: state.mediaComments,
+      }),
+    },
+  ),
 );
 
 export default useCommentsStore;

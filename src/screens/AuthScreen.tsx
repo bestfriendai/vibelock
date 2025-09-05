@@ -2,13 +2,7 @@ import React, { useEffect } from "react";
 import { View, Text, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  withTiming,
-  withDelay,
-} from "react-native-reanimated";
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming, withDelay } from "react-native-reanimated";
 import AnimatedButton from "../components/AnimatedButton";
 
 export default function AuthScreen() {
@@ -77,9 +71,7 @@ export default function AuthScreen() {
 
         {/* Title Section */}
         <Animated.View style={titleAnimatedStyle} className="items-center mb-16">
-          <Text className="text-4xl font-bold text-text-primary mb-4 text-center">
-            Locker Room Talk
-          </Text>
+          <Text className="text-4xl font-bold text-text-primary mb-4 text-center">Locker Room Talk</Text>
           <Text className="text-text-secondary text-center text-lg leading-7 px-4">
             Anonymous dating insights from real people in your community
           </Text>
@@ -87,14 +79,8 @@ export default function AuthScreen() {
 
         {/* Action Buttons */}
         <Animated.View style={buttonsAnimatedStyle} className="w-full space-y-4">
-          <AnimatedButton
-            title="Sign In"
-            variant="primary"
-            size="large"
-            onPress={handleSignIn}
-            className="w-full"
-          />
-          
+          <AnimatedButton title="Sign In" variant="primary" size="large" onPress={handleSignIn} className="w-full" />
+
           <AnimatedButton
             title="Create Account"
             variant="secondary"
@@ -105,8 +91,7 @@ export default function AuthScreen() {
 
           <View className="items-center mt-8">
             <Text className="text-text-muted text-sm text-center leading-6">
-              By continuing, you agree to our{" "}
-              <Text className="text-brand-red">Terms of Service</Text> and{" "}
+              By continuing, you agree to our <Text className="text-brand-red">Terms of Service</Text> and{" "}
               <Text className="text-brand-red">Privacy Policy</Text>
             </Text>
           </View>

@@ -6,7 +6,9 @@ import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/AppNavigator";
 
-interface Props { review: Review; }
+interface Props {
+  review: Review;
+}
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -24,7 +26,12 @@ export default function ReviewGridCard({ review }: Props) {
   return (
     <Pressable
       className="overflow-hidden rounded-2xl mb-4 mr-4 flex-1"
-      onPress={() => navigation.navigate("PersonProfile", { firstName: review.reviewedPersonName, location: review.reviewedPersonLocation })}
+      onPress={() =>
+        navigation.navigate("PersonProfile", {
+          firstName: review.reviewedPersonName,
+          location: review.reviewedPersonLocation,
+        })
+      }
     >
       <LinearGradient
         colors={colors}

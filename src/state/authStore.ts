@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { User } from "../types";
-import { firebaseAuth, firebaseUsers } from "../services/firebase";
+import { supabaseAuth, supabaseUsers } from "../services/supabase";
 
 interface AuthState {
   user: User | null;
@@ -18,10 +18,19 @@ interface AuthActions {
   setError: (error: string | null) => void;
   setGuestMode: (isGuest: boolean) => void;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, location: { city: string; state: string }, opts?: { genderPreference?: "all" | "men" | "women" | "lgbtq+"; gender?: string }) => Promise<void>;
+  register: (
+    email: string,
+    password: string,
+    location: { city: string; state: string },
+    opts?: { genderPreference?: "all" | "men" | "women" | "lgbtq+"; gender?: string },
+  ) => Promise<void>;
   logout: () => Promise<void>;
   clearError: () => void;
-  updateUserLocation: (location: { city: string; state: string; coordinates?: { latitude: number; longitude: number } }) => void;
+  updateUserLocation: (location: {
+    city: string;
+    state: string;
+    coordinates?: { latitude: number; longitude: number };
+  }) => void;
   initializeAuthListener: () => () => void;
 }
 
@@ -39,11 +48,11 @@ const useAuthStore = create<AuthStore>()(
 
       // Actions
       setUser: (user) => {
-        set((state) => ({ 
+        set((state) => ({
           ...state,
-          user, 
+          user,
           isAuthenticated: !!user,
-          error: null 
+          error: null,
         }));
       },
 
@@ -60,91 +69,91 @@ const useAuthStore = create<AuthStore>()(
       },
 
       setGuestMode: (isGuest) => {
-        set((state) => ({ 
-          ...state, 
+        set((state) => ({
+          ...state,
           isGuestMode: isGuest,
           isAuthenticated: isGuest,
-          user: null 
+          user: null,
         }));
       },
 
       login: async (email, password) => {
         try {
           set((state) => ({ ...state, isLoading: true, error: null }));
-          
-          // Sign in with Firebase
-          const firebaseUser = await firebaseAuth.signIn(email, password);
-          
-          // Get user profile from Firestore
-          let userProfile = await firebaseUsers.getUserProfile(firebaseUser.uid);
-          
+
+          // Sign in with Supabase
+          const supabaseUser = await supabaseAuth.signIn(email, password);
+
+          // Get user profile from Supabase
+          let userProfile = await supabaseUsers.getUserProfile(supabaseUser.id);
+
           // If no profile exists, create a basic one
           if (!userProfile) {
             const basicProfile: Partial<User> = {
-              id: firebaseUser.uid,
-              email: firebaseUser.email || email,
+              id: supabaseUser.id,
+              email: supabaseUser.email || email,
               anonymousId: `anon_${Date.now()}`,
               location: {
                 city: "Unknown",
-                state: "Unknown"
+                state: "Unknown",
               },
-              genderPreference: "all"
+              genderPreference: "all",
             };
-            
-            await firebaseUsers.createUserProfile(firebaseUser.uid, basicProfile);
-            userProfile = await firebaseUsers.getUserProfile(firebaseUser.uid);
+
+            await supabaseUsers.createUserProfile(supabaseUser.id, basicProfile);
+            userProfile = await supabaseUsers.getUserProfile(supabaseUser.id);
           }
-          
-          set((state) => ({ 
+
+          set((state) => ({
             ...state,
-            user: userProfile, 
-            isAuthenticated: true, 
+            user: userProfile,
+            isAuthenticated: true,
             isLoading: false,
-            error: null 
+            error: null,
           }));
         } catch (error) {
-          set((state) => ({ 
+          set((state) => ({
             ...state,
             error: error instanceof Error ? error.message : "Login failed",
-            isLoading: false 
+            isLoading: false,
           }));
         }
       },
 
-  register: async (email, password, location, opts) => {
+      register: async (email, password, location, opts) => {
         try {
           set((state) => ({ ...state, isLoading: true, error: null }));
-          
-          // Create Firebase user
-          const firebaseUser = await firebaseAuth.signUp(email, password);
-          
-          // Create user profile in Firestore
+
+          // Create Supabase user
+          const supabaseUser = await supabaseAuth.signUp(email, password);
+
+          // Create user profile in Supabase
           const userProfile: Partial<User> = {
-            id: firebaseUser.uid,
-            email: firebaseUser.email || email,
+            id: supabaseUser.id,
+            email: supabaseUser.email || email,
             anonymousId: `anon_${Date.now()}`,
             location,
             genderPreference: opts?.genderPreference || "all",
-            gender: opts?.gender
+            gender: opts?.gender,
           };
-          
-          await firebaseUsers.createUserProfile(firebaseUser.uid, userProfile);
-          
+
+          await supabaseUsers.createUserProfile(supabaseUser.id, userProfile);
+
           // Get the created profile
-          const createdProfile = await firebaseUsers.getUserProfile(firebaseUser.uid);
-          
-          set((state) => ({ 
+          const createdProfile = await supabaseUsers.getUserProfile(supabaseUser.id);
+
+          set((state) => ({
             ...state,
-            user: createdProfile, 
-            isAuthenticated: true, 
+            user: createdProfile,
+            isAuthenticated: true,
             isLoading: false,
-            error: null 
+            error: null,
           }));
         } catch (error) {
-          set((state) => ({ 
+          set((state) => ({
             ...state,
             error: error instanceof Error ? error.message : "Registration failed",
-            isLoading: false 
+            isLoading: false,
           }));
         }
       },
@@ -152,21 +161,21 @@ const useAuthStore = create<AuthStore>()(
       logout: async () => {
         try {
           set({ isLoading: true });
-          
-          // Sign out from Firebase
-          await firebaseAuth.signOut();
-          
-          set({ 
-            user: null, 
+
+          // Sign out from Supabase
+          await supabaseAuth.signOut();
+
+          set({
+            user: null,
             isAuthenticated: false,
             isGuestMode: false,
             isLoading: false,
-            error: null 
+            error: null,
           });
         } catch (error) {
-          set({ 
+          set({
             error: error instanceof Error ? error.message : "Logout failed",
-            isLoading: false 
+            isLoading: false,
           });
         }
       },
@@ -174,28 +183,32 @@ const useAuthStore = create<AuthStore>()(
       updateUserLocation: (location) => {
         set((state) => ({
           ...state,
-          user: state.user ? {
-            ...state.user,
-            location: {
-              ...location,
-              coordinates: location.coordinates
-            }
-          } : null
+          user: state.user
+            ? {
+                ...state.user,
+                location: {
+                  ...location,
+                  coordinates: location.coordinates,
+                },
+              }
+            : null,
         }));
       },
 
       initializeAuthListener: () => {
-        return firebaseAuth.onAuthStateChanged(async (firebaseUser) => {
-          if (firebaseUser) {
+        const {
+          data: { subscription },
+        } = supabaseAuth.onAuthStateChanged(async (supabaseUser) => {
+          if (supabaseUser) {
             try {
-              // Get user profile from Firestore
-              const userProfile = await firebaseUsers.getUserProfile(firebaseUser.uid);
+              // Get user profile from Supabase
+              const userProfile = await supabaseUsers.getUserProfile(supabaseUser.id);
               if (userProfile) {
                 set((state) => ({
                   ...state,
                   user: userProfile,
                   isAuthenticated: true,
-                  isLoading: false
+                  isLoading: false,
                 }));
               }
             } catch (error) {
@@ -203,7 +216,7 @@ const useAuthStore = create<AuthStore>()(
               set((state) => ({
                 ...state,
                 error: "Failed to load user profile",
-                isLoading: false
+                isLoading: false,
               }));
             }
           } else {
@@ -211,23 +224,28 @@ const useAuthStore = create<AuthStore>()(
               ...state,
               user: null,
               isAuthenticated: false,
-              isLoading: false
+              isLoading: false,
             }));
           }
         });
-      }
+
+        // Return unsubscribe function
+        return () => {
+          subscription.unsubscribe();
+        };
+      },
     }),
     {
       name: "auth-storage",
       storage: createJSONStorage(() => AsyncStorage),
       // Only persist user data, not loading states
-      partialize: (state) => ({ 
+      partialize: (state) => ({
         user: state.user,
         isAuthenticated: state.isAuthenticated,
-        isGuestMode: state.isGuestMode
+        isGuestMode: state.isGuestMode,
       }),
-    }
-  )
+    },
+  ),
 );
 
 export default useAuthStore;

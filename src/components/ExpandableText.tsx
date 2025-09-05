@@ -1,11 +1,7 @@
 import React, { useState } from "react";
 import { View, Text, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import Animated, { 
-  useSharedValue, 
-  useAnimatedStyle, 
-  withTiming
-} from "react-native-reanimated";
+import Animated, { useSharedValue, useAnimatedStyle, withTiming } from "react-native-reanimated";
 
 interface Props {
   text: string;
@@ -22,7 +18,7 @@ export default function ExpandableText({
   textStyle = "text-text-primary text-base leading-7",
   linkStyle = "text-brand-red font-medium",
   expandText = "Read full story",
-  collapseText = "Show less"
+  collapseText = "Show less",
 }: Props) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [shouldShowReadMore, setShouldShowReadMore] = useState(false);
@@ -50,11 +46,8 @@ export default function ExpandableText({
   const toggleExpanded = () => {
     const newIsExpanded = !isExpanded;
     setIsExpanded(newIsExpanded);
-    
-    animatedHeight.value = withTiming(
-      newIsExpanded ? fullTextHeight : truncatedTextHeight,
-      { duration: 300 }
-    );
+
+    animatedHeight.value = withTiming(newIsExpanded ? fullTextHeight : truncatedTextHeight, { duration: 300 });
   };
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -79,11 +72,7 @@ export default function ExpandableText({
 
       {/* Animated container */}
       <Animated.View style={animatedStyle}>
-        <Text
-          className={textStyle}
-          numberOfLines={isExpanded ? undefined : numberOfLines}
-          onLayout={handleTextLayout}
-        >
+        <Text className={textStyle} numberOfLines={isExpanded ? undefined : numberOfLines} onLayout={handleTextLayout}>
           {text}
         </Text>
       </Animated.View>
@@ -94,9 +83,7 @@ export default function ExpandableText({
           onPress={toggleExpanded}
           className="flex-row items-center mt-3 bg-brand-red/10 px-3 py-2 rounded-lg self-start"
         >
-          <Text className={linkStyle}>
-            {isExpanded ? collapseText : expandText}
-          </Text>
+          <Text className={linkStyle}>{isExpanded ? collapseText : expandText}</Text>
           <Ionicons
             name={isExpanded ? "chevron-up" : "chevron-down"}
             size={16}

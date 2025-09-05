@@ -1,12 +1,5 @@
 import React, { useState } from "react";
-import { 
-  View, 
-  Modal, 
-  Pressable, 
-  Text, 
-  Dimensions, 
-  StatusBar
-} from "react-native";
+import { View, Modal, Pressable, Text, Dimensions, StatusBar } from "react-native";
 import { Image } from "expo-image";
 import { VideoView, useVideoPlayer } from "expo-video";
 import { Ionicons } from "@expo/vector-icons";
@@ -24,26 +17,23 @@ interface Props {
   commentCounts?: Record<string, number>; // mediaId -> comment count
 }
 
-export default function MediaViewer({ 
-  visible, 
-  media, 
-  initialIndex, 
-  onClose, 
+export default function MediaViewer({
+  visible,
+  media,
+  initialIndex,
+  onClose,
   onCommentPress,
-  commentCounts = {}
+  commentCounts = {},
 }: Props) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const currentMedia = media[currentIndex];
-  
+
   // Video player for video media
-  const videoPlayer = useVideoPlayer(
-    currentMedia?.type === "video" ? currentMedia.uri : null,
-    (player) => {
-      if (currentMedia?.type === "video") {
-        player.play();
-      }
+  const videoPlayer = useVideoPlayer(currentMedia?.type === "video" ? currentMedia.uri : null, (player) => {
+    if (currentMedia?.type === "video") {
+      player.play();
     }
-  );
+  });
 
   const navigateMedia = (direction: "prev" | "next") => {
     if (direction === "prev" && currentIndex > 0) {
@@ -60,12 +50,7 @@ export default function MediaViewer({
   if (!visible || !currentMedia) return null;
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={handleClose}
-    >
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose}>
       <StatusBar hidden />
       <View className="flex-1 bg-black">
         <SafeAreaView className="flex-1">
@@ -137,18 +122,10 @@ export default function MediaViewer({
           <View className="absolute bottom-0 left-0 right-0 bg-black/50 px-4 py-3">
             <View className="flex-row items-center justify-between">
               <View className="flex-row items-center space-x-2">
-                <Ionicons 
-                  name={currentMedia.type === "video" ? "videocam" : "image"} 
-                  size={16} 
-                  color="white" 
-                />
-                <Text className="text-white text-sm">
-                  {currentMedia.type === "video" ? "Video" : "Image"}
-                </Text>
+                <Ionicons name={currentMedia.type === "video" ? "videocam" : "image"} size={16} color="white" />
+                <Text className="text-white text-sm">{currentMedia.type === "video" ? "Video" : "Image"}</Text>
                 {currentMedia.type === "video" && currentMedia.duration && (
-                  <Text className="text-white/70 text-sm">
-                    • {formatDuration(currentMedia.duration)}
-                  </Text>
+                  <Text className="text-white/70 text-sm">• {formatDuration(currentMedia.duration)}</Text>
                 )}
               </View>
 
@@ -159,21 +136,17 @@ export default function MediaViewer({
                   {commentCounts[currentMedia.id] && commentCounts[currentMedia.id] > 0 && (
                     <View className="flex-row items-center">
                       <Ionicons name="chatbubble" size={14} color="white" />
-                      <Text className="text-white text-sm ml-1">
-                        {commentCounts[currentMedia.id]}
-                      </Text>
+                      <Text className="text-white text-sm ml-1">{commentCounts[currentMedia.id]}</Text>
                     </View>
                   )}
-                  
+
                   {/* Comment button */}
                   <Pressable
                     onPress={() => onCommentPress(currentMedia, currentIndex)}
                     className="bg-white/20 rounded-full px-3 py-2 flex-row items-center"
                   >
                     <Ionicons name="chatbubble-outline" size={16} color="white" />
-                    <Text className="text-white text-sm font-medium ml-2">
-                      Comment
-                    </Text>
+                    <Text className="text-white text-sm font-medium ml-2">Comment</Text>
                   </Pressable>
                 </View>
               )}

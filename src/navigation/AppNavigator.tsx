@@ -18,13 +18,13 @@ import SignUpScreen from "../screens/SignUpScreen";
 import OnboardingScreen from "../screens/OnboardingScreen";
 import ChatRoomScreen from "../screens/ChatRoomScreen";
 import ReviewDetailScreen from "../screens/ReviewDetailScreen";
-import FirebaseExample from "../components/FirebaseExample";
+import SupabaseExample from "../components/SupabaseExample";
 
 // Import stores
 import useAuthStore from "../state/authStore";
 
 // Types for navigation - using serialized versions for React Navigation
-type SerializedReview = Omit<import("../types").Review, 'createdAt' | 'updatedAt'> & {
+type SerializedReview = Omit<import("../types").Review, "createdAt" | "updatedAt"> & {
   createdAt: string | Date;
   updatedAt: string | Date;
 };
@@ -35,9 +35,9 @@ export type RootStackParamList = {
   SignUp: undefined;
   Onboarding: undefined;
   MainTabs: undefined;
-  PersonProfile: { 
-    firstName: string; 
-    location: { city: string; state: string }; 
+  PersonProfile: {
+    firstName: string;
+    location: { city: string; state: string };
   };
   CreateReview: undefined;
   ChatRoom: { roomId: string };
@@ -87,7 +87,7 @@ const SettingsStack = createNativeStackNavigator<SettingsStackParamList>();
 function FloatingCreateButton() {
   const navigation = useNavigation<any>();
   const { isGuestMode } = useAuthStore();
-  
+
   const handlePress = () => {
     if (isGuestMode) {
       // Show guest mode prompt or navigate to sign up
@@ -96,7 +96,7 @@ function FloatingCreateButton() {
       navigation.navigate("CreateReview");
     }
   };
-  
+
   return (
     <Pressable
       className="absolute bottom-16 self-center w-14 h-14 rounded-full bg-white items-center justify-center shadow-lg"
@@ -117,8 +117,8 @@ function BrowseStackNavigator() {
       }}
     >
       <BrowseStack.Screen name="Browse" component={BrowseScreen} />
-      <BrowseStack.Screen 
-        name="ReviewDetail" 
+      <BrowseStack.Screen
+        name="ReviewDetail"
         component={ReviewDetailScreen}
         options={{
           headerShown: true,
@@ -141,8 +141,8 @@ function SearchStackNavigator() {
       }}
     >
       <SearchStack.Screen name="Search" component={SearchScreen} />
-      <SearchStack.Screen 
-        name="ReviewDetail" 
+      <SearchStack.Screen
+        name="ReviewDetail"
         component={ReviewDetailScreen}
         options={{
           headerShown: true,
@@ -178,12 +178,12 @@ function SettingsStackNavigator() {
       }}
     >
       <SettingsStack.Screen name="Settings" component={ProfileScreen} />
-      <SettingsStack.Screen 
-        name="FirebaseTest" 
-        component={FirebaseExample}
+      <SettingsStack.Screen
+        name="FirebaseTest"
+        component={SupabaseExample}
         options={{
           headerShown: true,
-          headerTitle: "Firebase Test",
+          headerTitle: "Supabase Test",
           headerStyle: { backgroundColor: "#141418" },
           headerTintColor: "#FFFFFF",
           headerBackTitle: "Back",
@@ -250,8 +250,8 @@ export default function AppNavigator() {
   const { isAuthenticated, isGuestMode } = useAuthStore();
 
   return (
-    <Stack.Navigator 
-      screenOptions={{ 
+    <Stack.Navigator
+      screenOptions={{
         headerShown: false,
         animation: "slide_from_right",
         animationDuration: 300,
@@ -259,22 +259,22 @@ export default function AppNavigator() {
     >
       {!isAuthenticated && !isGuestMode ? (
         <>
-          <Stack.Screen 
-            name="Onboarding" 
+          <Stack.Screen
+            name="Onboarding"
             component={OnboardingScreen}
             options={{
               animation: "fade",
             }}
           />
-          <Stack.Screen 
-            name="SignIn" 
+          <Stack.Screen
+            name="SignIn"
             component={SignInScreen}
             options={{
               animation: "slide_from_right",
             }}
           />
-          <Stack.Screen 
-            name="SignUp" 
+          <Stack.Screen
+            name="SignUp"
             component={SignUpScreen}
             options={{
               animation: "slide_from_right",
@@ -284,8 +284,8 @@ export default function AppNavigator() {
       ) : (
         <>
           <Stack.Screen name="MainTabs" component={TabNavigator} />
-          <Stack.Screen 
-            name="CreateReview" 
+          <Stack.Screen
+            name="CreateReview"
             component={CreateReviewScreen}
             options={{
               presentation: "modal",
@@ -295,8 +295,8 @@ export default function AppNavigator() {
               headerTintColor: "#FFFFFF",
             }}
           />
-          <Stack.Screen 
-            name="PersonProfile" 
+          <Stack.Screen
+            name="PersonProfile"
             component={PersonProfileScreen}
             options={{
               presentation: "modal",

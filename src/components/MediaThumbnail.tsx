@@ -11,21 +11,12 @@ interface Props {
   showPlayIcon?: boolean;
 }
 
-export default function MediaThumbnail({ 
-  media, 
-  size = 80, 
-  onPress, 
-  showPlayIcon = true 
-}: Props) {
+export default function MediaThumbnail({ media, size = 80, onPress, showPlayIcon = true }: Props) {
   const isVideo = media.type === "video";
   const imageUri = media.thumbnailUri || media.uri;
 
   return (
-    <Pressable
-      onPress={onPress}
-      className="relative overflow-hidden rounded-xl"
-      style={{ width: size, height: size }}
-    >
+    <Pressable onPress={onPress} className="relative overflow-hidden rounded-xl" style={{ width: size, height: size }}>
       <Image
         source={{ uri: imageUri }}
         style={{ width: size, height: size }}
@@ -33,7 +24,7 @@ export default function MediaThumbnail({
         transition={200}
         placeholder="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
       />
-      
+
       {/* Video play overlay */}
       {isVideo && showPlayIcon && (
         <View className="absolute inset-0 bg-black/30 items-center justify-center">
@@ -46,9 +37,7 @@ export default function MediaThumbnail({
       {/* Video duration badge */}
       {isVideo && media.duration && (
         <View className="absolute bottom-1 right-1 bg-black/70 px-1.5 py-0.5 rounded">
-          <Text className="text-white text-xs font-medium">
-            {formatDuration(media.duration)}
-          </Text>
+          <Text className="text-white text-xs font-medium">{formatDuration(media.duration)}</Text>
         </View>
       )}
 

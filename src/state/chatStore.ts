@@ -1,52 +1,45 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { 
-  ChatRoom, 
-  ChatMessage, 
-  ChatMember, 
-  TypingUser, 
-  ConnectionStatus,
-  ChatState 
-} from "../types";
+import { ChatRoom, ChatMessage, ChatMember, TypingUser, ConnectionStatus, ChatState } from "../types";
 import { webSocketService } from "../services/websocketService";
-import { firebaseChat } from "../services/firebase";
+import { supabaseChat } from "../services/supabase";
 
 interface ChatActions {
   // Connection management
   connect: (userId: string) => void;
   disconnect: () => void;
   setConnectionStatus: (status: ConnectionStatus) => void;
-  
+
   // Chat rooms
   loadChatRooms: () => Promise<void>;
   setRoomCategoryFilter: (category: "all" | "men" | "women" | "lgbtq+") => void;
   joinChatRoom: (roomId: string) => Promise<void>;
   leaveChatRoom: (roomId: string) => void;
   setCurrentChatRoom: (room: ChatRoom | null) => void;
-  
+
   // Messages
   loadMessages: (roomId: string) => Promise<void>;
   sendMessage: (roomId: string, content: string) => void;
   addMessage: (message: ChatMessage) => void;
   markMessagesAsRead: (roomId: string) => void;
   startListeningToMessages: (roomId: string) => () => void;
-  
+
   // Typing indicators
   setTyping: (roomId: string, isTyping: boolean) => void;
   addTypingUser: (typingUser: TypingUser) => void;
   removeTypingUser: (userId: string, roomId: string) => void;
-  
+
   // Online status
   setOnlineUsers: (userIds: string[]) => void;
   addOnlineUser: (userId: string) => void;
   removeOnlineUser: (userId: string) => void;
-  
+
   // Members
   loadMembers: (roomId: string) => Promise<void>;
   addMember: (member: ChatMember) => void;
   removeMember: (userId: string, roomId: string) => void;
-  
+
   // Error handling
   setError: (error: string | null) => void;
   clearError: () => void;
@@ -55,14 +48,14 @@ interface ChatActions {
 
 type ChatStore = ChatState & ChatActions;
 
-  // Mock data for development
+// Mock data for development
 const mockChatRooms: ChatRoom[] = [
   {
     id: "room_local_dc",
     name: "Washington DC Local",
     description: "Connect with singles in the Washington DC area",
-  type: "local",
-  category: "all",
+    type: "local",
+    category: "all",
     memberCount: 127,
     onlineCount: 23,
     lastMessage: {
@@ -73,20 +66,20 @@ const mockChatRooms: ChatRoom[] = [
       content: "Anyone been to that new rooftop bar in Adams Morgan?",
       messageType: "text",
       timestamp: new Date(Date.now() - 300000), // 5 minutes ago
-      isRead: false
+      isRead: false,
     },
     lastActivity: new Date(Date.now() - 300000),
     isActive: true,
     location: { city: "Washington", state: "DC" },
     createdAt: new Date("2024-01-01"),
-    updatedAt: new Date()
+    updatedAt: new Date(),
   },
   {
     id: "room_topic_dating_tips",
     name: "Dating Tips & Advice",
     description: "Share and get advice on dating, relationships, and meeting people",
-  type: "topic",
-  category: "all",
+    type: "topic",
+    category: "all",
     memberCount: 89,
     onlineCount: 15,
     lastMessage: {
@@ -97,19 +90,19 @@ const mockChatRooms: ChatRoom[] = [
       content: "What's everyone's take on first date locations?",
       messageType: "text",
       timestamp: new Date(Date.now() - 900000), // 15 minutes ago
-      isRead: false
+      isRead: false,
     },
     lastActivity: new Date(Date.now() - 900000),
     isActive: true,
     createdAt: new Date("2024-01-01"),
-    updatedAt: new Date()
+    updatedAt: new Date(),
   },
   {
     id: "room_topic_success_stories",
     name: "Success Stories",
     description: "Share your dating success stories and celebrate wins",
-  type: "topic",
-  category: "all",
+    type: "topic",
+    category: "all",
     memberCount: 156,
     onlineCount: 31,
     lastMessage: {
@@ -120,19 +113,19 @@ const mockChatRooms: ChatRoom[] = [
       content: "Just wanted to thank everyone for the advice! Had an amazing third date last night 💕",
       messageType: "text",
       timestamp: new Date(Date.now() - 1800000), // 30 minutes ago
-      isRead: false
+      isRead: false,
     },
     lastActivity: new Date(Date.now() - 1800000),
     isActive: true,
     createdAt: new Date("2024-01-01"),
-    updatedAt: new Date()
+    updatedAt: new Date(),
   },
   {
     id: "room_global",
     name: "Global Chat",
     description: "Open discussion for everyone",
-  type: "global",
-  category: "all",
+    type: "global",
+    category: "all",
     memberCount: 342,
     onlineCount: 67,
     lastMessage: {
@@ -143,14 +136,13 @@ const mockChatRooms: ChatRoom[] = [
       content: "Good morning everyone! Hope you all have a great day",
       messageType: "text",
       timestamp: new Date(Date.now() - 3600000), // 1 hour ago
-      isRead: false
+      isRead: false,
     },
     lastActivity: new Date(Date.now() - 3600000),
     isActive: true,
     createdAt: new Date("2024-01-01"),
-    updatedAt: new Date()
-  }
-  ,
+    updatedAt: new Date(),
+  },
   {
     id: "room_men",
     name: "Men's Room",
@@ -162,7 +154,7 @@ const mockChatRooms: ChatRoom[] = [
     lastActivity: new Date(Date.now() - 600000),
     isActive: true,
     createdAt: new Date("2024-01-01"),
-    updatedAt: new Date()
+    updatedAt: new Date(),
   },
   {
     id: "room_women",
@@ -175,7 +167,7 @@ const mockChatRooms: ChatRoom[] = [
     lastActivity: new Date(Date.now() - 1200000),
     isActive: true,
     createdAt: new Date("2024-01-01"),
-    updatedAt: new Date()
+    updatedAt: new Date(),
   },
   {
     id: "room_lgbtq",
@@ -188,8 +180,8 @@ const mockChatRooms: ChatRoom[] = [
     lastActivity: new Date(Date.now() - 2400000),
     isActive: true,
     createdAt: new Date("2024-01-01"),
-    updatedAt: new Date()
-  }
+    updatedAt: new Date(),
+  },
 ];
 
 const useChatStore = create<ChatStore>()(
@@ -203,7 +195,7 @@ const useChatStore = create<ChatStore>()(
       members: {},
       typingUsers: [],
       onlineUsers: [],
-      connectionStatus: 'disconnected',
+      connectionStatus: "disconnected",
       isLoading: false,
       error: null,
 
@@ -232,7 +224,7 @@ const useChatStore = create<ChatStore>()(
           },
           onError: (error: string) => {
             get().setError(error);
-          }
+          },
         };
 
         webSocketService.connect(userId, callbacks);
@@ -240,7 +232,7 @@ const useChatStore = create<ChatStore>()(
 
       disconnect: () => {
         webSocketService.disconnect();
-        set({ connectionStatus: 'disconnected' });
+        set({ connectionStatus: "disconnected" });
       },
 
       setConnectionStatus: (status: ConnectionStatus) => {
@@ -251,45 +243,51 @@ const useChatStore = create<ChatStore>()(
       loadChatRooms: async () => {
         try {
           set({ isLoading: true, error: null });
-          
+
           // If no chat rooms exist, immediately show mock data for better UX
           const currentState = get();
           if (currentState.chatRooms.length === 0) {
             const category = currentState.roomCategoryFilter || "all";
-            const roomsToUse = category && category !== "all" ? mockChatRooms.filter(r => (r.category || "all") === category) : mockChatRooms;
-            set({ 
+            const roomsToUse =
+              category && category !== "all"
+                ? mockChatRooms.filter((r) => (r.category || "all") === category)
+                : mockChatRooms;
+            set({
               chatRooms: roomsToUse,
-              isLoading: false 
+              isLoading: false,
             });
             return;
           }
-          
-          // Try to load from Firebase
+
+          // Try to load from Supabase
           try {
-            let chatRooms = await firebaseChat.getChatRooms();
+            let chatRooms = await supabaseChat.getChatRooms();
             // Apply category filter if set
             const category = get().roomCategoryFilter || "all";
             if (category && category !== "all") {
               chatRooms = chatRooms.filter((r: ChatRoom) => (r.category || "all") === category);
             }
-            set({ 
+            set({
               chatRooms,
-              isLoading: false 
+              isLoading: false,
             });
           } catch (firebaseError) {
             // Fallback to mock data if Firebase fails
             console.warn("Firebase failed, using mock data:", firebaseError);
             const category = get().roomCategoryFilter || "all";
-            const roomsToUse = category && category !== "all" ? mockChatRooms.filter(r => (r.category || "all") === category) : mockChatRooms;
-            set({ 
+            const roomsToUse =
+              category && category !== "all"
+                ? mockChatRooms.filter((r) => (r.category || "all") === category)
+                : mockChatRooms;
+            set({
               chatRooms: roomsToUse,
-              isLoading: false 
+              isLoading: false,
             });
           }
         } catch (error) {
-          set({ 
+          set({
             error: error instanceof Error ? error.message : "Failed to load chat rooms",
-            isLoading: false 
+            isLoading: false,
           });
         }
       },
@@ -300,7 +298,7 @@ const useChatStore = create<ChatStore>()(
 
       joinChatRoom: async (roomId: string) => {
         try {
-          const room = get().chatRooms.find(r => r.id === roomId);
+          const room = get().chatRooms.find((r) => r.id === roomId);
           if (room) {
             set({ currentChatRoom: room });
             webSocketService.joinRoom(roomId);
@@ -328,7 +326,7 @@ const useChatStore = create<ChatStore>()(
       loadMessages: async (roomId: string) => {
         try {
           set({ isLoading: true });
-          
+
           // Generate mock messages for the room
           const mockMessages: ChatMessage[] = [
             {
@@ -340,7 +338,7 @@ const useChatStore = create<ChatStore>()(
               messageType: "text",
               timestamp: new Date(Date.now() - 3600000),
               isRead: true,
-              isOwn: false
+              isOwn: false,
             },
             {
               id: `msg_${roomId}_2`,
@@ -351,7 +349,7 @@ const useChatStore = create<ChatStore>()(
               messageType: "text",
               timestamp: new Date(Date.now() - 3000000),
               isRead: true,
-              isOwn: true
+              isOwn: true,
             },
             {
               id: `msg_${roomId}_3`,
@@ -362,83 +360,79 @@ const useChatStore = create<ChatStore>()(
               messageType: "text",
               timestamp: new Date(Date.now() - 2400000),
               isRead: true,
-              isOwn: false
-            }
+              isOwn: false,
+            },
           ];
 
-          set(state => ({
+          set((state) => ({
             messages: {
               ...state.messages,
               [roomId]: [
                 ...mockMessages,
-                ...(state.messages[roomId] || []).filter(msg => 
-                  msg.senderId === "current_user" && 
-                  !mockMessages.find(mock => mock.id === msg.id)
-                )
-              ].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+                ...(state.messages[roomId] || []).filter(
+                  (msg) => msg.senderId === "current_user" && !mockMessages.find((mock) => mock.id === msg.id),
+                ),
+              ].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()),
             },
-            isLoading: false
+            isLoading: false,
           }));
         } catch (error) {
-          set({ 
+          set({
             error: error instanceof Error ? error.message : "Failed to load messages",
-            isLoading: false 
+            isLoading: false,
           });
         }
       },
 
       sendMessage: async (roomId: string, content: string) => {
-        const message: Omit<ChatMessage, 'id' | 'timestamp'> = {
+        const message: Omit<ChatMessage, "id" | "timestamp"> = {
           chatRoomId: roomId,
           senderId: "current_user",
           senderName: "You",
           content,
           messageType: "text",
           isRead: true,
-          isOwn: true
+          isOwn: true,
         };
 
         // Always add message to local state immediately (optimistic update)
         const newMessage: ChatMessage = {
           ...message,
           id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-          timestamp: new Date()
+          timestamp: new Date(),
         };
-        
+
         get().addMessage(newMessage);
 
-        // Try to send to Firebase in background
+        // Try to send to Supabase in background
         try {
-          await firebaseChat.sendMessage(roomId, message);
+          await supabaseChat.sendMessage(roomId, message);
           webSocketService.sendChatMessage(message);
         } catch (error) {
-          // Even if Firebase fails, we already added it locally
-          console.warn('Failed to send message to Firebase (but it\'s still visible locally):', error);
+          // Even if Supabase fails, we already added it locally
+          console.warn("Failed to send message to Supabase (but it's still visible locally):", error);
           webSocketService.sendChatMessage(message);
         }
       },
 
       addMessage: (message: ChatMessage) => {
-        set(state => ({
+        set((state) => ({
           messages: {
             ...state.messages,
-            [message.chatRoomId]: [
-              ...(state.messages[message.chatRoomId] || []),
-              message
-            ]
-          }
+            [message.chatRoomId]: [...(state.messages[message.chatRoomId] || []), message],
+          },
         }));
       },
 
       markMessagesAsRead: (roomId: string) => {
-        set(state => ({
+        set((state) => ({
           messages: {
             ...state.messages,
-            [roomId]: (state.messages[roomId] || []).map(msg => ({
+            [roomId]: (state.messages[roomId] || []).map((msg) => ({
               ...msg,
-              isRead: true
-            }))
-          }
+              isRead: true,
+            })),
+          },
         }));
       },
 
@@ -448,13 +442,13 @@ const useChatStore = create<ChatStore>()(
       },
 
       addTypingUser: (typingUser: TypingUser) => {
-        set(state => ({
+        set((state) => ({
           typingUsers: [
-            ...state.typingUsers.filter(u => 
-              u.userId !== typingUser.userId || u.chatRoomId !== typingUser.chatRoomId
+            ...state.typingUsers.filter(
+              (u) => u.userId !== typingUser.userId || u.chatRoomId !== typingUser.chatRoomId,
             ),
-            typingUser
-          ]
+            typingUser,
+          ],
         }));
 
         // Remove typing indicator after 3 seconds
@@ -464,10 +458,8 @@ const useChatStore = create<ChatStore>()(
       },
 
       removeTypingUser: (userId: string, roomId: string) => {
-        set(state => ({
-          typingUsers: state.typingUsers.filter(u => 
-            u.userId !== userId || u.chatRoomId !== roomId
-          )
+        set((state) => ({
+          typingUsers: state.typingUsers.filter((u) => u.userId !== userId || u.chatRoomId !== roomId),
         }));
       },
 
@@ -477,14 +469,14 @@ const useChatStore = create<ChatStore>()(
       },
 
       addOnlineUser: (userId: string) => {
-        set(state => ({
-          onlineUsers: [...new Set([...state.onlineUsers, userId])]
+        set((state) => ({
+          onlineUsers: [...new Set([...state.onlineUsers, userId])],
         }));
       },
 
       removeOnlineUser: (userId: string) => {
-        set(state => ({
-          onlineUsers: state.onlineUsers.filter(id => id !== userId)
+        set((state) => ({
+          onlineUsers: state.onlineUsers.filter((id) => id !== userId),
         }));
       },
 
@@ -501,7 +493,7 @@ const useChatStore = create<ChatStore>()(
               joinedAt: new Date(Date.now() - 86400000),
               role: "member",
               isOnline: true,
-              lastSeen: new Date()
+              lastSeen: new Date(),
             },
             {
               id: "member_2",
@@ -511,15 +503,15 @@ const useChatStore = create<ChatStore>()(
               joinedAt: new Date(Date.now() - 172800000),
               role: "member",
               isOnline: false,
-              lastSeen: new Date(Date.now() - 3600000)
-            }
+              lastSeen: new Date(Date.now() - 3600000),
+            },
           ];
 
-          set(state => ({
+          set((state) => ({
             members: {
               ...state.members,
-              [roomId]: mockMembers
-            }
+              [roomId]: mockMembers,
+            },
           }));
         } catch (error) {
           set({ error: error instanceof Error ? error.message : "Failed to load members" });
@@ -527,23 +519,20 @@ const useChatStore = create<ChatStore>()(
       },
 
       addMember: (member: ChatMember) => {
-        set(state => ({
+        set((state) => ({
           members: {
             ...state.members,
-            [member.chatRoomId]: [
-              ...(state.members[member.chatRoomId] || []),
-              member
-            ]
-          }
+            [member.chatRoomId]: [...(state.members[member.chatRoomId] || []), member],
+          },
         }));
       },
 
       removeMember: (userId: string, roomId: string) => {
-        set(state => ({
+        set((state) => ({
           members: {
             ...state.members,
-            [roomId]: (state.members[roomId] || []).filter(m => m.userId !== userId)
-          }
+            [roomId]: (state.members[roomId] || []).filter((m) => m.userId !== userId),
+          },
         }));
       },
 
@@ -560,30 +549,30 @@ const useChatStore = create<ChatStore>()(
         set({ isLoading: loading });
       },
 
-      // Firebase real-time message listener
+      // Supabase real-time message listener
       startListeningToMessages: (roomId: string) => {
-        return firebaseChat.onMessagesSnapshot(roomId, (messages: ChatMessage[]) => {
-          set(state => ({
+        return supabaseChat.onMessagesSnapshot(roomId, (messages: ChatMessage[]) => {
+          set((state) => ({
             messages: {
               ...state.messages,
-              [roomId]: messages
-            }
+              [roomId]: messages,
+            },
           }));
         });
-      }
+      },
     }),
     {
       name: "chat-storage",
       storage: createJSONStorage(() => AsyncStorage),
       // Only persist essential data, not real-time state
       partialize: (state) => ({
-  chatRooms: state.chatRooms,
-  messages: state.messages,
-  members: state.members,
-  roomCategoryFilter: (state as any).roomCategoryFilter
+        chatRooms: state.chatRooms,
+        messages: state.messages,
+        members: state.members,
+        roomCategoryFilter: (state as any).roomCategoryFilter,
       }),
-    }
-  )
+    },
+  ),
 );
 
 export default useChatStore;

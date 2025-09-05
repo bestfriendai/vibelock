@@ -4,13 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  withTiming,
-  withDelay,
-} from "react-native-reanimated";
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming, withDelay } from "react-native-reanimated";
 import AnimatedButton from "../components/AnimatedButton";
 import useAuthStore from "../state/authStore";
 
@@ -29,13 +23,13 @@ const features = [
     icon: "people-outline" as keyof typeof Ionicons.glyphMap,
     title: "Connect Safely",
     description: "Join location-based community discussions",
-  }
+  },
 ];
 
 export default function OnboardingScreen() {
   const navigation = useNavigation<any>();
   const { setGuestMode } = useAuthStore();
-  
+
   // Animation values
   const logoScale = useSharedValue(0);
   const logoOpacity = useSharedValue(0);
@@ -101,16 +95,9 @@ export default function OnboardingScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-surface-900">
-      <LinearGradient
-        colors={["#141418", "#1A1A20", "#141418"]}
-        className="absolute inset-0"
-      />
-      
-      <ScrollView 
-        className="flex-1" 
-        contentContainerStyle={{ flexGrow: 1 }}
-        showsVerticalScrollIndicator={false}
-      >
+      <LinearGradient colors={["#141418", "#1A1A20", "#141418"]} className="absolute inset-0" />
+
+      <ScrollView className="flex-1" contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false}>
         <View className="flex-1 px-6 py-8">
           {/* Logo Section */}
           <Animated.View style={logoAnimatedStyle} className="items-center mt-8 mb-12">
@@ -131,7 +118,7 @@ export default function OnboardingScreen() {
             <Text className="text-xl text-text-secondary text-center leading-8 px-2 mb-8">
               Anonymous dating insights from real people in your community
             </Text>
-            
+
             {/* Stats or Social Proof */}
             <View className="bg-surface-800/50 rounded-2xl p-6 w-full border border-surface-700/50">
               <View className="flex-row justify-around">
@@ -160,12 +147,8 @@ export default function OnboardingScreen() {
                     <Ionicons name={feature.icon} size={24} color="#FF6B6B" />
                   </View>
                   <View className="flex-1">
-                    <Text className="text-lg font-semibold text-text-primary mb-1">
-                      {feature.title}
-                    </Text>
-                    <Text className="text-text-secondary">
-                      {feature.description}
-                    </Text>
+                    <Text className="text-lg font-semibold text-text-primary mb-1">{feature.title}</Text>
+                    <Text className="text-text-secondary">{feature.description}</Text>
                   </View>
                 </View>
               ))}
@@ -181,7 +164,7 @@ export default function OnboardingScreen() {
               onPress={handleSignUp}
               className="w-full"
             />
-            
+
             <AnimatedButton
               title="Sign In"
               variant="secondary"
@@ -201,8 +184,7 @@ export default function OnboardingScreen() {
 
             <View className="items-center mt-6">
               <Text className="text-text-muted text-xs text-center leading-5 px-4">
-                By continuing, you agree to our{" "}
-                <Text className="text-brand-red">Terms of Service</Text> and{" "}
+                By continuing, you agree to our <Text className="text-brand-red">Terms of Service</Text> and{" "}
                 <Text className="text-brand-red">Privacy Policy</Text>
               </Text>
             </View>

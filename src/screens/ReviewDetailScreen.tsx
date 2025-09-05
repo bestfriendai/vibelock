@@ -1,12 +1,22 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, Pressable, RefreshControl, StatusBar, KeyboardAvoidingView, Platform, Keyboard, TouchableWithoutFeedback } from "react-native";
+import {
+  View,
+  Text,
+  Pressable,
+  RefreshControl,
+  StatusBar,
+  KeyboardAvoidingView,
+  Platform,
+  Keyboard,
+  TouchableWithoutFeedback,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { RouteProp, useRoute } from "@react-navigation/native";
-import Animated, { 
-  useSharedValue, 
-  useAnimatedStyle, 
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
   withSpring,
-  useAnimatedScrollHandler
+  useAnimatedScrollHandler,
 } from "react-native-reanimated";
 import { BrowseStackParamList, RootStackParamList, SearchStackParamList } from "../navigation/AppNavigator";
 import ImageCarousel from "../components/ImageCarousel";
@@ -19,7 +29,7 @@ import { Comment as ReviewComment } from "../types";
 import useReviewsStore from "../state/reviewsStore";
 import useAuthStore from "../state/authStore";
 import useCommentsStore from "../state/commentsStore";
-type ReviewDetailRouteProp = 
+type ReviewDetailRouteProp =
   | RouteProp<BrowseStackParamList, "ReviewDetail">
   | RouteProp<SearchStackParamList, "ReviewDetail">
   | RouteProp<RootStackParamList, "ReviewDetail">;
@@ -27,14 +37,14 @@ type ReviewDetailRouteProp =
 export default function ReviewDetailScreen() {
   const route = useRoute<ReviewDetailRouteProp>();
   const { review: rawReview } = route.params;
-  
+
   // Handle serialized dates from navigation params
   const review = {
     ...rawReview,
-    createdAt: typeof rawReview.createdAt === 'string' ? new Date(rawReview.createdAt) : rawReview.createdAt,
-    updatedAt: typeof rawReview.updatedAt === 'string' ? new Date(rawReview.updatedAt) : rawReview.updatedAt
+    createdAt: typeof rawReview.createdAt === "string" ? new Date(rawReview.createdAt) : rawReview.createdAt,
+    updatedAt: typeof rawReview.updatedAt === "string" ? new Date(rawReview.updatedAt) : rawReview.updatedAt,
   };
-  
+
   const [showMediaViewer, setShowMediaViewer] = useState(false);
   const [selectedMediaIndex, setSelectedMediaIndex] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
@@ -43,20 +53,20 @@ export default function ReviewDetailScreen() {
   const [dislikeCount, setDislikeCount] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   // Comment state from store
-  const { 
-    comments: commentsFromStore, 
-    isLoading: isLoadingComments, 
+  const {
+    comments: commentsFromStore,
+    isLoading: isLoadingComments,
     isPosting: isPostingComment,
     loadComments,
     createComment,
     likeComment,
-    dislikeComment
+    dislikeComment,
   } = useCommentsStore();
-  
+
   const [replyToComment, setReplyToComment] = useState<ReviewComment | null>(null);
-  
+
   // Get comments for this review
   const comments = commentsFromStore[review.id] || [];
 
@@ -67,22 +77,25 @@ export default function ReviewDetailScreen() {
   // Add mock media if review doesn't have any for demo purposes
   const reviewWithMedia = {
     ...review,
-    media: review.media && review.media.length > 0 ? review.media : [
-      {
-        id: "demo_media_1",
-        uri: review.profilePhoto || "https://picsum.photos/400/600?random=1",
-        type: "image" as const,
-        width: 400,
-        height: 600
-      },
-      {
-        id: "demo_media_2",
-        uri: "https://picsum.photos/400/500?random=2", 
-        type: "image" as const,
-        width: 400,
-        height: 500
-      }
-    ]
+    media:
+      review.media && review.media.length > 0
+        ? review.media
+        : [
+            {
+              id: "demo_media_1",
+              uri: review.profilePhoto || "https://picsum.photos/400/600?random=1",
+              type: "image" as const,
+              width: 400,
+              height: 600,
+            },
+            {
+              id: "demo_media_2",
+              uri: "https://picsum.photos/400/500?random=2",
+              type: "image" as const,
+              width: 400,
+              height: 500,
+            },
+          ],
   };
 
   const { likeReview, dislikeReview } = useReviewsStore();
@@ -91,21 +104,20 @@ export default function ReviewDetailScreen() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
-      contentScale.value = withSpring(1, { 
-        damping: 20, 
+      contentScale.value = withSpring(1, {
+        damping: 20,
         stiffness: 200,
         mass: 0.8,
         overshootClamping: false,
         restDisplacementThreshold: 0.01,
-        restSpeedThreshold: 0.01
+        restSpeedThreshold: 0.01,
       });
-      
+
       // Load comments from Firebase
       loadComments(review.id);
     }, 200);
     return () => clearTimeout(timer);
   }, [review.id, loadComments]);
-
 
   // Scroll handler for animations - optimized for performance
   const scrollHandler = useAnimatedScrollHandler(
@@ -114,7 +126,7 @@ export default function ReviewDetailScreen() {
         scrollY.value = event.contentOffset.y;
       },
     },
-    []
+    [],
   );
 
   const handleLike = () => {
@@ -122,7 +134,7 @@ export default function ReviewDetailScreen() {
       setIsDisliked(false);
       setDislikeCount((prev: number) => Math.max(0, prev - 1));
     }
-    
+
     if (isLiked) {
       setIsLiked(false);
       setLikeCount((prev: number) => Math.max(0, prev - 1));
@@ -138,7 +150,7 @@ export default function ReviewDetailScreen() {
       setIsLiked(false);
       setLikeCount((prev: number) => Math.max(0, prev - 1));
     }
-    
+
     if (isDisliked) {
       setIsDisliked(false);
       setDislikeCount((prev: number) => Math.max(0, prev - 1));
@@ -159,7 +171,7 @@ export default function ReviewDetailScreen() {
     try {
       await loadComments(review.id);
     } catch (error) {
-      console.error('Error refreshing comments:', error);
+      console.error("Error refreshing comments:", error);
     } finally {
       setRefreshing(false);
     }
@@ -205,18 +217,18 @@ export default function ReviewDetailScreen() {
   };
 
   const formatDate = (date: Date) => {
-    return date.toLocaleDateString("en-US", { 
+    return date.toLocaleDateString("en-US", {
       weekday: "long",
-      year: "numeric", 
-      month: "long", 
-      day: "numeric" 
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
   const formatTimeAgo = (date: Date) => {
     const now = new Date();
     const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-    
+
     if (diffInHours < 24) {
       return `${diffInHours}h ago`;
     } else {
@@ -237,9 +249,9 @@ export default function ReviewDetailScreen() {
   return (
     <View className="flex-1 bg-surface-900">
       <StatusBar barStyle="light-content" backgroundColor="#141418" />
-      
+
       {/* Main Content */}
-      <Animated.ScrollView 
+      <Animated.ScrollView
         style={[contentAnimatedStyle]}
         className="flex-1"
         showsVerticalScrollIndicator={false}
@@ -250,12 +262,7 @@ export default function ReviewDetailScreen() {
         bounces={true}
         alwaysBounceVertical={false}
         refreshControl={
-          <RefreshControl 
-            refreshing={refreshing} 
-            onRefresh={handleRefresh}
-            tintColor="#FFFFFF"
-            colors={["#FFFFFF"]}
-          />
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="#FFFFFF" colors={["#FFFFFF"]} />
         }
         contentContainerStyle={{ paddingBottom: 120, flexGrow: 1 }}
       >
@@ -271,10 +278,8 @@ export default function ReviewDetailScreen() {
             {/* Hero Section */}
             <View className="px-6 mb-8">
               {/* Person Name */}
-              <Text className="text-4xl font-bold text-text-primary mb-3">
-                {review.reviewedPersonName}
-              </Text>
-              
+              <Text className="text-4xl font-bold text-text-primary mb-3">{review.reviewedPersonName}</Text>
+
               {/* Location & Time */}
               <View className="flex-row items-center justify-between mb-4">
                 <View className="flex-row items-center">
@@ -283,9 +288,7 @@ export default function ReviewDetailScreen() {
                     {review.reviewedPersonLocation.city}, {review.reviewedPersonLocation.state}
                   </Text>
                 </View>
-                <Text className="text-text-muted text-sm">
-                  {formatTimeAgo(review.createdAt)}
-                </Text>
+                <Text className="text-text-muted text-sm">{formatTimeAgo(review.createdAt)}</Text>
               </View>
 
               {/* Posted by */}
@@ -293,9 +296,7 @@ export default function ReviewDetailScreen() {
                 <View className="w-6 h-6 rounded-full bg-surface-700 items-center justify-center mr-2">
                   <Ionicons name="person" size={12} color="#9CA3AF" />
                 </View>
-                <Text className="text-text-muted text-sm">
-                  Posted by Anonymous User
-                </Text>
+                <Text className="text-text-muted text-sm">Posted by Anonymous User</Text>
               </View>
             </View>
 
@@ -316,9 +317,7 @@ export default function ReviewDetailScreen() {
             <View className="mx-4 bg-surface-800 rounded-2xl p-6 mb-6">
               {/* Review Text */}
               <View className="mb-6">
-                <Text className="text-text-secondary text-sm font-medium mb-3 uppercase tracking-wide">
-                  Review
-                </Text>
+                <Text className="text-text-secondary text-sm font-medium mb-3 uppercase tracking-wide">Review</Text>
                 <ExpandableText
                   text={review.reviewText}
                   numberOfLines={4}
@@ -337,19 +336,21 @@ export default function ReviewDetailScreen() {
                   </Text>
                   <View className="flex-row flex-wrap gap-2">
                     {review.greenFlags.map((flag: string) => (
-                      <View key={flag} className="bg-green-500/20 border border-green-500/30 px-3 py-2 rounded-full flex-row items-center">
+                      <View
+                        key={flag}
+                        className="bg-green-500/20 border border-green-500/30 px-3 py-2 rounded-full flex-row items-center"
+                      >
                         <Ionicons name="checkmark-circle" size={14} color="#22C55E" />
-                        <Text className="text-green-400 text-sm font-medium ml-1">
-                          {flag.replace("_", " ")}
-                        </Text>
+                        <Text className="text-green-400 text-sm font-medium ml-1">{flag.replace("_", " ")}</Text>
                       </View>
                     ))}
                     {review.redFlags.map((flag: string) => (
-                      <View key={flag} className="bg-brand-red/20 border border-brand-red/30 px-3 py-2 rounded-full flex-row items-center">
+                      <View
+                        key={flag}
+                        className="bg-brand-red/20 border border-brand-red/30 px-3 py-2 rounded-full flex-row items-center"
+                      >
                         <Ionicons name="warning" size={14} color="#FFFFFF" />
-                        <Text className="text-brand-red text-sm font-medium ml-1">
-                          {flag.replace("_", " ")}
-                        </Text>
+                        <Text className="text-brand-red text-sm font-medium ml-1">{flag.replace("_", " ")}</Text>
                       </View>
                     ))}
                   </View>
@@ -373,18 +374,14 @@ export default function ReviewDetailScreen() {
 
               {/* Review Date */}
               <View className="items-center">
-                <Text className="text-text-muted text-xs">
-                  Posted on {formatDate(review.createdAt)}
-                </Text>
+                <Text className="text-text-muted text-xs">Posted on {formatDate(review.createdAt)}</Text>
               </View>
             </View>
 
             {/* Additional Actions */}
             <View className="px-6 mb-8">
               <View className="bg-surface-800 rounded-xl p-4">
-                <Text className="text-text-secondary text-sm font-medium mb-3">
-                  Found this review helpful?
-                </Text>
+                <Text className="text-text-secondary text-sm font-medium mb-3">Found this review helpful?</Text>
                 <View className="flex-row space-x-3">
                   <Pressable className="flex-1 bg-brand-red/20 border border-brand-red/30 rounded-lg py-3 items-center">
                     <Text className="text-brand-red font-medium">Share Review</Text>
@@ -409,34 +406,34 @@ export default function ReviewDetailScreen() {
             </View>
           </>
         )}
-        </Animated.ScrollView>
+      </Animated.ScrollView>
 
-        {/* Comment Input - Fixed at bottom */}
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
-        >
-          <TouchableWithoutFeedback onPress={dismissKeyboard}>
-            <View>
-              <CommentInput
-                onSubmit={handlePostComment}
-                isLoading={isPostingComment}
-                replyToComment={replyToComment?.authorName}
-                onCancelReply={handleCancelReply}
-              />
-            </View>
-          </TouchableWithoutFeedback>
-        </KeyboardAvoidingView>
+      {/* Comment Input - Fixed at bottom */}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+      >
+        <TouchableWithoutFeedback onPress={dismissKeyboard}>
+          <View>
+            <CommentInput
+              onSubmit={handlePostComment}
+              isLoading={isPostingComment}
+              replyToComment={replyToComment?.authorName}
+              onCancelReply={handleCancelReply}
+            />
+          </View>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
 
-        {/* Media Viewer Modal */}
-        {reviewWithMedia.media && (
-          <MediaViewer
-            visible={showMediaViewer}
-            media={reviewWithMedia.media}
-            initialIndex={selectedMediaIndex}
-            onClose={() => setShowMediaViewer(false)}
-          />
-        )}
-      </View>
+      {/* Media Viewer Modal */}
+      {reviewWithMedia.media && (
+        <MediaViewer
+          visible={showMediaViewer}
+          media={reviewWithMedia.media}
+          initialIndex={selectedMediaIndex}
+          onClose={() => setShowMediaViewer(false)}
+        />
+      )}
+    </View>
   );
 }

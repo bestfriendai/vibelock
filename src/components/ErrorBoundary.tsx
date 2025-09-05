@@ -44,23 +44,16 @@ export default class ErrorBoundary extends Component<Props, State> {
             <View className="w-20 h-20 bg-brand-red/20 rounded-full items-center justify-center mb-6">
               <Ionicons name="warning" size={32} color="#FFFFFF" />
             </View>
-            
-            <Text className="text-text-primary text-xl font-bold mb-2 text-center">
-              Something went wrong
-            </Text>
-            
+
+            <Text className="text-text-primary text-xl font-bold mb-2 text-center">Something went wrong</Text>
+
             <Text className="text-text-secondary text-center mb-8 leading-6">
               We encountered an unexpected error. Please try again or restart the app.
             </Text>
 
             <View className="space-y-3 w-full max-w-xs">
-              <Pressable
-                className="bg-brand-red rounded-xl py-4 items-center"
-                onPress={this.handleRetry}
-              >
-                <Text className="text-black font-semibold text-lg">
-                  Try Again
-                </Text>
+              <Pressable className="bg-brand-red rounded-xl py-4 items-center" onPress={this.handleRetry}>
+                <Text className="text-black font-semibold text-lg">Try Again</Text>
               </Pressable>
 
               <Pressable
@@ -70,17 +63,13 @@ export default class ErrorBoundary extends Component<Props, State> {
                   this.handleRetry();
                 }}
               >
-                <Text className="text-text-primary font-medium">
-                  Go to Home
-                </Text>
+                <Text className="text-text-primary font-medium">Go to Home</Text>
               </Pressable>
             </View>
 
             {__DEV__ && this.state.error && (
               <View className="mt-8 p-4 bg-surface-800 rounded-xl w-full">
-                <Text className="text-text-secondary text-xs font-mono">
-                  {this.state.error.toString()}
-                </Text>
+                <Text className="text-text-secondary text-xs font-mono">{this.state.error.toString()}</Text>
               </View>
             )}
           </View>

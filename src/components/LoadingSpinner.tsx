@@ -1,12 +1,6 @@
 import React, { useEffect } from "react";
 import { View, Text } from "react-native";
-import Animated, { 
-  useSharedValue, 
-  useAnimatedStyle, 
-  withRepeat, 
-  withTiming,
-  Easing
-} from "react-native-reanimated";
+import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, Easing } from "react-native-reanimated";
 
 interface Props {
   size?: "small" | "medium" | "large";
@@ -15,18 +9,13 @@ interface Props {
   className?: string;
 }
 
-export default function LoadingSpinner({ 
-  size = "medium", 
-  color = "#FFFFFF", 
-  text,
-  className = ""
-}: Props) {
+export default function LoadingSpinner({ size = "medium", color = "#FFFFFF", text, className = "" }: Props) {
   const rotation = useSharedValue(0);
 
   const sizeMap = {
     small: 20,
     medium: 32,
-    large: 48
+    large: 48,
   };
 
   const spinnerSize = sizeMap[size];
@@ -38,7 +27,7 @@ export default function LoadingSpinner({
         easing: Easing.linear,
       }),
       -1,
-      false
+      false,
     );
   }, []);
 
@@ -49,7 +38,7 @@ export default function LoadingSpinner({
   return (
     <View className={`items-center justify-center ${className}`}>
       <Animated.View style={[animatedStyle]}>
-        <View 
+        <View
           className="rounded-full border-2 border-transparent"
           style={{
             width: spinnerSize,
@@ -61,12 +50,8 @@ export default function LoadingSpinner({
           }}
         />
       </Animated.View>
-      
-      {text && (
-        <Text className="text-text-secondary text-sm mt-3 font-medium">
-          {text}
-        </Text>
-      )}
+
+      {text && <Text className="text-text-secondary text-sm mt-3 font-medium">{text}</Text>}
     </View>
   );
 }

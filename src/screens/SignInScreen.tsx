@@ -13,13 +13,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  withTiming,
-  withDelay,
-} from "react-native-reanimated";
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming, withDelay } from "react-native-reanimated";
 import AnimatedButton from "../components/AnimatedButton";
 import AnimatedInput from "../components/AnimatedInput";
 import TestingBanner from "../components/TestingBanner";
@@ -84,18 +78,18 @@ export default function SignInScreen() {
 
   const handleSubmit = async () => {
     clearError();
-    
+
     // Basic validation
     if (!email.trim()) {
       setEmailError("Email is required");
       return;
     }
-    
+
     if (!password.trim()) {
       setPasswordError("Password is required");
       return;
     }
-    
+
     try {
       await login(email.trim(), password);
     } catch (err) {
@@ -130,15 +124,9 @@ export default function SignInScreen() {
   return (
     <TouchableWithoutFeedback onPress={dismissKeyboard}>
       <SafeAreaView className="flex-1 bg-surface-900">
-        <LinearGradient
-          colors={["#141418", "#1A1A20", "#141418"]}
-          className="absolute inset-0"
-        />
+        <LinearGradient colors={["#141418", "#1A1A20", "#141418"]} className="absolute inset-0" />
         <TestingBanner />
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          className="flex-1"
-        >
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
           <ScrollView
             className="flex-1"
             contentContainerStyle={{ flexGrow: 1 }}
@@ -155,9 +143,7 @@ export default function SignInScreen() {
                     resizeMode="contain"
                   />
                 </View>
-                <Text className="text-4xl font-bold text-text-primary mb-3 text-center">
-                  Welcome Back
-                </Text>
+                <Text className="text-4xl font-bold text-text-primary mb-3 text-center">Welcome Back</Text>
                 <Text className="text-lg text-text-secondary text-center leading-7">
                   Sign in to continue to Locker Room Talk
                 </Text>
@@ -204,9 +190,7 @@ export default function SignInScreen() {
                 {/* Global Error */}
                 {error && (
                   <View className="bg-brand-red/20 border border-brand-red/30 rounded-lg p-4">
-                    <Text className="text-brand-red text-center font-medium">
-                      {error}
-                    </Text>
+                    <Text className="text-brand-red text-center font-medium">{error}</Text>
                   </View>
                 )}
 
@@ -237,9 +221,7 @@ export default function SignInScreen() {
             {/* Footer */}
             <Animated.View style={footerAnimatedStyle} className="px-6 pb-8">
               <View className="flex-row justify-center items-center">
-                <Text className="text-text-secondary">
-                  Don't have an account?{" "}
-                </Text>
+                <Text className="text-text-secondary">Don't have an account? </Text>
                 <AnimatedButton
                   title="Sign Up"
                   variant="ghost"

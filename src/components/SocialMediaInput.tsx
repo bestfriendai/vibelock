@@ -16,45 +16,45 @@ interface SocialPlatform {
 
 const SOCIAL_PLATFORMS: SocialPlatform[] = [
   {
-    key: 'instagram',
-    label: 'Instagram',
-    icon: 'logo-instagram',
-    placeholder: 'username',
-    prefix: '@',
-    color: '#E4405F',
+    key: "instagram",
+    label: "Instagram",
+    icon: "logo-instagram",
+    placeholder: "username",
+    prefix: "@",
+    color: "#E4405F",
     maxLength: 30,
-    pattern: /^[a-zA-Z0-9._]{1,30}$/
+    pattern: /^[a-zA-Z0-9._]{1,30}$/,
   },
   {
-    key: 'tiktok',
-    label: 'TikTok',
-    icon: 'logo-tiktok',
-    placeholder: 'username',
-    prefix: '@',
-    color: '#000000',
+    key: "tiktok",
+    label: "TikTok",
+    icon: "logo-tiktok",
+    placeholder: "username",
+    prefix: "@",
+    color: "#000000",
     maxLength: 24,
-    pattern: /^[a-zA-Z0-9._]{1,24}$/
+    pattern: /^[a-zA-Z0-9._]{1,24}$/,
   },
   {
-    key: 'snapchat',
-    label: 'Snapchat',
-    icon: 'camera',
-    placeholder: 'username',
-    prefix: '',
-    color: '#FFFC00',
+    key: "snapchat",
+    label: "Snapchat",
+    icon: "camera",
+    placeholder: "username",
+    prefix: "",
+    color: "#FFFC00",
     maxLength: 15,
-    pattern: /^[a-zA-Z0-9._-]{1,15}$/
+    pattern: /^[a-zA-Z0-9._-]{1,15}$/,
   },
   {
-    key: 'twitter',
-    label: 'X (Twitter)',
-    icon: 'logo-twitter',
-    placeholder: 'username',
-    prefix: '@',
-    color: '#1DA1F2',
+    key: "twitter",
+    label: "X (Twitter)",
+    icon: "logo-twitter",
+    placeholder: "username",
+    prefix: "@",
+    color: "#1DA1F2",
     maxLength: 15,
-    pattern: /^[a-zA-Z0-9_]{1,15}$/
-  }
+    pattern: /^[a-zA-Z0-9_]{1,15}$/,
+  },
 ];
 
 interface Props {
@@ -68,32 +68,32 @@ export default function SocialMediaInput({ socialMedia, onSocialMediaChange }: P
 
   const validateUsername = (platform: SocialPlatform, value: string): string | null => {
     if (!value) return null;
-    
+
     // Remove @ prefix if user typed it
-    const cleanValue = value.startsWith('@') ? value.slice(1) : value;
-    
+    const cleanValue = value.startsWith("@") ? value.slice(1) : value;
+
     if (!platform.pattern.test(cleanValue)) {
       return `Invalid ${platform.label} username format`;
     }
-    
+
     return null;
   };
 
   const handleInputChange = (platform: SocialPlatform, value: string) => {
     // Remove @ prefix if user typed it (we'll add it in display)
-    const cleanValue = value.startsWith('@') ? value.slice(1) : value;
-    
+    const cleanValue = value.startsWith("@") ? value.slice(1) : value;
+
     // Validate the input
     const error = validateUsername(platform, cleanValue);
-    setErrors(prev => ({
+    setErrors((prev) => ({
       ...prev,
-      [platform.key]: error
+      [platform.key]: error,
     }));
 
     // Update the social media handles
     onSocialMediaChange({
       ...socialMedia,
-      [platform.key]: cleanValue || undefined
+      [platform.key]: cleanValue || undefined,
     });
   };
 
@@ -108,18 +108,18 @@ export default function SocialMediaInput({ socialMedia, onSocialMediaChange }: P
   const clearInput = (platformKey: keyof SocialMediaHandles) => {
     onSocialMediaChange({
       ...socialMedia,
-      [platformKey]: undefined
+      [platformKey]: undefined,
     });
-    setErrors(prev => ({
+    setErrors((prev) => ({
       ...prev,
-      [platformKey]: null
+      [platformKey]: null,
     }));
   };
 
   return (
     <View className="space-y-4">
       {SOCIAL_PLATFORMS.map((platform) => {
-        const value = socialMedia[platform.key] || '';
+        const value = socialMedia[platform.key] || "";
         const error = errors[platform.key];
         const isFocused = focused === platform.key;
         const hasValue = value.length > 0;
@@ -128,30 +128,18 @@ export default function SocialMediaInput({ socialMedia, onSocialMediaChange }: P
           <View key={platform.key}>
             {/* Platform Label */}
             <View className="flex-row items-center mb-2">
-              <Ionicons 
-                name={platform.icon} 
-                size={20} 
-                color={platform.color} 
-              />
-              <Text className="text-text-primary font-medium ml-2">
-                {platform.label}
-              </Text>
+              <Ionicons name={platform.icon} size={20} color={platform.color} />
+              <Text className="text-text-primary font-medium ml-2">{platform.label}</Text>
             </View>
 
             {/* Input Container */}
-            <View className={`flex-row items-center bg-surface-800 border rounded-xl px-4 py-3 ${
-              isFocused 
-                ? 'border-brand-red' 
-                : error 
-                  ? 'border-red-500' 
-                  : 'border-border'
-            }`}>
+            <View
+              className={`flex-row items-center bg-surface-800 border rounded-xl px-4 py-3 ${
+                isFocused ? "border-brand-red" : error ? "border-red-500" : "border-border"
+              }`}
+            >
               {/* Prefix */}
-              {platform.prefix && (
-                <Text className="text-text-secondary font-medium mr-1">
-                  {platform.prefix}
-                </Text>
-              )}
+              {platform.prefix && <Text className="text-text-secondary font-medium mr-1">{platform.prefix}</Text>}
 
               {/* Text Input */}
               <TextInput
@@ -170,11 +158,7 @@ export default function SocialMediaInput({ socialMedia, onSocialMediaChange }: P
 
               {/* Clear Button */}
               {hasValue && (
-                <Pressable
-                  onPress={() => clearInput(platform.key)}
-                  className="ml-2 p-1"
-                  hitSlop={8}
-                >
+                <Pressable onPress={() => clearInput(platform.key)} className="ml-2 p-1" hitSlop={8}>
                   <Ionicons name="close-circle" size={20} color="#6B7280" />
                 </Pressable>
               )}
@@ -203,36 +187,30 @@ export default function SocialMediaInput({ socialMedia, onSocialMediaChange }: P
         <View className="flex-row items-start">
           <Ionicons name="information-circle" size={20} color="#9CA3AF" />
           <View className="ml-3 flex-1">
-            <Text className="text-text-secondary font-medium mb-1">
-              Privacy Notice
-            </Text>
+            <Text className="text-text-secondary font-medium mb-1">Privacy Notice</Text>
             <Text className="text-text-muted text-sm leading-5">
-              Social media handles will be displayed publicly in your review to help others verify your experience. Only add handles you're comfortable sharing.
+              Social media handles will be displayed publicly in your review to help others verify your experience. Only
+              add handles you're comfortable sharing.
             </Text>
           </View>
         </View>
       </View>
 
       {/* Summary */}
-      {Object.values(socialMedia).some(handle => handle) && (
+      {Object.values(socialMedia).some((handle) => handle) && (
         <View className="bg-surface-800 rounded-xl p-4">
-          <Text className="text-text-primary font-medium mb-2">
-            Your Social Media
-          </Text>
+          <Text className="text-text-primary font-medium mb-2">Your Social Media</Text>
           <View className="space-y-2">
             {SOCIAL_PLATFORMS.map((platform) => {
               const handle = socialMedia[platform.key];
               if (!handle) return null;
-              
+
               return (
                 <View key={platform.key} className="flex-row items-center">
-                  <Ionicons 
-                    name={platform.icon} 
-                    size={16} 
-                    color={platform.color} 
-                  />
+                  <Ionicons name={platform.icon} size={16} color={platform.color} />
                   <Text className="text-text-secondary ml-2">
-                    {platform.prefix}{handle}
+                    {platform.prefix}
+                    {handle}
                   </Text>
                 </View>
               );

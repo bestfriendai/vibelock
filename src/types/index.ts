@@ -81,9 +81,9 @@ export interface Profile {
   updatedAt: Date;
 }
 
-export type GreenFlag = 
+export type GreenFlag =
   | "good_communicator"
-  | "respectful" 
+  | "respectful"
   | "fun"
   | "reliable"
   | "honest"
@@ -91,7 +91,7 @@ export type GreenFlag =
   | "ambitious"
   | "good_listener";
 
-export type RedFlag = 
+export type RedFlag =
   | "poor_communication"
   | "disrespectful"
   | "unreliable"

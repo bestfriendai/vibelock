@@ -29,7 +29,10 @@ export default function ChatroomsScreen() {
     const q = query.toLowerCase();
     const rooms = Array.isArray(chatRooms) ? chatRooms : [];
     if (!q) return rooms;
-    return rooms.filter(r => r && r.name && r.description && (r.name.toLowerCase().includes(q) || r.description.toLowerCase().includes(q)));
+    return rooms.filter(
+      (r) =>
+        r && r.name && r.description && (r.name.toLowerCase().includes(q) || r.description.toLowerCase().includes(q)),
+    );
   }, [query, chatRooms]);
 
   const onRefresh = async () => {
@@ -52,16 +55,14 @@ export default function ChatroomsScreen() {
               <View className="w-16 h-16 bg-brand-red/20 rounded-full items-center justify-center mb-4">
                 <Text className="text-brand-red text-2xl">💬</Text>
               </View>
-              <Text className="text-2xl font-bold text-text-primary mb-2 text-center">
-                Join Chat Rooms
-              </Text>
+              <Text className="text-2xl font-bold text-text-primary mb-2 text-center">Join Chat Rooms</Text>
               <Text className="text-text-secondary text-center">
                 Create an account to join community discussions and connect with others in your area.
               </Text>
             </View>
-            
+
             <View className="space-y-3">
-              <Pressable 
+              <Pressable
                 className="bg-brand-red rounded-lg py-4 items-center"
                 onPress={() => {
                   // Navigate to sign up
@@ -69,8 +70,8 @@ export default function ChatroomsScreen() {
               >
                 <Text className="text-white font-semibold text-lg">Sign Up</Text>
               </Pressable>
-              
-              <Pressable 
+
+              <Pressable
                 className="bg-surface-700 rounded-lg py-4 items-center"
                 onPress={() => {
                   // Navigate to sign in
@@ -113,7 +114,7 @@ export default function ChatroomsScreen() {
               { key: "all", label: "All" },
               { key: "men", label: "Men" },
               { key: "women", label: "Women" },
-              { key: "lgbtq+", label: "LGBTQ+" }
+              { key: "lgbtq+", label: "LGBTQ+" },
             ]}
             value={category}
             onChange={(val) => setCategory(val as any)}
@@ -125,17 +126,17 @@ export default function ChatroomsScreen() {
         data={filtered}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ padding: 16 }}
-        renderItem={({ item }) => (
-          <ChatRoomCard room={item} onPress={openRoom} />
-        )}
+        renderItem={({ item }) => <ChatRoomCard room={item} onPress={openRoom} />}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        ListEmptyComponent={!isLoading ? (
-          <View className="items-center justify-center py-20">
-            <Ionicons name="chatbubbles-outline" size={48} color="#9CA3AF" />
-            <Text className="text-text-secondary text-lg font-medium mt-4">No chat rooms found</Text>
-            <Text className="text-text-muted text-center mt-2">Try adjusting your search</Text>
-          </View>
-        ) : null}
+        ListEmptyComponent={
+          !isLoading ? (
+            <View className="items-center justify-center py-20">
+              <Ionicons name="chatbubbles-outline" size={48} color="#9CA3AF" />
+              <Text className="text-text-secondary text-lg font-medium mt-4">No chat rooms found</Text>
+              <Text className="text-text-muted text-center mt-2">Try adjusting your search</Text>
+            </View>
+          ) : null
+        }
       />
     </SafeAreaView>
   );

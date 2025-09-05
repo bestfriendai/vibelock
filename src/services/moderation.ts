@@ -23,7 +23,7 @@ export async function moderateReviewContent(reviewText: string): Promise<Moderat
       isAppropriate: true,
       flaggedCategories: [],
       confidence: 1,
-      reason: "Moderation disabled"
+      reason: "Moderation disabled",
     };
   }
 
@@ -54,13 +54,13 @@ Categories can include: "harassment", "hate_speech", "sexual_content", "personal
 
     const messages: AIMessage[] = [
       { role: "system", content: "You are a content moderation assistant. Always respond with valid JSON." },
-      { role: "user", content: prompt }
+      { role: "user", content: prompt },
     ];
 
     const aiResponse = await getOpenAITextResponse(messages, {
       model: "gpt-4o-mini",
       temperature: 0.1,
-      maxTokens: 200
+      maxTokens: 200,
     });
 
     const response = aiResponse.content;
@@ -71,7 +71,7 @@ Categories can include: "harassment", "hate_speech", "sexual_content", "personal
         isAppropriate: result.isAppropriate || false,
         flaggedCategories: result.flaggedCategories || [],
         confidence: result.confidence || 0,
-        reason: result.reason
+        reason: result.reason,
       };
     } catch (parseError) {
       console.error("Failed to parse moderation response:", parseError);
@@ -80,7 +80,7 @@ Categories can include: "harassment", "hate_speech", "sexual_content", "personal
         isAppropriate: false,
         flaggedCategories: ["parsing_error"],
         confidence: 0,
-        reason: "Failed to analyze content"
+        reason: "Failed to analyze content",
       };
     }
   } catch (error) {
@@ -90,7 +90,7 @@ Categories can include: "harassment", "hate_speech", "sexual_content", "personal
       isAppropriate: true,
       flaggedCategories: [],
       confidence: 0,
-      reason: "Moderation service unavailable"
+      reason: "Moderation service unavailable",
     };
   }
 }
@@ -108,7 +108,7 @@ export async function moderateName(name: string): Promise<boolean> {
       /\b(hitler|nazi|terrorist)\b/i,
       /\d{3,}/, // Numbers that might be phone numbers
       /@/, // Email addresses
-      /\.(com|org|net)/i // Websites
+      /\.(com|org|net)/i, // Websites
     ];
 
     for (const pattern of inappropriatePatterns) {
@@ -158,14 +158,14 @@ export function needsHumanReview(moderationResult: ModerationResult): boolean {
   // - Low confidence automated decisions
   // - Borderline content
   // - Specific sensitive categories
-  
+
   if (moderationResult.confidence < 0.7) {
     return true;
   }
 
   const sensitiveCategories = ["harassment", "hate_speech", "personal_info"];
-  const hasSensitiveContent = moderationResult.flaggedCategories.some(
-    category => sensitiveCategories.includes(category)
+  const hasSensitiveContent = moderationResult.flaggedCategories.some((category) =>
+    sensitiveCategories.includes(category),
   );
 
   return hasSensitiveContent;

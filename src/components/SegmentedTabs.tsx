@@ -18,13 +18,10 @@ export default function SegmentedTabs({ tabs, value, onChange }: SegmentedTabsPr
       {tabs.map((t) => {
         const active = value === t.key;
         return (
-          <Pressable
-            key={t.key}
-            onPress={() => onChange(t.key)}
-            className="flex-1 py-3 items-center"
-            hitSlop={8}
-          >
-            <Text className={active ? "text-text-primary font-semibold text-sm" : "text-text-secondary font-medium text-sm"}>
+          <Pressable key={t.key} onPress={() => onChange(t.key)} className="flex-1 py-3 items-center" hitSlop={8}>
+            <Text
+              className={active ? "text-text-primary font-semibold text-sm" : "text-text-secondary font-medium text-sm"}
+            >
               {t.label}
             </Text>
             <View className={`h-0.5 mt-2 w-full ${active ? "bg-brand-red" : "bg-transparent"}`} />

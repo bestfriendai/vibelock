@@ -13,8 +13,6 @@ interface ReviewCardProps {
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-
-
 export default function ReviewCard({ review }: ReviewCardProps) {
   const navigation = useNavigation<NavigationProp>();
   const { likeReview } = useReviewsStore();
@@ -48,39 +46,26 @@ export default function ReviewCard({ review }: ReviewCardProps) {
       <Pressable onPress={handlePersonPress} className="mb-4">
         <View className="flex-row items-center">
           <View className="w-12 h-12 bg-brand-red rounded-full items-center justify-center">
-            <Text className="text-white font-bold text-lg">
-              {review.reviewedPersonName.charAt(0).toUpperCase()}
-            </Text>
+            <Text className="text-white font-bold text-lg">{review.reviewedPersonName.charAt(0).toUpperCase()}</Text>
           </View>
           <View className="ml-3 flex-1">
-            <Text className="text-lg font-semibold text-text-primary">
-              {review.reviewedPersonName}
-            </Text>
+            <Text className="text-lg font-semibold text-text-primary">{review.reviewedPersonName}</Text>
             <Text className="text-text-secondary text-sm">
               {review.reviewedPersonLocation.city}, {review.reviewedPersonLocation.state}
             </Text>
           </View>
-          <Text className="text-text-muted text-sm">
-            {formatDate(review.createdAt)}
-          </Text>
+          <Text className="text-text-muted text-sm">{formatDate(review.createdAt)}</Text>
         </View>
       </Pressable>
 
       {/* Review Text */}
-      <Text className="text-text-primary mb-4 leading-6 text-base">
-        {truncateText(review.reviewText)}
-      </Text>
+      <Text className="text-text-primary mb-4 leading-6 text-base">{truncateText(review.reviewText)}</Text>
 
       {/* Footer */}
       <View className="flex-row items-center justify-end pt-4 border-t border-surface-700">
-        <Pressable 
-          onPress={handleLike}
-          className="flex-row items-center bg-brand-red/10 px-3 py-2 rounded-full"
-        >
+        <Pressable onPress={handleLike} className="flex-row items-center bg-brand-red/10 px-3 py-2 rounded-full">
           <Ionicons name="heart" size={16} color="#FFFFFF" />
-          <Text className="text-brand-red text-sm ml-1 font-medium">
-            {review.likeCount}
-          </Text>
+          <Text className="text-brand-red text-sm ml-1 font-medium">{review.likeCount}</Text>
         </Pressable>
       </View>
 

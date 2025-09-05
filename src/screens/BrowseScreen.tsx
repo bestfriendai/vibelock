@@ -1,8 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {
-  View,
-  Text
-} from "react-native";
+import { View, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -18,16 +15,16 @@ import { Review } from "../types";
 
 export default function BrowseScreen() {
   const { user } = useAuthStore();
-  const { 
+  const {
     reviews = [], // Provide default empty array
-    isLoading = false, 
+    isLoading = false,
     filters = { category: "all", radius: 50, sortBy: "recent" }, // Provide default filters
-    loadReviews, 
+    loadReviews,
     setFilters,
     likeReview,
-    error
+    error,
   } = useReviewsStore();
-  
+
   const [refreshing, setRefreshing] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
@@ -40,7 +37,7 @@ export default function BrowseScreen() {
         try {
           await loadReviews(true);
         } catch (error) {
-          console.error('Error loading reviews:', error);
+          console.error("Error loading reviews:", error);
         }
       };
       loadData();
@@ -53,7 +50,7 @@ export default function BrowseScreen() {
       try {
         await loadReviews(true);
       } catch (error) {
-        console.error('Error loading reviews with filters:', error);
+        console.error("Error loading reviews with filters:", error);
       }
     };
     loadData();
@@ -103,14 +100,14 @@ export default function BrowseScreen() {
             currentLocation={{
               city: user?.location.city || "Washington",
               state: user?.location.state || "DC",
-              fullName: `${user?.location.city || "Washington"}, ${user?.location.state || "DC"}`
+              fullName: `${user?.location.city || "Washington"}, ${user?.location.state || "DC"}`,
             }}
             onLocationChange={(location) => {
               // Update user location in auth store
               const { updateUserLocation } = useAuthStore.getState();
               updateUserLocation({
                 city: location.city,
-                state: location.state
+                state: location.state,
               });
             }}
           />
@@ -127,7 +124,7 @@ export default function BrowseScreen() {
               { key: "all", label: "All" },
               { key: "men", label: "Men" },
               { key: "women", label: "Women" },
-              { key: "lgbtq+", label: "LGBTQ+" }
+              { key: "lgbtq+", label: "LGBTQ+" },
             ]}
             value={filters.category}
             onChange={(category) => setFilters({ category: category as "all" | "men" | "women" | "lgbtq+" })}
@@ -164,12 +161,8 @@ export default function BrowseScreen() {
         <View className="absolute inset-0 items-center justify-center px-8">
           <Ionicons name="warning-outline" size={64} color="#EF4444" />
           <Text className="text-red-400 text-xl font-medium mt-4 text-center">Error Loading Reviews</Text>
-          <Text className="text-text-secondary text-center mt-2">
-            {error}
-          </Text>
-          <Text className="text-text-muted text-center mt-2">
-            Pull down to try again
-          </Text>
+          <Text className="text-text-secondary text-center mt-2">{error}</Text>
+          <Text className="text-text-muted text-center mt-2">Pull down to try again</Text>
         </View>
       )}
 

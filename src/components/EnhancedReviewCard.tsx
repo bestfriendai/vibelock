@@ -11,17 +11,12 @@ interface Props {
   isLiked?: boolean;
 }
 
-export default function EnhancedReviewCard({ 
-  review, 
-  onMediaPress, 
-  onLike, 
-  isLiked = false 
-}: Props) {
+export default function EnhancedReviewCard({ review, onMediaPress, onLike, isLiked = false }: Props) {
   const formatDate = (date: Date) => {
-    return date.toLocaleDateString("en-US", { 
-      year: "numeric", 
-      month: "short", 
-      day: "numeric" 
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
@@ -34,35 +29,23 @@ export default function EnhancedReviewCard({
         </View>
         <View className="flex-1">
           <Text className="text-text-primary font-medium">Anonymous Reviewer</Text>
-          <Text className="text-text-muted text-sm">
-            {formatDate(review.createdAt)}
-          </Text>
+          <Text className="text-text-muted text-sm">{formatDate(review.createdAt)}</Text>
         </View>
         <View className="flex-row items-center">
-          <Ionicons 
-            name={isLiked ? "heart" : "heart-outline"} 
-            size={18} 
-            color={isLiked ? "#FFFFFF" : "#9CA3AF"} 
-          />
-          <Text className="text-text-muted text-sm ml-1">
-            {review.likeCount}
-          </Text>
+          <Ionicons name={isLiked ? "heart" : "heart-outline"} size={18} color={isLiked ? "#FFFFFF" : "#9CA3AF"} />
+          <Text className="text-text-muted text-sm ml-1">{review.likeCount}</Text>
         </View>
       </View>
 
       {/* Review Text */}
-      <Text className="text-text-primary text-base leading-6 mb-4">
-        {review.reviewText}
-      </Text>
+      <Text className="text-text-primary text-base leading-6 mb-4">{review.reviewText}</Text>
 
       {/* Media Gallery */}
       {review.media && review.media.length > 0 && (
         <View className="mb-4">
           <MediaGallery
             media={review.media}
-            onMediaPress={(media, mediaIndex) => 
-              onMediaPress(media, mediaIndex, review.media!)
-            }
+            onMediaPress={(media, mediaIndex) => onMediaPress(media, mediaIndex, review.media!)}
             size={100}
           />
         </View>
@@ -71,20 +54,11 @@ export default function EnhancedReviewCard({
       {/* Footer Actions */}
       <View className="flex-row items-center justify-between pt-4 border-t border-border">
         <View className="flex-row items-center space-x-4">
-          <Pressable 
-            onPress={onLike}
-            className="flex-row items-center"
-          >
-            <Ionicons 
-              name={isLiked ? "heart" : "heart-outline"} 
-              size={18} 
-              color={isLiked ? "#FFFFFF" : "#9CA3AF"} 
-            />
-            <Text className="text-text-muted text-sm ml-1">
-              {isLiked ? "Liked" : "Like"}
-            </Text>
+          <Pressable onPress={onLike} className="flex-row items-center">
+            <Ionicons name={isLiked ? "heart" : "heart-outline"} size={18} color={isLiked ? "#FFFFFF" : "#9CA3AF"} />
+            <Text className="text-text-muted text-sm ml-1">{isLiked ? "Liked" : "Like"}</Text>
           </Pressable>
-          
+
           <Pressable className="flex-row items-center">
             <Ionicons name="chatbubble-outline" size={18} color="#9CA3AF" />
             <Text className="text-text-muted text-sm ml-1">Reply</Text>
