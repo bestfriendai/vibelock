@@ -241,20 +241,25 @@ export const supabaseReviews = {
   createReview: async (reviewData: Omit<Review, "id" | "createdAt" | "updatedAt" | "authorId">): Promise<string> => {
     try {
       const user = await supabaseAuth.getCurrentUser();
-      if (!user) throw new Error("Must be signed in to create a review");
+      // Allow anonymous review creation for now - use null for author_id if not authenticated
+      const authorId = user?.id || null;
 
       const { data, error } = await supabase
         .from("reviews_firebase")
         .insert({
-          ...reviewData,
-          author_id: user.id,
+          author_id: authorId,
           reviewer_anonymous_id: reviewData.reviewerAnonymousId,
           reviewed_person_name: reviewData.reviewedPersonName,
           reviewed_person_location: reviewData.reviewedPersonLocation,
+          category: reviewData.category,
           profile_photo: reviewData.profilePhoto,
           green_flags: reviewData.greenFlags,
           red_flags: reviewData.redFlags,
+          sentiment: reviewData.sentiment,
           review_text: reviewData.reviewText,
+          media: reviewData.media,
+          social_media: reviewData.socialMedia,
+          status: reviewData.status,
           like_count: reviewData.likeCount || 0,
           dislike_count: reviewData.dislikeCount || 0,
         })

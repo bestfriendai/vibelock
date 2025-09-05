@@ -49,10 +49,10 @@ interface ChatActions {
 
 type ChatStore = ChatState & ChatActions;
 
-// Mock data for development
+// Mock data for development - using actual database UUIDs
 const mockChatRooms: ChatRoom[] = [
   {
-    id: "room_local_dc",
+    id: "86250edc-5520-48da-b9cd-0c28982b6148",
     name: "Washington DC Local",
     description: "Connect with singles in the Washington DC area",
     type: "local",
@@ -61,7 +61,7 @@ const mockChatRooms: ChatRoom[] = [
     onlineCount: 23,
     lastMessage: {
       id: "msg_1",
-      chatRoomId: "room_local_dc",
+      chatRoomId: "86250edc-5520-48da-b9cd-0c28982b6148",
       senderId: "user_456",
       senderName: "Sarah M.",
       content: "Anyone been to that new rooftop bar in Adams Morgan?",
@@ -76,7 +76,7 @@ const mockChatRooms: ChatRoom[] = [
     updatedAt: new Date(),
   },
   {
-    id: "room_topic_dating_tips",
+    id: "694c3b9c-1079-4cf5-a9cb-b06e8715a804",
     name: "Dating Tips & Advice",
     description: "Share and get advice on dating, relationships, and meeting people",
     type: "topic",
@@ -85,7 +85,7 @@ const mockChatRooms: ChatRoom[] = [
     onlineCount: 15,
     lastMessage: {
       id: "msg_2",
-      chatRoomId: "room_topic_dating_tips",
+      chatRoomId: "694c3b9c-1079-4cf5-a9cb-b06e8715a804",
       senderId: "user_789",
       senderName: "Mike R.",
       content: "What's everyone's take on first date locations?",
@@ -99,7 +99,7 @@ const mockChatRooms: ChatRoom[] = [
     updatedAt: new Date(),
   },
   {
-    id: "room_topic_success_stories",
+    id: "f47b5109-bd62-468c-b024-d40b11ea78c2",
     name: "Success Stories",
     description: "Share your dating success stories and celebrate wins",
     type: "topic",
@@ -108,7 +108,7 @@ const mockChatRooms: ChatRoom[] = [
     onlineCount: 31,
     lastMessage: {
       id: "msg_3",
-      chatRoomId: "room_topic_success_stories",
+      chatRoomId: "f47b5109-bd62-468c-b024-d40b11ea78c2",
       senderId: "user_321",
       senderName: "Jessica L.",
       content: "Just wanted to thank everyone for the advice! Had an amazing third date last night 💕",
@@ -122,7 +122,7 @@ const mockChatRooms: ChatRoom[] = [
     updatedAt: new Date(),
   },
   {
-    id: "room_global",
+    id: "ca1d221d-5047-4168-9a46-e25de522179b",
     name: "Global Chat",
     description: "Open discussion for everyone",
     type: "global",
@@ -131,7 +131,7 @@ const mockChatRooms: ChatRoom[] = [
     onlineCount: 67,
     lastMessage: {
       id: "msg_4",
-      chatRoomId: "room_global",
+      chatRoomId: "ca1d221d-5047-4168-9a46-e25de522179b",
       senderId: "user_654",
       senderName: "Alex T.",
       content: "Good morning everyone! Hope you all have a great day",
@@ -145,7 +145,7 @@ const mockChatRooms: ChatRoom[] = [
     updatedAt: new Date(),
   },
   {
-    id: "room_men",
+    id: "4c2bfb82-1161-40e3-895d-549b64ae4b26",
     name: "Men's Room",
     description: "Space for men to connect and share experiences",
     type: "topic",
@@ -158,7 +158,7 @@ const mockChatRooms: ChatRoom[] = [
     updatedAt: new Date(),
   },
   {
-    id: "room_women",
+    id: "a9082cbb-2bc8-48eb-b35d-04997803232b",
     name: "Women's Room",
     description: "Space for women to connect and share experiences",
     type: "topic",
@@ -171,7 +171,7 @@ const mockChatRooms: ChatRoom[] = [
     updatedAt: new Date(),
   },
   {
-    id: "room_lgbtq",
+    id: "fef4dae9-7507-4832-b82e-69fb5e40fbb5",
     name: "LGBTQ+ Room",
     description: "Inclusive space for LGBTQ+ community members",
     type: "topic",
@@ -377,56 +377,22 @@ const useChatStore = create<ChatStore>()(
         try {
           set({ isLoading: true });
 
-          // Generate mock messages for the room
-          const mockMessages: ChatMessage[] = [
-            {
-              id: `msg_${roomId}_1`,
-              chatRoomId: roomId,
-              senderId: "user_456",
-              senderName: "Sarah M.",
-              content: "Hey everyone! How's everyone doing today?",
-              messageType: "text",
-              timestamp: new Date(Date.now() - 3600000),
-              isRead: true,
-              isOwn: false,
-            },
-            {
-              id: `msg_${roomId}_2`,
-              chatRoomId: roomId,
-              senderId: "current_user",
-              senderName: "You",
-              content: "Doing great! Just joined this room",
-              messageType: "text",
-              timestamp: new Date(Date.now() - 3000000),
-              isRead: true,
-              isOwn: true,
-            },
-            {
-              id: `msg_${roomId}_3`,
-              chatRoomId: roomId,
-              senderId: "user_789",
-              senderName: "Mike R.",
-              content: "Welcome! This is a great community",
-              messageType: "text",
-              timestamp: new Date(Date.now() - 2400000),
-              isRead: true,
-              isOwn: false,
-            },
-          ];
+          console.log(`📨 Loading messages for room ${roomId}...`);
+
+          // Load messages from Supabase via real-time service
+          const messages = await realtimeChatService.loadRoomMessages(roomId);
 
           set((state) => ({
             messages: {
               ...state.messages,
-              [roomId]: [
-                ...mockMessages,
-                ...(state.messages[roomId] || []).filter(
-                  (msg) => msg.senderId === "current_user" && !mockMessages.find((mock) => mock.id === msg.id),
-                ),
-              ].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()),
+              [roomId]: messages,
             },
             isLoading: false,
           }));
+
+          console.log(`📨 Loaded ${messages.length} messages for room ${roomId}`);
         } catch (error) {
+          console.error("💥 Failed to load messages:", error);
           set({
             error: error instanceof Error ? error.message : "Failed to load messages",
             isLoading: false,
@@ -484,9 +450,31 @@ const useChatStore = create<ChatStore>()(
         set((state) => ({
           messages: {
             ...state.messages,
-            [message.chatRoomId]: [...(state.messages[message.chatRoomId] || []), message],
+            [message.chatRoomId]: [...(state.messages[message.chatRoomId] || []), message]
+              .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()),
           },
         }));
+      },
+
+      // Add message immediately for real-time updates
+      addMessageImmediate: (message: ChatMessage) => {
+        set((state) => {
+          const roomMessages = state.messages[message.chatRoomId] || [];
+
+          // Check if message already exists to avoid duplicates
+          const messageExists = roomMessages.some(msg => msg.id === message.id);
+          if (messageExists) {
+            return state;
+          }
+
+          return {
+            messages: {
+              ...state.messages,
+              [message.chatRoomId]: [...roomMessages, message]
+                .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()),
+            },
+          };
+        });
       },
 
       markMessagesAsRead: (roomId: string) => {

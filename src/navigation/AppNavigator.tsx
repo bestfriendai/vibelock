@@ -19,6 +19,7 @@ import OnboardingScreen from "../screens/OnboardingScreen";
 import ChatRoomScreen from "../screens/ChatRoomScreen";
 import ReviewDetailScreen from "../screens/ReviewDetailScreen";
 import SupabaseExample from "../components/SupabaseExample";
+import LocationFilterDemo from "../components/LocationFilterDemo";
 
 // Import stores
 import useAuthStore from "../state/authStore";
@@ -45,6 +46,7 @@ export type RootStackParamList = {
     review: SerializedReview;
   };
   FirebaseTest: undefined;
+  LocationFilterDemo: undefined;
 };
 
 export type TabParamList = {
@@ -314,6 +316,7 @@ export default function AppNavigator() {
               headerTitle: "Chat",
               headerStyle: { backgroundColor: "#141418" },
               headerTintColor: "#FFFFFF",
+              headerBackTitle: "Back",
             }}
           />
           <Stack.Screen
@@ -322,6 +325,17 @@ export default function AppNavigator() {
             options={{
               headerShown: true,
               headerTitle: "Review",
+              headerStyle: { backgroundColor: "#141418" },
+              headerTintColor: "#FFFFFF",
+              headerBackTitle: "Back",
+            }}
+          />
+          <Stack.Screen
+            name="LocationFilterDemo"
+            component={LocationFilterDemo}
+            options={{
+              headerShown: true,
+              headerTitle: "Location Filter Demo",
               headerStyle: { backgroundColor: "#141418" },
               headerTintColor: "#FFFFFF",
               headerBackTitle: "Back",

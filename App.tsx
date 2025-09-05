@@ -32,7 +32,7 @@ export default function App() {
   const { initializeAuthListener } = useAuthStore();
 
   useEffect(() => {
-    // Initialize Firebase auth state listener
+    // Initialize Supabase auth state listener
     const unsubscribe = initializeAuthListener();
 
     // Cleanup listener on unmount

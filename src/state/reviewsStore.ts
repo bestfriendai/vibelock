@@ -183,8 +183,8 @@ const mockReviews: Review[] = [
 const useReviewsStore = create<ReviewsStore>()(
   persist(
     (set, get) => ({
-      // State - Initialize with mock data so users see content immediately
-      reviews: mockReviews,
+      // State - Initialize with empty array to force loading from Supabase
+      reviews: [],
       isLoading: false,
       error: null,
       filters: {
@@ -240,19 +240,9 @@ const useReviewsStore = create<ReviewsStore>()(
         try {
           set({ isLoading: true, error: null });
 
-          // If no reviews exist, immediately show mock data for better UX
           const currentState = get();
-          if (currentState.reviews.length === 0) {
-            set({
-              reviews: mockReviews,
-              hasMore: false,
-              lastVisible: null,
-              isLoading: false,
-            });
-            return;
-          }
 
-          // Try to load from Supabase
+          // Try to load from Supabase first
           const offset = refresh ? 0 : currentState.reviews.length;
           const newReviews = await supabaseReviews.getReviews(20, offset);
 
@@ -278,19 +268,44 @@ const useReviewsStore = create<ReviewsStore>()(
           };
 
           const applyLocationFilter = (list: Review[]) => {
-            if (!filters.radius || !userLocation) return list;
+            // If no radius filter is set or no user location, show all reviews
+            if (!filters.radius || !userLocation) {
+              return list;
+            }
 
-            // For simplicity, filter by city/state match if radius is defined
-            // In a real app, you'd calculate actual distance using coordinates
+            // If radius is set to a large value (>= 100), show all reviews (nationwide)
+            if (filters.radius >= 100) {
+              return list;
+            }
+
+            // For medium radius (50-99), filter by state only
+            if (filters.radius >= 50) {
+              return list.filter(
+                (r) => r.reviewedPersonLocation.state.toLowerCase() === userLocation.state.toLowerCase()
+              );
+            }
+
+            // For small radius (<50), filter by city and state
             return list.filter(
               (r) =>
                 r.reviewedPersonLocation.city.toLowerCase() === userLocation.city.toLowerCase() &&
-                r.reviewedPersonLocation.state.toLowerCase() === userLocation.state.toLowerCase(),
+                r.reviewedPersonLocation.state.toLowerCase() === userLocation.state.toLowerCase()
             );
           };
 
           let filteredNewReviews = applyCategoryFilter(newReviews);
           filteredNewReviews = applyLocationFilter(filteredNewReviews);
+
+          // If no reviews found and this is a refresh, show mock data
+          if (refresh && filteredNewReviews.length === 0) {
+            set({
+              reviews: mockReviews,
+              hasMore: false,
+              lastVisible: null,
+              isLoading: false,
+            });
+            return;
+          }
 
           if (refresh) {
             set({

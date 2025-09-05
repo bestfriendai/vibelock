@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { View, TextInput, Pressable, Text, Alert, KeyboardAvoidingView, Platform } from "react-native";
+import { View, TextInput, Pressable, Text, Alert, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming } from "react-native-reanimated";
 import * as ImagePicker from "expo-image-picker";
@@ -169,11 +169,7 @@ export default function ChatInput({ onSend, onTyping, onSendMedia, replyingTo, o
   }));
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
-    >
-      <View className="bg-surface-800 border-t border-border" style={{ paddingBottom: insets.bottom }}>
+    <View className="bg-surface-800 border-t border-border" style={{ paddingBottom: insets.bottom }}>
         {/* Reply indicator */}
         {replyingTo && (
           <View className="flex-row items-center justify-between px-4 py-2 bg-surface-700/50 border-b border-border">
@@ -267,7 +263,6 @@ export default function ChatInput({ onSend, onTyping, onSendMedia, replyingTo, o
           </Pressable>
         )}
       </View>
-      </View>
-    </KeyboardAvoidingView>
+    </View>
   );
 }

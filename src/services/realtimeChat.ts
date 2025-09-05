@@ -37,18 +37,20 @@ class RealtimeChatService {
   async getChatRooms(): Promise<ChatRoom[]> {
     try {
       const { data, error } = await supabase
-        .from("chat_rooms")
+        .from("chat_rooms_firebase")
         .select(`
           id,
           name,
           description,
+          type,
           category,
           member_count,
+          online_count,
+          last_activity,
           is_active,
+          location,
           created_at,
-          location_name,
-          latitude,
-          longitude
+          updated_at
         `)
         .eq("is_active", true)
         .order("created_at", { ascending: false });
@@ -64,18 +66,15 @@ class RealtimeChatService {
         id: room.id,
         name: room.name,
         description: room.description || "",
-        type: "local" as const,
+        type: room.type as any,
         category: room.category as any,
         memberCount: room.member_count || 0,
-        onlineCount: 0, // Will be updated via presence
-        lastActivity: new Date(room.created_at),
+        onlineCount: room.online_count || 0,
+        lastActivity: new Date(room.last_activity || room.created_at),
         isActive: room.is_active,
-        location: room.location_name ? {
-          city: room.location_name,
-          state: "Unknown",
-        } : undefined,
+        location: room.location ? room.location : undefined,
         createdAt: new Date(room.created_at),
-        updatedAt: new Date(room.created_at),
+        updatedAt: new Date(room.updated_at || room.created_at),
       }));
     } catch (error: any) {
       console.error("💥 Failed to get chat rooms:", error);
@@ -101,8 +100,8 @@ class RealtimeChatService {
           {
             event: "INSERT",
             schema: "public",
-            table: "chat_messages",
-            filter: `category=eq.${roomId}`, // Using category as room filter for now
+            table: "chat_messages_firebase",
+            filter: `chat_room_id=eq.${roomId}`,
           },
           (payload) => {
             console.log("💬 New message:", payload);
@@ -161,22 +160,22 @@ class RealtimeChatService {
   // Load messages for a room
   async loadRoomMessages(roomId: string): Promise<ChatMessage[]> {
     try {
-      // For now, we'll use the category field to filter messages by room
-      // This is a temporary solution until we fix the schema
       const { data, error } = await supabase
-        .from("chat_messages")
+        .from("chat_messages_firebase")
         .select(`
           id,
+          chat_room_id,
           sender_id,
+          sender_name,
+          sender_avatar,
           content,
-          type,
-          created_at,
-          reply_to_id,
-          media_url,
-          media_type
+          message_type,
+          timestamp,
+          is_read,
+          reply_to
         `)
-        .eq("category", roomId) // Temporary: using category as room_id
-        .order("created_at", { ascending: true })
+        .eq("chat_room_id", roomId)
+        .order("timestamp", { ascending: true })
         .limit(50);
 
       if (error) {
@@ -186,14 +185,15 @@ class RealtimeChatService {
 
       const messages = (data || []).map((msg) => ({
         id: msg.id,
-        chatRoomId: roomId,
+        chatRoomId: msg.chat_room_id,
         senderId: msg.sender_id || "unknown",
-        senderName: "User", // We'll need to join with users table later
+        senderName: msg.sender_name || "User",
+        senderAvatar: msg.sender_avatar,
         content: msg.content,
-        messageType: (msg.type || "text") as any,
-        timestamp: new Date(msg.created_at),
-        isRead: true,
-        replyTo: msg.reply_to_id,
+        messageType: (msg.message_type || "text") as any,
+        timestamp: new Date(msg.timestamp),
+        isRead: msg.is_read || false,
+        replyTo: msg.reply_to,
       })) as ChatMessage[];
 
       console.log(`📨 Loaded ${messages.length} messages for room ${roomId}`);
@@ -217,13 +217,15 @@ class RealtimeChatService {
       console.log(`📤 Sending message to room ${roomId}:`, content);
 
       const { error } = await supabase
-        .from("chat_messages")
+        .from("chat_messages_firebase")
         .insert({
+          chat_room_id: roomId,
           sender_id: senderId,
-          category: roomId, // Temporary: using category as room_id
+          sender_name: senderName,
           content: content,
-          type: "text",
-          created_at: new Date().toISOString(),
+          message_type: "text",
+          timestamp: new Date().toISOString(),
+          is_read: false,
         });
 
       if (error) {
@@ -241,6 +243,27 @@ class RealtimeChatService {
   // Subscribe to messages for a room
   subscribeToMessages(roomId: string, callback: (messages: ChatMessage[]) => void) {
     this.messageCallbacks.set(roomId, callback);
+
+    // Load initial messages
+    this.loadRoomMessages(roomId).then(callback).catch(console.error);
+  }
+
+  // Subscribe to new messages only (for immediate updates)
+  subscribeToNewMessages(roomId: string, callback: (message: ChatMessage) => void) {
+    const channel = this.channels.get(roomId);
+    if (channel) {
+      // Add a callback for individual new messages
+      const existingCallback = this.messageCallbacks.get(roomId);
+      this.messageCallbacks.set(roomId, (messages) => {
+        if (existingCallback) existingCallback(messages);
+
+        // Call the new message callback with the latest message
+        if (messages.length > 0) {
+          const latestMessage = messages[messages.length - 1];
+          callback(latestMessage);
+        }
+      });
+    }
   }
 
   // Subscribe to presence for a room
@@ -251,9 +274,25 @@ class RealtimeChatService {
   // Handle new message from real-time subscription
   private handleNewMessage(roomId: string, payload: any) {
     const callback = this.messageCallbacks.get(roomId);
-    if (callback) {
-      // Reload messages to get the latest state
-      this.loadRoomMessages(roomId);
+    if (callback && payload.new) {
+      // Transform the new message to match our ChatMessage interface
+      const newMessage = {
+        id: payload.new.id,
+        chatRoomId: payload.new.chat_room_id,
+        senderId: payload.new.sender_id,
+        senderName: payload.new.sender_name,
+        senderAvatar: payload.new.sender_avatar,
+        content: payload.new.content,
+        messageType: payload.new.message_type,
+        timestamp: new Date(payload.new.timestamp),
+        isRead: payload.new.is_read,
+        replyTo: payload.new.reply_to,
+      };
+
+      // Immediately reload messages to get the latest state
+      this.loadRoomMessages(roomId).then((messages) => {
+        callback(messages);
+      }).catch(console.error);
     }
   }
 

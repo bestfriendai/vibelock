@@ -224,6 +224,17 @@ export default function ProfileScreen() {
               <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
             </Pressable>
 
+            <Pressable
+              className="flex-row items-center justify-between p-4 border-b border-surface-700"
+              onPress={() => navigation.navigate("LocationFilterDemo")}
+            >
+              <View className="flex-row items-center">
+                <Ionicons name="location-outline" size={20} color="#9CA3AF" />
+                <Text className="text-text-primary font-medium ml-3">Location Filter Demo</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
+            </Pressable>
+
             <View className="flex-row items-center justify-between p-4">
               <View className="flex-row items-center">
                 <Ionicons name="information-circle-outline" size={20} color="#9CA3AF" />

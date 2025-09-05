@@ -70,10 +70,10 @@ export default function ChatRoomScreen() {
       <KeyboardAvoidingView
         className="flex-1"
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
       >
         {/* Enhanced Room Header */}
-        <View className="px-4 py-3 border-b border-border bg-surface-800">
+        <View className="px-4 py-4 border-b border-border bg-surface-800 mt-2">
           <View className="flex-row items-center justify-between">
             <View className="flex-1">
               <Text className="text-text-primary text-lg font-bold">{currentChatRoom?.name || "Chat"}</Text>
