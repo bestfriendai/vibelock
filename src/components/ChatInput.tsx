@@ -130,7 +130,8 @@ export default function ChatInput({ onSend, onTyping, onSendMedia, replyingTo, o
   const handleDocument = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        type: "*/*",
+        // Use SDK constant to avoid JSX parser confusion with "/*"
+        type: DocumentPicker.types.allFiles,
         copyToCacheDirectory: true,
       });
 
@@ -265,6 +266,7 @@ export default function ChatInput({ onSend, onTyping, onSendMedia, replyingTo, o
             <Ionicons name="mic" size={20} color={isRecording ? "#000" : "#9CA3AF"} />
           </Pressable>
         )}
+      </View>
       </View>
     </KeyboardAvoidingView>
   );
