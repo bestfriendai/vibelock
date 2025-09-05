@@ -23,6 +23,12 @@ import FirebaseExample from "../components/FirebaseExample";
 // Import stores
 import useAuthStore from "../state/authStore";
 
+// Types for navigation - using serialized versions for React Navigation
+type SerializedReview = Omit<import("../types").Review, 'createdAt' | 'updatedAt'> & {
+  createdAt: string | Date;
+  updatedAt: string | Date;
+};
+
 // Navigation types
 export type RootStackParamList = {
   SignIn: undefined;
@@ -36,7 +42,7 @@ export type RootStackParamList = {
   CreateReview: undefined;
   ChatRoom: { roomId: string };
   ReviewDetail: {
-    review: import("../types").Review;
+    review: SerializedReview;
   };
   FirebaseTest: undefined;
 };
@@ -51,14 +57,14 @@ export type TabParamList = {
 export type BrowseStackParamList = {
   Browse: undefined;
   ReviewDetail: {
-    review: import("../types").Review;
+    review: SerializedReview;
   };
 };
 
 export type SearchStackParamList = {
   Search: undefined;
   ReviewDetail: {
-    review: import("../types").Review;
+    review: SerializedReview;
   };
 };
 

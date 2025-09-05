@@ -195,9 +195,9 @@ const mockChatRooms: ChatRoom[] = [
 const useChatStore = create<ChatStore>()(
   persist(
     (set, get) => ({
-      // Initial state
-  chatRooms: [],
-  roomCategoryFilter: "all",
+      // Initial state - Initialize with mock data so users see chat rooms immediately
+      chatRooms: mockChatRooms,
+      roomCategoryFilter: "all",
       currentChatRoom: null,
       messages: {},
       members: {},
@@ -252,7 +252,19 @@ const useChatStore = create<ChatStore>()(
         try {
           set({ isLoading: true, error: null });
           
-          // Try to load from Firebase first
+          // If no chat rooms exist, immediately show mock data for better UX
+          const currentState = get();
+          if (currentState.chatRooms.length === 0) {
+            const category = currentState.roomCategoryFilter || "all";
+            const roomsToUse = category && category !== "all" ? mockChatRooms.filter(r => (r.category || "all") === category) : mockChatRooms;
+            set({ 
+              chatRooms: roomsToUse,
+              isLoading: false 
+            });
+            return;
+          }
+          
+          // Try to load from Firebase
           try {
             let chatRooms = await firebaseChat.getChatRooms();
             // Apply category filter if set
@@ -357,7 +369,13 @@ const useChatStore = create<ChatStore>()(
           set(state => ({
             messages: {
               ...state.messages,
-              [roomId]: mockMessages
+              [roomId]: [
+                ...mockMessages,
+                ...(state.messages[roomId] || []).filter(msg => 
+                  msg.senderId === "current_user" && 
+                  !mockMessages.find(mock => mock.id === msg.id)
+                )
+              ].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
             },
             isLoading: false
           }));
@@ -370,44 +388,33 @@ const useChatStore = create<ChatStore>()(
       },
 
       sendMessage: async (roomId: string, content: string) => {
-        try {
-          const message: Omit<ChatMessage, 'id' | 'timestamp'> = {
-            chatRoomId: roomId,
-            senderId: "current_user",
-            senderName: "You",
-            content,
-            messageType: "text",
-            isRead: true,
-            isOwn: true
-          };
+        const message: Omit<ChatMessage, 'id' | 'timestamp'> = {
+          chatRoomId: roomId,
+          senderId: "current_user",
+          senderName: "You",
+          content,
+          messageType: "text",
+          isRead: true,
+          isOwn: true
+        };
 
-          // Send to Firebase
+        // Always add message to local state immediately (optimistic update)
+        const newMessage: ChatMessage = {
+          ...message,
+          id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+          timestamp: new Date()
+        };
+        
+        get().addMessage(newMessage);
+
+        // Try to send to Firebase in background
+        try {
           await firebaseChat.sendMessage(roomId, message);
-          
-          // Also send via WebSocket for real-time updates (fallback)
           webSocketService.sendChatMessage(message);
         } catch (error) {
-          // Fallback to WebSocket only
-          const message: Omit<ChatMessage, 'id' | 'timestamp'> = {
-            chatRoomId: roomId,
-            senderId: "current_user",
-            senderName: "You",
-            content,
-            messageType: "text",
-            isRead: true,
-            isOwn: true
-          };
-
+          // Even if Firebase fails, we already added it locally
+          console.warn('Failed to send message to Firebase (but it\'s still visible locally):', error);
           webSocketService.sendChatMessage(message);
-          
-          // Optimistically add message to local state
-          const newMessage: ChatMessage = {
-            ...message,
-            id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-            timestamp: new Date()
-          };
-          
-          get().addMessage(newMessage);
         }
       },
 

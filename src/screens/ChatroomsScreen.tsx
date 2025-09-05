@@ -27,8 +27,9 @@ export default function ChatroomsScreen() {
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase();
-    if (!q) return chatRooms;
-    return chatRooms.filter(r => r.name.toLowerCase().includes(q) || r.description.toLowerCase().includes(q));
+    const rooms = Array.isArray(chatRooms) ? chatRooms : [];
+    if (!q) return rooms;
+    return rooms.filter(r => r && r.name && r.description && (r.name.toLowerCase().includes(q) || r.description.toLowerCase().includes(q)));
   }, [query, chatRooms]);
 
   const onRefresh = async () => {

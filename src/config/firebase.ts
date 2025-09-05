@@ -14,6 +14,10 @@ const firebaseConfig = {
   appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
 };
 
+// Debug logging for environment variables
+console.log('[Firebase Config] Project ID:', process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID);
+console.log('[Firebase Config] Auth Domain:', process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN);
+
 // Validate configuration
 const requiredKeys = [
   "EXPO_PUBLIC_FIREBASE_API_KEY",

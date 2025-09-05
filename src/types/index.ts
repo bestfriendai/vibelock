@@ -38,6 +38,7 @@ export interface SocialMediaHandles {
 }
 
 export type Sentiment = "green" | "red";
+export type ReviewCategory = "all" | "men" | "women" | "lgbtq+";
 
 export interface Review {
   id: string;
@@ -48,7 +49,7 @@ export interface Review {
     state: string;
   };
   // Category tag for the reviewed person (used for filtering)
-  category?: "men" | "women" | "lgbtq+" | "all";
+  category?: ReviewCategory;
   profilePhoto: string; // URL to profile photo
   greenFlags: GreenFlag[];
   redFlags: RedFlag[];
@@ -99,7 +100,7 @@ export type RedFlag =
   | "inconsistent";
 
 export interface FilterOptions {
-  category: "all" | "men" | "women" | "lgbtq+";
+  category: ReviewCategory;
   radius?: number; // in miles, undefined means show all
   sortBy: "recent" | "most_reviewed" | "highest_rated";
 }
@@ -150,7 +151,7 @@ export interface ChatRoom {
   description: string;
   type: ChatRoomType;
   // Optional category for gender-specific rooms
-  category?: "all" | "men" | "women" | "lgbtq+";
+  category?: ReviewCategory;
   memberCount: number;
   onlineCount: number;
   lastMessage?: ChatMessage;

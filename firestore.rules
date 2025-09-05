@@ -16,6 +16,15 @@ service cloud.firestore {
         && request.auth.uid != null
         && (request.writeFields.size() == 1 && 'likeCount' in request.writeFields); // Only allow likeCount updates
       allow delete: if false; // No deletion allowed
+      
+      // Comments within reviews
+      match /comments/{commentId} {
+        allow read: if true; // Public read access to comments
+        allow create: if request.auth != null; // Authenticated users can create comments
+        allow update: if request.auth != null 
+          && (request.writeFields.size() <= 2 && ('likeCount' in request.writeFields || 'dislikeCount' in request.writeFields)); // Only allow like/dislike updates
+        allow delete: if request.auth != null; // Authenticated users can delete comments
+      }
     }
     
     // Chat rooms are publicly readable

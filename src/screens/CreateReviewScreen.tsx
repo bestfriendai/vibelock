@@ -9,8 +9,9 @@ import {
   Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useNavigation } from "@react-navigation/native";
 import useReviewsStore from "../state/reviewsStore";
-import { MediaItem, SocialMediaHandles, Sentiment } from "../types";
+import { MediaItem, SocialMediaHandles, Sentiment, ReviewCategory } from "../types";
 import FormSection from "../components/FormSection";
 import MediaUploadGrid from "../components/MediaUploadGrid";
 import SocialMediaInput from "../components/SocialMediaInput";
@@ -31,6 +32,7 @@ interface Location {
 }
 
 export default function CreateReviewScreen() {
+  const navigation = useNavigation<any>();
   const { user, isGuestMode } = useAuthStore();
   const [firstName, setFirstName] = useState("");
   const [selectedLocation, setSelectedLocation] = useState<Location>({
@@ -40,6 +42,7 @@ export default function CreateReviewScreen() {
   });
   const [reviewText, setReviewText] = useState("");
   const [sentiment, setSentiment] = useState<Sentiment | null>(null);
+  const [category, setCategory] = useState<ReviewCategory>("men");
   const [media, setMedia] = useState<MediaItem[]>([]);
   const [socialMedia, setSocialMedia] = useState<SocialMediaHandles>({});
   const [error, setError] = useState<string | null>(null);
@@ -67,6 +70,7 @@ export default function CreateReviewScreen() {
           }
           setReviewText(draft.reviewText || "");
           setSentiment(draft.sentiment ?? null);
+          setCategory(draft.category || "men");
           setMedia(draft.media || []);
           setSocialMedia(draft.socialMedia || {});
         }
@@ -84,13 +88,14 @@ export default function CreateReviewScreen() {
             selectedLocation,
             reviewText,
             sentiment,
+            category,
             media,
             socialMedia,
           })
       ).catch(() => {});
     }, 400);
     return () => clearTimeout(save);
-  }, [firstName, selectedLocation, reviewText, sentiment, media, socialMedia]);
+  }, [firstName, selectedLocation, reviewText, sentiment, category, media, socialMedia]);
 
 
 
@@ -111,14 +116,17 @@ export default function CreateReviewScreen() {
     }
 
     try {
-      await createReview({
+      const reviewData = {
         reviewedPersonName: firstName.trim(),
         reviewedPersonLocation: { city: selectedLocation.city.trim(), state: selectedLocation.state.trim().toUpperCase() },
         sentiment: sentiment || undefined,
         reviewText: reviewText.trim(),
+        category,
         media,
         socialMedia,
-      });
+      };
+      
+      await createReview(reviewData);
 
       // Reset form and draft
       setFirstName("");
@@ -129,10 +137,18 @@ export default function CreateReviewScreen() {
       });
       setReviewText("");
       setSentiment(null);
+      setCategory("men");
       setMedia([]);
       setSocialMedia({});
       await AsyncStorage.removeItem(DRAFT_KEY);
-      setSuccess("Review submitted for moderation");
+      
+      // Show success message and navigate back
+      setSuccess("Review posted successfully!");
+      
+      // Navigate back to browse screen after a short delay
+      setTimeout(() => {
+        navigation.goBack();
+      }, 1500);
     } catch (e) {
       setError("Failed to submit review. Please try again.");
     }
@@ -232,6 +248,30 @@ export default function CreateReviewScreen() {
               </View>
             </FormSection>
 
+            {/* Category */}
+            <FormSection title="Category" subtitle="Select who you're reviewing" required>
+              <View className="flex-row space-x-3">
+                <Pressable
+                  className={`flex-1 items-center justify-center rounded-xl border px-3 py-3 ${category === "men" ? "bg-blue-500/15 border-blue-500" : "bg-surface-800 border-border"}`}
+                  onPress={() => setCategory("men")}
+                >
+                  <Text className={`font-medium ${category === "men" ? "text-blue-400" : "text-text-primary"}`}>Men</Text>
+                </Pressable>
+                <Pressable
+                  className={`flex-1 items-center justify-center rounded-xl border px-3 py-3 ${category === "women" ? "bg-pink-500/15 border-pink-500" : "bg-surface-800 border-border"}`}
+                  onPress={() => setCategory("women")}
+                >
+                  <Text className={`font-medium ${category === "women" ? "text-pink-400" : "text-text-primary"}`}>Women</Text>
+                </Pressable>
+                <Pressable
+                  className={`flex-1 items-center justify-center rounded-xl border px-3 py-3 ${category === "lgbtq+" ? "bg-purple-500/15 border-purple-500" : "bg-surface-800 border-border"}`}
+                  onPress={() => setCategory("lgbtq+")}
+                >
+                  <Text className={`font-medium ${category === "lgbtq+" ? "text-purple-400" : "text-text-primary"}`}>LGBTQ+</Text>
+                </Pressable>
+              </View>
+            </FormSection>
+
             {/* Media */}
             <FormSection title="Photos & Videos" subtitle="Add at least 1 photo (max 6). Videos up to 60 seconds." required>
               <MediaUploadGrid media={media} onMediaChange={setMedia} maxItems={6} required />
@@ -286,7 +326,7 @@ export default function CreateReviewScreen() {
             </Pressable>
 
             <Text className="text-text-muted text-sm text-center mt-3">
-              Your review will be completely anonymous and screened before publication
+              Your review will be posted immediately and remain completely anonymous
             </Text>
           </View>
         </ScrollView>

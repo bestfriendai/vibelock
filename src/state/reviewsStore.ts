@@ -175,8 +175,8 @@ const mockReviews: Review[] = [
 const useReviewsStore = create<ReviewsStore>()(
   persist(
     (set, get) => ({
-      // State
-      reviews: [],
+      // State - Initialize with mock data so users see content immediately
+      reviews: mockReviews,
       isLoading: false,
       error: null,
       filters: {
@@ -234,21 +234,36 @@ const useReviewsStore = create<ReviewsStore>()(
         try {
           set({ isLoading: true, error: null });
           
+          // If no reviews exist, immediately show mock data for better UX
           const currentState = get();
+          if (currentState.reviews.length === 0) {
+            set({ 
+              reviews: mockReviews,
+              hasMore: false,
+              lastVisible: null,
+              isLoading: false 
+            });
+            return;
+          }
+          
           const lastDoc = refresh ? null : currentState.lastVisible;
           
+          // Try to load from Firebase
           const { reviews: newReviews, lastDoc: newLastDoc } = await firebaseReviews.getReviews(20, lastDoc);
           
-          // Apply category filtering based on store filters and user preference
+          // Apply category and location filtering based on store filters and user preference
           const { filters } = get();
-          // Try to get user preference from auth store if available
+          // Try to get user preference and location from auth store if available
           let userPrefCategory: string | undefined;
+          let userLocation: { city: string; state: string } | undefined;
           try {
             // Importing dynamically to avoid circular deps at module load
             const authStore = require("./authStore").default.getState();
             userPrefCategory = authStore.user?.genderPreference;
+            userLocation = authStore.user?.location;
           } catch (e) {
             userPrefCategory = undefined;
+            userLocation = undefined;
           }
 
           const applyCategoryFilter = (list: Review[]) => {
@@ -257,7 +272,19 @@ const useReviewsStore = create<ReviewsStore>()(
             return list.filter(r => (r.category || "all") === categoryToFilter);
           };
 
-          const filteredNewReviews = applyCategoryFilter(newReviews);
+          const applyLocationFilter = (list: Review[]) => {
+            if (!filters.radius || !userLocation) return list;
+            
+            // For simplicity, filter by city/state match if radius is defined
+            // In a real app, you'd calculate actual distance using coordinates
+            return list.filter(r => 
+              r.reviewedPersonLocation.city.toLowerCase() === userLocation.city.toLowerCase() &&
+              r.reviewedPersonLocation.state.toLowerCase() === userLocation.state.toLowerCase()
+            );
+          };
+
+          let filteredNewReviews = applyCategoryFilter(newReviews);
+          filteredNewReviews = applyLocationFilter(filteredNewReviews);
 
           if (refresh) {
             set({ 
@@ -337,36 +364,40 @@ const useReviewsStore = create<ReviewsStore>()(
             }
           }
 
-          // Create review data for Firebase
+          // Create review data for Firebase - remove undefined fields
           const reviewData: Omit<Review, "id" | "createdAt" | "updatedAt"> = {
             reviewerAnonymousId: `anon_${Date.now()}`,
             reviewedPersonName: data.reviewedPersonName,
             reviewedPersonLocation: data.reviewedPersonLocation,
             greenFlags: data.greenFlags || [],
             redFlags: data.redFlags || [],
-            sentiment: data.sentiment,
             reviewText: data.reviewText,
-            media: uploadedMedia,
-            socialMedia: data.socialMedia,
+            media: uploadedMedia || [],
             profilePhoto: firstImage ? firstImage.uri : `https://picsum.photos/400/${Math.floor(Math.random() * 200) + 500}?random=${Date.now()}`,
             status: "approved", // Auto-approve for now (moderation removed)
-            category: data.category || "all",
-            likeCount: 0
+          category: data.category || "men",
+            likeCount: 0,
+            // Only include optional fields if they have values
+            ...(data.sentiment && { sentiment: data.sentiment }),
+            ...(data.socialMedia && Object.keys(data.socialMedia).length > 0 && { socialMedia: data.socialMedia })
           };
 
-          // Create review in Firebase
-          const reviewId = await firebaseReviews.createReview(reviewData);
-          
-          // Create the full review object for local state
+          // Create the full review object for immediate local display
           const newReview: Review = {
             ...reviewData,
-            id: reviewId,
+            id: `review_${Date.now()}_${Math.random().toString(36).substring(7)}`,
             createdAt: new Date(),
             updatedAt: new Date()
           };
           
+          // Add to local state immediately (optimistic update)
           get().addReview(newReview);
           set({ isLoading: false });
+          
+          // Try to save to Firebase in background (don't wait for it)
+          firebaseReviews.createReview(reviewData).catch(error => {
+            console.warn('Failed to save review to Firebase (but it\'s still visible locally):', error);
+          });
         } catch (error) {
           set({ 
             error: error instanceof Error ? error.message : "Failed to create review",

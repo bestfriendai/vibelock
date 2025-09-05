@@ -1,5 +1,5 @@
 import React, { useMemo, memo } from "react";
-import { ScrollView, View, RefreshControl } from "react-native";
+import { ScrollView, View, RefreshControl, Text } from "react-native";
 import { Review } from "../types";
 import ProfileCard from "./ProfileCard";
 
@@ -7,7 +7,7 @@ import ProfileCard from "./ProfileCard";
 const MemoizedProfileCard = memo(ProfileCard);
 
 interface Props {
-  data: Review[];
+  data?: Review[];
   refreshing?: boolean;
   onRefresh?: () => void;
   onReport?: (review: Review) => void;
@@ -28,7 +28,16 @@ function StaggeredGrid({
     const left: Array<{ review: Review; height: number }> = [];
     const right: Array<{ review: Review; height: number }> = [];
     
+    // Safety check: ensure data exists and is an array
+    if (!data || !Array.isArray(data) || data.length === 0) {
+      return { leftColumn: left, rightColumn: right };
+    }
+    
     data.forEach((review, index) => {
+      // Safety check: ensure review exists and has required properties
+      if (!review || !review.id || !review.reviewText) {
+        return; // Skip invalid reviews
+      }
       // Calculate height based on text length and other factors
       const baseHeight = 280;
       const textLength = review.reviewText.length;
@@ -58,6 +67,53 @@ function StaggeredGrid({
     
     return { leftColumn: left, rightColumn: right };
   }, [data]);
+
+  // Early return for empty data
+  if (!data || !Array.isArray(data)) {
+    return (
+      <ScrollView 
+        className="flex-1" 
+        contentContainerStyle={{ padding: 16, flex: 1, justifyContent: 'center', alignItems: 'center' }}
+        refreshControl={
+          onRefresh ? (
+            <RefreshControl 
+              refreshing={refreshing} 
+              onRefresh={onRefresh}
+              tintColor="#FFFFFF"
+              colors={["#FFFFFF"]}
+            />
+          ) : undefined
+        }
+      >
+        <Text className="text-text-secondary text-lg text-center">
+          {refreshing ? 'Loading reviews...' : 'No reviews available'}
+        </Text>
+      </ScrollView>
+    );
+  }
+
+  if (data.length === 0) {
+    return (
+      <ScrollView 
+        className="flex-1" 
+        contentContainerStyle={{ padding: 16, flex: 1, justifyContent: 'center', alignItems: 'center' }}
+        refreshControl={
+          onRefresh ? (
+            <RefreshControl 
+              refreshing={refreshing} 
+              onRefresh={onRefresh}
+              tintColor="#FFFFFF"
+              colors={["#FFFFFF"]}
+            />
+          ) : undefined
+        }
+      >
+        <Text className="text-text-secondary text-lg text-center">
+          {refreshing ? 'Loading reviews...' : 'No reviews found.\nPull down to refresh or try changing your filters.'}
+        </Text>
+      </ScrollView>
+    );
+  }
 
   const renderColumn = (column: Array<{ review: Review; height: number }>, isLeft: boolean) => (
     <View className={`flex-1 ${isLeft ? 'mr-2' : 'ml-2'}`}>

@@ -33,6 +33,10 @@ export default function ProfileCard({
   onLike,
   isLiked = false 
 }: Props) {
+  // Safety check: ensure review exists and has required properties
+  if (!review || !review.id || !review.reviewedPersonName) {
+    return null;
+  }
   const navigation = useNavigation<Nav>();
   const [imageLoaded, setImageLoaded] = useState(false);
   
@@ -47,9 +51,15 @@ export default function ProfileCard({
       scale.value = withSpring(1, { duration: 100 });
     });
     
-    // Navigate to review detail instead of person profile
+    // Navigate to review detail with serialized data
+    const serializedReview = {
+      ...review,
+      createdAt: review.createdAt.toISOString(),
+      updatedAt: review.updatedAt.toISOString()
+    };
+    
     navigation.navigate("ReviewDetail", { 
-      review: review
+      review: serializedReview
     });
   };
 
@@ -92,7 +102,7 @@ export default function ProfileCard({
       >
       {/* Profile Image */}
       <Image
-        source={{ uri: review.profilePhoto }}
+        source={{ uri: review.profilePhoto || `https://picsum.photos/${Math.floor(cardWidth)}/${cardHeight}?random=${review.id}` }}
         style={{ width: cardWidth, height: cardHeight }}
         contentFit="cover"
         transition={300}
@@ -149,15 +159,17 @@ export default function ProfileCard({
       <View className="absolute bottom-0 left-0 right-0 p-4">
         {/* Name */}
         <Text className="text-white font-bold text-xl">
-          {review.reviewedPersonName}
+          {review.reviewedPersonName || "Unknown"}
         </Text>
         {/* Location */}
-        <View className="flex-row items-center mt-1">
-          <Ionicons name="location" size={12} color="#FFFFFF" />
-          <Text className="text-white/80 text-xs ml-1">
-            {review.reviewedPersonLocation.city}, {review.reviewedPersonLocation.state}
-          </Text>
-        </View>
+        {review.reviewedPersonLocation && (
+          <View className="flex-row items-center mt-1">
+            <Ionicons name="location" size={12} color="#FFFFFF" />
+            <Text className="text-white/80 text-xs ml-1">
+              {review.reviewedPersonLocation.city || "Unknown"}, {review.reviewedPersonLocation.state || "Unknown"}
+            </Text>
+          </View>
+        )}
 
         {/* Like Count */}
         {review.likeCount > 0 && (

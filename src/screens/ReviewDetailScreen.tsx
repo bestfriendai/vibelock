@@ -15,9 +15,10 @@ import ExpandableText from "../components/ExpandableText";
 import MediaViewer from "../components/MediaViewer";
 import CommentSection from "../components/CommentSection";
 import CommentInput from "../components/CommentInput";
+import { Comment as ReviewComment } from "../types";
 import useReviewsStore from "../state/reviewsStore";
-import { Comment } from "../types";
-
+import useAuthStore from "../state/authStore";
+import useCommentsStore from "../state/commentsStore";
 type ReviewDetailRouteProp = 
   | RouteProp<BrowseStackParamList, "ReviewDetail">
   | RouteProp<SearchStackParamList, "ReviewDetail">
@@ -25,7 +26,14 @@ type ReviewDetailRouteProp =
 
 export default function ReviewDetailScreen() {
   const route = useRoute<ReviewDetailRouteProp>();
-  const { review } = route.params;
+  const { review: rawReview } = route.params;
+  
+  // Handle serialized dates from navigation params
+  const review = {
+    ...rawReview,
+    createdAt: typeof rawReview.createdAt === 'string' ? new Date(rawReview.createdAt) : rawReview.createdAt,
+    updatedAt: typeof rawReview.updatedAt === 'string' ? new Date(rawReview.updatedAt) : rawReview.updatedAt
+  };
   
   const [showMediaViewer, setShowMediaViewer] = useState(false);
   const [selectedMediaIndex, setSelectedMediaIndex] = useState(0);
@@ -36,11 +44,21 @@ export default function ReviewDetailScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   
-  // Comment state
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [isLoadingComments, setIsLoadingComments] = useState(false);
-  const [isPostingComment, setIsPostingComment] = useState(false);
-  const [replyToComment, setReplyToComment] = useState<Comment | null>(null);
+  // Comment state from store
+  const { 
+    comments: commentsFromStore, 
+    isLoading: isLoadingComments, 
+    isPosting: isPostingComment,
+    loadComments,
+    createComment,
+    likeComment,
+    dislikeComment
+  } = useCommentsStore();
+  
+  const [replyToComment, setReplyToComment] = useState<ReviewComment | null>(null);
+  
+  // Get comments for this review
+  const comments = commentsFromStore[review.id] || [];
 
   // Animation values
   const scrollY = useSharedValue(0);
@@ -69,7 +87,7 @@ export default function ReviewDetailScreen() {
 
   const { likeReview, dislikeReview } = useReviewsStore();
 
-  // Initialize loading state and mock comments
+  // Initialize loading state and load comments
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
@@ -82,79 +100,12 @@ export default function ReviewDetailScreen() {
         restSpeedThreshold: 0.01
       });
       
-      // Load mock comments
-      loadMockComments();
+      // Load comments from Firebase
+      loadComments(review.id);
     }, 200);
     return () => clearTimeout(timer);
-  }, []);
+  }, [review.id, loadComments]);
 
-  const loadMockComments = () => {
-    setIsLoadingComments(true);
-    
-    // Mock comment data
-    const mockComments: Comment[] = [
-      {
-        id: "comment_1",
-        reviewId: review.id,
-        authorId: "user_1",
-        authorName: "Anonymous User",
-        content: "This is really helpful, thanks for sharing your experience!",
-        likeCount: 5,
-        dislikeCount: 0,
-        isLiked: false,
-        isDisliked: false,
-        createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
-        updatedAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
-        replies: [
-          {
-            id: "reply_1",
-            reviewId: review.id,
-            authorId: "user_2",
-            authorName: "Another User",
-            content: "I agree! Very detailed review.",
-            likeCount: 2,
-            dislikeCount: 0,
-            isLiked: false,
-            isDisliked: false,
-            parentCommentId: "comment_1",
-            createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000), // 1 hour ago
-            updatedAt: new Date(Date.now() - 1 * 60 * 60 * 1000),
-          }
-        ]
-      },
-      {
-        id: "comment_2",
-        reviewId: review.id,
-        authorId: "user_3",
-        authorName: "Reviewer123",
-        content: "I had a similar experience with this person. The red flags mentioned here are spot on.",
-        likeCount: 8,
-        dislikeCount: 1,
-        isLiked: true,
-        isDisliked: false,
-        createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000), // 4 hours ago
-        updatedAt: new Date(Date.now() - 4 * 60 * 60 * 1000),
-      },
-      {
-        id: "comment_3",
-        reviewId: review.id,
-        authorId: "user_4",
-        authorName: "LocalDater",
-        content: "Thanks for the heads up! This kind of transparency is exactly what the dating scene needs.",
-        likeCount: 12,
-        dislikeCount: 0,
-        isLiked: false,
-        isDisliked: false,
-        createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000), // 6 hours ago
-        updatedAt: new Date(Date.now() - 6 * 60 * 60 * 1000),
-      }
-    ];
-
-    setTimeout(() => {
-      setComments(mockComments);
-      setIsLoadingComments(false);
-    }, 500);
-  };
 
   // Scroll handler for animations - optimized for performance
   const scrollHandler = useAnimatedScrollHandler(
@@ -205,135 +156,42 @@ export default function ReviewDetailScreen() {
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    // Simulate refresh delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    loadMockComments();
-    setRefreshing(false);
-  };
-
-  const handlePostComment = async (content: string) => {
-    setIsPostingComment(true);
-    
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const newComment: Comment = {
-        id: `comment_${Date.now()}`,
-        reviewId: review.id,
-        authorId: "current_user",
-        authorName: "You",
-        content,
-        likeCount: 0,
-        dislikeCount: 0,
-        isLiked: false,
-        isDisliked: false,
-        parentCommentId: replyToComment?.id,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
-      if (replyToComment) {
-        // Add as reply
-        setComments(prevComments => 
-          prevComments.map(comment => 
-            comment.id === replyToComment.id
-              ? {
-                  ...comment,
-                  replies: [...(comment.replies || []), newComment]
-                }
-              : comment
-          )
-        );
-      } else {
-        // Add as new comment
-        setComments(prevComments => [newComment, ...prevComments]);
-      }
+      await loadComments(review.id);
     } catch (error) {
-      // Handle error
-      console.error("Error posting comment:", error);
+      console.error('Error refreshing comments:', error);
     } finally {
-      setIsPostingComment(false);
+      setRefreshing(false);
     }
   };
 
-  const handleLikeComment = (commentId: string) => {
-    setComments(prevComments => 
-      prevComments.map(comment => {
-        if (comment.id === commentId) {
-          const wasLiked = comment.isLiked;
-          const wasDisliked = comment.isDisliked;
-          return {
-            ...comment,
-            isLiked: !wasLiked,
-            isDisliked: false,
-            likeCount: wasLiked ? comment.likeCount - 1 : comment.likeCount + 1,
-            dislikeCount: wasDisliked ? comment.dislikeCount - 1 : comment.dislikeCount
-          };
-        }
-        
-        // Handle replies
-        if (comment.replies) {
-          return {
-            ...comment,
-            replies: comment.replies.map(reply => 
-              reply.id === commentId
-                ? {
-                    ...reply,
-                    isLiked: !reply.isLiked,
-                    isDisliked: false,
-                    likeCount: reply.isLiked ? reply.likeCount - 1 : reply.likeCount + 1,
-                    dislikeCount: reply.isDisliked ? reply.dislikeCount - 1 : reply.dislikeCount
-                  }
-                : reply
-            )
-          };
-        }
-        
-        return comment;
-      })
-    );
+  const handlePostComment = async (content: string) => {
+    try {
+      await createComment(review.id, content);
+      // Clear reply state after successful comment
+      setReplyToComment(null);
+    } catch (error) {
+      console.error("Error posting comment:", error);
+    }
   };
 
-  const handleDislikeComment = (commentId: string) => {
-    setComments(prevComments => 
-      prevComments.map(comment => {
-        if (comment.id === commentId) {
-          const wasLiked = comment.isLiked;
-          const wasDisliked = comment.isDisliked;
-          return {
-            ...comment,
-            isLiked: false,
-            isDisliked: !wasDisliked,
-            likeCount: wasLiked ? comment.likeCount - 1 : comment.likeCount,
-            dislikeCount: wasDisliked ? comment.dislikeCount - 1 : comment.dislikeCount + 1
-          };
-        }
-        
-        // Handle replies
-        if (comment.replies) {
-          return {
-            ...comment,
-            replies: comment.replies.map(reply => 
-              reply.id === commentId
-                ? {
-                    ...reply,
-                    isLiked: false,
-                    isDisliked: !reply.isDisliked,
-                    likeCount: reply.isLiked ? reply.likeCount - 1 : reply.likeCount,
-                    dislikeCount: reply.isDisliked ? reply.dislikeCount - 1 : reply.dislikeCount + 1
-                  }
-                : reply
-            )
-          };
-        }
-        
-        return comment;
-      })
-    );
+  const handleLikeComment = async (commentId: string) => {
+    try {
+      await likeComment(review.id, commentId);
+    } catch (error) {
+      console.error("Error liking comment:", error);
+    }
   };
 
-  const handleReplyToComment = (comment: Comment) => {
+  const handleDislikeComment = async (commentId: string) => {
+    try {
+      await dislikeComment(review.id, commentId);
+    } catch (error) {
+      console.error("Error disliking comment:", error);
+    }
+  };
+
+  const handleReplyToComment = (comment: ReviewComment) => {
     setReplyToComment(comment);
   };
 
@@ -377,29 +235,30 @@ export default function ReviewDetailScreen() {
   };
 
   return (
-    <TouchableWithoutFeedback onPress={dismissKeyboard}>
-      <View className="flex-1 bg-surface-900">
-        <StatusBar barStyle="light-content" backgroundColor="#141418" />
-        
-        {/* Main Content */}
-        <Animated.ScrollView 
-          style={[contentAnimatedStyle]}
-          className="flex-1"
-          showsVerticalScrollIndicator={false}
-          onScroll={scrollHandler}
-          scrollEventThrottle={16}
-          keyboardShouldPersistTaps="handled"
-          bounces={true}
-          refreshControl={
-            <RefreshControl 
-              refreshing={refreshing} 
-              onRefresh={handleRefresh}
-              tintColor="#FFFFFF"
-              colors={["#FFFFFF"]}
-            />
-          }
-          contentContainerStyle={{ paddingBottom: 120 }}
-        >
+    <View className="flex-1 bg-surface-900">
+      <StatusBar barStyle="light-content" backgroundColor="#141418" />
+      
+      {/* Main Content */}
+      <Animated.ScrollView 
+        style={[contentAnimatedStyle]}
+        className="flex-1"
+        showsVerticalScrollIndicator={false}
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
+        bounces={true}
+        alwaysBounceVertical={false}
+        refreshControl={
+          <RefreshControl 
+            refreshing={refreshing} 
+            onRefresh={handleRefresh}
+            tintColor="#FFFFFF"
+            colors={["#FFFFFF"]}
+          />
+        }
+        contentContainerStyle={{ paddingBottom: 120, flexGrow: 1 }}
+      >
         {/* Loading State */}
         {isLoading && (
           <View className="items-center justify-center py-8">
@@ -557,12 +416,16 @@ export default function ReviewDetailScreen() {
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
         >
-          <CommentInput
-            onSubmit={handlePostComment}
-            isLoading={isPostingComment}
-            replyToComment={replyToComment?.authorName}
-            onCancelReply={handleCancelReply}
-          />
+          <TouchableWithoutFeedback onPress={dismissKeyboard}>
+            <View>
+              <CommentInput
+                onSubmit={handlePostComment}
+                isLoading={isPostingComment}
+                replyToComment={replyToComment?.authorName}
+                onCancelReply={handleCancelReply}
+              />
+            </View>
+          </TouchableWithoutFeedback>
         </KeyboardAvoidingView>
 
         {/* Media Viewer Modal */}
@@ -575,6 +438,5 @@ export default function ReviewDetailScreen() {
           />
         )}
       </View>
-    </TouchableWithoutFeedback>
   );
 }

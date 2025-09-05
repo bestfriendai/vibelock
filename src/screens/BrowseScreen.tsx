@@ -19,12 +19,13 @@ import { Review } from "../types";
 export default function BrowseScreen() {
   const { user } = useAuthStore();
   const { 
-    reviews, 
-    isLoading, 
-    filters, 
+    reviews = [], // Provide default empty array
+    isLoading = false, 
+    filters = { category: "all", radius: 50, sortBy: "recent" }, // Provide default filters
     loadReviews, 
     setFilters,
-    likeReview
+    likeReview,
+    error
   } = useReviewsStore();
   
   const [refreshing, setRefreshing] = useState(false);
@@ -33,13 +34,30 @@ export default function BrowseScreen() {
   const [likedReviews, setLikedReviews] = useState(new Set<string>());
 
   useEffect(() => {
-    loadReviews(true);
-  }, []);
+    // Only load if we don't have reviews already
+    if (reviews.length === 0) {
+      const loadData = async () => {
+        try {
+          await loadReviews(true);
+        } catch (error) {
+          console.error('Error loading reviews:', error);
+        }
+      };
+      loadData();
+    }
+  }, [loadReviews, reviews.length]);
 
-  // Reload when filters change (category, radius)
+  // Reload when filters change (category, radius) or user location changes
   useEffect(() => {
-    loadReviews(true);
-  }, [filters.category, filters.radius]);
+    const loadData = async () => {
+      try {
+        await loadReviews(true);
+      } catch (error) {
+        console.error('Error loading reviews with filters:', error);
+      }
+    };
+    loadData();
+  }, [filters.category, filters.radius, user?.location.city, user?.location.state, loadReviews]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -141,8 +159,22 @@ export default function BrowseScreen() {
         />
       )}
 
+      {/* Error State */}
+      {error && (
+        <View className="absolute inset-0 items-center justify-center px-8">
+          <Ionicons name="warning-outline" size={64} color="#EF4444" />
+          <Text className="text-red-400 text-xl font-medium mt-4 text-center">Error Loading Reviews</Text>
+          <Text className="text-text-secondary text-center mt-2">
+            {error}
+          </Text>
+          <Text className="text-text-muted text-center mt-2">
+            Pull down to try again
+          </Text>
+        </View>
+      )}
+
       {/* Empty State */}
-      {!isLoading && reviews.length === 0 && (
+      {!isLoading && !error && Array.isArray(reviews) && reviews.length === 0 && (
         <View className="absolute inset-0 items-center justify-center">
           <Ionicons name="heart-outline" size={64} color="#9CA3AF" />
           <Text className="text-text-secondary text-xl font-medium mt-4">No reviews yet</Text>

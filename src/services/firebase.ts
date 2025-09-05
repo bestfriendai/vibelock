@@ -34,7 +34,7 @@ import {
   deleteObject 
 } from "firebase/storage";
 import { auth, db, storage } from "../config/firebase";
-import { User, Review, ChatRoom, ChatMessage } from "../types";
+import { User, Review, ChatRoom, ChatMessage, Comment } from "../types";
 
 // Authentication Services
 export const firebaseAuth = {
@@ -501,6 +501,87 @@ export const firebaseChat = {
     } catch (error: any) {
       throw new Error(error.message || "Failed to send message");
     }
+  }
+};
+
+// Comments Services
+export const firebaseComments = {
+  // Create a comment
+  createComment: async (reviewId: string, commentData: Omit<Comment, "id" | "createdAt" | "updatedAt">): Promise<string> => {
+    try {
+      const commentsRef = collection(db, "reviews", reviewId, "comments");
+      const docRef = await addDoc(commentsRef, {
+        ...commentData,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+      return docRef.id;
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to create comment");
+    }
+  },
+
+  // Get comments for a review
+  getComments: async (reviewId: string): Promise<Comment[]> => {
+    try {
+      const commentsRef = collection(db, "reviews", reviewId, "comments");
+      const q = query(commentsRef, orderBy("createdAt", "asc"));
+      
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          ...data,
+          id: doc.id,
+          createdAt: data.createdAt?.toDate() || new Date(),
+          updatedAt: data.updatedAt?.toDate() || new Date()
+        } as Comment;
+      });
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to get comments");
+    }
+  },
+
+  // Update comment (like/dislike)
+  updateComment: async (reviewId: string, commentId: string, updates: Partial<Comment>): Promise<void> => {
+    try {
+      const commentRef = doc(db, "reviews", reviewId, "comments", commentId);
+      await updateDoc(commentRef, {
+        ...updates,
+        updatedAt: serverTimestamp()
+      });
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to update comment");
+    }
+  },
+
+  // Delete comment
+  deleteComment: async (reviewId: string, commentId: string): Promise<void> => {
+    try {
+      const commentRef = doc(db, "reviews", reviewId, "comments", commentId);
+      await deleteDoc(commentRef);
+    } catch (error: any) {
+      throw new Error(error.message || "Failed to delete comment");
+    }
+  },
+
+  // Listen to comments changes
+  onCommentsSnapshot: (reviewId: string, callback: (comments: Comment[]) => void) => {
+    const commentsRef = collection(db, "reviews", reviewId, "comments");
+    const q = query(commentsRef, orderBy("createdAt", "asc"));
+    
+    return onSnapshot(q, (querySnapshot) => {
+      const comments = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          ...data,
+          id: doc.id,
+          createdAt: data.createdAt?.toDate() || new Date(),
+          updatedAt: data.updatedAt?.toDate() || new Date()
+        } as Comment;
+      });
+      callback(comments);
+    });
   }
 };
 

@@ -24,6 +24,16 @@
         "foregroundImage": "./assets/app-icon.png",
         "backgroundColor": "#0B0B0F"
       }
-    }
+    },
+    "plugins": [
+      "expo-asset",
+      "expo-build-properties",
+      "expo-font",
+      "expo-mail-composer",
+      "expo-secure-store",
+      "expo-sqlite",
+      "expo-video",
+      "expo-web-browser"
+    ]
   }
 }
