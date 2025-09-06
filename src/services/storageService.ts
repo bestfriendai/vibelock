@@ -21,9 +21,9 @@ export interface FileUploadOptions {
 
 class StorageService {
   private readonly buckets = {
-    PROFILE_IMAGES: 'profile-images',
+    AVATARS: 'avatars',
     REVIEW_IMAGES: 'review-images',
-    CHAT_IMAGES: 'chat-images',
+    CHAT_MEDIA: 'chat-media',
     DOCUMENTS: 'documents',
   };
 
@@ -89,13 +89,13 @@ class StorageService {
   }
 
   /**
-   * Upload profile image
+   * Upload avatar image
    */
-  async uploadProfileImage(fileUri: string, userId: string): Promise<UploadResult> {
+  async uploadAvatarImage(fileUri: string, userId: string): Promise<UploadResult> {
     return this.uploadFile(fileUri, {
-      bucket: this.buckets.PROFILE_IMAGES,
+      bucket: this.buckets.AVATARS,
       folder: userId,
-      fileName: `profile-${Date.now()}.jpg`,
+      fileName: `avatar-${Date.now()}.jpg`,
       contentType: 'image/jpeg',
       upsert: true,
     });
@@ -114,13 +114,13 @@ class StorageService {
   }
 
   /**
-   * Upload chat image
+   * Upload chat media
    */
-  async uploadChatImage(fileUri: string, chatRoomId: string): Promise<UploadResult> {
+  async uploadChatMedia(fileUri: string, userId: string, chatRoomId: string): Promise<UploadResult> {
     return this.uploadFile(fileUri, {
-      bucket: this.buckets.CHAT_IMAGES,
-      folder: chatRoomId,
-      fileName: `chat-image-${Date.now()}.jpg`,
+      bucket: this.buckets.CHAT_MEDIA,
+      folder: `${userId}/${chatRoomId}`,
+      fileName: `chat-media-${Date.now()}.jpg`,
       contentType: 'image/jpeg',
     });
   }

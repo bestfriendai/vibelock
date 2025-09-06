@@ -5,6 +5,8 @@ import { ChatRoom, ChatMessage, ChatMember, TypingUser, ConnectionStatus, ChatSt
 import { webSocketService } from "../services/websocketService";
 import { supabaseChat, supabaseAuth } from "../services/supabase";
 import { realtimeChatService } from "../services/realtimeChat";
+import useAuthStore from "./authStore";
+import { requireAuthentication, getUserDisplayName } from "../utils/authUtils";
 
 interface ChatActions {
   // Connection management
@@ -45,6 +47,9 @@ interface ChatActions {
   setError: (error: string | null) => void;
   clearError: () => void;
   setLoading: (loading: boolean) => void;
+
+  // Pagination
+  loadOlderMessages: (roomId: string) => Promise<void>;
 }
 
 type ChatStore = ChatState & ChatActions;
@@ -255,9 +260,10 @@ const useChatStore = create<ChatStore>()(
 
           // Apply category filter if set
           const category = get().roomCategoryFilter || "all";
-          const filteredRooms = category && category !== "all"
-            ? chatRooms.filter((r: ChatRoom) => (r.category || "all").toLowerCase() === category.toLowerCase())
-            : chatRooms;
+          const filteredRooms =
+            category && category !== "all"
+              ? chatRooms.filter((r: ChatRoom) => (r.category || "all").toLowerCase() === category.toLowerCase())
+              : chatRooms;
 
           console.log(`✅ Loaded ${filteredRooms.length} chat rooms (filtered by: ${category})`);
 
@@ -269,21 +275,24 @@ const useChatStore = create<ChatStore>()(
           // Subscribe to real-time room updates
           realtimeChatService.subscribeToRooms((updatedRooms) => {
             const currentCategory = get().roomCategoryFilter || "all";
-            const filtered = currentCategory && currentCategory !== "all"
-              ? updatedRooms.filter((r: ChatRoom) => (r.category || "all").toLowerCase() === currentCategory.toLowerCase())
-              : updatedRooms;
+            const filtered =
+              currentCategory && currentCategory !== "all"
+                ? updatedRooms.filter(
+                    (r: ChatRoom) => (r.category || "all").toLowerCase() === currentCategory.toLowerCase(),
+                  )
+                : updatedRooms;
 
             set({ chatRooms: filtered });
           });
-
         } catch (error) {
           console.error("💥 Failed to load chat rooms:", error);
 
           // Fallback to mock data on error
           const category = get().roomCategoryFilter || "all";
-          const roomsToUse = category && category !== "all"
-            ? mockChatRooms.filter((r) => (r.category || "all").toLowerCase() === category.toLowerCase())
-            : mockChatRooms;
+          const roomsToUse =
+            category && category !== "all"
+              ? mockChatRooms.filter((r) => (r.category || "all").toLowerCase() === category.toLowerCase())
+              : mockChatRooms;
 
           set({
             chatRooms: roomsToUse,
@@ -308,14 +317,11 @@ const useChatStore = create<ChatStore>()(
 
           set({ currentChatRoom: room });
 
-          // Get current user for real-time presence
-          const currentUser = await supabaseAuth.getCurrentUser();
-          if (!currentUser) {
-            throw new Error("Must be signed in to join chat room");
-          }
+          // Use unified authentication check
+          const { user, supabaseUser } = await requireAuthentication("join chat room");
 
           // Join room with real-time service
-          await realtimeChatService.joinRoom(roomId, currentUser.id, currentUser.email?.split("@")[0] || "User");
+          await realtimeChatService.joinRoom(roomId, supabaseUser.id, getUserDisplayName(user));
 
           // Subscribe to messages for this room
           realtimeChatService.subscribeToMessages(roomId, (messages) => {
@@ -334,6 +340,13 @@ const useChatStore = create<ChatStore>()(
                 ...state.members,
                 [roomId]: members,
               },
+            }));
+          });
+
+          // Subscribe to typing indicators for this room
+          realtimeChatService.subscribeToTyping(roomId, (typingUsers) => {
+            set(() => ({
+              typingUsers: typingUsers.filter((user) => user.chatRoomId === roomId),
             }));
           });
 
@@ -404,19 +417,15 @@ const useChatStore = create<ChatStore>()(
         try {
           console.log(`📤 Sending message to room ${roomId}:`, content);
 
-          // Get current authenticated user
-          const currentUser = await supabaseAuth.getCurrentUser();
-          if (!currentUser) {
-            throw new Error("Must be signed in to send messages");
-          }
-
-          const senderName = currentUser.email?.split("@")[0] || "Anonymous";
+          // Use unified authentication
+          const { user } = await requireAuthentication("send messages");
+          const senderName = getUserDisplayName(user);
 
           // Optimistic update - add message locally first
           const optimisticMessage: ChatMessage = {
             id: `temp_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
             chatRoomId: roomId,
-            senderId: currentUser.id,
+            senderId: user.id,
             senderName,
             content,
             messageType: "text",
@@ -428,7 +437,7 @@ const useChatStore = create<ChatStore>()(
           get().addMessage(optimisticMessage);
 
           // Send to Supabase via real-time service
-          await realtimeChatService.sendMessage(roomId, content, currentUser.id, senderName);
+          await realtimeChatService.sendMessage(roomId, content, user.id, senderName);
 
           console.log("✅ Message sent successfully");
         } catch (error) {
@@ -438,7 +447,7 @@ const useChatStore = create<ChatStore>()(
           set((state) => ({
             messages: {
               ...state.messages,
-              [roomId]: (state.messages[roomId] || []).filter(msg => !msg.id.startsWith('temp_')),
+              [roomId]: (state.messages[roomId] || []).filter((msg) => !msg.id.startsWith("temp_")),
             },
           }));
 
@@ -450,8 +459,9 @@ const useChatStore = create<ChatStore>()(
         set((state) => ({
           messages: {
             ...state.messages,
-            [message.chatRoomId]: [...(state.messages[message.chatRoomId] || []), message]
-              .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()),
+            [message.chatRoomId]: [...(state.messages[message.chatRoomId] || []), message].sort(
+              (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
+            ),
           },
         }));
       },
@@ -462,7 +472,7 @@ const useChatStore = create<ChatStore>()(
           const roomMessages = state.messages[message.chatRoomId] || [];
 
           // Check if message already exists to avoid duplicates
-          const messageExists = roomMessages.some(msg => msg.id === message.id);
+          const messageExists = roomMessages.some((msg) => msg.id === message.id);
           if (messageExists) {
             return state;
           }
@@ -470,8 +480,9 @@ const useChatStore = create<ChatStore>()(
           return {
             messages: {
               ...state.messages,
-              [message.chatRoomId]: [...roomMessages, message]
-                .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()),
+              [message.chatRoomId]: [...roomMessages, message].sort(
+                (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
+              ),
             },
           };
         });
@@ -491,7 +502,48 @@ const useChatStore = create<ChatStore>()(
 
       // Typing indicators
       setTyping: (roomId: string, isTyping: boolean) => {
-        webSocketService.sendTypingIndicator(roomId, isTyping);
+        const { user } = useAuthStore.getState();
+        if (user) {
+          realtimeChatService.setTyping(roomId, user.id, user.email || "Anonymous", isTyping);
+        }
+      },
+
+      // Pagination
+      loadOlderMessages: async (roomId: string) => {
+        try {
+          set({ isLoading: true });
+
+          const currentMessages = get().messages[roomId] || [];
+          if (currentMessages.length === 0) {
+            set({ isLoading: false });
+            return;
+          }
+
+          // Get the oldest message timestamp for pagination
+          const oldestMessage = currentMessages[0];
+          const beforeTimestamp = oldestMessage.timestamp;
+
+          // Load older messages from Supabase
+          const olderMessages = await supabaseChat.getMessages(roomId, 20, beforeTimestamp);
+
+          if (olderMessages.length > 0) {
+            set((state) => ({
+              messages: {
+                ...state.messages,
+                [roomId]: [...olderMessages, ...currentMessages],
+              },
+              isLoading: false,
+            }));
+          } else {
+            set({ isLoading: false });
+          }
+        } catch (error) {
+          console.error("Failed to load older messages:", error);
+          set({
+            isLoading: false,
+            error: "Failed to load older messages",
+          });
+        }
       },
 
       addTypingUser: (typingUser: TypingUser) => {

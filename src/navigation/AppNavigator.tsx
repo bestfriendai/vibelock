@@ -18,8 +18,10 @@ import SignUpScreen from "../screens/SignUpScreen";
 import OnboardingScreen from "../screens/OnboardingScreen";
 import ChatRoomScreen from "../screens/ChatRoomScreen";
 import ReviewDetailScreen from "../screens/ReviewDetailScreen";
-import SupabaseExample from "../components/SupabaseExample";
-import LocationFilterDemo from "../components/LocationFilterDemo";
+// Screens (new)
+// Screens (new)
+import NotificationsScreen from "../screens/NotificationsScreen";
+import DeleteAccountScreen from "../screens/DeleteAccountScreen";
 
 // Import stores
 import useAuthStore from "../state/authStore";
@@ -45,8 +47,6 @@ export type RootStackParamList = {
   ReviewDetail: {
     review: SerializedReview;
   };
-  FirebaseTest: undefined;
-  LocationFilterDemo: undefined;
 };
 
 export type TabParamList = {
@@ -76,7 +76,8 @@ export type ChatroomsStackParamList = {
 
 export type SettingsStackParamList = {
   Settings: undefined;
-  FirebaseTest: undefined;
+  Notifications: undefined;
+  DeleteAccount: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -181,11 +182,22 @@ function SettingsStackNavigator() {
     >
       <SettingsStack.Screen name="Settings" component={ProfileScreen} />
       <SettingsStack.Screen
-        name="FirebaseTest"
-        component={SupabaseExample}
+        name="Notifications"
+        component={NotificationsScreen}
         options={{
           headerShown: true,
-          headerTitle: "Supabase Test",
+          headerTitle: "Notifications",
+          headerStyle: { backgroundColor: "#000000" },
+          headerTintColor: "#FFFFFF",
+          headerBackTitle: "Back",
+        }}
+      />
+      <SettingsStack.Screen
+        name="DeleteAccount"
+        component={DeleteAccountScreen}
+        options={{
+          headerShown: true,
+          headerTitle: "Delete Account",
           headerStyle: { backgroundColor: "#000000" },
           headerTintColor: "#FFFFFF",
           headerBackTitle: "Back",
@@ -330,17 +342,7 @@ export default function AppNavigator() {
               headerBackTitle: "Back",
             }}
           />
-          <Stack.Screen
-            name="LocationFilterDemo"
-            component={LocationFilterDemo}
-            options={{
-              headerShown: true,
-              headerTitle: "Location Filter Demo",
-              headerStyle: { backgroundColor: "#141418" },
-              headerTintColor: "#FFFFFF",
-              headerBackTitle: "Back",
-            }}
-          />
+          {/** LocationFilterDemo removed */}
         </>
       )}
     </Stack.Navigator>

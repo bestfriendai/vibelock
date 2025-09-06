@@ -6,6 +6,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import * as Linking from "expo-linking";
 import AppNavigator from "./src/navigation/AppNavigator";
 import ErrorBoundary from "./src/components/ErrorBoundary";
+import OfflineBanner from "./src/components/OfflineBanner";
 import useAuthStore from "./src/state/authStore";
 
 /*
@@ -70,6 +71,7 @@ export default function App() {
         <SafeAreaProvider>
           <NavigationContainer linking={linking}>
             <AppNavigator />
+            <OfflineBanner />
             <StatusBar style="light" backgroundColor="#000000" />
           </NavigationContainer>
         </SafeAreaProvider>

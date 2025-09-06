@@ -5,11 +5,12 @@ import { useRoute, RouteProp, useNavigation } from "@react-navigation/native";
 import { FlashList } from "@shopify/flash-list";
 import { Ionicons } from "@expo/vector-icons";
 import useChatStore from "../state/chatStore";
-import useAuthStore from "../state/authStore";
+import { useAuthState } from "../utils/authUtils";
 import { RootStackParamList } from "../navigation/AppNavigator";
 import MessageBubble from "../components/MessageBubble";
 import ChatInput from "../components/ChatInput";
 import { ChatMessage } from "../types";
+import { notificationService } from "../services/notificationService";
 
 export type ChatRoomRouteProp = RouteProp<RootStackParamList, "ChatRoom">;
 
@@ -29,17 +30,28 @@ function toDateSafe(value: any): Date {
 export default function ChatRoomScreen() {
   const { params } = useRoute<ChatRoomRouteProp>();
   const navigation = useNavigation<any>();
-  const { user } = useAuthStore();
+  const { canAccessChat, needsSignIn } = useAuthState();
 
   const { roomId } = params;
   const [showMemberList, setShowMemberList] = useState(false);
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
+  const [isSubscribed, setIsSubscribed] = useState(false);
 
-  const { currentChatRoom, messages, members, joinChatRoom, leaveChatRoom, sendMessage, setTyping, typingUsers } =
-    useChatStore();
+  const {
+    currentChatRoom,
+    messages,
+    members,
+    joinChatRoom,
+    leaveChatRoom,
+    sendMessage,
+    setTyping,
+    typingUsers,
+    loadOlderMessages,
+    isLoading
+  } = useChatStore();
 
   // Guard against guest access
-  if (!user) {
+  if (!canAccessChat || needsSignIn) {
     return (
       <SafeAreaView className="flex-1 bg-surface-900">
         <View className="flex-1 items-center justify-center px-6">
@@ -73,6 +85,11 @@ export default function ChatRoomScreen() {
     joinChatRoom(roomId);
     return () => leaveChatRoom(roomId);
   }, [roomId]);
+
+  useEffect(() => {
+    notificationService.getChatRoomSubscription(roomId).then(setIsSubscribed).catch(() => setIsSubscribed(false));
+  }, [roomId]);
+
 
   const roomMessages = messages[roomId] || [];
   const roomMembers = members[roomId] || [];
@@ -121,6 +138,17 @@ export default function ChatRoomScreen() {
             </View>
 
             <View className="flex-row items-center space-x-3">
+              <Pressable
+                onPress={async () => {
+                  const next = !isSubscribed;
+                  setIsSubscribed(next);
+                  await notificationService.setChatRoomSubscription(roomId, next);
+                }}
+                className="p-2 rounded-full bg-surface-700"
+                accessibilityLabel={isSubscribed ? "Disable chatroom notifications" : "Enable chatroom notifications"}
+              >
+                <Ionicons name={isSubscribed ? "notifications" : "notifications-outline"} size={18} color="#9CA3AF" />
+              </Pressable>
               <Pressable onPress={() => setShowMemberList(true)} className="p-2 rounded-full bg-surface-700">
                 <Ionicons name="people" size={18} color="#9CA3AF" />
               </Pressable>
@@ -140,6 +168,21 @@ export default function ChatRoomScreen() {
           estimatedItemSize={64}
           contentContainerStyle={{ padding: 12 }}
           showsVerticalScrollIndicator={false}
+          ListHeaderComponent={
+            roomMessages.length > 0 ? (
+              <View className="items-center py-4">
+                <Pressable
+                  onPress={() => loadOlderMessages(roomId)}
+                  disabled={isLoading}
+                  className={`bg-surface-700 rounded-full px-4 py-2 ${isLoading ? "opacity-50" : ""}`}
+                >
+                  <Text className="text-text-secondary text-sm font-medium">
+                    {isLoading ? "Loading..." : "Load older messages"}
+                  </Text>
+                </Pressable>
+              </View>
+            ) : null
+          }
         />
 
         {/* Typing indicator */}

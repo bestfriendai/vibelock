@@ -6,7 +6,7 @@ import { notificationService, NotificationData } from '../services/notificationS
 export interface Notification {
   id: string;
   userId: string;
-  type: 'new_review' | 'new_comment' | 'new_message' | 'review_approved' | 'review_rejected' | 'safety_alert';
+  type: 'new_review' | 'new_comment' | 'new_message' | 'new_like' | 'review_approved' | 'review_rejected' | 'safety_alert';
   title: string;
   body: string;
   data?: Record<string, any>;

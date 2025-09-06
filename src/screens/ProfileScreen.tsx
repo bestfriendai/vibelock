@@ -4,13 +4,15 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import useAuthStore from "../state/authStore";
+import useThemeStore from "../state/themeStore";
 import ConfirmationModal from "../components/ConfirmationModal";
 
 export default function ProfileScreen() {
   const navigation = useNavigation<any>();
   const { user, logout, isGuestMode, setGuestMode } = useAuthStore();
+  const { theme, isDarkMode, setTheme } = useThemeStore();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [notificationsEnabled] = useState(true);
 
   const handleLogout = () => {
     setShowLogoutModal(true);
@@ -29,18 +31,10 @@ export default function ProfileScreen() {
   };
 
   const handleNotificationSettings = () => {
-    Alert.alert(
-      "Notification Settings",
-      "Manage your notification preferences for new reviews, messages, and safety alerts.",
-      [{ text: "OK", style: "default" }],
-    );
+    navigation.navigate("Notifications");
   };
 
-  const handlePrivacySettings = () => {
-    Alert.alert("Privacy Settings", "Control who can see your activity and manage blocked users.", [
-      { text: "OK", style: "default" },
-    ]);
-  };
+  // Privacy settings removed per product direction
 
   const handleHelpSupport = () => {
     Alert.alert("Help & Support", "Get help with using the app, report issues, or contact our support team.", [
@@ -60,9 +54,7 @@ export default function ProfileScreen() {
     ]);
   };
 
-  const handleFirebaseTest = () => {
-    navigation.navigate("FirebaseTest");
-  };
+  // Firebase test removed per product direction
 
   return (
     <SafeAreaView className="flex-1 bg-surface-900">
@@ -159,26 +151,41 @@ export default function ProfileScreen() {
                 <Ionicons name="notifications-outline" size={20} color="#9CA3AF" />
                 <Text className="text-text-primary font-medium ml-3">Notifications</Text>
               </View>
+              <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
+            </Pressable>
+
+            {/* Theme Toggle */}
+            <Pressable
+              className="flex-row items-center justify-between p-4 border-b border-surface-700"
+              onPress={() => {
+                const newTheme = theme === "dark" ? "light" : "dark";
+                setTheme(newTheme);
+                Alert.alert(
+                  "Theme Changed",
+                  `Switched to ${newTheme} mode. Note: Full theme switching will be implemented in a future update.`,
+                  [{ text: "OK" }]
+                );
+              }}
+            >
               <View className="flex-row items-center">
+                <Ionicons name={isDarkMode ? "moon-outline" : "sunny-outline"} size={20} color="#9CA3AF" />
+                <Text className="text-text-primary font-medium ml-3">Theme</Text>
+              </View>
+              <View className="flex-row items-center">
+                <Text className="text-text-secondary text-sm mr-3 capitalize">{theme}</Text>
                 <Switch
-                  value={notificationsEnabled}
-                  onValueChange={setNotificationsEnabled}
-                  trackColor={{ false: "#374151", true: "#FFFFFF" }}
-                  thumbColor={notificationsEnabled ? "#FFFFFF" : "#9CA3AF"}
+                  value={isDarkMode}
+                  onValueChange={() => {
+                    const newTheme = isDarkMode ? "light" : "dark";
+                    setTheme(newTheme);
+                  }}
+                  trackColor={{ false: "#374151", true: "#1F2937" }}
+                  thumbColor={isDarkMode ? "#FFFFFF" : "#9CA3AF"}
                 />
               </View>
             </Pressable>
 
-            <Pressable
-              className="flex-row items-center justify-between p-4 border-b border-surface-700"
-              onPress={handlePrivacySettings}
-            >
-              <View className="flex-row items-center">
-                <Ionicons name="shield-outline" size={20} color="#9CA3AF" />
-                <Text className="text-text-primary font-medium ml-3">Privacy</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
-            </Pressable>
+            {/** Privacy removed */}
 
             <Pressable className="flex-row items-center justify-between p-4" onPress={handleHelpSupport}>
               <View className="flex-row items-center">
@@ -212,28 +219,7 @@ export default function ProfileScreen() {
               </View>
               <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
             </Pressable>
-
-            <Pressable
-              className="flex-row items-center justify-between p-4 border-b border-surface-700"
-              onPress={handleFirebaseTest}
-            >
-              <View className="flex-row items-center">
-                <Ionicons name="server-outline" size={20} color="#9CA3AF" />
-                <Text className="text-text-primary font-medium ml-3">Firebase Test</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
-            </Pressable>
-
-            <Pressable
-              className="flex-row items-center justify-between p-4 border-b border-surface-700"
-              onPress={() => navigation.navigate("LocationFilterDemo")}
-            >
-              <View className="flex-row items-center">
-                <Ionicons name="location-outline" size={20} color="#9CA3AF" />
-                <Text className="text-text-primary font-medium ml-3">Location Filter Demo</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
-            </Pressable>
+            {/** Firebase Test and Location Filter Demo removed */}
 
             <View className="flex-row items-center justify-between p-4">
               <View className="flex-row items-center">
@@ -243,6 +229,14 @@ export default function ProfileScreen() {
               <Text className="text-text-secondary">1.0.0</Text>
             </View>
           </View>
+
+          {/* Account Actions */}
+          <Pressable className="bg-surface-800 rounded-lg p-4 mb-3" onPress={() => navigation.navigate("DeleteAccount")}>
+            <View className="flex-row items-center justify-center">
+              <Ionicons name="trash-outline" size={20} color="#EF4444" />
+              <Text className="text-red-500 font-medium ml-3">Delete Account</Text>
+            </View>
+          </Pressable>
 
           {/* Sign Out */}
           <Pressable className="bg-surface-800 rounded-lg p-4" onPress={handleLogout}>

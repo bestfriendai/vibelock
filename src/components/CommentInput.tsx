@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, Pressable, ActivityIndicator, Keyboard } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import useAuthStore from "../state/authStore";
+import { useAuthState } from "../utils/authUtils";
 
 interface CommentInputProps {
   onSubmit: (content: string) => Promise<void>;
@@ -22,10 +22,10 @@ export default function CommentInput({
 }: CommentInputProps) {
   const [comment, setComment] = useState("");
   const [isFocused, setIsFocused] = useState(false);
-  const { user } = useAuthStore();
+  const { canComment, needsSignIn } = useAuthState();
 
   const handleSubmit = async () => {
-    if (comment.trim() && !isLoading) {
+    if (comment.trim() && !isLoading && canComment) {
       try {
         await onSubmit(comment.trim());
         setComment("");
@@ -39,10 +39,10 @@ export default function CommentInput({
     }
   };
 
-  const canSubmit = comment.trim().length > 0 && !isLoading && !!user;
+  const canSubmit = comment.trim().length > 0 && !isLoading && canComment;
 
   // Show sign-in prompt for guests
-  if (!user) {
+  if (needsSignIn) {
     return (
       <View className="bg-surface-800 border-t border-surface-700">
         <View className="flex-row items-center justify-between px-4 py-4">

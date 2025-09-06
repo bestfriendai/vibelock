@@ -1,27 +1,65 @@
 // Supabase service layer for LockerRoom MVP
 import { supabase, handleSupabaseError } from "../config/supabase";
+import { requireAuthentication, getUserDisplayName } from "../utils/authUtils";
 import type { User as SupabaseUser, Session } from "@supabase/supabase-js";
 import { User, Review, ChatRoom, ChatMessage, Comment, Profile } from "../types";
+
+// Helper function for retry logic
+const retryWithBackoff = async <T>(
+  fn: () => Promise<T>,
+  maxRetries: number = 3,
+  baseDelay: number = 1000
+): Promise<T> => {
+  let lastError: any;
+
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error: any) {
+      lastError = error;
+
+      // Don't retry on authentication errors (400, 401, 403)
+      if (error?.status && [400, 401, 403, 422].includes(error.status)) {
+        throw error;
+      }
+
+      // Don't retry on the last attempt
+      if (attempt === maxRetries - 1) {
+        break;
+      }
+
+      // Exponential backoff with jitter
+      const delay = baseDelay * Math.pow(2, attempt) + Math.random() * 1000;
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+
+  throw lastError;
+};
 
 // Authentication Services
 export const supabaseAuth = {
   // Sign up with email and password
   signUp: async (email: string, password: string, displayName?: string): Promise<SupabaseUser> => {
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            display_name: displayName,
+      const result = await retryWithBackoff(async () => {
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              display_name: displayName,
+            },
           },
-        },
+        });
+
+        if (error) throw error;
+        if (!data.user) throw new Error("Failed to create user");
+
+        return data.user;
       });
 
-      if (error) throw error;
-      if (!data.user) throw new Error("Failed to create user");
-
-      return data.user;
+      return result;
     } catch (error: any) {
       throw new Error(handleSupabaseError(error));
     }
@@ -30,15 +68,19 @@ export const supabaseAuth = {
   // Sign in with email and password
   signIn: async (email: string, password: string): Promise<SupabaseUser> => {
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      const result = await retryWithBackoff(async () => {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (error) throw error;
+        if (!data.user) throw new Error("Failed to sign in");
+
+        return data.user;
       });
 
-      if (error) throw error;
-      if (!data.user) throw new Error("Failed to sign in");
-
-      return data.user;
+      return result;
     } catch (error: any) {
       throw new Error(handleSupabaseError(error));
     }
@@ -56,7 +98,7 @@ export const supabaseAuth = {
 
   // Listen to auth state changes
   onAuthStateChanged: (callback: (user: SupabaseUser | null) => void) => {
-    return supabase.auth.onAuthStateChange((event, session) => {
+    return supabase.auth.onAuthStateChange((_event, session) => {
       callback(session?.user || null);
     });
   },
@@ -74,12 +116,20 @@ export const supabaseAuth = {
   // Get current user
   getCurrentUser: async (): Promise<SupabaseUser | null> => {
     try {
-      const {
-        data: { user },
-        error,
-      } = await supabase.auth.getUser();
-      if (error) throw error;
-      return user;
+      // Prefer session-first to avoid AuthSessionMissingError on RN
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (sessionData?.session?.user) {
+        return sessionData.session.user;
+      }
+
+      // Try to refresh session if missing (in case of hot reload or expired memory)
+      try {
+        await supabase.auth.refreshSession();
+      } catch (_) {}
+
+      // Fallback to getUser
+      const { data: userData } = await supabase.auth.getUser();
+      return userData?.user ?? null;
     } catch (error: any) {
       console.error("Error getting current user:", error);
       return null;
@@ -91,9 +141,16 @@ export const supabaseAuth = {
     try {
       const {
         data: { session },
-        error,
       } = await supabase.auth.getSession();
-      if (error) throw error;
+      if (!session) {
+        try {
+          await supabase.auth.refreshSession();
+        } catch {
+          // Ignore refresh errors
+        }
+        const { data: refreshed } = await supabase.auth.getSession();
+        return refreshed?.session ?? null;
+      }
       return session;
     } catch (error: any) {
       console.error("Error getting current session:", error);
@@ -368,8 +425,7 @@ export const supabaseReviews = {
   // Update review
   updateReview: async (reviewId: string, updates: Partial<Review>): Promise<void> => {
     try {
-      const user = await supabaseAuth.getCurrentUser();
-      if (!user) throw new Error("Must be signed in to update review");
+      const { user } = await requireAuthentication("update review");
 
       const updateData: any = {};
       if (updates.reviewText) updateData.review_text = updates.reviewText;
@@ -396,8 +452,7 @@ export const supabaseReviews = {
   // Delete review
   deleteReview: async (reviewId: string): Promise<void> => {
     try {
-      const user = await supabaseAuth.getCurrentUser();
-      if (!user) throw new Error("Must be signed in to delete review");
+      const { user } = await requireAuthentication("delete review");
 
       const { error } = await supabase.from("reviews_firebase").delete().eq("id", reviewId).eq("author_id", user.id);
 
@@ -489,14 +544,13 @@ export const supabaseChat = {
   // Send message
   sendMessage: async (chatRoomId: string, messageData: Omit<ChatMessage, "id" | "timestamp">): Promise<void> => {
     try {
-      const user = await supabaseAuth.getCurrentUser();
-      if (!user) throw new Error("Must be signed in to send messages");
+      const { user } = await requireAuthentication("send messages");
 
       // Insert message
       const { error: messageError } = await supabase.from("chat_messages_firebase").insert({
         chat_room_id: chatRoomId,
         sender_id: user.id,
-        sender_name: messageData.senderName,
+        sender_name: messageData.senderName ?? getUserDisplayName(user),
         sender_avatar: messageData.senderAvatar,
         content: messageData.content,
         message_type: messageData.messageType || "text",
@@ -524,6 +578,48 @@ export const supabaseChat = {
       throw new Error(handleSupabaseError(error));
     }
   },
+
+  // Get messages with pagination
+  getMessages: async (
+    chatRoomId: string,
+    limit: number = 20,
+    beforeTimestamp?: Date
+  ): Promise<ChatMessage[]> => {
+    try {
+      let query = supabase
+        .from("chat_messages_firebase")
+        .select("*")
+        .eq("chat_room_id", chatRoomId)
+        .order("timestamp", { ascending: false })
+        .limit(limit);
+
+      if (beforeTimestamp) {
+        query = query.lt("timestamp", beforeTimestamp.toISOString());
+      }
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+
+      // Transform and reverse to get chronological order
+      return (data || [])
+        .map((msg: any) => ({
+          id: msg.id,
+          chatRoomId: msg.chat_room_id,
+          senderId: msg.sender_id,
+          senderName: msg.sender_name,
+          senderAvatar: msg.sender_avatar,
+          content: msg.content,
+          messageType: msg.message_type || "text",
+          timestamp: new Date(msg.timestamp),
+          isRead: msg.is_read,
+          replyTo: msg.reply_to,
+        }))
+        .reverse();
+    } catch (error: any) {
+      throw new Error(handleSupabaseError(error));
+    }
+  },
 };
 
 // Comments Services
@@ -534,15 +630,14 @@ export const supabaseComments = {
     commentData: Omit<Comment, "id" | "createdAt" | "updatedAt">,
   ): Promise<string> => {
     try {
-      const user = await supabaseAuth.getCurrentUser();
-      if (!user) throw new Error("Must be signed in to comment");
+      const { user } = await requireAuthentication("comment");
 
       const { data, error } = await supabase
         .from("comments_firebase")
         .insert({
           review_id: reviewId,
-          author_id: user.id,
-          author_name: commentData.authorName,
+          author_id: user.id, // ✅ Reverted back to author_id (matches actual DB schema)
+          author_name: commentData.authorName || getUserDisplayName(user),
           content: commentData.content,
           like_count: commentData.likeCount || 0,
           dislike_count: commentData.dislikeCount || 0,
@@ -574,7 +669,7 @@ export const supabaseComments = {
       return data.map((item) => ({
         id: item.id,
         reviewId: item.review_id,
-        authorId: item.author_id,
+        authorId: item.author_id, // ✅ Reverted back to author_id (matches actual DB schema)
         authorName: item.author_name,
         content: item.content,
         likeCount: item.like_count || 0,
@@ -594,8 +689,7 @@ export const supabaseComments = {
   // Update comment
   updateComment: async (commentId: string, updates: Partial<Comment>): Promise<void> => {
     try {
-      const user = await supabaseAuth.getCurrentUser();
-      if (!user) throw new Error("Must be signed in to update comment");
+      const { user } = await requireAuthentication("update comment");
 
       const updateData: any = {};
       if (updates.content) updateData.content = updates.content;
@@ -606,7 +700,7 @@ export const supabaseComments = {
         .from("comments_firebase")
         .update(updateData)
         .eq("id", commentId)
-        .eq("author_id", user.id);
+        .eq("author_id", user.id); // ✅ Reverted back to author_id (matches actual DB schema)
 
       if (error) throw error;
     } catch (error: any) {
@@ -617,14 +711,13 @@ export const supabaseComments = {
   // Delete comment (soft delete)
   deleteComment: async (commentId: string): Promise<void> => {
     try {
-      const user = await supabaseAuth.getCurrentUser();
-      if (!user) throw new Error("Must be signed in to delete comment");
+      const { user } = await requireAuthentication("delete comment");
 
       const { error } = await supabase
         .from("comments_firebase")
         .update({ is_deleted: true })
         .eq("id", commentId)
-        .eq("author_id", user.id);
+        .eq("author_id", user.id); // ✅ Reverted back to author_id (matches actual DB schema)
 
       if (error) throw error;
     } catch (error: any) {
@@ -834,6 +927,175 @@ export const supabaseSearch = {
     } catch (error: any) {
       console.error("Error getting trending names:", error);
       return [];
+    }
+  },
+
+  // Search reviews by content, name, and location
+  searchReviews: async (
+    query: string,
+    filters?: {
+      category?: string;
+      city?: string;
+      state?: string;
+    },
+  ): Promise<any[]> => {
+    try {
+      let queryBuilder = supabase
+        .from("reviews_firebase")
+        .select("*")
+        .eq("status", "approved")
+        .or(`review_text.ilike.%${query}%,reviewed_person_name.ilike.%${query}%,reviewed_person_location->>city.ilike.%${query}%,reviewed_person_location->>state.ilike.%${query}%`)
+        .order("created_at", { ascending: false })
+        .limit(20);
+
+      // Apply filters
+      if (filters?.category && filters.category !== "all") {
+        queryBuilder = queryBuilder.eq("category", filters.category);
+      }
+      if (filters?.city) {
+        queryBuilder = queryBuilder.eq("reviewed_person_location->>city", filters.city);
+      }
+      if (filters?.state) {
+        queryBuilder = queryBuilder.eq("reviewed_person_location->>state", filters.state);
+      }
+
+      const { data, error } = await queryBuilder;
+
+      if (error) throw error;
+      return data || [];
+    } catch (error: any) {
+      throw new Error(handleSupabaseError(error));
+    }
+  },
+
+  // Search comments by content
+  searchComments: async (query: string): Promise<any[]> => {
+    try {
+      const { data, error } = await supabase
+        .from("comments_firebase")
+        .select("*, reviews_firebase!inner(id, reviewed_person_name)")
+        .ilike("content", `%${query}%`)
+        .eq("is_deleted", false)
+        .order("created_at", { ascending: false })
+        .limit(20);
+
+      if (error) throw error;
+      return data || [];
+    } catch (error: any) {
+      throw new Error(handleSupabaseError(error));
+    }
+  },
+
+  // Search chat messages by content
+  searchMessages: async (query: string): Promise<any[]> => {
+    try {
+      const { data, error } = await supabase
+        .from("chat_messages_firebase")
+        .select("*, chat_rooms(id, name)")
+        .ilike("content", `%${query}%`)
+        .order("timestamp", { ascending: false })
+        .limit(20);
+
+      if (error) throw error;
+      return data || [];
+    } catch (error: any) {
+      throw new Error(handleSupabaseError(error));
+    }
+  },
+
+  // Combined search across all entities
+  searchAll: async (
+    query: string,
+    filters?: {
+      category?: string;
+      city?: string;
+      state?: string;
+    },
+  ): Promise<{
+    reviews: any[];
+    comments: any[];
+    messages: any[];
+  }> => {
+    try {
+      const [reviews, comments, messages] = await Promise.all([
+        supabaseSearch.searchReviews(query, filters),
+        supabaseSearch.searchComments(query),
+        supabaseSearch.searchMessages(query),
+      ]);
+
+      return {
+        reviews,
+        comments,
+        messages,
+      };
+    } catch (error: any) {
+      throw new Error(handleSupabaseError(error));
+    }
+  },
+};
+
+// Reports Services
+export const supabaseReports = {
+  // Create a new report
+  createReport: async (reportData: {
+    reporterId: string;
+    reportedItemId: string;
+    reportedItemType: "review" | "profile" | "comment" | "message";
+    reason: "inappropriate_content" | "fake_profile" | "harassment" | "spam" | "other";
+    description?: string;
+  }): Promise<string> => {
+    try {
+      const { data, error } = await supabase
+        .from("reports")
+        .insert({
+          reporter_id: reportData.reporterId,
+          reported_item_id: reportData.reportedItemId,
+          reported_item_type: reportData.reportedItemType,
+          reason: reportData.reason,
+          description: reportData.description,
+          status: "pending",
+          created_at: new Date().toISOString(),
+        })
+        .select("id")
+        .single();
+
+      if (error) throw error;
+      return data.id;
+    } catch (error: any) {
+      throw new Error(handleSupabaseError(error));
+    }
+  },
+
+  // Get reports by reporter
+  getReportsByReporter: async (reporterId: string): Promise<any[]> => {
+    try {
+      const { data, error } = await supabase
+        .from("reports")
+        .select("*")
+        .eq("reporter_id", reporterId)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return data || [];
+    } catch (error: any) {
+      throw new Error(handleSupabaseError(error));
+    }
+  },
+
+  // Update report status (for admin use)
+  updateReportStatus: async (reportId: string, status: "pending" | "reviewed" | "resolved" | "dismissed"): Promise<void> => {
+    try {
+      const { error } = await supabase
+        .from("reports")
+        .update({
+          status,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", reportId);
+
+      if (error) throw error;
+    } catch (error: any) {
+      throw new Error(handleSupabaseError(error));
     }
   },
 };

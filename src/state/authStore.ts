@@ -48,12 +48,26 @@ const useAuthStore = create<AuthStore>()(
 
       // Actions
       setUser: (user) => {
+        // Add protection against accidental logout
+        if (!user && useAuthStore.getState().isAuthenticated) {
+          console.warn("⚠️ Attempting to clear authenticated user. This might be unintentional.");
+          console.trace("setUser(null) call stack:");
+        }
+
         set((state) => ({
           ...state,
           user,
           isAuthenticated: !!user,
           error: null,
         }));
+
+        if (__DEV__) {
+          console.log("🔄 Auth state updated:", {
+            hasUser: !!user,
+            isAuthenticated: !!user,
+            userId: user?.id?.slice(-4)
+          });
+        }
       },
 
       setLoading: (isLoading) => {
@@ -72,7 +86,7 @@ const useAuthStore = create<AuthStore>()(
         set((state) => ({
           ...state,
           isGuestMode: isGuest,
-          isAuthenticated: isGuest,
+          isAuthenticated: false, // Guest mode should not set isAuthenticated to true
           user: null,
         }));
       },
@@ -81,8 +95,20 @@ const useAuthStore = create<AuthStore>()(
         try {
           set((state) => ({ ...state, isLoading: true, error: null }));
 
+          // Validate inputs
+          if (!email?.trim()) {
+            throw new Error("Email is required");
+          }
+          if (!password?.trim()) {
+            throw new Error("Password is required");
+          }
+
+          // Sanitize email for safety (remove hidden chars, lowercase)
+          const { sanitizeEmail } = await import("../utils/authUtils");
+          const safeEmail = sanitizeEmail(email);
+
           // Sign in with Supabase
-          const supabaseUser = await supabaseAuth.signIn(email, password);
+          const supabaseUser = await supabaseAuth.signIn(safeEmail, password);
 
           // Get user profile from Supabase
           let userProfile = await supabaseUsers.getUserProfile(supabaseUser.id);
@@ -112,10 +138,20 @@ const useAuthStore = create<AuthStore>()(
             error: null,
           }));
         } catch (error) {
+          console.error("Login error:", error);
+
+          // Extract user-friendly error message
+          let errorMessage = "Failed to sign in. Please try again.";
+          if (error instanceof Error && error.message) {
+            errorMessage = error.message;
+          }
+
           set((state) => ({
             ...state,
-            error: error instanceof Error ? error.message : "Login failed",
+            error: errorMessage,
             isLoading: false,
+            isAuthenticated: false,
+            user: null,
           }));
         }
       },
@@ -124,8 +160,23 @@ const useAuthStore = create<AuthStore>()(
         try {
           set((state) => ({ ...state, isLoading: true, error: null }));
 
+          // Validate inputs
+          if (!email?.trim()) {
+            throw new Error("Email is required");
+          }
+          if (!password?.trim()) {
+            throw new Error("Password is required");
+          }
+          if (password.length < 6) {
+            throw new Error("Password must be at least 6 characters long");
+          }
+
+          // Sanitize email for safety (remove hidden chars, lowercase)
+          const { sanitizeEmail } = await import("../utils/authUtils");
+          const safeEmail = sanitizeEmail(email);
+
           // Create Supabase user
-          const supabaseUser = await supabaseAuth.signUp(email, password);
+          const supabaseUser = await supabaseAuth.signUp(safeEmail, password);
 
           // Create user profile in Supabase
           const userProfile: Partial<User> = {
@@ -150,10 +201,20 @@ const useAuthStore = create<AuthStore>()(
             error: null,
           }));
         } catch (error) {
+          console.error("Registration error:", error);
+
+          // Extract user-friendly error message
+          let errorMessage = "Failed to create account. Please try again.";
+          if (error instanceof Error && error.message) {
+            errorMessage = error.message;
+          }
+
           set((state) => ({
             ...state,
-            error: error instanceof Error ? error.message : "Registration failed",
+            error: errorMessage,
             isLoading: false,
+            isAuthenticated: false,
+            user: null,
           }));
         }
       },
@@ -196,18 +257,70 @@ const useAuthStore = create<AuthStore>()(
       },
 
       initializeAuthListener: () => {
+        let isInitializing = false;
+        let authSubscription: any = null;
+
         // First, check if we have a current session on app start
         const initializeSession = async () => {
+          if (isInitializing) return;
+          isInitializing = true;
+
           try {
-            const session = await supabaseAuth.getCurrentSession();
+            set((state) => ({ ...state, isLoading: true, error: null }));
+
+            // Session initialization re-enabled after fixing API key issue
+
+            // Get current session with retry logic
+            let session = null;
+            let retries = 3;
+
+            while (retries > 0 && !session) {
+              try {
+                session = await supabaseAuth.getCurrentSession();
+                break;
+              } catch (error) {
+                console.warn(`Session fetch attempt ${4 - retries} failed:`, error);
+                retries--;
+                if (retries > 0) {
+                  await new Promise(resolve => setTimeout(resolve, 1000));
+                }
+              }
+            }
+
             if (session?.user) {
-              const userProfile = await supabaseUsers.getUserProfile(session.user.id);
+              // Get user profile with retry logic
+              let userProfile = null;
+              retries = 3;
+
+              while (retries > 0 && !userProfile) {
+                try {
+                  userProfile = await supabaseUsers.getUserProfile(session.user.id);
+                  break;
+                } catch (error) {
+                  console.warn(`Profile fetch attempt ${4 - retries} failed:`, error);
+                  retries--;
+                  if (retries > 0) {
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                  }
+                }
+              }
+
               if (userProfile) {
                 set((state) => ({
                   ...state,
                   user: userProfile,
                   isAuthenticated: true,
                   isLoading: false,
+                  error: null,
+                }));
+              } else {
+                console.warn("User profile not found, clearing session");
+                set((state) => ({
+                  ...state,
+                  user: null,
+                  isAuthenticated: false,
+                  isLoading: false,
+                  error: "Failed to load user profile",
                 }));
               }
             } else {
@@ -217,6 +330,7 @@ const useAuthStore = create<AuthStore>()(
                 user: null,
                 isAuthenticated: false,
                 isLoading: false,
+                error: null,
               }));
             }
           } catch (error) {
@@ -226,50 +340,79 @@ const useAuthStore = create<AuthStore>()(
               user: null,
               isAuthenticated: false,
               isLoading: false,
+              error: "Failed to initialize authentication",
             }));
+          } finally {
+            isInitializing = false;
           }
         };
 
         // Initialize session immediately
         initializeSession();
 
-        // Then set up the auth state change listener
-        const {
-          data: { subscription },
-        } = supabaseAuth.onAuthStateChanged(async (supabaseUser) => {
-          if (supabaseUser) {
-            try {
-              // Get user profile from Supabase
-              const userProfile = await supabaseUsers.getUserProfile(supabaseUser.id);
-              if (userProfile) {
+        // Set up the auth state change listener with debouncing
+        let authChangeTimeout: NodeJS.Timeout | null = null;
+
+        const { data: { subscription } } = supabaseAuth.onAuthStateChanged(async (supabaseUser) => {
+          // Debounce auth state changes to prevent rapid updates
+          if (authChangeTimeout) {
+            clearTimeout(authChangeTimeout);
+          }
+
+          authChangeTimeout = setTimeout(async () => {
+            if (supabaseUser && !isInitializing) {
+              try {
+                // Get user profile from Supabase
+                const userProfile = await supabaseUsers.getUserProfile(supabaseUser.id);
+                if (userProfile) {
+                  set((state) => ({
+                    ...state,
+                    user: userProfile,
+                    isAuthenticated: true,
+                    isGuestMode: false, // Clear guest mode when authenticated
+                    isLoading: false,
+                    error: null,
+                  }));
+                  console.log("✅ Auth state synchronized: User authenticated");
+                } else {
+                  console.warn("User profile not found in auth state change");
+                  set((state) => ({
+                    ...state,
+                    error: "User profile not found",
+                    isLoading: false,
+                  }));
+                }
+              } catch (error) {
+                console.error("Error loading user profile in auth state change:", error);
                 set((state) => ({
                   ...state,
-                  user: userProfile,
-                  isAuthenticated: true,
+                  error: "Failed to load user profile",
                   isLoading: false,
                 }));
               }
-            } catch (error) {
-              console.error("Error loading user profile:", error);
+            } else if (!supabaseUser) {
               set((state) => ({
                 ...state,
-                error: "Failed to load user profile",
+                user: null,
+                isAuthenticated: false,
                 isLoading: false,
+                error: null,
               }));
+              console.log("✅ Auth state synchronized: User signed out");
             }
-          } else {
-            set((state) => ({
-              ...state,
-              user: null,
-              isAuthenticated: false,
-              isLoading: false,
-            }));
-          }
+          }, 100); // 100ms debounce
         });
+
+        authSubscription = subscription;
 
         // Return unsubscribe function
         return () => {
-          subscription.unsubscribe();
+          if (authChangeTimeout) {
+            clearTimeout(authChangeTimeout);
+          }
+          if (authSubscription) {
+            authSubscription.unsubscribe();
+          }
         };
       },
     }),

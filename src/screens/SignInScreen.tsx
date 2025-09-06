@@ -18,6 +18,7 @@ import AnimatedButton from "../components/AnimatedButton";
 import AnimatedInput from "../components/AnimatedInput";
 import TestingBanner from "../components/TestingBanner";
 import useAuthStore from "../state/authStore";
+import { testSupabaseConnection, testAuthFlow } from "../utils/testSupabaseConnection";
 
 export default function SignInScreen() {
   const navigation = useNavigation<any>();
@@ -99,6 +100,14 @@ export default function SignInScreen() {
 
   const handleSignUpPress = () => {
     navigation.navigate("SignUp");
+  };
+
+  const handleTestConnection = async () => {
+    console.log("🧪 Running connection test...");
+    await testSupabaseConnection();
+    if (email && password) {
+      await testAuthFlow(email, password);
+    }
   };
 
   const dismissKeyboard = () => {
@@ -217,6 +226,19 @@ export default function SignInScreen() {
                 </View>
               </Animated.View>
             </View>
+
+            {/* Debug Section (Development Only) */}
+            {__DEV__ && (
+              <Animated.View style={footerAnimatedStyle} className="px-6 pb-4">
+                <AnimatedButton
+                  title="🧪 Test Connection"
+                  variant="secondary"
+                  size="small"
+                  onPress={handleTestConnection}
+                  className="opacity-70"
+                />
+              </Animated.View>
+            )}
 
             {/* Footer */}
             <Animated.View style={footerAnimatedStyle} className="px-6 pb-8">

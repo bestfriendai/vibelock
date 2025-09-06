@@ -3,15 +3,17 @@ import { View, Text, TextInput, FlatList, RefreshControl, Pressable } from "reac
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import useChatStore from "../state/chatStore";
+import { useAuthState } from "../utils/authUtils";
 import SegmentedTabs from "../components/SegmentedTabs";
 import ChatRoomCard from "../components/ChatRoomCard";
 import { ChatRoom } from "../types";
 import { useNavigation } from "@react-navigation/native";
+import AdBanner from "../components/AdBanner";
 
 export default function ChatroomsScreen() {
   const navigation = useNavigation<any>();
   const { chatRooms, loadChatRooms, isLoading, onlineUsers, setRoomCategoryFilter } = useChatStore();
-  const { user, isGuestMode } = require("../state/authStore").default.getState();
+  const { user, canAccessChat, needsSignIn } = useAuthState();
   const [category, setCategory] = useState<"all" | "men" | "women" | "lgbtq+">(user?.genderPreference || "all");
   const [query, setQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
@@ -46,7 +48,7 @@ export default function ChatroomsScreen() {
   };
 
   // Guest mode protection
-  if (isGuestMode) {
+  if (!canAccessChat || needsSignIn) {
     return (
       <SafeAreaView className="flex-1 bg-surface-900">
         <View className="flex-1 justify-center items-center px-6">
@@ -138,6 +140,9 @@ export default function ChatroomsScreen() {
           ) : null
         }
       />
+
+      {/* Ad banner */}
+      <AdBanner placement="chat" />
     </SafeAreaView>
   );
 }

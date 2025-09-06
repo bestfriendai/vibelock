@@ -2,9 +2,12 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Comment, CommentState } from "../types";
-import { supabaseComments } from "../services/supabase";
+import { supabaseComments, supabaseReviews } from "../services/supabase";
 import { supabase } from "../config/supabase";
 import { RealtimeChannel } from '@supabase/supabase-js';
+import { notificationService } from "../services/notificationService";
+import useAuthStore from "./authStore";
+import { requireAuthentication, getUserDisplayName } from "../utils/authUtils";
 
 interface CommentsStore extends CommentState {
   // Actions
@@ -66,10 +69,19 @@ const useCommentsStore = create<CommentsStore>()(
         try {
           set({ isPosting: true, error: null });
 
+          // Simple, safe authentication check - prefer store state
+          const storeState = useAuthStore.getState();
+          if (!storeState.isAuthenticated || !storeState.user) {
+            throw new Error("Must be signed in to comment");
+          }
+
+          const user = storeState.user;
+          console.log("💬 Creating comment for user:", user.id);
+
           const commentData: Omit<Comment, "id" | "createdAt" | "updatedAt"> = {
             reviewId,
-            authorId: `anon_${Date.now()}`,
-            authorName: `Anonymous ${Math.floor(Math.random() * 1000)}`,
+            authorId: user.id,
+            authorName: getUserDisplayName(user),
             content: content.trim(),
             likeCount: 0,
             dislikeCount: 0,
@@ -93,11 +105,41 @@ const useCommentsStore = create<CommentsStore>()(
             isPosting: false,
           }));
 
-          // Save to Supabase in background
-          supabaseComments.createComment(reviewId, commentData).catch((error) => {
-            console.warn("Failed to save comment to Supabase:", error);
-            // Could remove the optimistic comment here if needed
-          });
+          // Save to Supabase and then create notifications
+          try {
+            const createdId = await supabaseComments.createComment(reviewId, commentData);
+
+            // Notify review author about new comment (if not self)
+            const review = await supabaseReviews.getReview(reviewId);
+            const currentUser = useAuthStore.getState().user;
+            if (review?.authorId && review.authorId !== currentUser?.id) {
+              await notificationService.createNotification(review.authorId, {
+                type: 'new_comment',
+                title: 'New comment on your review',
+                body: commentData.content.slice(0, 100),
+                data: { reviewId, commentId: createdId },
+              });
+            }
+
+            // If replying to a comment, also notify parent comment author (if different)
+            if ((commentData as any).parentCommentId) {
+              const { data: parent, error: parentErr } = await supabase
+                .from('comments_firebase')
+                .select('author_id')
+                .eq('id', (commentData as any).parentCommentId)
+                .single();
+              if (!parentErr && parent?.author_id && parent.author_id !== currentUser?.id && parent.author_id !== review?.authorId) {
+                await notificationService.createNotification(parent.author_id, {
+                  type: 'new_comment',
+                  title: 'Someone replied to your comment',
+                  body: commentData.content.slice(0, 100),
+                  data: { reviewId, parentCommentId: (commentData as any).parentCommentId, commentId: createdId },
+                });
+              }
+            }
+          } catch (persistErr) {
+            console.warn("Failed to save comment or create notifications:", persistErr);
+          }
         } catch (error) {
           set({
             error: error instanceof Error ? error.message : "Failed to create comment",

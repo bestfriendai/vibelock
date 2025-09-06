@@ -120,10 +120,10 @@ export interface Report {
   id: string;
   reporterId: string;
   reportedItemId: string;
-  reportedItemType: "review" | "profile";
+  reportedItemType: "review" | "profile" | "comment" | "message";
   reason: "inappropriate_content" | "fake_profile" | "harassment" | "spam" | "other";
   description?: string;
-  status: "pending" | "reviewed" | "resolved";
+  status: "pending" | "reviewed" | "resolved" | "dismissed";
   createdAt: Date;
 }
 
@@ -255,4 +255,30 @@ export interface MediaCommentData {
   mediaUri: string;
   commentCount: number;
   comments: Comment[];
+}
+
+// Search result types
+export interface SearchResult {
+  id: string;
+  type: "review" | "comment" | "message";
+  title: string;
+  content: string;
+  snippet: string;
+  createdAt: Date;
+  metadata: {
+    reviewId?: string;
+    commentId?: string;
+    messageId?: string;
+    roomId?: string;
+    roomName?: string;
+    authorName?: string;
+    location?: string;
+  };
+}
+
+export interface SearchResults {
+  reviews: SearchResult[];
+  comments: SearchResult[];
+  messages: SearchResult[];
+  total: number;
 }

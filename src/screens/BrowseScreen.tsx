@@ -12,6 +12,7 @@ import SegmentedTabs from "../components/SegmentedTabs";
 import LocationSelector from "../components/LocationSelector";
 import DistanceFilter from "../components/DistanceFilter";
 import { Review } from "../types";
+import AdBanner from "../components/AdBanner";
 
 export default function BrowseScreen() {
   const { user } = useAuthStore();
@@ -176,6 +177,9 @@ export default function BrowseScreen() {
           </Text>
         </View>
       )}
+
+      {/* Ad banner */}
+      <AdBanner placement="browse" />
     </SafeAreaView>
   );
 }

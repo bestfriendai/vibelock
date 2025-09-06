@@ -1,8 +1,12 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as FileSystem from "expo-file-system";
+import { manipulateAsync, SaveFormat } from "expo-image-manipulator";
 import { Review, FilterOptions, GreenFlag, RedFlag, MediaItem, SocialMediaHandles, Sentiment } from "../types";
 import { supabaseReviews, supabaseStorage } from "../services/supabase";
+import useAuthStore from "./authStore";
+import { notificationService } from "../services/notificationService";
 
 interface ReviewsState {
   reviews: Review[];
@@ -247,11 +251,11 @@ const useReviewsStore = create<ReviewsStore>()(
           let userPrefCategory: string | undefined;
           let userLocation: { city: string; state: string } | undefined;
           try {
-            // Importing dynamically to avoid circular deps at module load
-            const authStore = require("./authStore").default.getState();
+            // Get auth store state to avoid circular deps
+            const authStore = useAuthStore.getState();
             userPrefCategory = authStore.user?.genderPreference;
             userLocation = authStore.user?.location;
-          } catch (e) {
+          } catch {
             userPrefCategory = undefined;
             userLocation = undefined;
           }
@@ -355,17 +359,41 @@ const useReviewsStore = create<ReviewsStore>()(
           for (const mediaItem of data.media) {
             if (mediaItem.uri.startsWith("file://") || mediaItem.uri.startsWith("content://")) {
               try {
-                // Convert URI to blob for upload
-                const response = await fetch(mediaItem.uri);
-                const blob = await response.blob();
+                // Compress and resize image using expo-image-manipulator
+                const manipulatedImage = await manipulateAsync(
+                  mediaItem.uri,
+                  [
+                    { resize: { width: 800 } }, // Resize to max width of 800px
+                  ],
+                  {
+                    compress: 0.8, // 80% quality
+                    format: SaveFormat.JPEG,
+                  },
+                );
+
+                // Read the compressed image as base64
+                const base64 = await FileSystem.readAsStringAsync(manipulatedImage.uri, {
+                  encoding: FileSystem.EncodingType.Base64,
+                });
+
+                // Convert base64 to blob
+                const byteCharacters = atob(base64);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                  byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([byteArray], { type: "image/jpeg" });
 
                 // Create unique filename
-                const filename = `reviews/${Date.now()}_${Math.random().toString(36).substring(7)}`;
+                const filename = `reviews/${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`;
                 const downloadURL = await supabaseStorage.uploadFile("chat-media", filename, blob);
 
                 uploadedMedia.push({
                   ...mediaItem,
                   uri: downloadURL,
+                  width: manipulatedImage.width,
+                  height: manipulatedImage.height,
                 });
               } catch (uploadError) {
                 console.warn("Failed to upload media, using original URI:", uploadError);
@@ -401,7 +429,7 @@ const useReviewsStore = create<ReviewsStore>()(
             ...reviewData,
             authorId: (() => {
               try {
-                return require("./authStore").default.getState().user?.id || "local_seed";
+                return useAuthStore.getState().user?.id || "local_seed";
               } catch {
                 return "local_seed";
               }
@@ -438,6 +466,21 @@ const useReviewsStore = create<ReviewsStore>()(
 
             // Update local state
             get().updateReview(id, { likeCount: newLikeCount });
+
+            // Create notification for review author (if not self)
+            try {
+              const currentUser = useAuthStore.getState().user;
+              if (review.authorId && review.authorId !== currentUser?.id) {
+                await notificationService.createNotification(review.authorId, {
+                  type: "new_like",
+                  title: "Your review got a like",
+                  body: `${review.reviewedPersonName || "Someone you reviewed"} received a like`,
+                  data: { reviewId: review.id },
+                });
+              }
+            } catch (notifyErr) {
+              console.warn("Failed to create like notification:", notifyErr);
+            }
           }
         } catch (error) {
           set({

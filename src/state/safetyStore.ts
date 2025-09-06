@@ -2,6 +2,8 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Report } from "../types";
+import { supabaseReports } from "../services/supabase";
+import useAuthStore from "./authStore";
 
 interface SafetyState {
   blockedUsers: string[];
@@ -18,7 +20,7 @@ interface SafetyActions {
   unblockProfile: (profileId: string) => void;
   reportContent: (data: {
     reportedItemId: string;
-    reportedItemType: "review" | "profile";
+    reportedItemType: "review" | "profile" | "comment" | "message";
     reason: "inappropriate_content" | "fake_profile" | "harassment" | "spam" | "other";
     description?: string;
   }) => Promise<void>;
@@ -68,9 +70,25 @@ const useSafetyStore = create<SafetyStore>()(
         try {
           set({ isLoading: true, error: null });
 
+          // Get current user from auth store
+          const { user } = useAuthStore.getState();
+          if (!user) {
+            throw new Error("Must be signed in to report content");
+          }
+
+          // Create report in Supabase
+          const reportId = await supabaseReports.createReport({
+            reporterId: user.id,
+            reportedItemId: data.reportedItemId,
+            reportedItemType: data.reportedItemType,
+            reason: data.reason,
+            description: data.description,
+          });
+
+          // Create local report object for optimistic UI
           const newReport: Report = {
-            id: `report_${Date.now()}`,
-            reporterId: `user_${Date.now()}`, // In production, use actual user ID
+            id: reportId,
+            reporterId: user.id,
             reportedItemId: data.reportedItemId,
             reportedItemType: data.reportedItemType,
             reason: data.reason,
@@ -78,9 +96,6 @@ const useSafetyStore = create<SafetyStore>()(
             status: "pending",
             createdAt: new Date(),
           };
-
-          // Simulate API delay
-          await new Promise((resolve) => setTimeout(resolve, 500));
 
           set((state) => ({
             reports: [...state.reports, newReport],

@@ -1,0 +1,98 @@
+import React, { useEffect, useCallback, useState } from "react";
+import { View, Text, Pressable, RefreshControl } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { FlashList } from "@shopify/flash-list";
+import { Ionicons } from "@expo/vector-icons";
+import useNotificationStore from "../state/notificationStore";
+import useAuthStore from "../state/authStore";
+
+export default function NotificationsScreen() {
+  const { user } = useAuthStore();
+  const {
+    notifications,
+    unreadCount,
+    isLoading,
+    initialize,
+    loadNotifications,
+    markAsRead,
+    markAllAsRead,
+  } = useNotificationStore();
+
+  const [refreshing, setRefreshing] = useState(false);
+
+  useEffect(() => {
+    initialize();
+  }, [initialize]);
+
+  useEffect(() => {
+    if (user?.id) loadNotifications(user.id);
+  }, [user?.id, loadNotifications]);
+
+  const onRefresh = useCallback(async () => {
+    if (!user?.id) return;
+    setRefreshing(true);
+    await loadNotifications(user.id);
+    setRefreshing(false);
+  }, [user?.id, loadNotifications]);
+
+  return (
+    <SafeAreaView className="flex-1 bg-surface-900">
+      <View className="px-4 py-4 border-b border-border bg-surface-800">
+        <View className="flex-row items-center justify-between">
+          <Text className="text-text-primary text-2xl font-bold">Notifications</Text>
+          {unreadCount > 0 && (
+            <Pressable
+              className="bg-brand-red rounded-full px-3 py-1"
+              onPress={() => user?.id && markAllAsRead(user.id)}
+            >
+              <Text className="text-black text-sm font-semibold">Mark all read</Text>
+            </Pressable>
+          )}
+        </View>
+        <Text className="text-text-secondary text-sm mt-1">{unreadCount} unread</Text>
+      </View>
+
+      <FlashList
+        data={notifications}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <Pressable
+            onPress={() => markAsRead(item.id)}
+            className={`px-4 py-3 border-b border-surface-700 ${item.isRead ? "bg-surface-900" : "bg-surface-800"}`}
+          >
+            <View className="flex-row items-start">
+              <View className="w-8 items-center mt-1">
+                {item.type === "new_comment" && <Ionicons name="chatbubble-outline" size={18} color="#9CA3AF" />}
+                {item.type === "new_message" && <Ionicons name="mail-unread-outline" size={18} color="#9CA3AF" />}
+                {item.type === "new_review" && <Ionicons name="star-outline" size={18} color="#9CA3AF" />}
+                {item.type === "safety_alert" && <Ionicons name="warning-outline" size={18} color="#F59E0B" />}
+              </View>
+              <View className="flex-1">
+                <Text className="text-text-primary font-medium">{item.title}</Text>
+                {!!item.body && (
+                  <Text className="text-text-secondary mt-1" numberOfLines={2}>{item.body}</Text>
+                )}
+                <Text className="text-text-muted text-xs mt-1">{item.createdAt.toLocaleString()}</Text>
+              </View>
+              {!item.isRead && <View className="w-2 h-2 bg-brand-red rounded-full mt-2" />}
+            </View>
+          </Pressable>
+        )}
+        estimatedItemSize={72}
+        refreshControl={<RefreshControl refreshing={refreshing || isLoading} onRefresh={onRefresh} />}
+        ListEmptyComponent={
+          !isLoading ? (
+            <View className="items-center justify-center py-20">
+              <Ionicons name="notifications-off-outline" size={48} color="#6B7280" />
+              <Text className="text-text-secondary text-lg font-medium mt-4">No notifications yet</Text>
+              <Text className="text-text-muted text-center mt-2 px-8">
+                Likes, comments, replies, and chat mentions will appear here.
+              </Text>
+            </View>
+          ) : null
+        }
+      />
+    </SafeAreaView>
+  );
+}
+

@@ -31,18 +31,28 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     // Detect session in URL (useful for magic links)
     detectSessionInUrl: false,
+    // Use PKCE flow for better security
+    flowType: 'pkce',
+    // Reduce auth timeout to prevent hanging
+    debug: __DEV__,
   },
-  // Real-time configuration
+  // Real-time configuration with better error handling
   realtime: {
-    // Enable real-time subscriptions
+    // Enable real-time subscriptions with conservative settings
     params: {
-      eventsPerSecond: 10,
+      eventsPerSecond: 5, // Reduced from 10 to prevent rate limiting
     },
+    // Add heartbeat and reconnection settings
+    heartbeatIntervalMs: 30000,
+    reconnectAfterMs: (tries: number) => Math.min(tries * 1000, 10000),
   },
-  // Global configuration
+  // Global configuration - custom headers only (do NOT override Authorization)
+  // Note: Supabase JS sets `apikey` and user `Authorization` automatically.
+  // Overriding `Authorization` with the anon key breaks authenticated calls.
   global: {
     headers: {
       "X-Client-Info": "lockerroom-mobile-app",
+      "X-Client-Version": "1.0.0",
     },
   },
 });
@@ -55,13 +65,71 @@ export type { PostgrestError } from "@supabase/supabase-js";
 
 // Helper function to handle Supabase errors
 export const handleSupabaseError = (error: any): string => {
+  console.error("Supabase error:", error);
+
+  // Handle network/timeout errors
+  if (error?.name === "AbortError" || error?.message?.includes("timeout")) {
+    return "Connection timeout. Please check your internet connection and try again.";
+  }
+
+  // Handle specific HTTP status codes
+  if (error?.status) {
+    switch (error.status) {
+      case 400:
+        return "Invalid request. Please check your input and try again.";
+      case 401:
+        return "Invalid email or password.";
+      case 403:
+        return "Access denied. Please check your credentials.";
+      case 404:
+        return "Service not found. Please try again later.";
+      case 422:
+        return "Invalid data provided. Please check your input.";
+      case 429:
+        return "Too many requests. Please wait a moment and try again.";
+      case 500:
+        return "Server error. Please try again later.";
+      case 502:
+      case 503:
+      case 504:
+        return "Service temporarily unavailable. Please try again in a few moments.";
+      default:
+        return `Network error (${error.status}). Please try again.`;
+    }
+  }
+
+  // Handle specific Supabase auth errors
   if (error?.message) {
+    const message = error.message.toLowerCase();
+    if (message.includes("invalid login credentials")) {
+      return "Invalid email or password. Please check your credentials and try again.";
+    }
+    if ((message.includes("email address") && message.includes("invalid")) || message.includes("invalid email address")) {
+      return "Please enter a valid email address.";
+    }
+    if (message.includes("email not confirmed")) {
+      return "Please check your email and click the confirmation link before signing in.";
+    }
+    if (message.includes("user already registered")) {
+      return "An account with this email already exists. Please sign in instead.";
+    }
+    if (message.includes("password should be at least")) {
+      return "Password must be at least 6 characters long.";
+    }
+    if (message.includes("invalid email")) {
+      return "Please enter a valid email address.";
+    }
+    if (message.includes("network")) {
+      return "Network error. Please check your internet connection and try again.";
+    }
     return error.message;
   }
+
   if (typeof error === "string") {
     return error;
   }
-  return "An unexpected error occurred";
+
+  return "An unexpected error occurred. Please try again.";
 };
 
 // Helper function to check if user is authenticated (async version)

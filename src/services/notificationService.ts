@@ -15,7 +15,7 @@ Notifications.setNotificationHandler({
 });
 
 export interface NotificationData {
-  type: 'new_review' | 'new_comment' | 'new_message' | 'review_approved' | 'review_rejected' | 'safety_alert';
+  type: 'new_review' | 'new_comment' | 'new_message' | 'new_like' | 'review_approved' | 'review_rejected' | 'safety_alert';
   title: string;
   body: string;
   data?: Record<string, any>;
@@ -95,8 +95,8 @@ class NotificationService {
    */
   private async registerPushToken(token: string): Promise<void> {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      const { supabaseUser } = await import('../utils/authUtils').then(m => m.getAuthenticatedUser());
+      if (!supabaseUser) {
         console.warn('User not authenticated, cannot register push token');
         return;
       }
@@ -108,7 +108,7 @@ class NotificationService {
       const { error } = await supabase
         .from('push_tokens')
         .upsert({
-          user_id: user.id,
+          user_id: supabaseUser.id,
           token,
           device_id: deviceId,
           platform,
@@ -296,6 +296,55 @@ class NotificationService {
       }
     } catch (error) {
       console.error('Error removing push token:', error);
+    }
+  }
+
+  /**
+   * Subscribe/unsubscribe to chat room notifications
+   */
+  async setChatRoomSubscription(roomId: string, isSubscribed: boolean): Promise<void> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { error } = await supabase
+        .from('chat_room_subscriptions')
+        .upsert({
+          user_id: user.id,
+          room_id: roomId,
+          is_subscribed: isSubscribed,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'user_id,room_id' });
+
+      if (error) {
+        console.error('Failed to update chat room subscription:', error);
+      }
+    } catch (error) {
+      console.error('Error updating chat room subscription:', error);
+    }
+  }
+
+  async getChatRoomSubscription(roomId: string): Promise<boolean> {
+    try {
+      const { supabaseUser } = await import('../utils/authUtils').then(m => m.getAuthenticatedUser());
+      if (!supabaseUser) return false;
+
+      const { data, error } = await supabase
+        .from('chat_room_subscriptions')
+        .select('is_subscribed')
+        .eq('user_id', supabaseUser.id)
+        .eq('room_id', roomId)
+        .single();
+
+      if (error) {
+        // If no row, treat as unsubscribed
+        return false;
+      }
+
+      return !!data?.is_subscribed;
+    } catch (error) {
+      console.error('Error fetching chat room subscription:', error);
+      return false;
     }
   }
 
