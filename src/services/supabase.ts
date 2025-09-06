@@ -1,7 +1,7 @@
 // Supabase service layer for LockerRoom MVP
 import { supabase, handleSupabaseError } from "../config/supabase";
 import type { User as SupabaseUser, Session } from "@supabase/supabase-js";
-import { User, Review, ChatRoom, ChatMessage, Comment } from "../types";
+import { User, Review, ChatRoom, ChatMessage, Comment, Profile } from "../types";
 
 // Authentication Services
 export const supabaseAuth = {
@@ -193,10 +193,7 @@ export const supabaseUsers = {
       if (updates.gender) dbUpdates.gender = updates.gender;
       if (updates.isBlocked !== undefined) dbUpdates.is_blocked = updates.isBlocked;
 
-      const { error } = await supabase
-        .from("users")
-        .update(dbUpdates)
-        .eq("id", userId);
+      const { error } = await supabase.from("users").update(dbUpdates).eq("id", userId);
 
       if (error) throw error;
     } catch (error: any) {
@@ -273,15 +270,38 @@ export const supabaseReviews = {
     }
   },
 
-  // Get reviews with pagination
-  getReviews: async (limit: number = 20, offset: number = 0): Promise<Review[]> => {
+  // Get reviews with pagination and filtering
+  getReviews: async (
+    limit: number = 20,
+    offset: number = 0,
+    filters?: {
+      category?: string;
+      city?: string;
+      state?: string;
+      radiusMiles?: number;
+    },
+  ): Promise<Review[]> => {
     try {
-      const { data, error } = await supabase
-        .from("reviews_firebase")
-        .select("*")
-        .eq("status", "approved")
-        .order("created_at", { ascending: false })
-        .range(offset, offset + limit - 1);
+      let query = supabase.from("reviews_firebase").select("*").eq("status", "approved");
+
+      // Apply category filter
+      if (filters?.category && filters.category !== "all") {
+        query = query.eq("category", filters.category);
+      }
+
+      // Apply location filters
+      if (filters?.state) {
+        query = query.eq("reviewed_person_location->>state", filters.state);
+      }
+
+      if (filters?.city) {
+        query = query.eq("reviewed_person_location->>city", filters.city);
+      }
+
+      // Apply ordering and pagination
+      query = query.order("created_at", { ascending: false }).range(offset, offset + limit - 1);
+
+      const { data, error } = await query;
 
       if (error) throw error;
 
@@ -662,6 +682,159 @@ export const supabaseStorage = {
     const { data } = supabase.storage.from(bucket).getPublicUrl(path);
 
     return data.publicUrl;
+  },
+};
+
+// Search Services
+export const supabaseSearch = {
+  // Search for profiles by name with optional location filtering
+  searchProfiles: async (
+    query: string,
+    filters?: {
+      city?: string;
+      state?: string;
+      category?: string;
+      radius?: number;
+    },
+  ): Promise<Profile[]> => {
+    try {
+      if (!query || query.trim().length < 2) {
+        return [];
+      }
+
+      let searchQuery = supabase
+        .from("reviews_firebase")
+        .select("reviewed_person_name, reviewed_person_location, category, created_at, updated_at")
+        .eq("status", "approved")
+        .ilike("reviewed_person_name", `${query.trim()}%`);
+
+      // Apply filters
+      if (filters?.category && filters.category !== "all") {
+        searchQuery = searchQuery.eq("category", filters.category);
+      }
+
+      if (filters?.state) {
+        searchQuery = searchQuery.eq("reviewed_person_location->>state", filters.state);
+      }
+
+      if (filters?.city) {
+        searchQuery = searchQuery.eq("reviewed_person_location->>city", filters.city);
+      }
+
+      const { data: searchData, error } = await searchQuery;
+
+      if (error) throw error;
+
+      // Aggregate results by person name and location
+      const profileMap = new Map<
+        string,
+        {
+          firstName: string;
+          location: { city: string; state: string };
+          reviews: any[];
+          greenFlagCount: number;
+          redFlagCount: number;
+          totalRating: number;
+          createdAt: Date;
+          updatedAt: Date;
+        }
+      >();
+
+      // Get detailed review data for aggregation
+      const detailedQuery = supabase
+        .from("reviews_firebase")
+        .select("*")
+        .eq("status", "approved")
+        .ilike("reviewed_person_name", `${query.trim()}%`);
+
+      const { data: detailedData, error: detailedError } = await detailedQuery;
+      if (detailedError) throw detailedError;
+
+      detailedData?.forEach((review) => {
+        const key = `${review.reviewed_person_name}-${review.reviewed_person_location?.city}-${review.reviewed_person_location?.state}`;
+
+        if (!profileMap.has(key)) {
+          profileMap.set(key, {
+            firstName: review.reviewed_person_name,
+            location: review.reviewed_person_location || { city: "Unknown", state: "Unknown" },
+            reviews: [],
+            greenFlagCount: 0,
+            redFlagCount: 0,
+            totalRating: 0,
+            createdAt: new Date(review.created_at),
+            updatedAt: new Date(review.updated_at),
+          });
+        }
+
+        const profile = profileMap.get(key)!;
+        profile.reviews.push(review);
+        profile.greenFlagCount += (review.green_flags || []).length;
+        profile.redFlagCount += (review.red_flags || []).length;
+
+        // Simple rating calculation based on sentiment
+        if (review.sentiment === "green") {
+          profile.totalRating += 5;
+        } else if (review.sentiment === "red") {
+          profile.totalRating += 2;
+        } else {
+          profile.totalRating += 3; // neutral
+        }
+
+        // Update dates
+        const reviewDate = new Date(review.updated_at);
+        if (reviewDate > profile.updatedAt) {
+          profile.updatedAt = reviewDate;
+        }
+      });
+
+      // Convert to Profile array
+      const profiles: Profile[] = Array.from(profileMap.values()).map((profile, index) => ({
+        id: `profile_${index}_${Date.now()}`,
+        firstName: profile.firstName,
+        location: profile.location,
+        totalReviews: profile.reviews.length,
+        greenFlagCount: profile.greenFlagCount,
+        redFlagCount: profile.redFlagCount,
+        averageRating: profile.reviews.length > 0 ? profile.totalRating / profile.reviews.length : undefined,
+        createdAt: profile.createdAt,
+        updatedAt: profile.updatedAt,
+      }));
+
+      // Sort by total reviews (most reviewed first)
+      return profiles.sort((a, b) => b.totalReviews - a.totalReviews);
+    } catch (error: any) {
+      throw new Error(handleSupabaseError(error));
+    }
+  },
+
+  // Get trending/popular names (most reviewed)
+  getTrendingNames: async (limit: number = 10): Promise<string[]> => {
+    try {
+      const { data, error } = await supabase
+        .from("reviews_firebase")
+        .select("reviewed_person_name")
+        .eq("status", "approved")
+        .order("created_at", { ascending: false })
+        .limit(100); // Get recent reviews
+
+      if (error) throw error;
+
+      // Count occurrences and get most common names
+      const nameCount = new Map<string, number>();
+      data?.forEach((review) => {
+        const name = review.reviewed_person_name;
+        nameCount.set(name, (nameCount.get(name) || 0) + 1);
+      });
+
+      // Sort by count and return top names
+      return Array.from(nameCount.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, limit)
+        .map(([name]) => name);
+    } catch (error: any) {
+      console.error("Error getting trending names:", error);
+      return [];
+    }
   },
 };
 

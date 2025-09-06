@@ -241,14 +241,9 @@ const useReviewsStore = create<ReviewsStore>()(
           set({ isLoading: true, error: null });
 
           const currentState = get();
-
-          // Try to load from Supabase first
-          const offset = refresh ? 0 : currentState.reviews.length;
-          const newReviews = await supabaseReviews.getReviews(20, offset);
-
-          // Apply category and location filtering based on store filters and user preference
           const { filters } = get();
-          // Try to get user preference and location from auth store if available
+
+          // Get user preference and location from auth store if available
           let userPrefCategory: string | undefined;
           let userLocation: { city: string; state: string } | undefined;
           try {
@@ -261,43 +256,39 @@ const useReviewsStore = create<ReviewsStore>()(
             userLocation = undefined;
           }
 
-          const applyCategoryFilter = (list: Review[]) => {
-            const categoryToFilter = filters.category || userPrefCategory || "all";
-            if (!categoryToFilter || categoryToFilter === "all") return list;
-            return list.filter((r) => (r.category || "all") === categoryToFilter);
-          };
+          // Build server-side filters
+          const serverFilters: {
+            category?: string;
+            city?: string;
+            state?: string;
+            radiusMiles?: number;
+          } = {};
 
-          const applyLocationFilter = (list: Review[]) => {
-            // If no radius filter is set or no user location, show all reviews
-            if (!filters.radius || !userLocation) {
-              return list;
+          // Apply category filter
+          const categoryToFilter = filters.category || userPrefCategory || "all";
+          if (categoryToFilter && categoryToFilter !== "all") {
+            serverFilters.category = categoryToFilter;
+          }
+
+          // Apply location filters based on radius
+          if (filters.radius && userLocation) {
+            if (filters.radius < 50) {
+              // Small radius: filter by city and state
+              serverFilters.city = userLocation.city;
+              serverFilters.state = userLocation.state;
+            } else if (filters.radius < 100) {
+              // Medium radius: filter by state only
+              serverFilters.state = userLocation.state;
             }
+            // Large radius (>= 100): no location filter (nationwide)
+          }
 
-            // If radius is set to a large value (>= 100), show all reviews (nationwide)
-            if (filters.radius >= 100) {
-              return list;
-            }
-
-            // For medium radius (50-99), filter by state only
-            if (filters.radius >= 50) {
-              return list.filter(
-                (r) => r.reviewedPersonLocation.state.toLowerCase() === userLocation.state.toLowerCase()
-              );
-            }
-
-            // For small radius (<50), filter by city and state
-            return list.filter(
-              (r) =>
-                r.reviewedPersonLocation.city.toLowerCase() === userLocation.city.toLowerCase() &&
-                r.reviewedPersonLocation.state.toLowerCase() === userLocation.state.toLowerCase()
-            );
-          };
-
-          let filteredNewReviews = applyCategoryFilter(newReviews);
-          filteredNewReviews = applyLocationFilter(filteredNewReviews);
+          // Load from Supabase with server-side filtering
+          const offset = refresh ? 0 : currentState.reviews.length;
+          const newReviews = await supabaseReviews.getReviews(20, offset, serverFilters);
 
           // If no reviews found and this is a refresh, show mock data
-          if (refresh && filteredNewReviews.length === 0) {
+          if (refresh && newReviews.length === 0) {
             set({
               reviews: mockReviews,
               hasMore: false,
@@ -309,16 +300,16 @@ const useReviewsStore = create<ReviewsStore>()(
 
           if (refresh) {
             set({
-              reviews: filteredNewReviews,
-              hasMore: filteredNewReviews.length === 20,
+              reviews: newReviews,
+              hasMore: newReviews.length === 20,
               lastVisible: null, // Supabase uses offset-based pagination
               isLoading: false,
             });
           } else {
             const currentReviews = currentState.reviews;
             set({
-              reviews: [...currentReviews, ...filteredNewReviews],
-              hasMore: filteredNewReviews.length === 20,
+              reviews: [...currentReviews, ...newReviews],
+              hasMore: newReviews.length === 20,
               lastVisible: null, // Supabase uses offset-based pagination
               isLoading: false,
             });

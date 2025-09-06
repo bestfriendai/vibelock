@@ -1,7 +1,9 @@
 import React, { useMemo, memo } from "react";
-import { ScrollView, View, RefreshControl, Text } from "react-native";
+import { View, RefreshControl, Text, Dimensions } from "react-native";
+import { FlashList } from "@shopify/flash-list";
 import { Review } from "../types";
 import ProfileCard from "./ProfileCard";
+import ProfileCardSkeleton from "./ProfileCardSkeleton";
 
 // Memoized ProfileCard to prevent unnecessary re-renders
 const MemoizedProfileCard = memo(ProfileCard);
@@ -13,27 +15,38 @@ interface Props {
   onReport?: (review: Review) => void;
   onLike?: (review: Review) => void;
   likedReviews?: Set<string>;
+  onEndReached?: () => void;
+  onEndReachedThreshold?: number;
 }
 
-function StaggeredGrid({ data, refreshing = false, onRefresh, onReport, onLike, likedReviews = new Set() }: Props) {
-  // Calculate card heights based on content length and create two columns
-  const { leftColumn, rightColumn } = useMemo(() => {
-    const left: { review: Review; height: number }[] = [];
-    const right: { review: Review; height: number }[] = [];
+const { width: screenWidth } = Dimensions.get("window");
+const cardWidth = (screenWidth - 48) / 2; // Account for padding and gap
 
-    // Safety check: ensure data exists and is an array
+function StaggeredGrid({
+  data,
+  refreshing = false,
+  onRefresh,
+  onReport,
+  onLike,
+  likedReviews = new Set(),
+  onEndReached,
+  onEndReachedThreshold = 0.1,
+}: Props) {
+  // Calculate item heights for FlashList
+  const itemsWithHeights = useMemo(() => {
     if (!data || !Array.isArray(data) || data.length === 0) {
-      return { leftColumn: left, rightColumn: right };
+      return [];
     }
 
-    data.forEach((review, index) => {
+    return data.map((review, index) => {
       // Safety check: ensure review exists and has required properties
       if (!review || !review.id || !review.reviewText) {
-        return; // Skip invalid reviews
+        return { review, height: 280 }; // Default height for invalid reviews
       }
+
       // Calculate height based on text length and other factors
       const baseHeight = 280;
-      const textLength = review.reviewText.length;
+      const textLength = review.reviewText?.length || 0;
 
       // Add variation based on content
       let height = baseHeight;
@@ -47,91 +60,128 @@ function StaggeredGrid({ data, refreshing = false, onRefresh, onReport, onLike, 
       // Ensure minimum and maximum heights
       height = Math.max(250, Math.min(height, 400));
 
-      // Distribute to columns to balance heights
-      const leftHeight = left.reduce((sum, item) => sum + item.height, 0);
-      const rightHeight = right.reduce((sum, item) => sum + item.height, 0);
-
-      if (leftHeight <= rightHeight) {
-        left.push({ review, height });
-      } else {
-        right.push({ review, height });
-      }
+      return { review, height };
     });
-
-    return { leftColumn: left, rightColumn: right };
   }, [data]);
 
-  // Early return for empty data
-  if (!data || !Array.isArray(data)) {
-    return (
-      <ScrollView
-        className="flex-1"
-        contentContainerStyle={{ padding: 16, flex: 1, justifyContent: "center", alignItems: "center" }}
-        refreshControl={
-          onRefresh ? (
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#FFFFFF" colors={["#FFFFFF"]} />
-          ) : undefined
-        }
-      >
-        <Text className="text-text-secondary text-lg text-center">
-          {refreshing ? "Loading reviews..." : "No reviews available"}
-        </Text>
-      </ScrollView>
-    );
-  }
+  // Render item function for FlashList
+  const renderItem = ({ item, index }: { item: { review: Review; height: number }; index: number }) => {
+    const { review, height } = item;
 
-  if (data.length === 0) {
     return (
-      <ScrollView
-        className="flex-1"
-        contentContainerStyle={{ padding: 16, flex: 1, justifyContent: "center", alignItems: "center" }}
-        refreshControl={
-          onRefresh ? (
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#FFFFFF" colors={["#FFFFFF"]} />
-          ) : undefined
-        }
+      <View
+        style={{
+          width: cardWidth,
+          marginBottom: 16,
+          marginRight: index % 2 === 0 ? 8 : 0,
+          marginLeft: index % 2 === 1 ? 8 : 0,
+        }}
       >
-        <Text className="text-text-secondary text-lg text-center">
-          {refreshing ? "Loading reviews..." : "No reviews found.\nPull down to refresh or try changing your filters."}
-        </Text>
-      </ScrollView>
-    );
-  }
-
-  const renderColumn = (column: { review: Review; height: number }[], isLeft: boolean) => (
-    <View className={`flex-1 ${isLeft ? "mr-2" : "ml-2"}`}>
-      {column.map(({ review, height }) => (
         <MemoizedProfileCard
-          key={review.id}
           review={review}
           cardHeight={height}
           onReport={() => onReport?.(review)}
           onLike={() => onLike?.(review)}
           isLiked={likedReviews.has(review.id)}
         />
-      ))}
+      </View>
+    );
+  };
+
+  // Get item layout for FlashList optimization (currently unused but kept for future optimization)
+  // const getItemLayout = (data: any, index: number) => {
+  //   const item = itemsWithHeights[index];
+  //   return {
+  //     length: item?.height || 280,
+  //     offset: 0, // FlashList will calculate this
+  //     index,
+  //   };
+  // };
+
+  // Skeleton loading component
+  const renderSkeletonGrid = () => {
+    const skeletonItems = Array.from({ length: 6 }, (_, index) => ({
+      id: `skeleton-${index}`,
+      height: 280 + (index % 3) * 40, // Varied heights for natural look
+    }));
+
+    return (
+      <View className="flex-1 p-4">
+        <View className="flex-row">
+          <View className="flex-1 mr-2">
+            {skeletonItems
+              .filter((_, index) => index % 2 === 0)
+              .map((item) => (
+                <ProfileCardSkeleton key={item.id} cardHeight={item.height} />
+              ))}
+          </View>
+          <View className="flex-1 ml-2">
+            {skeletonItems
+              .filter((_, index) => index % 2 === 1)
+              .map((item) => (
+                <ProfileCardSkeleton key={item.id} cardHeight={item.height} />
+              ))}
+          </View>
+        </View>
+      </View>
+    );
+  };
+
+  // Empty state component
+  const renderEmptyComponent = () => (
+    <View className="flex-1 items-center justify-center p-16">
+      <Text className="text-text-secondary text-lg text-center">
+        {refreshing ? "Loading reviews..." : "No reviews found.\nPull down to refresh or try changing your filters."}
+      </Text>
     </View>
   );
 
-  return (
-    <ScrollView
-      className="flex-1"
-      contentContainerStyle={{ padding: 16 }}
-      showsVerticalScrollIndicator={false}
-      refreshControl={
-        onRefresh ? (
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#FFFFFF" colors={["#FFFFFF"]} />
-        ) : undefined
-      }
-    >
-      <View className="flex-row">
-        {renderColumn(leftColumn, true)}
-        {renderColumn(rightColumn, false)}
-      </View>
+  // Show skeleton loading during initial load
+  if (refreshing && (!data || data.length === 0)) {
+    return renderSkeletonGrid();
+  }
 
-      {/* Bottom spacing for floating button */}
-      <View className="h-20" />
-    </ScrollView>
+  // Early return for empty data
+  if (!data || !Array.isArray(data) || data.length === 0) {
+    return (
+      <View className="flex-1">
+        <FlashList
+          data={[]}
+          renderItem={() => null}
+          estimatedItemSize={280}
+          contentContainerStyle={{ padding: 16 }}
+          refreshControl={
+            onRefresh ? (
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#FFFFFF" colors={["#FFFFFF"]} />
+            ) : undefined
+          }
+          ListEmptyComponent={renderEmptyComponent}
+        />
+      </View>
+    );
+  }
+
+  return (
+    <View className="flex-1">
+      <FlashList
+        data={itemsWithHeights}
+        renderItem={renderItem}
+        numColumns={2}
+        estimatedItemSize={280}
+        contentContainerStyle={{ padding: 16 }}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          onRefresh ? (
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#FFFFFF" colors={["#FFFFFF"]} />
+          ) : undefined
+        }
+        onEndReached={onEndReached}
+        onEndReachedThreshold={onEndReachedThreshold}
+        ListEmptyComponent={renderEmptyComponent}
+        // Add bottom spacing for floating button
+        ListFooterComponent={() => <View className="h-20" />}
+      />
+    </View>
   );
 }
 

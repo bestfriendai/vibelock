@@ -125,7 +125,7 @@ function BrowseStackNavigator() {
         options={{
           headerShown: true,
           headerTitle: "Review",
-          headerStyle: { backgroundColor: "#141418" },
+          headerStyle: { backgroundColor: "#000000" },
           headerTintColor: "#FFFFFF",
           headerBackTitle: "Back",
         }}
@@ -149,7 +149,7 @@ function SearchStackNavigator() {
         options={{
           headerShown: true,
           headerTitle: "Review",
-          headerStyle: { backgroundColor: "#141418" },
+          headerStyle: { backgroundColor: "#000000" },
           headerTintColor: "#FFFFFF",
           headerBackTitle: "Back",
         }}
@@ -186,7 +186,7 @@ function SettingsStackNavigator() {
         options={{
           headerShown: true,
           headerTitle: "Supabase Test",
-          headerStyle: { backgroundColor: "#141418" },
+          headerStyle: { backgroundColor: "#000000" },
           headerTintColor: "#FFFFFF",
           headerBackTitle: "Back",
         }}
@@ -224,7 +224,7 @@ function TabNavigator() {
           tabBarActiveTintColor: "#FFFFFF",
           tabBarInactiveTintColor: "#9CA3AF",
           tabBarStyle: {
-            backgroundColor: "#141418",
+            backgroundColor: "#000000",
             borderTopWidth: 1,
             borderTopColor: "#2A2A2F",
             paddingBottom: 8,
@@ -293,7 +293,7 @@ export default function AppNavigator() {
               presentation: "modal",
               headerShown: true,
               headerTitle: "Write Review",
-              headerStyle: { backgroundColor: "#141418" },
+              headerStyle: { backgroundColor: "#000000" },
               headerTintColor: "#FFFFFF",
             }}
           />

@@ -15,7 +15,8 @@
     },
     "ios": {
       "supportsTablet": true,
-      "icon": "./assets/app-icon.png"
+      "icon": "./assets/app-icon.png",
+      "statusBarStyle": "light"
     },
     "android": {
       "edgeToEdgeEnabled": true,

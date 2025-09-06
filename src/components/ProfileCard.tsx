@@ -8,6 +8,7 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from "react-native-reanimated";
 import { BrowseStackParamList } from "../navigation/AppNavigator";
 import { Review } from "../types";
+import { shareService } from "../services/shareService";
 
 interface Props {
   review: Review;
@@ -30,6 +31,7 @@ export default function ProfileCard({ review, cardHeight = 280, onReport, onLike
   const scale = useSharedValue(1);
   const heartScale = useSharedValue(1);
   const reportScale = useSharedValue(1);
+  const shareScale = useSharedValue(1);
 
   // Animated styles
   const animatedCardStyle = useAnimatedStyle(() => ({
@@ -42,6 +44,10 @@ export default function ProfileCard({ review, cardHeight = 280, onReport, onLike
 
   const animatedReportStyle = useAnimatedStyle(() => ({
     transform: [{ scale: reportScale.value }],
+  }));
+
+  const animatedShareStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: shareScale.value }],
   }));
 
   // Safety check: ensure review exists and has required properties
@@ -85,6 +91,14 @@ export default function ProfileCard({ review, cardHeight = 280, onReport, onLike
     onLike?.();
   };
 
+  const handleShare = (e: any) => {
+    e.stopPropagation();
+    shareScale.value = withSpring(0.8, { duration: 100 }, () => {
+      shareScale.value = withSpring(1, { duration: 100 });
+    });
+    shareService.shareReview(review);
+  };
+
   return (
     <Animated.View style={[animatedCardStyle, { width: cardWidth, height: cardHeight }]}>
       <Pressable onPress={handlePress} className="overflow-hidden rounded-2xl mb-4 flex-1">
@@ -120,27 +134,38 @@ export default function ProfileCard({ review, cardHeight = 280, onReport, onLike
           }}
         />
 
-        {/* Report Button */}
-        <Animated.View style={[animatedReportStyle, { position: "absolute", top: 12, right: 12 }]}>
-          <Pressable onPress={handleReport} className="bg-black/50 rounded-full p-2" hitSlop={8}>
-            <Ionicons name="flag" size={16} color="#FFFFFF" />
-          </Pressable>
-        </Animated.View>
+        {/* Action Buttons - Top Right */}
+        <View className="absolute top-3 right-3 flex-col space-y-2">
+          {/* Share Button */}
+          <Animated.View style={animatedShareStyle}>
+            <Pressable onPress={handleShare} className="bg-black/60 rounded-full p-2.5" hitSlop={8}>
+              <Ionicons name="share-outline" size={16} color="#FFFFFF" />
+            </Pressable>
+          </Animated.View>
 
-        {/* Heart/Like Button */}
+          {/* Report Button */}
+          <Animated.View style={animatedReportStyle}>
+            <Pressable onPress={handleReport} className="bg-black/60 rounded-full p-2.5" hitSlop={8}>
+              <Ionicons name="flag" size={16} color="#FFFFFF" />
+            </Pressable>
+          </Animated.View>
+        </View>
+
+        {/* Heart/Like Button - Top Left */}
         <Animated.View style={[animatedHeartStyle, { position: "absolute", top: 12, left: 12 }]}>
-          <Pressable onPress={handleLike} className="bg-black/50 rounded-full p-2" hitSlop={8}>
-            <Ionicons name={isLiked ? "heart" : "heart-outline"} size={16} color={isLiked ? "#FFFFFF" : "#FFFFFF"} />
+          <Pressable onPress={handleLike} className="bg-black/60 rounded-full p-2.5" hitSlop={8}>
+            <Ionicons name={isLiked ? "heart" : "heart-outline"} size={16} color={isLiked ? "#EF4444" : "#FFFFFF"} />
           </Pressable>
         </Animated.View>
 
         {/* Content */}
-        <View className="absolute bottom-0 left-0 right-0 p-4">
+        <View className="absolute bottom-0 left-0 right-0 p-4 pb-12">
           {/* Name */}
-          <Text className="text-white font-bold text-xl">{review.reviewedPersonName || "Unknown"}</Text>
+          <Text className="text-white font-bold text-xl mb-1">{review.reviewedPersonName || "Unknown"}</Text>
+
           {/* Location */}
           {review.reviewedPersonLocation && (
-            <View className="flex-row items-center mt-1">
+            <View className="flex-row items-center mb-2">
               <Ionicons name="location" size={12} color="#FFFFFF" />
               <Text className="text-white/80 text-xs ml-1">
                 {review.reviewedPersonLocation.city || "Unknown"}, {review.reviewedPersonLocation.state || "Unknown"}
@@ -148,22 +173,68 @@ export default function ProfileCard({ review, cardHeight = 280, onReport, onLike
             </View>
           )}
 
-          {/* Like Count */}
-          {review.likeCount > 0 && (
-            <View className="flex-row items-center mt-2">
-              <Ionicons name="heart" size={12} color="#FFFFFF" />
-              <Text className="text-white/70 text-xs ml-1">{review.likeCount}</Text>
+          {/* Review Preview Text */}
+          {review.reviewText && (
+            <Text className="text-white/90 text-sm mb-3 leading-5" numberOfLines={2} ellipsizeMode="tail">
+              {review.reviewText}
+            </Text>
+          )}
+
+          {/* Stats Row */}
+          <View className="flex-row items-center">
+            {/* Like Count */}
+            {review.likeCount > 0 && (
+              <View className="flex-row items-center mr-4">
+                <Ionicons name="heart" size={12} color="#EF4444" />
+                <Text className="text-white/80 text-xs ml-1">{review.likeCount}</Text>
+              </View>
+            )}
+
+            {/* Comment indicator (placeholder for future feature) */}
+            <View className="flex-row items-center">
+              <Ionicons name="chatbubble-outline" size={12} color="#FFFFFF" />
+              <Text className="text-white/80 text-xs ml-1">0</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Bottom Indicators Row */}
+        <View className="absolute bottom-3 left-3 right-3 flex-row items-end justify-between">
+          {/* Flag Count Indicators - Left Side */}
+          {(review.greenFlags?.length > 0 || review.redFlags?.length > 0) && (
+            <View className="flex-row space-x-2">
+              {review.greenFlags?.length > 0 && (
+                <View className="bg-green-500/20 border border-green-500/40 rounded-full px-2 py-1 flex-row items-center">
+                  <Ionicons name="leaf" size={10} color="#22C55E" />
+                  <Text className="text-green-400 text-xs font-medium ml-1">{review.greenFlags.length}</Text>
+                </View>
+              )}
+              {review.redFlags?.length > 0 && (
+                <View className="bg-red-500/20 border border-red-500/40 rounded-full px-2 py-1 flex-row items-center">
+                  <Ionicons name="alert-circle" size={10} color="#EF4444" />
+                  <Text className="text-red-400 text-xs font-medium ml-1">{review.redFlags.length}</Text>
+                </View>
+              )}
+            </View>
+          )}
+
+          {/* Sentiment Chip - Right Side */}
+          {review.sentiment && (
+            <View>
+              {review.sentiment === "green" ? (
+                <View className="bg-green-500/90 rounded-full px-3 py-1.5 flex-row items-center shadow-lg">
+                  <Ionicons name="checkmark-circle" size={12} color="#FFFFFF" />
+                  <Text className="text-white text-xs font-semibold ml-1">GREEN FLAG</Text>
+                </View>
+              ) : (
+                <View className="bg-red-500/90 rounded-full px-3 py-1.5 flex-row items-center shadow-lg">
+                  <Ionicons name="warning" size={12} color="#FFFFFF" />
+                  <Text className="text-white text-xs font-semibold ml-1">RED FLAG</Text>
+                </View>
+              )}
             </View>
           )}
         </View>
-
-        {/* Sentiment Overlay */}
-        {review.sentiment && (
-          <View className="absolute bottom-3 right-3 bg-black/50 rounded-full px-2 py-1 flex-row items-center">
-            <Ionicons name="flag" size={12} color={review.sentiment === "green" ? "#22C55E" : "#FFFFFF"} />
-            <Text className="text-white text-xs ml-1">{review.sentiment === "green" ? "Green" : "Red"}</Text>
-          </View>
-        )}
       </Pressable>
     </Animated.View>
   );

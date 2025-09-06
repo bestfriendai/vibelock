@@ -4,6 +4,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { Profile } from "../types";
+import { supabaseSearch } from "../services/supabase";
+import useAuthStore from "../state/authStore";
+// import ProfileCardSkeleton from "../components/ProfileCardSkeleton"; // Currently unused
 
 // Mock profile data aggregated from reviews
 const mockProfiles: Profile[] = [
@@ -66,28 +69,77 @@ const mockProfiles: Profile[] = [
 
 export default function SearchScreen() {
   const navigation = useNavigation<any>();
+  const { user } = useAuthStore();
   const [searchQuery, setSearchQuery] = useState("");
   const [radius, setRadius] = useState(50);
   const [searchResults, setSearchResults] = useState<Profile[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [trendingNames, setTrendingNames] = useState<string[]>([]);
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
 
-  // Search functionality
+  // Load trending names on component mount
+  useEffect(() => {
+    const loadTrendingNames = async () => {
+      try {
+        const trending = await supabaseSearch.getTrendingNames(5);
+        setTrendingNames(trending);
+      } catch (error) {
+        console.error("Error loading trending names:", error);
+      }
+    };
+    loadTrendingNames();
+  }, []);
+
+  // Search functionality with real Supabase search
   useEffect(() => {
     if (searchQuery.trim().length >= 2) {
       setIsSearching(true);
-      const timer = setTimeout(() => {
-        const filtered = mockProfiles.filter((profile) =>
-          profile.firstName.toLowerCase().includes(searchQuery.toLowerCase()),
-        );
-        setSearchResults(filtered);
-        setIsSearching(false);
+      const timer = setTimeout(async () => {
+        try {
+          // Build search filters based on user location and radius
+          const filters: any = {};
+
+          if (user?.location && radius < 100) {
+            if (radius < 50) {
+              // Small radius: filter by city and state
+              filters.city = user.location.city;
+              filters.state = user.location.state;
+            } else {
+              // Medium radius: filter by state only
+              filters.state = user.location.state;
+            }
+          }
+
+          // Add user's gender preference as category filter
+          if (user?.genderPreference && user.genderPreference !== "all") {
+            filters.category = user.genderPreference;
+          }
+
+          const results = await supabaseSearch.searchProfiles(searchQuery, filters);
+          setSearchResults(results);
+
+          // Add to recent searches (keep last 5)
+          setRecentSearches((prev) => {
+            const updated = [searchQuery, ...prev.filter((s) => s !== searchQuery)];
+            return updated.slice(0, 5);
+          });
+        } catch (error) {
+          console.error("Search error:", error);
+          // Fallback to mock data on error
+          const filtered = mockProfiles.filter((profile) =>
+            profile.firstName.toLowerCase().includes(searchQuery.toLowerCase()),
+          );
+          setSearchResults(filtered);
+        } finally {
+          setIsSearching(false);
+        }
       }, 500);
       return () => clearTimeout(timer);
     } else {
       setSearchResults([]);
       setIsSearching(false);
     }
-  }, [searchQuery]);
+  }, [searchQuery, radius, user]);
 
   const handleProfilePress = (profile: Profile) => {
     navigation.navigate("PersonProfile", {
@@ -170,7 +222,12 @@ export default function SearchScreen() {
                 onChangeText={setSearchQuery}
                 autoCapitalize="words"
               />
-              <View className="absolute right-3 top-3">
+              <View className="absolute right-3 top-3 flex-row items-center">
+                {searchQuery.length > 0 && (
+                  <Pressable onPress={() => setSearchQuery("")} className="mr-2">
+                    <Ionicons name="close-circle" size={20} color="#9CA3AF" />
+                  </Pressable>
+                )}
                 <Ionicons name={isSearching ? "hourglass" : "search"} size={20} color="#9CA3AF" />
               </View>
             </View>
@@ -211,7 +268,32 @@ export default function SearchScreen() {
             contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 100 }}
             showsVerticalScrollIndicator={false}
             ListEmptyComponent={
-              !isSearching ? (
+              isSearching ? (
+                <View className="px-4">
+                  {/* Search skeleton loading */}
+                  {Array.from({ length: 3 }).map((_, index) => (
+                    <View key={index} className="bg-surface-800 border border-surface-700 rounded-xl p-4 mb-3">
+                      <View className="flex-row items-center justify-between">
+                        <View className="flex-1">
+                          <View className="bg-surface-600 h-5 w-24 rounded mb-2" />
+                          <View className="bg-surface-600 h-4 w-32 rounded mb-2" />
+                          <View className="flex-row items-center">
+                            <View className="bg-surface-600 h-4 w-16 rounded mr-4" />
+                            <View className="bg-surface-600 h-4 w-12 rounded" />
+                          </View>
+                        </View>
+                        <View className="items-end">
+                          <View className="flex-row items-center">
+                            <View className="bg-surface-600 h-6 w-8 rounded-full mr-2" />
+                            <View className="bg-surface-600 h-6 w-8 rounded-full" />
+                          </View>
+                          <View className="bg-surface-600 h-4 w-4 rounded mt-2" />
+                        </View>
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              ) : (
                 <View className="items-center justify-center py-12">
                   <Ionicons name="person-outline" size={48} color="#6B7280" />
                   <Text className="text-text-secondary text-lg font-medium mt-4">No profiles found</Text>
@@ -219,14 +301,59 @@ export default function SearchScreen() {
                     Try a different name or expand your search radius
                   </Text>
                 </View>
-              ) : null
+              )
             }
           />
         ) : (
-          <View className="flex-1 items-center justify-center px-4">
-            <Ionicons name="search-outline" size={48} color="#6B7280" />
-            <Text className="text-text-secondary text-lg font-medium mt-4">Search for someone</Text>
-            <Text className="text-text-muted text-center mt-2">Enter at least 2 characters to find reviews</Text>
+          <View className="flex-1 px-4">
+            {/* Trending Names */}
+            {trendingNames.length > 0 && (
+              <View className="mb-6">
+                <Text className="text-text-primary font-medium mb-3">Trending Names</Text>
+                <View className="flex-row flex-wrap">
+                  {trendingNames.map((name, index) => (
+                    <Pressable
+                      key={index}
+                      onPress={() => setSearchQuery(name)}
+                      className="bg-surface-700 rounded-full px-3 py-2 mr-2 mb-2"
+                    >
+                      <Text className="text-text-secondary text-sm">{name}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </View>
+            )}
+
+            {/* Recent Searches */}
+            {recentSearches.length > 0 && (
+              <View className="mb-6">
+                <View className="flex-row items-center justify-between mb-3">
+                  <Text className="text-text-primary font-medium">Recent Searches</Text>
+                  <Pressable onPress={() => setRecentSearches([])} className="px-2 py-1">
+                    <Text className="text-text-muted text-sm">Clear</Text>
+                  </Pressable>
+                </View>
+                <View className="flex-row flex-wrap">
+                  {recentSearches.map((search, index) => (
+                    <Pressable
+                      key={index}
+                      onPress={() => setSearchQuery(search)}
+                      className="bg-surface-800 border border-surface-700 rounded-full px-3 py-2 mr-2 mb-2 flex-row items-center"
+                    >
+                      <Ionicons name="time-outline" size={14} color="#9CA3AF" />
+                      <Text className="text-text-secondary text-sm ml-1">{search}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </View>
+            )}
+
+            {/* Empty State */}
+            <View className="flex-1 items-center justify-center">
+              <Ionicons name="search-outline" size={48} color="#6B7280" />
+              <Text className="text-text-secondary text-lg font-medium mt-4">Search for someone</Text>
+              <Text className="text-text-muted text-center mt-2">Enter at least 2 characters to find reviews</Text>
+            </View>
           </View>
         )}
       </View>

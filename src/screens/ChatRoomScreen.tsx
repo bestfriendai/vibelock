@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
 import { View, Text, Pressable, Modal, KeyboardAvoidingView, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRoute, RouteProp } from "@react-navigation/native";
+import { useRoute, RouteProp, useNavigation } from "@react-navigation/native";
 import { FlashList } from "@shopify/flash-list";
 import { Ionicons } from "@expo/vector-icons";
 import useChatStore from "../state/chatStore";
+import useAuthStore from "../state/authStore";
 import { RootStackParamList } from "../navigation/AppNavigator";
 import MessageBubble from "../components/MessageBubble";
 import ChatInput from "../components/ChatInput";
@@ -27,6 +28,8 @@ function toDateSafe(value: any): Date {
 
 export default function ChatRoomScreen() {
   const { params } = useRoute<ChatRoomRouteProp>();
+  const navigation = useNavigation<any>();
+  const { user } = useAuthStore();
 
   const { roomId } = params;
   const [showMemberList, setShowMemberList] = useState(false);
@@ -34,6 +37,35 @@ export default function ChatRoomScreen() {
 
   const { currentChatRoom, messages, members, joinChatRoom, leaveChatRoom, sendMessage, setTyping, typingUsers } =
     useChatStore();
+
+  // Guard against guest access
+  if (!user) {
+    return (
+      <SafeAreaView className="flex-1 bg-surface-900">
+        <View className="flex-1 items-center justify-center px-6">
+          <Ionicons name="chatbubbles-outline" size={64} color="#6B7280" />
+          <Text className="text-text-primary text-xl font-bold mt-4 text-center">
+            Sign In Required
+          </Text>
+          <Text className="text-text-secondary text-center mt-2 leading-6">
+            You need to sign in to join chat rooms and participate in conversations.
+          </Text>
+          <Pressable
+            onPress={() => navigation.navigate("SignIn")}
+            className="bg-brand-red rounded-xl px-6 py-3 mt-6"
+          >
+            <Text className="text-black font-semibold text-base">Sign In</Text>
+          </Pressable>
+          <Pressable
+            onPress={() => navigation.goBack()}
+            className="mt-4"
+          >
+            <Text className="text-text-muted text-base">Go Back</Text>
+          </Pressable>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   const listRef = useRef<FlashList<any>>(null);
 
@@ -49,7 +81,11 @@ export default function ChatRoomScreen() {
     sendMessage(roomId, text);
     setReplyingTo(null);
     // scroll to bottom after send
-    setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 50);
+    setTimeout(() => {
+      if (listRef.current && roomMessages.length > 0) {
+        listRef.current.scrollToIndex({ index: roomMessages.length - 1, animated: true });
+      }
+    }, 100);
   };
 
   const handleReply = (message: ChatMessage) => {
@@ -62,7 +98,9 @@ export default function ChatRoomScreen() {
   };
 
   const scrollToBottom = () => {
-    listRef.current?.scrollToEnd({ animated: true });
+    if (listRef.current && roomMessages.length > 0) {
+      listRef.current.scrollToIndex({ index: roomMessages.length - 1, animated: true });
+    }
   };
 
   return (

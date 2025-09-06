@@ -3,6 +3,7 @@ import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { NavigationContainer } from "@react-navigation/native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import * as Linking from "expo-linking";
 import AppNavigator from "./src/navigation/AppNavigator";
 import ErrorBoundary from "./src/components/ErrorBoundary";
 import useAuthStore from "./src/state/authStore";
@@ -28,6 +29,28 @@ const openai_api_key = Constants.expoConfig.extra.apikey;
 
 */
 
+// Deep linking configuration
+const linking = {
+  prefixes: [
+    Linking.createURL("/"),
+    "locker-room-talk://",
+    "https://lockerroom.app",
+    "http://lockerroom.app",
+  ],
+  config: {
+    screens: {
+      MainTabs: "main",
+      PersonProfile: "profile/:firstName/:city/:state",
+      ChatRoom: "chat/:roomId",
+      ReviewDetail: "review/:reviewId",
+      CreateReview: "create",
+      SignIn: "signin",
+      SignUp: "signup",
+      Onboarding: "onboarding",
+    },
+  },
+};
+
 export default function App() {
   const { initializeAuthListener } = useAuthStore();
 
@@ -45,9 +68,9 @@ export default function App() {
     <ErrorBoundary>
       <GestureHandlerRootView className="flex-1">
         <SafeAreaProvider>
-          <NavigationContainer>
+          <NavigationContainer linking={linking}>
             <AppNavigator />
-            <StatusBar style="auto" />
+            <StatusBar style="light" backgroundColor="#000000" />
           </NavigationContainer>
         </SafeAreaProvider>
       </GestureHandlerRootView>

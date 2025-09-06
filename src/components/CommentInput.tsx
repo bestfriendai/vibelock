@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, Pressable, ActivityIndicator, Keyboard } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import useAuthStore from "../state/authStore";
 
 interface CommentInputProps {
   onSubmit: (content: string) => Promise<void>;
@@ -8,6 +9,7 @@ interface CommentInputProps {
   isLoading?: boolean;
   replyToComment?: string; // Comment author name if replying
   onCancelReply?: () => void;
+  onSignInPress?: () => void; // Callback for sign in button
 }
 
 export default function CommentInput({
@@ -16,9 +18,11 @@ export default function CommentInput({
   isLoading = false,
   replyToComment,
   onCancelReply,
+  onSignInPress,
 }: CommentInputProps) {
   const [comment, setComment] = useState("");
   const [isFocused, setIsFocused] = useState(false);
+  const { user } = useAuthStore();
 
   const handleSubmit = async () => {
     if (comment.trim() && !isLoading) {
@@ -35,7 +39,27 @@ export default function CommentInput({
     }
   };
 
-  const canSubmit = comment.trim().length > 0 && !isLoading;
+  const canSubmit = comment.trim().length > 0 && !isLoading && !!user;
+
+  // Show sign-in prompt for guests
+  if (!user) {
+    return (
+      <View className="bg-surface-800 border-t border-surface-700">
+        <View className="flex-row items-center justify-between px-4 py-4">
+          <View className="flex-1">
+            <Text className="text-text-secondary text-base">Sign in to join the conversation</Text>
+            <Text className="text-text-muted text-sm mt-1">Share your thoughts and connect with others</Text>
+          </View>
+          <Pressable
+            onPress={onSignInPress}
+            className="bg-brand-red rounded-lg px-4 py-2 ml-3"
+          >
+            <Text className="text-black font-semibold text-sm">Sign In</Text>
+          </Pressable>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View className="bg-surface-800 border-t border-surface-700">

@@ -11,7 +11,7 @@ import {
   TouchableWithoutFeedback,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { RouteProp, useRoute } from "@react-navigation/native";
+import { RouteProp, useRoute, useNavigation } from "@react-navigation/native";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -27,8 +27,8 @@ import CommentSection from "../components/CommentSection";
 import CommentInput from "../components/CommentInput";
 import { Comment as ReviewComment } from "../types";
 import useReviewsStore from "../state/reviewsStore";
-import useAuthStore from "../state/authStore";
 import useCommentsStore from "../state/commentsStore";
+import useAuthStore from "../state/authStore";
 type ReviewDetailRouteProp =
   | RouteProp<BrowseStackParamList, "ReviewDetail">
   | RouteProp<SearchStackParamList, "ReviewDetail">
@@ -36,6 +36,7 @@ type ReviewDetailRouteProp =
 
 export default function ReviewDetailScreen() {
   const route = useRoute<ReviewDetailRouteProp>();
+  const navigation = useNavigation<any>();
   const { review: rawReview } = route.params;
 
   // Handle serialized dates from navigation params
@@ -248,7 +249,7 @@ export default function ReviewDetailScreen() {
 
   return (
     <View className="flex-1 bg-surface-900">
-      <StatusBar barStyle="light-content" backgroundColor="#141418" />
+      <StatusBar barStyle="light-content" backgroundColor="#000000" />
 
       {/* Main Content */}
       <Animated.ScrollView
@@ -420,6 +421,7 @@ export default function ReviewDetailScreen() {
               isLoading={isPostingComment}
               replyToComment={replyToComment?.authorName}
               onCancelReply={handleCancelReply}
+              onSignInPress={() => navigation.navigate("SignIn")}
             />
           </View>
         </TouchableWithoutFeedback>
