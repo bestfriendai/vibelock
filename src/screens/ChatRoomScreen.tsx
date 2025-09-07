@@ -57,7 +57,7 @@ export default function ChatRoomScreen() {
   // Guard against guest access
   if (!canAccessChat || needsSignIn) {
     return (
-      <SafeAreaView className="flex-1 bg-surface-900">
+      <SafeAreaView className="flex-1 bg-black">
         <View className="flex-1 items-center justify-center px-6">
           <Ionicons name="chatbubbles-outline" size={64} color="#6B7280" />
           <Text className="text-text-primary text-xl font-bold mt-4 text-center">
@@ -165,20 +165,17 @@ export default function ChatRoomScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-surface-900">
+    <SafeAreaView className="flex-1 bg-black">
       <KeyboardAvoidingView
         className="flex-1"
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
       >
         {/* Enhanced Room Header */}
-        <View className="px-6 py-6 border-b border-border bg-surface-800">
+        <View className="px-4 py-2 border-b border-border bg-black sm:px-6">
           <View className="flex-row items-center justify-between">
             <View className="flex-1">
               <Text className="text-text-primary text-lg font-bold">{currentChatRoom?.name || "Chat"}</Text>
-              <Text className="text-text-secondary text-xs">
-                {currentChatRoom?.onlineCount || 0} online • {roomMembers.length} members
-              </Text>
             </View>
 
             <View className="flex-row items-center space-x-3">
@@ -232,17 +229,17 @@ export default function ChatRoomScreen() {
             if (item.content && item.content.length > 100) return 'long';
             return 'short';
           }}
-          contentContainerStyle={{ padding: 24 }}
+          contentContainerStyle={{ paddingHorizontal: 12, paddingTop: 0, paddingBottom: 0 }}
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={
             roomMessages.length > 0 ? (
-              <View className="items-center py-6">
+              <View className="items-center py-1">
                 <Pressable
                   onPress={handleLoadOlderMessages}
                   disabled={isLoadingOlderMessages}
-                  className={`bg-surface-700 rounded-full px-6 py-3 ${isLoadingOlderMessages ? "opacity-50" : ""}`}
+                  className={`bg-surface-700 rounded-full px-2.5 py-1 ${isLoadingOlderMessages ? "opacity-50" : ""}`}
                 >
-                  <Text className="text-text-secondary text-sm font-medium">
+                  <Text className="text-text-secondary text-xs font-medium">
                     {isLoadingOlderMessages ? "Loading..." : "Load older messages"}
                   </Text>
                 </Pressable>
@@ -253,7 +250,7 @@ export default function ChatRoomScreen() {
 
         {/* Typing indicator */}
         {typingUsers.filter((t) => t.chatRoomId === roomId).length > 0 && (
-          <View className="px-4 pb-1">
+          <View className="px-4 py-1">
             <View className="flex-row items-center">
               <View className="flex-row space-x-1 mr-2">
                 <View className="w-1 h-1 bg-text-muted rounded-full animate-pulse" />
@@ -295,8 +292,8 @@ export default function ChatRoomScreen() {
         presentationStyle="pageSheet"
         onRequestClose={() => setShowMemberList(false)}
       >
-        <SafeAreaView className="flex-1 bg-surface-900">
-          <View className="flex-row items-center justify-between px-4 py-3 border-b border-border">
+        <SafeAreaView className="flex-1 bg-black">
+          <View className="flex-row items-center justify-between px-4 py-3 border-b border-border sm:px-6">
             <Text className="text-text-primary text-lg font-bold">Members ({roomMembers.length})</Text>
             <Pressable onPress={() => setShowMemberList(false)} className="p-2">
               <Ionicons name="close" size={24} color="#9CA3AF" />
@@ -307,7 +304,7 @@ export default function ChatRoomScreen() {
             data={roomMembers}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
-              <View className="flex-row items-center px-6 py-4 border-b border-surface-700">
+              <View className="flex-row items-center px-4 py-3 border-b border-surface-700 sm:px-6 sm:py-4">
                 <View className="w-10 h-10 bg-brand-red rounded-full items-center justify-center mr-3">
                   <Text className="text-black font-bold">{item.userName.charAt(0).toUpperCase()}</Text>
                 </View>

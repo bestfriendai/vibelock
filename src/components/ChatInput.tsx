@@ -169,10 +169,10 @@ export default function ChatInput({ onSend, onTyping, onSendMedia, replyingTo, o
   }));
 
   return (
-    <View className="bg-surface-800 border-t border-border" style={{ paddingBottom: insets.bottom }}>
+    <View className="bg-black border-t border-border" style={{ paddingBottom: Math.min(insets.bottom, 12) }}>
         {/* Reply indicator */}
         {replyingTo && (
-          <View className="flex-row items-center justify-between px-4 py-2 bg-surface-700/50 border-b border-border">
+          <View className="flex-row items-center justify-between px-4 py-2 bg-surface-800/50 border-b border-border">
             <View className="flex-1">
               <Text className="text-text-secondary text-xs font-medium">Replying to {replyingTo.senderName}</Text>
               <Text className="text-text-muted text-sm" numberOfLines={1}>
@@ -187,10 +187,10 @@ export default function ChatInput({ onSend, onTyping, onSendMedia, replyingTo, o
 
       {/* Emoji picker */}
       {showEmojis && (
-        <Animated.View style={[emojiAnimatedStyle]} className="px-4 py-3 bg-surface-700/50 border-b border-border">
+        <Animated.View style={[emojiAnimatedStyle]} className="px-3 py-2 bg-surface-800/50 border-b border-border">
           <View className="flex-row flex-wrap gap-2">
             {emojis.map((emoji) => (
-              <Pressable key={emoji} onPress={() => addEmoji(emoji)} className="p-2 rounded-lg bg-surface-800">
+              <Pressable key={emoji} onPress={() => addEmoji(emoji)} className="p-1.5 rounded-lg bg-surface-800">
                 <Text className="text-lg">{emoji}</Text>
               </Pressable>
             ))}
@@ -200,18 +200,18 @@ export default function ChatInput({ onSend, onTyping, onSendMedia, replyingTo, o
 
       {/* Attachment options */}
       {showAttachments && (
-        <Animated.View style={[attachmentAnimatedStyle]} className="px-4 py-3 bg-surface-700/50 border-b border-border">
-          <View className="flex-row space-x-4">
-            <Pressable onPress={handleCamera} className="items-center p-3 bg-surface-800 rounded-xl">
-              <Ionicons name="camera" size={24} color="#FFFFFF" />
+        <Animated.View style={[attachmentAnimatedStyle]} className="px-3 py-2 bg-surface-800/50 border-b border-border">
+          <View className="flex-row space-x-3">
+            <Pressable onPress={handleCamera} className="items-center p-2.5 bg-surface-800 rounded-xl">
+              <Ionicons name="camera" size={22} color="#FFFFFF" />
               <Text className="text-text-secondary text-xs mt-1">Camera</Text>
             </Pressable>
-            <Pressable onPress={handleImagePicker} className="items-center p-3 bg-surface-800 rounded-xl">
-              <Ionicons name="images" size={24} color="#22C55E" />
+            <Pressable onPress={handleImagePicker} className="items-center p-2.5 bg-surface-800 rounded-xl">
+              <Ionicons name="images" size={22} color="#22C55E" />
               <Text className="text-text-secondary text-xs mt-1">Gallery</Text>
             </Pressable>
-            <Pressable onPress={handleDocument} className="items-center p-3 bg-surface-800 rounded-xl">
-              <Ionicons name="document" size={24} color="#3B82F6" />
+            <Pressable onPress={handleDocument} className="items-center p-2.5 bg-surface-800 rounded-xl">
+              <Ionicons name="document" size={22} color="#3B82F6" />
               <Text className="text-text-secondary text-xs mt-1">File</Text>
             </Pressable>
           </View>
@@ -219,7 +219,7 @@ export default function ChatInput({ onSend, onTyping, onSendMedia, replyingTo, o
       )}
 
       {/* Input area */}
-      <View className="flex-row items-end px-3 py-2">
+      <View className="flex-row items-end px-3 py-1 sm:px-4">
         {/* Attachment button */}
         <Pressable onPress={toggleAttachments} className="p-2 mr-2">
           <Ionicons name="add-circle" size={24} color={showAttachments ? "#FFFFFF" : "#9CA3AF"} />

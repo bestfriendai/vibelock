@@ -267,3 +267,33 @@ export function getResponsiveSpacing(deviceType: DeviceInfo['deviceType']) {
   
   return baseSpacing;
 }
+
+/**
+ * Hook for responsive chat styling
+ */
+export function useChatResponsiveStyles() {
+  const { width } = useScreenDimensions();
+  const deviceInfo = getDeviceInfo({ width, height: 0, scale: 1, fontScale: 1 });
+
+  return {
+    // Chat container padding
+    containerPadding: deviceInfo.isTablet ? 'px-6 py-6' : 'px-4 py-4',
+
+    // Message list padding
+    messageListPadding: deviceInfo.isTablet ?
+      { paddingHorizontal: 24, paddingVertical: 16 } :
+      { paddingHorizontal: 16, paddingVertical: 12 },
+
+    // Input area padding
+    inputPadding: deviceInfo.isTablet ? 'px-4 py-3' : 'px-3 py-2',
+
+    // Header padding
+    headerPadding: deviceInfo.isTablet ? 'px-6 py-6' : 'px-4 py-4',
+
+    // Member list item padding
+    memberItemPadding: deviceInfo.isTablet ? 'px-6 py-4' : 'px-4 py-3',
+
+    // Device info for conditional rendering
+    deviceInfo,
+  };
+}

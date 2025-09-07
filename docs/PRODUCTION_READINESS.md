@@ -1,16 +1,17 @@
 # Production Readiness Guide
 
-This document is a practical, repo‑specific guide to take this Expo React Native app (Locker Room Talk) to production with strong quality, reliability, and security. It prioritizes critical fixes first, then outlines an implementation roadmap across security, platform configuration, quality engineering, observability, and operations.
+This document is a practical, repo‑specific guide to take the Locker Room Talk Expo React Native app to production with strong quality, reliability, and security. It prioritizes critical fixes first, then outlines an implementation roadmap across security, platform configuration, quality engineering, observability, and operations.
 
 ## Executive Summary
 
 - Critical: Secrets are currently committed to the repo in `.env`. Immediately migrate secrets out of Git, rotate keys, and enforce secret scanning.
-- Platform alignment: Ensure React/React Native/Expo SDK versions are compatible. Expo SDK 53 typically pairs with React 18; verify React 19 compatibility or pin to React 18.2.x.
+- Platform alignment: App currently uses React 19.0.0 with Expo SDK 53. Verify compatibility or consider pinning to React 18.2.x if issues arise.
 - CI/CD: Add a CI pipeline that runs type checks, lint, unit tests, and build validations (EAS Build previews). Enforce branch protections.
 - Quality engineering: Add unit/integration tests (Jest + Testing Library) and lightweight E2E (Detox or Maestro) for smoke flows.
 - Observability: Add Sentry or Bugsnag for crash/error monitoring; keep using `expo-insights` but introduce a structured app logger.
 - Performance & stability: Optimize Supabase real‑time message subscription to avoid refetching whole room on every change; tighten memory and reconnection behavior.
-- Security & data: Establish Supabase RLS policies (documented) for each table used; review Firebase remnants and finalize the migration plan to a single backend.
+- Security & data: Establish Supabase RLS policies (documented) for each table used; remove unused Firebase configuration files.
+- Monetization: Current subscription system is basic (boolean flag) - implement proper RevenueCat integration before production.
 - Release management: Configure `app.json` for OTA updates with `runtimeVersion`, set EAS release channels, and introduce staged rollouts.
 
 ## Immediate Critical Actions (Day 0–1)
@@ -32,11 +33,12 @@ This document is a practical, repo‑specific guide to take this Expo React Nati
 
 ## Stack Overview (Repo‑Specific)
 
-- Mobile: Expo SDK 53, React Native 0.79.x, React 19 currently.
+- Mobile: Expo SDK 53, React Native 0.79.5, React 19.0.0, TypeScript ~5.8.3.
 - Navigation: `@react-navigation` stacks and tabs; deep linking configured in `App.tsx`.
 - State: Zustand stores (`src/state/*`) persisted via AsyncStorage.
-- Backend: Supabase (`src/config/supabase.ts`, `src/services/supabase.ts`) with real‑time chat, reviews, comments, reports; some Firebase legacy files present.
+- Backend: Supabase exclusively (`src/config/supabase.ts`, `src/services/supabase.ts`) with real‑time chat, reviews, comments, reports. Firebase config files are legacy/unused.
 - UI: Tailwind (nativewind), custom components in `src/components/*`.
+- Monetization: Basic subscription store (boolean flag), placeholder ad components.
 - Tests: Utility scripts exist (`scripts/test-comprehensive-backend.js`), but no formal unit/E2E test harness.
 
 ## Security & Data Protection
@@ -45,16 +47,19 @@ This document is a practical, repo‑specific guide to take this Expo React Nati
   - Use environment schema enforcement at CI start (`scripts/verify-env.js` exists — good). Extend it to warn on accidental `EXPO_PUBLIC_*` usage for server‑only secrets.
   - Add pre‑commit/pre‑push hooks: run `gitleaks`/`trufflehog` + ESLint + typecheck.
 - Supabase RLS
-  - Define and document row‑level security policies for all tables used: `users`, `reviews_firebase`, `comments_firebase`, `chat_rooms_firebase`, `chat_messages_firebase`, `notifications`, `push_tokens`, `reports`.
+  - Define and document row‑level security policies for all Supabase tables: `users`, `reviews_firebase`, `comments_firebase`, `chat_rooms_firebase`, `chat_messages_firebase`, `notifications`, `push_tokens`, `reports`.
+  - Note: Table names contain "firebase" for legacy reasons but all data is in Supabase.
   - Principle: user can read public content; can only write/delete own rows where appropriate; admin pathways via service role (never shipped to client).
 - Client trust boundary
   - Treat the mobile app as untrusted. Never embed service roles; avoid sensitive endpoints. Anon key is fine for public RLS‑protected reads/writes.
 - PII & content safety
-  - Profiles, reviews, and messages contain PII and UGC. Ensure moderation is enforced server‑side. Consider AI moderation as assistive, not authoritative.
+  - Profiles, reviews, and messages contain PII and UGC. Ensure moderation is enforced server‑side. OpenAI moderation is implemented for content screening.
   - Add T&S, privacy policy, and data deletion pathways. `DeleteAccountScreen` exists — verify backend actual deletion/retention.
 - Transport & integrity
   - Use HTTPS only. Consider certificate pinning if your risk profile warrants it (3rd‑party modules exist, needs careful integration on RN).
-  - Ensure storage object ACLs align with expectations (public vs private buckets).
+  - Ensure Supabase storage object ACLs align with expectations (public vs private buckets).
+- Legacy cleanup
+  - Remove unused Firebase configuration files (`firebase.json`, `firestore.rules`, `firestore.indexes.json`, `.firebaserc`) once confirmed they're not needed.
 
 ## Platform Configuration & Releases
 
@@ -184,8 +189,13 @@ This document is a practical, repo‑specific guide to take this Expo React Nati
    - Integrate Sentry; introduce logger; standardize error surfaces (user‑friendly + developer‑friendly).
 7. App Config & Releases
    - Add `runtimeVersion`, release channels, EAS profiles; formalize staging → prod promotion.
-8. Cleanup Legacy
-   - Decide on Firebase deprecation timeline; remove unused rules/configs when safe. Migrate any remaining features fully to Supabase.
+8. Monetization Implementation
+   - Upgrade basic subscription store to support RevenueCat integration
+   - Replace placeholder AdBanner with actual ad network integration
+   - Implement proper feature gating and paywall flows
+9. Cleanup Legacy
+   - Remove unused Firebase configuration files (`firebase.json`, `firestore.rules`, etc.)
+   - Clean up any remaining Firebase references in documentation
 
 ## Appendix: Notable File Pointers
 

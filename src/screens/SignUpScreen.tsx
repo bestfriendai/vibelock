@@ -16,7 +16,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming, withDelay } from "react-native-reanimated";
 import AnimatedButton from "../components/AnimatedButton";
 import AnimatedInput from "../components/AnimatedInput";
-import TestingBanner from "../components/TestingBanner";
+
 import useAuthStore from "../state/authStore";
 import LocationSelector from "../components/LocationSelector";
 import SegmentedTabs from "../components/SegmentedTabs";
@@ -198,7 +198,7 @@ export default function SignUpScreen() {
     <TouchableWithoutFeedback onPress={dismissKeyboard}>
       <SafeAreaView className="flex-1 bg-surface-900">
         <LinearGradient colors={["#141418", "#1A1A20", "#141418"]} className="absolute inset-0" />
-        <TestingBanner />
+
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
           <ScrollView
             className="flex-1"

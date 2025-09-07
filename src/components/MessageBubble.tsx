@@ -98,7 +98,7 @@ export default function MessageBubble({ message, onReply, onReact, onLongPress }
 
   if (isSystem) {
     return (
-      <View className="items-center my-2">
+      <View className="items-center my-1">
         <View className="bg-surface-800/50 px-3 py-1 rounded-full">
           <Text className="text-text-muted text-xs">{message.content}</Text>
         </View>
@@ -107,10 +107,10 @@ export default function MessageBubble({ message, onReply, onReact, onLongPress }
   }
 
   return (
-    <View className={`w-full my-1 ${isOwn ? "items-end" : "items-start"}`}>
+    <View className={`w-full my-0.5 ${isOwn ? "items-end" : "items-start"}`}>
       {/* Reply indicator */}
       {message.replyTo && (
-        <View className={`max-w-[70%] mb-1 ${isOwn ? "items-end" : "items-start"}`}>
+        <View className={`max-w-[70%] mb-0.5 ${isOwn ? "items-end" : "items-start"}`}>
           <View className="bg-surface-600/50 rounded-lg px-2 py-1 border-l-2 border-brand-red/50">
             <Text className="text-text-muted text-xs">Replying to message</Text>
           </View>
@@ -118,7 +118,7 @@ export default function MessageBubble({ message, onReply, onReact, onLongPress }
       )}
 
       {/* Sender name for group chats */}
-      {!isOwn && <Text className="text-text-secondary text-xs mb-1 ml-1 font-medium">{message.senderName}</Text>}
+      {!isOwn && <Text className="text-text-secondary text-xs mb-0.5 ml-1 font-medium">{message.senderName}</Text>}
 
       <Animated.View style={animatedStyle}>
         <Pressable

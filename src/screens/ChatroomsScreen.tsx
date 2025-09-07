@@ -88,15 +88,11 @@ export default function ChatroomsScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-surface-900">
+    <SafeAreaView className="flex-1 bg-black">
       {/* Header */}
-      <View className="px-6 py-6 border-b border-border bg-surface-800">
+      <View className="px-6 py-6 border-b border-border bg-black">
         <View className="flex-row items-center justify-between">
           <Text className="text-text-primary text-2xl font-bold">Chat Rooms</Text>
-          <View className="flex-row items-center">
-            <Ionicons name="wifi" size={16} color="#9CA3AF" />
-            <Text className="text-text-secondary text-sm ml-1">{onlineUsers.length} online</Text>
-          </View>
         </View>
         <View className="mt-6 bg-surface-700 rounded-xl px-4 py-3 flex-row items-center">
           <Ionicons name="search" size={16} color="#9CA3AF" />

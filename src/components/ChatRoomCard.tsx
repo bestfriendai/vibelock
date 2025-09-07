@@ -19,7 +19,7 @@ export default function ChatRoomCard({ room, onPress }: Props) {
   const badgeCls = typeColors[room.type];
 
   return (
-    <Pressable onPress={() => onPress?.(room)} className="bg-surface-800 border border-border rounded-2xl p-5">
+    <Pressable onPress={() => onPress?.(room)} className="bg-black border border-border rounded-2xl p-5">
       <View className="flex-row items-start justify-between">
         <View className="flex-1 pr-3">
           <View className="flex-row items-center flex-wrap">
@@ -42,12 +42,6 @@ export default function ChatRoomCard({ room, onPress }: Props) {
           ) : null}
         </View>
         <View className="items-end">
-          <View className="flex-row items-center">
-            <Ionicons name="people-outline" size={16} color="#9CA3AF" />
-            <Text className="text-text-secondary text-sm ml-1">
-              {room.onlineCount}/{room.memberCount}
-            </Text>
-          </View>
           {unread > 0 && (
             <View className="mt-2 bg-brand-red rounded-full px-2 py-0.5">
               <Text className="text-white text-xs font-semibold">{unread}</Text>

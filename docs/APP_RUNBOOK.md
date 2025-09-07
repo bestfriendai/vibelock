@@ -1,10 +1,10 @@
 **Purpose**
-- End-to-end checklist to make the LockerRoom app run reliably on a new machine, including environment, database, verification, and troubleshooting.
+- End-to-end checklist to make the Locker Room Talk app run reliably on a new machine, including environment, database, verification, and troubleshooting.
 
 **Stack Overview**
-- Mobile: Expo React Native (SDK 53) + TypeScript
+- Mobile: Expo React Native (SDK 53) + TypeScript + React 19.0.0
 - State: `zustand` with persisted stores
-- Backend: Supabase (Auth, PostgREST, Realtime, Storage, Edge Functions)
+- Backend: Supabase (Auth, PostgREST, Realtime, Storage, Edge Functions) - **Supabase Only**
 - Notifications: Expo push + Supabase table `notifications` + Edge Function
 
 **Prerequisites**
@@ -15,9 +15,10 @@
 
 **Environment**
 - Copy `.env.example` to `.env` and fill required values:
-  - `EXPO_PUBLIC_SUPABASE_URL`
-  - `EXPO_PUBLIC_SUPABASE_ANON_KEY`
+  - `EXPO_PUBLIC_SUPABASE_URL` (your Supabase project URL)
+  - `EXPO_PUBLIC_SUPABASE_ANON_KEY` (your Supabase anon key)
   - `EXPO_PUBLIC_PROJECT_ID` (Expo project ID for push notifications)
+- Note: Firebase environment variables in `.env.example` are legacy and can be left empty
 - Verify: `npm run verify:env`
 
 **Key Configuration Files**
@@ -34,23 +35,25 @@
   - Android: press `a`
 
 **Supabase Setup (Hosted or Local)**
-- Hosted: Use project URL + anon key in `.env`
-- Local (optional):
+- **Hosted (Recommended)**: Use your Supabase project URL + anon key in `.env`
+- **Local Development (Optional)**:
   - Start: `supabase start`
   - Studio: http://127.0.0.1:54323/
   - Update `.env` with the local URL and anon key shown by CLI
+- **Important**: This app uses Supabase exclusively - no Firebase integration
 
 **Database Expectations**
-- Tables used by the app/services (must exist):
-  - `users`
-  - `reviews_firebase`
-  - `comments_firebase`
-  - `chat_rooms_firebase`
-  - `chat_messages_firebase`
-  - `notifications`
-  - `push_tokens`
-  - `chat_room_subscriptions`
+- Tables used by the app/services (must exist in Supabase):
+  - `users` - User profiles and authentication data
+  - `reviews_firebase` - Dating reviews (legacy table name, but uses Supabase)
+  - `comments_firebase` - Comments on reviews (legacy table name, but uses Supabase)
+  - `chat_rooms_firebase` - Chat room metadata (legacy table name, but uses Supabase)
+  - `chat_messages_firebase` - Chat messages (legacy table name, but uses Supabase)
+  - `notifications` - Push notification queue
+  - `push_tokens` - Device push notification tokens
+  - `reports` - User reports for content moderation
 - Storage buckets used (public): `avatars`, `evidence`, `thumbnails`, `chat-media`
+- Note: Table names contain "firebase" for legacy reasons but all data is stored in Supabase
 - If starting fresh, pull schema from your cloud project or apply your team SQL migrations.
 
 **Edge Functions**

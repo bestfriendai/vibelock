@@ -16,7 +16,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming, withDelay } from "react-native-reanimated";
 import AnimatedButton from "../components/AnimatedButton";
 import AnimatedInput from "../components/AnimatedInput";
-import TestingBanner from "../components/TestingBanner";
+
 import useAuthStore from "../state/authStore";
 
 
@@ -102,15 +102,7 @@ export default function SignInScreen() {
     navigation.navigate("SignUp");
   };
 
-  const handleTestConnection = async () => {
-    console.log("🧪 Running connection test...");
-    // Test connection functionality removed - use regular sign in instead
-    if (email && password) {
-      await handleSubmit();
-    } else {
-      console.warn("Please enter email and password to test connection");
-    }
-  };
+
 
   const dismissKeyboard = () => {
     Keyboard.dismiss();
@@ -136,7 +128,7 @@ export default function SignInScreen() {
     <TouchableWithoutFeedback onPress={dismissKeyboard}>
       <SafeAreaView className="flex-1 bg-surface-900">
         <LinearGradient colors={["#141418", "#1A1A20", "#141418"]} className="absolute inset-0" />
-        <TestingBanner />
+
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
           <ScrollView
             className="flex-1"
@@ -229,18 +221,7 @@ export default function SignInScreen() {
               </Animated.View>
             </View>
 
-            {/* Debug Section (Development Only) */}
-            {__DEV__ && (
-              <Animated.View style={footerAnimatedStyle} className="px-6 pb-4">
-                <AnimatedButton
-                  title="🧪 Test Connection"
-                  variant="secondary"
-                  size="small"
-                  onPress={handleTestConnection}
-                  className="opacity-70"
-                />
-              </Animated.View>
-            )}
+
 
             {/* Footer */}
             <Animated.View style={footerAnimatedStyle} className="px-6 pb-8">

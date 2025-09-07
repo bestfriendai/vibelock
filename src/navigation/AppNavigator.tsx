@@ -17,7 +17,6 @@ import PersonProfileScreen from "../screens/PersonProfileScreen";
 
 import SignInScreen from "../screens/SignInScreen";
 import SignUpScreen from "../screens/SignUpScreen";
-import OnboardingScreen from "../screens/OnboardingScreen";
 import ChatRoomScreen from "../screens/ChatRoomScreen";
 import ReviewDetailScreen from "../screens/ReviewDetailScreen";
 // Screens (new)
@@ -39,7 +38,6 @@ type SerializedReview = Omit<import("../types").Review, "createdAt" | "updatedAt
 export type RootStackParamList = {
   SignIn: undefined;
   SignUp: undefined;
-  Onboarding: undefined;
   MainTabs: undefined;
   PersonProfile: {
     firstName: string;
@@ -335,17 +333,10 @@ export default function AppNavigator() {
       {!isAuthenticated && !isGuestMode ? (
         <>
           <Stack.Screen
-            name="Onboarding"
-            component={OnboardingScreen}
-            options={{
-              animation: "fade",
-            }}
-          />
-          <Stack.Screen
             name="SignIn"
             component={SignInScreen}
             options={{
-              animation: "slide_from_right",
+              animation: "fade",
             }}
           />
           <Stack.Screen
