@@ -1,12 +1,11 @@
 import React, { useState } from "react";
-import { View, Modal, Pressable, Text, Dimensions, StatusBar } from "react-native";
+import { View, Modal, Pressable, Text, StatusBar } from "react-native";
 import { Image } from "expo-image";
 import { VideoView, useVideoPlayer } from "expo-video";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MediaItem, Comment } from "../types";
-
-const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
+import { useResponsiveScreen } from "../utils/responsive";
 
 interface Props {
   visible: boolean;
@@ -27,6 +26,8 @@ export default function MediaViewer({
 }: Props) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const currentMedia = media[currentIndex];
+  const screenData = useResponsiveScreen();
+  const { width: screenWidth, height: screenHeight } = screenData;
 
   // Video player for video media
   const videoPlayer = useVideoPlayer(currentMedia?.type === "video" ? currentMedia.uri : null, (player) => {

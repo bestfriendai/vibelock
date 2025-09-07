@@ -10,9 +10,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --ext .js,.ts,.tsx",
     "check": "npm run typecheck && npm run lint",
-    "verify:env": "node scripts/verify-env.js",
-    "verify:db": "node test-supabase-migration.js",
-    "verify:backend": "node scripts/test-comprehensive-backend.js"
+    "verify:env": "node scripts/verify-env.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",

@@ -1,11 +1,12 @@
-import React, { useMemo, memo, useState, useEffect } from "react";
-import { View, RefreshControl, Text, Dimensions } from "react-native";
+import React, { useMemo, memo } from "react";
+import { View, RefreshControl, Text } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FlashList } from "@shopify/flash-list";
 import { Review } from "../types";
 import ProfileCard from "./ProfileCard";
 import ProfileCardSkeleton from "./ProfileCardSkeleton";
 import ErrorBoundary from "./ErrorBoundary";
+import { useResponsiveScreen } from "../utils/responsive";
 
 // Memoized ProfileCard to prevent unnecessary re-renders
 const MemoizedProfileCard = memo(ProfileCard, (prevProps, nextProps) => {
@@ -42,16 +43,7 @@ function StaggeredGrid({
   onEndReachedThreshold = 0.1,
 }: Props) {
   const insets = useSafeAreaInsets();
-  const [screenData, setScreenData] = useState(Dimensions.get("window"));
-
-  useEffect(() => {
-    const onChange = (result: { window: any }) => {
-      setScreenData(result.window);
-    };
-
-    const subscription = Dimensions.addEventListener("change", onChange);
-    return () => subscription?.remove();
-  }, []);
+  const screenData = useResponsiveScreen();
   // Calculate item heights for FlashList
   const itemsWithHeights = useMemo(() => {
     if (!data || !Array.isArray(data) || data.length === 0) {
@@ -88,15 +80,21 @@ function StaggeredGrid({
   // Render item function for FlashList with responsive width
   const renderItem = ({ item, index }: { item: { review: Review; height: number }; index: number }) => {
     const { review, height } = item;
-    const cardWidth = (screenData.width - 48) / 2; // Use responsive screen width
+    const { responsive } = screenData;
+    const { cardWidth, cardGap, columns } = responsive;
+
+    // Calculate column index for proper spacing
+    const columnIndex = index % columns;
+    const isFirstColumn = columnIndex === 0;
+    const isLastColumn = columnIndex === columns - 1;
 
     return (
       <View
         style={{
           width: cardWidth,
-          marginBottom: 16,
-          marginRight: index % 2 === 0 ? 8 : 0,
-          marginLeft: index % 2 === 1 ? 8 : 0,
+          marginBottom: cardGap,
+          marginRight: isLastColumn ? 0 : cardGap / 2,
+          marginLeft: isFirstColumn ? 0 : cardGap / 2,
         }}
       >
         <MemoizedProfileCard
@@ -189,9 +187,9 @@ function StaggeredGrid({
         <FlashList
           data={itemsWithHeights}
           renderItem={renderItem}
-          numColumns={2}
+          numColumns={screenData.responsive.columns}
           estimatedItemSize={280}
-          contentContainerStyle={{ padding: 24 }}
+          contentContainerStyle={{ padding: screenData.responsive.basePadding }}
           showsVerticalScrollIndicator={false}
           refreshControl={
             onRefresh ? (

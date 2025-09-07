@@ -71,8 +71,6 @@ export function geocodeLocation(city: string, state: string): Coordinates {
     "herndon,va": { latitude: 38.9696, longitude: -77.3861 },
     "sterling,va": { latitude: 39.0062, longitude: -77.4286 },
     "leesburg,va": { latitude: 39.1157, longitude: -77.5636 },
-    "vienna,va": { latitude: 38.9012, longitude: -77.2653 },
-    "falls church,va": { latitude: 38.8823, longitude: -77.1711 },
 
     // Major US Cities
     "new york,ny": { latitude: 40.7128, longitude: -74.006 },

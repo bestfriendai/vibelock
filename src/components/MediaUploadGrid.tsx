@@ -1,17 +1,12 @@
 import React, { useState } from "react";
-import { View, Pressable, Text, Alert, Dimensions, ActionSheetIOS, Platform } from "react-native";
+import { View, Pressable, Text, Alert, ActionSheetIOS, Platform } from "react-native";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { MediaItem } from "../types";
 import MediaViewer from "./MediaViewer";
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming } from "react-native-reanimated";
-
-const { width: screenWidth } = Dimensions.get("window");
-const GRID_PADDING = 32; // 16px on each side
-const GRID_GAP = 12;
-const ITEMS_PER_ROW = 3;
-const ITEM_SIZE = (screenWidth - GRID_PADDING - GRID_GAP * (ITEMS_PER_ROW - 1)) / ITEMS_PER_ROW;
+import { useResponsiveScreen } from "../utils/responsive";
 
 interface Props {
   media: MediaItem[];
@@ -24,8 +19,15 @@ export default function MediaUploadGrid({ media, onMediaChange, maxItems = 6, re
   const [showMediaViewer, setShowMediaViewer] = useState(false);
   const [selectedMediaIndex, setSelectedMediaIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const screenData = useResponsiveScreen();
 
   const addButtonScale = useSharedValue(1);
+
+  // Calculate responsive grid dimensions
+  const ITEMS_PER_ROW = screenData.deviceInfo.isTablet ? 4 : 3;
+  const GRID_PADDING = screenData.responsive.horizontalPadding;
+  const GRID_GAP = screenData.responsive.cardGap;
+  const ITEM_SIZE = (screenData.width - GRID_PADDING - GRID_GAP * (ITEMS_PER_ROW - 1)) / ITEMS_PER_ROW;
 
   const requestPermissions = async () => {
     const { status: cameraStatus } = await ImagePicker.requestCameraPermissionsAsync();

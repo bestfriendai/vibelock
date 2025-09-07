@@ -24,7 +24,15 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/app-icon.png",
         "backgroundColor": "#0B0B0F"
-      }
+      },
+      "permissions": [
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE",
+        "WAKE_LOCK",
+        "ACCESS_NETWORK_STATE",
+        "INTERNET"
+      ],
+      "googleServicesFile": "./google-services.json"
     },
     "plugins": [
       "expo-asset",

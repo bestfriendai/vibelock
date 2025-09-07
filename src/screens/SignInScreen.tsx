@@ -18,7 +18,7 @@ import AnimatedButton from "../components/AnimatedButton";
 import AnimatedInput from "../components/AnimatedInput";
 import TestingBanner from "../components/TestingBanner";
 import useAuthStore from "../state/authStore";
-import { testSupabaseConnection, testAuthFlow } from "../utils/testSupabaseConnection";
+
 
 export default function SignInScreen() {
   const navigation = useNavigation<any>();
@@ -104,15 +104,11 @@ export default function SignInScreen() {
 
   const handleTestConnection = async () => {
     console.log("🧪 Running connection test...");
-    try {
-      const connectionSuccess = await testSupabaseConnection();
-      if (connectionSuccess && email && password) {
-        await testAuthFlow(email, password);
-      } else if (!connectionSuccess) {
-        console.error("❌ Connection test failed");
-      }
-    } catch (error) {
-      console.error("❌ Test connection failed:", error);
+    // Test connection functionality removed - use regular sign in instead
+    if (email && password) {
+      await handleSubmit();
+    } else {
+      console.warn("Please enter email and password to test connection");
     }
   };
 

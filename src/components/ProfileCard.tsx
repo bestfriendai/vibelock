@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, Pressable, Dimensions } from "react-native";
+import { View, Text, Pressable } from "react-native";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
@@ -9,6 +9,7 @@ import Animated, { useSharedValue, useAnimatedStyle, withSpring, withDelay, Fade
 import { BrowseStackParamList } from "../navigation/AppNavigator";
 import { Review } from "../types";
 import { shareService } from "../services/shareService";
+import { useResponsiveScreen } from "../utils/responsive";
 
 interface Props {
   review: Review;
@@ -20,12 +21,11 @@ interface Props {
 
 type Nav = NativeStackNavigationProp<BrowseStackParamList>;
 
-const { width: screenWidth } = Dimensions.get("window");
-const cardWidth = (screenWidth - 48) / 2; // Account for padding and gap
-
 export default function ProfileCard({ review, cardHeight = 280, onReport, onLike, isLiked = false }: Props) {
   const navigation = useNavigation<Nav>();
   const [imageLoaded, setImageLoaded] = useState(false);
+  const screenData = useResponsiveScreen();
+  const { cardWidth } = screenData.responsive;
 
   // Animation values
   const scale = useSharedValue(1);
