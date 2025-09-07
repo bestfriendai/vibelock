@@ -8,7 +8,6 @@ import SegmentedTabs from "../components/SegmentedTabs";
 import ChatRoomCard from "../components/ChatRoomCard";
 import { ChatRoom } from "../types";
 import { useNavigation } from "@react-navigation/native";
-import AdBanner from "../components/AdBanner";
 
 export default function ChatroomsScreen() {
   const navigation = useNavigation<any>();
@@ -91,7 +90,7 @@ export default function ChatroomsScreen() {
   return (
     <SafeAreaView className="flex-1 bg-surface-900">
       {/* Header */}
-      <View className="px-4 py-4 border-b border-border bg-surface-800">
+      <View className="px-6 py-6 border-b border-border bg-surface-800">
         <View className="flex-row items-center justify-between">
           <Text className="text-text-primary text-2xl font-bold">Chat Rooms</Text>
           <View className="flex-row items-center">
@@ -99,7 +98,7 @@ export default function ChatroomsScreen() {
             <Text className="text-text-secondary text-sm ml-1">{onlineUsers.length} online</Text>
           </View>
         </View>
-        <View className="mt-3 bg-surface-700 rounded-xl px-3 py-2 flex-row items-center">
+        <View className="mt-6 bg-surface-700 rounded-xl px-4 py-3 flex-row items-center">
           <Ionicons name="search" size={16} color="#9CA3AF" />
           <TextInput
             className="flex-1 ml-2 text-text-primary"
@@ -110,7 +109,7 @@ export default function ChatroomsScreen() {
           />
         </View>
 
-        <View className="px-4 mt-3">
+        <View className="px-0 mt-6">
           <SegmentedTabs
             tabs={[
               { key: "all", label: "All" },
@@ -127,7 +126,8 @@ export default function ChatroomsScreen() {
       <FlatList
         data={filtered}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ padding: 16 }}
+        contentContainerStyle={{ padding: 24 }}
+        ItemSeparatorComponent={() => <View className="h-4" />}
         renderItem={({ item }) => <ChatRoomCard room={item} onPress={openRoom} />}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         ListEmptyComponent={
@@ -140,9 +140,6 @@ export default function ChatroomsScreen() {
           ) : null
         }
       />
-
-      {/* Ad banner */}
-      <AdBanner placement="chat" />
     </SafeAreaView>
   );
 }

@@ -1,7 +1,8 @@
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
-import { Platform } from 'react-native';
+import { Platform, Alert } from 'react-native';
 import { supabase } from '../config/supabase';
+import { AppError, ErrorType, parseSupabaseError } from '../utils/errorHandling';
 
 // Configure notification behavior
 Notifications.setNotificationHandler({
@@ -30,6 +31,7 @@ export interface PushToken {
 class NotificationService {
   private pushToken: string | null = null;
   private isInitialized = false;
+  private notificationListeners: Notifications.Subscription[] = [];
 
   /**
    * Initialize the notification service
@@ -60,11 +62,20 @@ class NotificationService {
         }
       } else {
         console.warn('Push notifications only work on physical devices');
+        Alert.alert('Info', 'Push notifications require a physical device.');
       }
 
       this.isInitialized = true;
     } catch (error) {
       console.error('Failed to initialize notification service:', error);
+      const appError = error instanceof AppError ? error : parseSupabaseError(error);
+      throw new AppError(
+        'Failed to initialize notifications',
+        ErrorType.SERVER,
+        'NOTIFICATION_INIT_FAILED',
+        undefined,
+        true
+      );
     }
   }
 
@@ -86,7 +97,14 @@ class NotificationService {
       return token.data;
     } catch (error) {
       console.error('Failed to get push token:', error);
-      return null;
+      const appError = error instanceof AppError ? error : parseSupabaseError(error);
+      throw new AppError(
+        'Failed to get push token',
+        ErrorType.SERVER,
+        'PUSH_TOKEN_FAILED',
+        undefined,
+        true
+      );
     }
   }
 
@@ -120,11 +138,20 @@ class NotificationService {
 
       if (error) {
         console.error('Failed to register push token:', error);
+        throw new AppError(
+          'Failed to register push token',
+          ErrorType.SERVER,
+          'PUSH_TOKEN_REGISTER_FAILED',
+          undefined,
+          true
+        );
       } else {
         console.log('Push token registered successfully');
       }
     } catch (error) {
       console.error('Error registering push token:', error);
+      const appError = error instanceof AppError ? error : parseSupabaseError(error);
+      throw appError;
     }
   }
 
@@ -171,23 +198,45 @@ class NotificationService {
    */
   async createNotification(userId: string, notification: NotificationData): Promise<void> {
     try {
-      const { error } = await supabase
-        .from('notifications')
-        .insert({
-          user_id: userId,
-          type: notification.type,
-          title: notification.title,
-          body: notification.body,
-          data: notification.data || {},
-          is_read: false,
-          is_sent: false,
-        });
+      // Prefer RPC to bypass RLS safely (SECURITY DEFINER on server)
+      const { error } = await supabase.rpc('create_notification', {
+        target_user_id: userId,
+        n_type: notification.type,
+        n_title: notification.title,
+        n_body: notification.body,
+        n_data: notification.data || {},
+      });
 
       if (error) {
-        console.error('Failed to create notification:', error);
+        console.error('Failed to create notification via RPC, falling back to direct insert:', error);
+        // Safe fallback for dev environments where a permissive policy may exist
+        const { error: insertError } = await supabase
+          .from('notifications')
+          .insert({
+            user_id: userId,
+            type: notification.type,
+            title: notification.title,
+            body: notification.body,
+            data: notification.data || {},
+            is_read: false,
+            is_sent: false,
+          });
+
+        if (insertError) {
+          console.error('Failed to create notification:', insertError);
+          throw new AppError(
+            'Failed to create notification',
+            ErrorType.SERVER,
+            'NOTIFICATION_CREATE_FAILED',
+            undefined,
+            true
+          );
+        }
       }
     } catch (error) {
       console.error('Error creating notification:', error);
+      const appError = error instanceof AppError ? error : parseSupabaseError(error);
+      throw appError;
     }
   }
 
@@ -227,9 +276,18 @@ class NotificationService {
 
       if (error) {
         console.error('Failed to mark notification as read:', error);
+        throw new AppError(
+          'Failed to mark notification as read',
+          ErrorType.SERVER,
+          'NOTIFICATION_MARK_READ_FAILED',
+          undefined,
+          true
+        );
       }
     } catch (error) {
       console.error('Error marking notification as read:', error);
+      const appError = error instanceof AppError ? error : parseSupabaseError(error);
+      throw appError;
     }
   }
 
@@ -246,9 +304,18 @@ class NotificationService {
 
       if (error) {
         console.error('Failed to mark all notifications as read:', error);
+        throw new AppError(
+          'Failed to mark all notifications as read',
+          ErrorType.SERVER,
+          'NOTIFICATION_MARK_ALL_READ_FAILED',
+          undefined,
+          true
+        );
       }
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
+      const appError = error instanceof AppError ? error : parseSupabaseError(error);
+      throw appError;
     }
   }
 
@@ -352,14 +419,31 @@ class NotificationService {
    * Listen for notification responses
    */
   addNotificationResponseListener(listener: (response: Notifications.NotificationResponse) => void) {
-    return Notifications.addNotificationResponseReceivedListener(listener);
+    const subscription = Notifications.addNotificationResponseReceivedListener(listener);
+    this.notificationListeners.push(subscription);
+    return subscription;
   }
 
   /**
    * Listen for notifications received while app is in foreground
    */
   addNotificationReceivedListener(listener: (notification: Notifications.Notification) => void) {
-    return Notifications.addNotificationReceivedListener(listener);
+    const subscription = Notifications.addNotificationReceivedListener(listener);
+    this.notificationListeners.push(subscription);
+    return subscription;
+  }
+
+  /**
+   * Clean up all notification listeners
+   */
+  cleanup() {
+    console.log("🧹 Cleaning up notification service");
+    this.notificationListeners.forEach(subscription => {
+      subscription.remove();
+    });
+    this.notificationListeners = [];
+    this.pushToken = null;
+    this.isInitialized = false;
   }
 
   /**

@@ -3,6 +3,7 @@ import { supabase } from "../config/supabase";
 import { supabaseAuth } from "../services/supabase";
 import useAuthStore from "../state/authStore";
 import { User } from "../types";
+import { AppError, ErrorType, parseSupabaseError } from './errorHandling';
 
 /**
  * Unified authentication checker that ensures consistency across the app
@@ -38,6 +39,8 @@ export const getAuthenticatedUser = async (): Promise<{ user: User | null; supab
     };
   } catch (error) {
     console.error("Error checking authentication:", error);
+    const appError = error instanceof AppError ? error : parseSupabaseError(error);
+    // Don't throw here as this is used for checking auth state
     return { user: null, supabaseUser: null };
   }
 };
@@ -49,14 +52,14 @@ export const getAuthenticatedUser = async (): Promise<{ user: User | null; supab
 export const useAuthState = () => {
   const { user, isAuthenticated, isGuestMode, isLoading } = useAuthStore();
 
-  // Debug logging
-  if (__DEV__) {
+  // Debug logging - add null safety
+  if (__DEV__ && typeof __DEV__ !== 'undefined') {
     console.log("🔍 useAuthState:", {
       hasUser: !!user,
       isAuthenticated,
       isGuestMode,
       isLoading,
-      userId: user?.id?.slice(-4)
+      userId: user?.id?.slice(-4) || 'undefined'
     });
   }
 
@@ -83,13 +86,19 @@ export const requireAuthentication = async (action: string = "perform this actio
   // Be more lenient - if we have either a user OR supabaseUser, allow the action
   // The auth listener will eventually sync the states
   if (!user && !supabaseUser) {
-    throw new Error(`Must be signed in to ${action}`);
+    throw new AppError(
+      `Must be signed in to ${action}`,
+      ErrorType.AUTH,
+      'AUTHENTICATION_REQUIRED',
+      401,
+      false
+    );
   }
 
   // If we have store user but no supabase user, try to get supabase user again
   if (user && !supabaseUser) {
     const freshSupabaseUser = await supabaseAuth.getCurrentUser();
-    return { user, supabaseUser: freshSupabaseUser || user };
+    return { user, supabaseUser: freshSupabaseUser || null };
   }
 
   // If we have supabase user but no store user, use supabase user
@@ -100,7 +109,8 @@ export const requireAuthentication = async (action: string = "perform this actio
       email: supabaseUser.email || '',
       anonymousId: supabaseUser.email?.split('@')[0] || `User ${supabaseUser.id.slice(-4)}`,
       location: { city: 'Unknown', state: 'Unknown' },
-      genderPreference: 'all'
+      genderPreference: 'all',
+      createdAt: new Date(supabaseUser.created_at || Date.now())
     };
     return { user: minimalUser, supabaseUser };
   }
@@ -133,7 +143,45 @@ export const canPerformAction = (action: 'comment' | 'create_review' | 'access_c
  */
 export const getUserDisplayName = (user?: User | null): string => {
   if (!user) return "Anonymous";
-  return user.anonymousId || user.email?.split('@')[0] || `User ${user.id.slice(-4)}`;
+  return user.anonymousId || user.email?.split('@')[0] || `User ${user.id?.slice(-4) || 'Unknown'}`;
+};
+
+/**
+ * Refresh the current session if it's expired
+ */
+export const refreshSessionIfNeeded = async (): Promise<boolean> => {
+  try {
+    const session = await supabaseAuth.getCurrentSession();
+
+    if (!session) {
+      return false;
+    }
+
+    // Check if session is close to expiring (within 5 minutes)
+    const expiresAt = session.expires_at;
+    if (!expiresAt) return true;
+
+    const now = Math.floor(Date.now() / 1000);
+    const timeUntilExpiry = expiresAt - now;
+
+    if (timeUntilExpiry < 300) { // Less than 5 minutes
+      console.log("🔄 Session expiring soon, refreshing...");
+      const { data, error } = await supabase.auth.refreshSession();
+
+      if (error) {
+        console.error("Failed to refresh session:", error);
+        return false;
+      }
+
+      console.log("✅ Session refreshed successfully");
+      return true;
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Error refreshing session:", error);
+    return false;
+  }
 };
 
 /**
@@ -143,18 +191,21 @@ export const syncAuthState = async (): Promise<void> => {
   try {
     const storeState = useAuthStore.getState();
     const supabaseUser = await supabaseAuth.getCurrentUser();
-    
+
     console.log("🔄 Syncing auth state:");
     console.log("  Store authenticated:", storeState.isAuthenticated);
     console.log("  Store user:", !!storeState.user);
     console.log("  Supabase user:", !!supabaseUser);
-    
-    // If there's a mismatch, log it but don't auto-fix (let auth listener handle it)
+
+    // If there's a mismatch, try to refresh session first
     if (storeState.isAuthenticated !== !!supabaseUser) {
-      console.warn("⚠️ Auth state mismatch detected. Auth listener should resolve this.");
+      console.warn("⚠️ Auth state mismatch detected. Attempting session refresh...");
+      await refreshSessionIfNeeded();
     }
   } catch (error) {
     console.error("Error syncing auth state:", error);
+    const appError = error instanceof AppError ? error : parseSupabaseError(error);
+    // Don't throw as this is a utility function
   }
 };
 

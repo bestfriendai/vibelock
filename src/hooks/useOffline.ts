@@ -1,6 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
 import NetInfo from "@react-native-community/netinfo";
 
+// Custom error class for offline conditions
+export class OfflineError extends Error {
+  constructor(message: string = "No internet connection") {
+    super(message);
+    this.name = "OfflineError";
+  }
+}
+
 interface UseOfflineOptions {
   onConnectionChange?: (isConnected: boolean) => void;
   retryDelay?: number;
@@ -21,70 +29,88 @@ export function useOffline(options: UseOfflineOptions = {}): UseOfflineReturn {
     maxRetries = 3,
   } = options;
 
-  const [isConnected, setIsConnected] = useState(true);
-  const [isOnline, setIsOnline] = useState(true);
+  const [isConnected, setIsConnected] = useState(false);
+  const [isOnline, setIsOnline] = useState(false);
 
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener(state => {
-      const connected = !!(state.isConnected && state.isInternetReachable);
+      // Compute connected and online separately
+      const connected = Boolean(state.isConnected);
+      const online = connected && (state.isInternetReachable !== false);
+      
       setIsConnected(connected);
-      setIsOnline(connected);
+      setIsOnline(online);
 
       if (onConnectionChange) {
-        onConnectionChange(connected);
+        onConnectionChange(online);
       }
     });
 
     // Check initial state
     NetInfo.fetch().then(state => {
-      const connected = !!(state.isConnected && state.isInternetReachable);
+      const connected = Boolean(state.isConnected);
+      const online = connected && (state.isInternetReachable !== false);
+      
       setIsConnected(connected);
-      setIsOnline(connected);
+      setIsOnline(online);
+      
+      if (onConnectionChange) {
+        onConnectionChange(online);
+      }
     });
 
     return unsubscribe;
   }, [onConnectionChange]);
 
   const retry = useCallback(async <T>(fn: () => Promise<T>): Promise<T> => {
-    if (!isConnected) {
-      throw new Error("No internet connection");
+    if (!isOnline) {
+      throw new OfflineError();
     }
     
     return fn();
-  }, [isConnected]);
+  }, [isOnline]);
 
   const retryWithBackoff = useCallback(async <T>(fn: () => Promise<T>): Promise<T> => {
-    let lastError: Error;
+    // Normalize maxRetries to ensure it's at least 1
+    const normalizedMaxRetries = Math.max(1, maxRetries);
+    let lastError: Error | undefined;
     
-    for (let attempt = 0; attempt < maxRetries; attempt++) {
+    for (let attempt = 0; attempt < normalizedMaxRetries; attempt++) {
       try {
         // Check connection before each attempt
         const netState = await NetInfo.fetch();
-        if (!netState.isConnected || !netState.isInternetReachable) {
-          throw new Error("No internet connection");
+        const online = Boolean(netState.isConnected) && (netState.isInternetReachable !== false);
+        if (!online) {
+          throw new OfflineError();
         }
         
         return await fn();
       } catch (error) {
         lastError = error as Error;
         
-        // Don't retry if it's a connection error
-        if (error instanceof Error && error.message.includes("internet connection")) {
+        // Don't retry if it's an offline error
+        if (error instanceof OfflineError) {
           throw error;
         }
         
         // Don't retry on the last attempt
-        if (attempt === maxRetries - 1) {
+        if (attempt === normalizedMaxRetries - 1) {
           break;
         }
         
-        // Exponential backoff
-        const delay = retryDelay * Math.pow(2, attempt);
+        // Exponential backoff with jitter
+        const baseDelay = retryDelay * Math.pow(2, attempt);
+        const jitter = Math.random() * 0.3 * baseDelay; // Add up to 30% jitter
+        const delay = baseDelay + jitter;
         await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
     
-    throw lastError!;
+    // Ensure we have an error to throw
+    if (!lastError) {
+      lastError = new Error('Operation failed after retries');
+    }
+    throw lastError;
   }, [maxRetries, retryDelay]);
 
   return {
@@ -110,7 +136,7 @@ export function withOfflineHandling<T extends any[], R>(
         if (options.fallback) {
           return await options.fallback(...args);
         }
-        throw new Error("No internet connection");
+        throw new OfflineError();
       }
       
       return await fn(...args);

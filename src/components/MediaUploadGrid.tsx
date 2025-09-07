@@ -190,6 +190,9 @@ export default function MediaUploadGrid({ media, onMediaChange, maxItems = 6, re
                 style={{ width: ITEM_SIZE, height: ITEM_SIZE }}
                 contentFit="cover"
                 transition={200}
+                priority="low"
+                cachePolicy="memory-disk"
+                placeholder={{ blurhash: "L6PZfSi_.AyE_3t7t7R**0o#DgR4" }}
               />
 
               {/* Video indicator */}

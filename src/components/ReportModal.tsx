@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { View, Text, Pressable, TextInput, Modal, Alert, ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming, FadeIn, FadeOut, SlideInUp, SlideOutDown } from "react-native-reanimated";
 import useSafetyStore from "../state/safetyStore";
 
 interface ReportModalProps {
@@ -61,8 +62,12 @@ export default function ReportModal({ visible, onClose, itemId, itemType, itemNa
   };
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={handleClose}>
-      <View className="flex-1 bg-surface-900">
+    <Modal visible={visible} animationType="none" presentationStyle="pageSheet" onRequestClose={handleClose}>
+      <Animated.View
+        className="flex-1 bg-surface-900"
+        entering={SlideInUp.duration(300).springify()}
+        exiting={SlideOutDown.duration(200)}
+      >
         {/* Header */}
         <View className="flex-row items-center justify-between p-4 border-b border">
           <Pressable onPress={handleClose}>
@@ -160,7 +165,7 @@ export default function ReportModal({ visible, onClose, itemId, itemType, itemNa
             </View>
           </View>
         </ScrollView>
-      </View>
+      </Animated.View>
     </Modal>
   );
 }

@@ -1,11 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, Pressable, Dimensions } from "react-native";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import Animated, { useSharedValue, useAnimatedStyle, withSpring } from "react-native-reanimated";
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, withDelay, FadeIn } from "react-native-reanimated";
 import { BrowseStackParamList } from "../navigation/AppNavigator";
 import { Review } from "../types";
 import { shareService } from "../services/shareService";
@@ -62,10 +62,22 @@ export default function ProfileCard({ review, cardHeight = 280, onReport, onLike
     });
 
     // Navigate to review detail with serialized data
+    // Serialize dates defensively in case persisted data has strings/undefined
+    const toIso = (value: any) => {
+      try {
+        if (value instanceof Date) return value.toISOString();
+        if (typeof value === "string") {
+          const d = new Date(value);
+          if (!isNaN(d.getTime())) return d.toISOString();
+        }
+      } catch {}
+      return new Date().toISOString();
+    };
+
     const serializedReview = {
       ...review,
-      createdAt: review.createdAt.toISOString(),
-      updatedAt: review.updatedAt.toISOString(),
+      createdAt: toIso((review as any).createdAt),
+      updatedAt: toIso((review as any).updatedAt),
     };
 
     navigation.navigate("ReviewDetail", {
@@ -91,12 +103,21 @@ export default function ProfileCard({ review, cardHeight = 280, onReport, onLike
     onLike?.();
   };
 
-  const handleShare = (e: any) => {
+  const handleShare = async (e: any) => {
     e.stopPropagation();
     shareScale.value = withSpring(0.8, { duration: 100 }, () => {
       shareScale.value = withSpring(1, { duration: 100 });
     });
-    shareService.shareReview(review);
+    
+    try {
+      await shareService.shareReview(review);
+    } catch (error) {
+      // Log the error for diagnostics
+      console.error('Failed to share review:', error);
+      
+      // You could show a toast or alert here if you have a toast service
+      // For now, we'll just ensure the animation completes even on error
+    }
   };
 
   return (
@@ -202,7 +223,7 @@ export default function ProfileCard({ review, cardHeight = 280, onReport, onLike
         <View className="absolute bottom-3 left-3 right-3 flex-row items-end justify-between">
           {/* Flag Count Indicators - Left Side */}
           {(review.greenFlags?.length > 0 || review.redFlags?.length > 0) && (
-            <View className="flex-row space-x-2">
+            <View className="flex-row space-x-3">
               {review.greenFlags?.length > 0 && (
                 <View className="bg-green-500/20 border border-green-500/40 rounded-full px-2 py-1 flex-row items-center">
                   <Ionicons name="leaf" size={10} color="#22C55E" />

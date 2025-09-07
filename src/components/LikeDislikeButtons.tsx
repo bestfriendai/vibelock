@@ -64,6 +64,11 @@ export default function LikeDislikeButtons({
         <Pressable
           onPress={handleLike}
           disabled={disabled}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel={isLiked ? `Unlike review (${likeCount} likes)` : `Like review (${likeCount} likes)`}
+          accessibilityState={{ selected: isLiked }}
+          accessibilityHint={isLiked ? "Double tap to remove your like" : "Double tap to like this review"}
           className={`flex-row items-center justify-center px-4 py-3 rounded-xl border ${
             isLiked ? "bg-green-500 border-green-500" : "bg-green-500/10 border-green-500/30"
           } ${disabled ? "opacity-50" : ""}`}
@@ -71,7 +76,7 @@ export default function LikeDislikeButtons({
           <Ionicons name={isLiked ? "heart" : "heart-outline"} size={18} color={isLiked ? "#FFFFFF" : "#22C55E"} />
           <Text className={`ml-2 font-semibold ${isLiked ? "text-white" : "text-green-400"}`}>Like</Text>
           {likeCount > 0 && (
-            <View className={`ml-2 px-2 py-0.5 rounded-full ${isLiked ? "bg-white/20" : "bg-green-500/20"}`}>
+            <View className={`ml-2 px-2 py-1 rounded-full ${isLiked ? "bg-white/20" : "bg-green-500/20"}`}>
               <Text className={`text-xs font-bold ${isLiked ? "text-white" : "text-green-400"}`}>{likeCount}</Text>
             </View>
           )}
@@ -83,6 +88,11 @@ export default function LikeDislikeButtons({
         <Pressable
           onPress={handleDislike}
           disabled={disabled}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel={isDisliked ? `Remove dislike (${dislikeCount} dislikes)` : `Dislike review (${dislikeCount} dislikes)`}
+          accessibilityState={{ selected: isDisliked }}
+          accessibilityHint={isDisliked ? "Double tap to remove your dislike" : "Double tap to dislike this review"}
           className={`flex-row items-center justify-center px-4 py-3 rounded-xl border ${
             isDisliked ? "bg-white border-white" : "bg-white/10 border-white/30"
           } ${disabled ? "opacity-50" : ""}`}
@@ -94,7 +104,7 @@ export default function LikeDislikeButtons({
           />
           <Text className={`ml-2 font-semibold ${isDisliked ? "text-black" : "text-white"}`}>Dislike</Text>
           {dislikeCount > 0 && (
-            <View className={`ml-2 px-2 py-0.5 rounded-full ${isDisliked ? "bg-black/20" : "bg-white/20"}`}>
+            <View className={`ml-2 px-2 py-1 rounded-full ${isDisliked ? "bg-black/20" : "bg-white/20"}`}>
               <Text className={`text-xs font-bold ${isDisliked ? "text-black" : "text-white"}`}>{dislikeCount}</Text>
             </View>
           )}

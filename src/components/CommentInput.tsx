@@ -45,7 +45,7 @@ export default function CommentInput({
   if (needsSignIn) {
     return (
       <View className="bg-surface-800 border-t border-surface-700">
-        <View className="flex-row items-center justify-between px-4 py-4">
+        <View className="flex-row items-center justify-between px-6 py-6">
           <View className="flex-1">
             <Text className="text-text-secondary text-base">Sign in to join the conversation</Text>
             <Text className="text-text-muted text-sm mt-1">Share your thoughts and connect with others</Text>

@@ -38,9 +38,13 @@ export default function FormSection({
   };
 
   return (
-    <View className={`mb-8 ${className}`}>
+    <View
+      className={`mb-6 ${className}`}
+      accessible={true}
+      accessibilityLabel={`${title} section${required ? ', required' : ''}`}
+    >
       {/* Section Header */}
-      <View className="mb-4">
+      <View className="mb-6">
         <View className="flex-row items-center justify-between">
           <View className="flex-row items-center">
             <Text className="text-text-primary text-xl font-bold">{title}</Text>

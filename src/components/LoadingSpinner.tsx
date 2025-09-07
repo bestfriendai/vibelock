@@ -1,5 +1,5 @@
-import React, { useEffect } from "react";
-import { View, Text } from "react-native";
+import React, { useEffect, useState } from "react";
+import { View, Text, AccessibilityInfo } from "react-native";
 import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, Easing } from "react-native-reanimated";
 
 interface Props {
@@ -11,6 +11,7 @@ interface Props {
 
 export default function LoadingSpinner({ size = "medium", color = "#FFFFFF", text, className = "" }: Props) {
   const rotation = useSharedValue(0);
+  const [reduceMotion, setReduceMotion] = useState(false);
 
   const sizeMap = {
     small: 20,
@@ -21,23 +22,33 @@ export default function LoadingSpinner({ size = "medium", color = "#FFFFFF", tex
   const spinnerSize = sizeMap[size];
 
   useEffect(() => {
-    rotation.value = withRepeat(
-      withTiming(360, {
-        duration: 1000,
-        easing: Easing.linear,
-      }),
-      -1,
-      false,
-    );
-  }, []);
+    // Check for reduced motion preference
+    AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion);
+
+    if (!reduceMotion) {
+      rotation.value = withRepeat(
+        withTiming(360, {
+          duration: 1000,
+          easing: Easing.linear,
+        }),
+        -1,
+        false,
+      );
+    }
+  }, [reduceMotion]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${rotation.value}deg` }],
   }));
 
   return (
-    <View className={`items-center justify-center ${className}`}>
-      <Animated.View style={[animatedStyle]}>
+    <View
+      className={`items-center justify-center ${className}`}
+      accessible={true}
+      accessibilityRole="progressbar"
+      accessibilityLabel={text || "Loading"}
+    >
+      <Animated.View style={[reduceMotion ? {} : animatedStyle]}>
         <View
           className="rounded-full border-2 border-transparent"
           style={{

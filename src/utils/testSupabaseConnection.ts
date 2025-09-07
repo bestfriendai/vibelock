@@ -23,22 +23,37 @@ export const testSupabaseConnection = async () => {
     const { data: session } = await supabase.auth.getSession();
     console.log("✅ Auth service available, current session:", session?.session ? "Active" : "None");
     
-    // Test 3: Network timeout test
-    console.log("⏱️ Testing network timeout handling...");
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error("Test timeout")), 5000);
-    });
-    
-    const connectionPromise = supabase.from("users").select("id").limit(1);
+    // Test 3: Network timeout test with AbortController
+    console.log("⏱️ Testing network timeout handling with AbortController...");
+    const abortController = new AbortController();
+    const timeoutId = setTimeout(() => {
+      abortController.abort();
+    }, 5000);
     
     try {
-      await Promise.race([connectionPromise, timeoutPromise]);
-      console.log("✅ Network timeout handling working");
-    } catch (error: any) {
-      if (error.message === "Test timeout") {
-        console.log("⚠️ Connection is slow but functional");
+      const { data, error } = await supabase
+        .from("users")
+        .select("id")
+        .limit(1)
+        .abortSignal(abortController.signal);
+      
+      clearTimeout(timeoutId);
+      
+      if (error) {
+        if (error.message?.includes('aborted')) {
+          console.log("⚠️ Connection timed out (5 seconds)");
+        } else {
+          throw error;
+        }
       } else {
-        console.error("❌ Network error:", error);
+        console.log("✅ Network timeout handling working");
+      }
+    } catch (error: any) {
+      clearTimeout(timeoutId);
+      if (error.name === 'AbortError' || error.message?.includes('aborted')) {
+        console.log("⚠️ Connection aborted due to timeout");
+      } else {
+        console.error("❌ Network error:", error.message || error);
       }
     }
     

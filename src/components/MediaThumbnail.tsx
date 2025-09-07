@@ -9,9 +9,10 @@ interface Props {
   size?: number;
   onPress?: () => void;
   showPlayIcon?: boolean;
+  onLoad?: () => void;
 }
 
-export default function MediaThumbnail({ media, size = 80, onPress, showPlayIcon = true }: Props) {
+export default function MediaThumbnail({ media, size = 80, onPress, showPlayIcon = true, onLoad }: Props) {
   const isVideo = media.type === "video";
   const imageUri = media.thumbnailUri || media.uri;
 
@@ -23,6 +24,7 @@ export default function MediaThumbnail({ media, size = 80, onPress, showPlayIcon
         contentFit="cover"
         transition={200}
         placeholder="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+        onLoad={onLoad}
       />
 
       {/* Video play overlay */}

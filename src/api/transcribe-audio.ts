@@ -36,11 +36,26 @@ export const transcribeAudio = async (localAudioUri: string) => {
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Transcription failed: ${errorText}`);
+      let errorText;
+      try {
+        errorText = await response.text();
+      } catch {
+        errorText = 'Unknown error';
+      }
+      throw new Error(`Transcription failed: ${errorText || 'Unknown error'}`);
     }
 
-    const result = await response.json();
+    let result;
+    try {
+      result = await response.json();
+    } catch {
+      throw new Error("Failed to parse transcription response");
+    }
+
+    if (!result?.text) {
+      throw new Error("No transcription text found in response");
+    }
+
     return result.text;
   } catch (error) {
     console.error("Transcription error:", error);

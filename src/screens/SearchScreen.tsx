@@ -9,6 +9,7 @@ export default function SearchScreen() {
   const navigation = useNavigation<any>();
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
   const [contentResults, setContentResults] = useState<{
     reviews: any[];
     comments: any[];
@@ -17,12 +18,26 @@ export default function SearchScreen() {
   const [activeTab, setActiveTab] = useState<"all" | "reviews" | "comments" | "messages">("all");
 
   const handleSearch = async () => {
-    if (searchQuery.trim().length < 2) return;
+    if (searchQuery.trim().length < 2) {
+      setSearchError("Please enter at least 2 characters to search");
+      return;
+    }
+    
     setIsSearching(true);
+    setSearchError(null);
+    
     try {
       const results = await supabaseSearch.searchAll(searchQuery);
       setContentResults(results);
+      
+      // Show feedback if no results found
+      const totalResults = results.reviews.length + results.comments.length + results.messages.length;
+      if (totalResults === 0) {
+        setSearchError(`No results found for "${searchQuery}". Try different keywords or check your spelling.`);
+      }
     } catch (e) {
+      console.error('Search failed:', e);
+      setSearchError("Search failed. Please check your connection and try again.");
       setContentResults({ reviews: [], comments: [], messages: [] });
     } finally {
       setIsSearching(false);
@@ -32,7 +47,7 @@ export default function SearchScreen() {
   return (
     <SafeAreaView className="flex-1 bg-surface-900">
       {/* Header */}
-      <View className="bg-black px-4 py-4">
+      <View className="bg-black px-6 py-6">
         <View className="flex-row items-center">
           <View className="w-10 h-10 mr-3">
             <Image
@@ -59,8 +74,16 @@ export default function SearchScreen() {
                 placeholder="Enter keywords..."
                 placeholderTextColor="#9CA3AF"
                 value={searchQuery}
-                onChangeText={setSearchQuery}
+                onChangeText={(text) => {
+                  setSearchQuery(text);
+                  // Clear error when user starts typing
+                  if (searchError) {
+                    setSearchError(null);
+                  }
+                }}
                 autoCapitalize="none"
+                onSubmitEditing={handleSearch}
+                returnKeyType="search"
               />
               <View className="absolute right-3 top-3 flex-row items-center">
                 {searchQuery.length > 0 && (
@@ -73,6 +96,16 @@ export default function SearchScreen() {
                 </Pressable>
               </View>
             </View>
+            
+            {/* Search Error */}
+            {searchError && (
+              <View className="mt-3 p-3 bg-red-900/20 border border-red-500/30 rounded-lg">
+                <View className="flex-row items-center">
+                  <Ionicons name="alert-circle" size={16} color="#EF4444" />
+                  <Text className="text-red-400 text-sm ml-2 flex-1">{searchError}</Text>
+                </View>
+              </View>
+            )}
           </View>
         </View>
 
@@ -141,7 +174,7 @@ export default function SearchScreen() {
                       <View className="bg-purple-500 rounded px-2 py-1">
                         <Text className="text-white text-xs font-medium">Message</Text>
                       </View>
-                      <Text className="text-text-muted text-xs ml-2">{message.chat_rooms?.name || "Chat"}</Text>
+                      <Text className="text-text-muted text-xs ml-2">{message.chat_rooms_firebase?.name || "Chat"}</Text>
                     </View>
                     <Text className="text-text-secondary text-sm" numberOfLines={2}>{message.content}</Text>
                   </Pressable>
@@ -170,4 +203,3 @@ export default function SearchScreen() {
     </SafeAreaView>
   );
 }
-

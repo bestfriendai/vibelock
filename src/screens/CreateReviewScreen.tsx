@@ -86,23 +86,41 @@ export default function CreateReviewScreen() {
   }, [firstName, selectedLocation, reviewText, sentiment, category, media, socialMedia]);
 
   const imagesCount = useMemo(() => media.filter((m) => m.type === "image").length, [media]);
-  const hasRequired = Boolean(
-    firstName.trim() &&
-      selectedLocation.city.trim() &&
-      selectedLocation.state.trim() &&
-      reviewText.trim() &&
-      imagesCount >= 1,
-  );
+
+  // Enhanced validation
+  const validation = useMemo(() => {
+    const errors: string[] = [];
+
+    if (!firstName.trim()) errors.push("Name is required");
+    else if (firstName.trim().length < 2) errors.push("Name must be at least 2 characters");
+
+    if (!selectedLocation.city.trim() || !selectedLocation.state.trim()) {
+      errors.push("Location is required");
+    }
+
+    if (!reviewText.trim()) errors.push("Review text is required");
+    else if (reviewText.trim().length < 10) errors.push("Review must be at least 10 characters");
+    else if (reviewText.trim().length > 500) errors.push("Review must be less than 500 characters");
+
+    if (imagesCount < 1) errors.push("At least one photo is required");
+
+    if (!sentiment) errors.push("Please select a sentiment (green/red flags)");
+
+    return {
+      isValid: errors.length === 0,
+      errors,
+      firstError: errors[0] || null
+    };
+  }, [firstName, selectedLocation, reviewText, imagesCount, sentiment]);
+
+  const hasRequired = validation.isValid;
 
   const handleSubmit = async () => {
     setError(null);
     setSuccess(null);
 
-    if (!hasRequired) {
-      if (!firstName.trim() || !selectedLocation.city.trim() || !selectedLocation.state.trim())
-        setError("Please fill in all required fields");
-      else if (imagesCount < 1) setError("Please add at least one photo");
-      else if (!reviewText.trim()) setError("Please write a review");
+    if (!validation.isValid) {
+      setError(validation.firstError);
       return;
     }
 
@@ -195,13 +213,13 @@ export default function CreateReviewScreen() {
     <SafeAreaView className="flex-1 bg-surface-900">
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
         {/* Header */}
-        <View className="px-4 py-4 border-b border-border bg-surface-800">
+        <View className="px-6 py-6 border-b border-border bg-surface-800">
           <Text className="text-text-primary text-2xl font-bold">Write Review</Text>
           <Text className="text-text-secondary mt-1">Share your dating experience anonymously</Text>
         </View>
 
         <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-          <View className="px-4 py-6">
+          <View className="px-6 py-6">
             {/* Error / Success banners */}
             {error && (
               <View className="bg-red-500/15 border border-red-500 rounded-xl p-3 mb-4">
@@ -240,7 +258,7 @@ export default function CreateReviewScreen() {
             <FormSection title="Category" subtitle="Select who you're reviewing" required>
               <View className="flex-row space-x-3">
                 <Pressable
-                  className={`flex-1 items-center justify-center rounded-xl border px-3 py-3 ${category === "men" ? "bg-blue-500/15 border-blue-500" : "bg-surface-800 border-border"}`}
+                  className={`flex-1 items-center justify-center rounded-xl border px-3 py-4 ${category === "men" ? "bg-blue-500/15 border-blue-500" : "bg-surface-800 border-border"}`}
                   onPress={() => setCategory("men")}
                 >
                   <Text className={`font-medium ${category === "men" ? "text-blue-400" : "text-text-primary"}`}>
@@ -248,7 +266,7 @@ export default function CreateReviewScreen() {
                   </Text>
                 </Pressable>
                 <Pressable
-                  className={`flex-1 items-center justify-center rounded-xl border px-3 py-3 ${category === "women" ? "bg-pink-500/15 border-pink-500" : "bg-surface-800 border-border"}`}
+                  className={`flex-1 items-center justify-center rounded-xl border px-3 py-4 ${category === "women" ? "bg-pink-500/15 border-pink-500" : "bg-surface-800 border-border"}`}
                   onPress={() => setCategory("women")}
                 >
                   <Text className={`font-medium ${category === "women" ? "text-pink-400" : "text-text-primary"}`}>
@@ -256,7 +274,7 @@ export default function CreateReviewScreen() {
                   </Text>
                 </Pressable>
                 <Pressable
-                  className={`flex-1 items-center justify-center rounded-xl border px-3 py-3 ${category === "lgbtq+" ? "bg-purple-500/15 border-purple-500" : "bg-surface-800 border-border"}`}
+                  className={`flex-1 items-center justify-center rounded-xl border px-3 py-4 ${category === "lgbtq+" ? "bg-purple-500/15 border-purple-500" : "bg-surface-800 border-border"}`}
                   onPress={() => setCategory("lgbtq+")}
                 >
                   <Text className={`font-medium ${category === "lgbtq+" ? "text-purple-400" : "text-text-primary"}`}>
@@ -279,13 +297,13 @@ export default function CreateReviewScreen() {
             <FormSection title="Sentiment (Optional)" subtitle="Choose one, or skip">
               <View className="flex-row space-x-3">
                 <Pressable
-                  className={`flex-1 flex-row items-center justify-center rounded-xl border px-3 py-3 ${sentiment === "green" ? "bg-green-500/15 border-green-500" : "bg-surface-800 border-border"}`}
+                  className={`flex-1 flex-row items-center justify-center rounded-xl border px-3 py-4 ${sentiment === "green" ? "bg-green-500/15 border-green-500" : "bg-surface-800 border-border"}`}
                   onPress={() => setSentiment(sentiment === "green" ? null : "green")}
                 >
                   <Text className="text-text-primary font-medium">Green Flag</Text>
                 </Pressable>
                 <Pressable
-                  className={`flex-1 flex-row items-center justify-center rounded-xl border px-3 py-3 ${sentiment === "red" ? "bg-brand-red/20 border-brand-red" : "bg-surface-800 border-border"}`}
+                  className={`flex-1 flex-row items-center justify-center rounded-xl border px-3 py-4 ${sentiment === "red" ? "bg-brand-red/20 border-brand-red" : "bg-surface-800 border-border"}`}
                   onPress={() => setSentiment(sentiment === "red" ? null : "red")}
                 >
                   <Text className="text-text-primary font-medium">Red Flag</Text>
@@ -294,17 +312,31 @@ export default function CreateReviewScreen() {
             </FormSection>
 
             {/* Review Text */}
-            <FormSection title="Your Review" subtitle={`Share your experience (${reviewText.length}/500)`} required>
-              <TextInput
-                className="bg-surface-800 border border-border rounded-xl px-4 py-3 text-text-primary h-32"
-                placeholder="Write your review here..."
-                placeholderTextColor="#9CA3AF"
-                value={reviewText}
-                onChangeText={setReviewText}
-                multiline
-                textAlignVertical="top"
-                maxLength={500}
-              />
+            <FormSection
+              title="Your Review"
+              subtitle={`Share your experience`}
+              required
+            >
+              <View>
+                <TextInput
+                  className="bg-surface-800 border border-border rounded-xl px-4 py-3 text-text-primary h-32"
+                  placeholder="Write your review here..."
+                  placeholderTextColor="#9CA3AF"
+                  value={reviewText}
+                  onChangeText={setReviewText}
+                  multiline
+                  textAlignVertical="top"
+                  maxLength={500}
+                />
+                <View className="flex-row justify-between items-center mt-2">
+                  <Text className="text-text-muted text-sm">
+                    {reviewText.length < 10 ? 'Minimum 10 characters' : 'Looking good!'}
+                  </Text>
+                  <Text className={`text-sm ${reviewText.length > 450 ? 'text-yellow-400' : reviewText.length > 480 ? 'text-red-400' : 'text-text-muted'}`}>
+                    {reviewText.length}/500
+                  </Text>
+                </View>
+              </View>
             </FormSection>
 
             {/* Social Media */}

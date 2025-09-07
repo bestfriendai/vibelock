@@ -13,6 +13,7 @@ export const getAnthropicClient = () => {
   const apiKey = process.env.EXPO_PUBLIC_VIBECODE_ANTHROPIC_API_KEY;
   if (!apiKey) {
     console.warn("Anthropic API key not found in environment variables");
+    throw new Error("Anthropic API key is required but not found in environment variables");
   }
   return new Anthropic({
     apiKey: apiKey,

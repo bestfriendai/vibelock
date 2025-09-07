@@ -3,6 +3,7 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { User } from "../types";
 import { supabaseAuth, supabaseUsers } from "../services/supabase";
+import { AppError, ErrorType, parseSupabaseError } from '../utils/errorHandling';
 
 interface AuthState {
   user: User | null;
@@ -30,7 +31,7 @@ interface AuthActions {
     city: string;
     state: string;
     coordinates?: { latitude: number; longitude: number };
-  }) => void;
+  }) => Promise<void>;
   initializeAuthListener: () => () => void;
 }
 
@@ -38,7 +39,7 @@ type AuthStore = AuthState & AuthActions;
 
 const useAuthStore = create<AuthStore>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       // State
       user: null,
       isAuthenticated: false,
@@ -241,7 +242,12 @@ const useAuthStore = create<AuthStore>()(
         }
       },
 
-      updateUserLocation: (location) => {
+      updateUserLocation: async (location) => {
+        // Get current state
+        const currentState = get();
+        if (!currentState.user) return;
+
+        // Update local state immediately for responsive UI
         set((state) => ({
           ...state,
           user: state.user
@@ -254,18 +260,40 @@ const useAuthStore = create<AuthStore>()(
               }
             : null,
         }));
+
+        // Persist to database
+        try {
+          const { supabaseUsers } = await import("../services/supabase");
+          await supabaseUsers.updateUserProfile(currentState.user.id, {
+            location: {
+              city: location.city,
+              state: location.state,
+              coordinates: location.coordinates,
+            },
+          });
+          console.log("✅ Location saved to database successfully");
+        } catch (error) {
+          console.error("❌ Failed to update user location in database:", error);
+          // Could show a toast notification here if needed
+        }
       },
 
       initializeAuthListener: () => {
         let isInitializing = false;
         let authSubscription: any = null;
+        let authChangeTimeout: NodeJS.Timeout | null = null;
+        let isProcessingAuthChange = false;
 
         // First, check if we have a current session on app start
         const initializeSession = async () => {
-          if (isInitializing) return;
+          if (isInitializing) {
+            console.log("🔄 Session initialization already in progress");
+            return;
+          }
           isInitializing = true;
 
           try {
+            console.log("🚀 Initializing auth session");
             set((state) => ({ ...state, isLoading: true, error: null }));
 
             // Session initialization re-enabled after fixing API key issue
@@ -335,33 +363,44 @@ const useAuthStore = create<AuthStore>()(
             }
           } catch (error) {
             console.error("Error initializing session:", error);
+            const appError = error instanceof AppError ? error : parseSupabaseError(error);
             set((state) => ({
               ...state,
               user: null,
               isAuthenticated: false,
               isLoading: false,
-              error: "Failed to initialize authentication",
+              error: appError.userMessage,
             }));
           } finally {
             isInitializing = false;
+            console.log("✅ Session initialization complete");
           }
         };
 
         // Initialize session immediately
         initializeSession();
 
-        // Set up the auth state change listener with debouncing
-        let authChangeTimeout: NodeJS.Timeout | null = null;
-
+        // Set up the auth state change listener with proper synchronization
         const { data: { subscription } } = supabaseAuth.onAuthStateChanged(async (supabaseUser) => {
+          // Prevent concurrent auth state processing
+          if (isProcessingAuthChange || isInitializing) {
+            console.log("🔄 Auth change ignored - already processing");
+            return;
+          }
+
           // Debounce auth state changes to prevent rapid updates
           if (authChangeTimeout) {
             clearTimeout(authChangeTimeout);
           }
 
           authChangeTimeout = setTimeout(async () => {
-            if (supabaseUser && !isInitializing) {
-              try {
+            if (isProcessingAuthChange || isInitializing) {
+              return;
+            }
+
+            isProcessingAuthChange = true;
+            try {
+              if (supabaseUser) {
                 // Get user profile from Supabase
                 const userProfile = await supabaseUsers.getUserProfile(supabaseUser.id);
                 if (userProfile) {
@@ -376,43 +415,64 @@ const useAuthStore = create<AuthStore>()(
                   console.log("✅ Auth state synchronized: User authenticated");
                 } else {
                   console.warn("User profile not found in auth state change");
+                  const appError = new AppError(
+                    "User profile not found",
+                    ErrorType.AUTH,
+                    'PROFILE_NOT_FOUND',
+                    undefined,
+                    false
+                  );
                   set((state) => ({
                     ...state,
-                    error: "User profile not found",
+                    user: null,
+                    isAuthenticated: false,
+                    error: appError.userMessage,
                     isLoading: false,
                   }));
                 }
-              } catch (error) {
-                console.error("Error loading user profile in auth state change:", error);
+              } else {
+                // User signed out
                 set((state) => ({
                   ...state,
-                  error: "Failed to load user profile",
+                  user: null,
+                  isAuthenticated: false,
+                  isGuestMode: false,
                   isLoading: false,
+                  error: null,
                 }));
+                console.log("✅ Auth state synchronized: User signed out");
               }
-            } else if (!supabaseUser) {
+            } catch (error) {
+              console.error("Error in auth state change:", error);
+              const appError = error instanceof AppError ? error : parseSupabaseError(error);
               set((state) => ({
                 ...state,
                 user: null,
                 isAuthenticated: false,
+                error: appError.userMessage,
                 isLoading: false,
-                error: null,
               }));
-              console.log("✅ Auth state synchronized: User signed out");
+            } finally {
+              isProcessingAuthChange = false;
             }
-          }, 100); // 100ms debounce
+          }, 300); // 300ms debounce to prevent rapid state changes
         });
 
         authSubscription = subscription;
 
         // Return unsubscribe function
         return () => {
+          console.log("🧹 Cleaning up auth listener");
           if (authChangeTimeout) {
             clearTimeout(authChangeTimeout);
+            authChangeTimeout = null;
           }
           if (authSubscription) {
             authSubscription.unsubscribe();
+            authSubscription = null;
           }
+          isProcessingAuthChange = false;
+          isInitializing = false;
         };
       },
     }),

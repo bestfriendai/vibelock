@@ -38,10 +38,6 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
   // Real-time configuration with better error handling
   realtime: {
-    // Enable real-time subscriptions with conservative settings
-    params: {
-      eventsPerSecond: 5, // Reduced from 10 to prevent rate limiting
-    },
     // Add heartbeat and reconnection settings
     heartbeatIntervalMs: 30000,
     reconnectAfterMs: (tries: number) => Math.min(tries * 1000, 10000),
@@ -51,8 +47,8 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   // Overriding `Authorization` with the anon key breaks authenticated calls.
   global: {
     headers: {
-      "X-Client-Info": "lockerroom-mobile-app",
-      "X-Client-Version": "1.0.0",
+      "X-App-Client-Info": "lockerroom-mobile-app",
+      "X-App-Client-Version": "1.0.0",
     },
   },
 });

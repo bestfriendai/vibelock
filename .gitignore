@@ -36,6 +36,10 @@ yarn-error.*
 # iOS & Android
 ios/
 android/
+.env
+.env.local
+.env.*
+!.env.example
 .clinerules/byterover-rules.md
 .kilocode/rules/byterover-rules.md
 .roo/rules/byterover-rules.md

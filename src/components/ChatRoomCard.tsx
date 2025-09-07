@@ -19,7 +19,7 @@ export default function ChatRoomCard({ room, onPress }: Props) {
   const badgeCls = typeColors[room.type];
 
   return (
-    <Pressable onPress={() => onPress?.(room)} className="bg-surface-800 border border-border rounded-2xl p-4 mb-4">
+    <Pressable onPress={() => onPress?.(room)} className="bg-surface-800 border border-border rounded-2xl p-5">
       <View className="flex-row items-start justify-between">
         <View className="flex-1 pr-3">
           <View className="flex-row items-center flex-wrap">

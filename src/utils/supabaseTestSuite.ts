@@ -1,5 +1,5 @@
 // Comprehensive Supabase Integration Test Suite
-import { supabaseAuth, supabaseUsers, supabaseReviews, supabaseChat, supabaseStorage } from "../services/supabase";
+import { supabaseAuth, supabaseUsers, supabaseReviews, supabaseChat, supabaseStorage, supabaseSearch } from "../services/supabase";
 import { supabase } from "../config/supabase";
 import { storageService } from "../services/storageService";
 import { realtimeChatService } from "../services/realtimeChat";
@@ -127,7 +127,7 @@ class SupabaseTestSuite {
     });
 
     await this.runTest("Review Operations - Search Reviews", async () => {
-      const results = await supabaseReviews.searchReviews("test", {});
+      const results = await supabaseSearch.searchReviews("test", {});
       return `Search returned ${results.length} results`;
     });
   }
@@ -152,6 +152,11 @@ class SupabaseTestSuite {
       await testChannel.subscribe();
       await supabase.removeChannel(testChannel);
       return "Test channel created and removed";
+    });
+
+    await this.runTest("Real-time - Service Cleanup", async () => {
+      await realtimeChatService.cleanup();
+      return "Real-time service cleaned up successfully";
     });
   }
 

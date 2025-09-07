@@ -3,10 +3,11 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ChatRoom, ChatMessage, ChatMember, TypingUser, ConnectionStatus, ChatState } from "../types";
 import { webSocketService } from "../services/websocketService";
-import { supabaseChat, supabaseAuth } from "../services/supabase";
+import { supabaseChat } from "../services/supabase";
 import { realtimeChatService } from "../services/realtimeChat";
 import useAuthStore from "./authStore";
 import { requireAuthentication, getUserDisplayName } from "../utils/authUtils";
+import { AppError, parseSupabaseError } from "../utils/errorHandling";
 
 interface ChatActions {
   // Connection management
@@ -38,6 +39,9 @@ interface ChatActions {
   addOnlineUser: (userId: string) => void;
   removeOnlineUser: (userId: string) => void;
 
+  // Cleanup
+  cleanup: () => Promise<void>;
+
   // Members
   loadMembers: (roomId: string) => Promise<void>;
   addMember: (member: ChatMember) => void;
@@ -54,147 +58,13 @@ interface ChatActions {
 
 type ChatStore = ChatState & ChatActions;
 
-// Mock data for development - using actual database UUIDs
-const mockChatRooms: ChatRoom[] = [
-  {
-    id: "86250edc-5520-48da-b9cd-0c28982b6148",
-    name: "Washington DC Local",
-    description: "Connect with singles in the Washington DC area",
-    type: "local",
-    category: "all",
-    memberCount: 127,
-    onlineCount: 23,
-    lastMessage: {
-      id: "msg_1",
-      chatRoomId: "86250edc-5520-48da-b9cd-0c28982b6148",
-      senderId: "user_456",
-      senderName: "Sarah M.",
-      content: "Anyone been to that new rooftop bar in Adams Morgan?",
-      messageType: "text",
-      timestamp: new Date(Date.now() - 300000), // 5 minutes ago
-      isRead: false,
-    },
-    lastActivity: new Date(Date.now() - 300000),
-    isActive: true,
-    location: { city: "Washington", state: "DC" },
-    createdAt: new Date("2024-01-01"),
-    updatedAt: new Date(),
-  },
-  {
-    id: "694c3b9c-1079-4cf5-a9cb-b06e8715a804",
-    name: "Dating Tips & Advice",
-    description: "Share and get advice on dating, relationships, and meeting people",
-    type: "topic",
-    category: "all",
-    memberCount: 89,
-    onlineCount: 15,
-    lastMessage: {
-      id: "msg_2",
-      chatRoomId: "694c3b9c-1079-4cf5-a9cb-b06e8715a804",
-      senderId: "user_789",
-      senderName: "Mike R.",
-      content: "What's everyone's take on first date locations?",
-      messageType: "text",
-      timestamp: new Date(Date.now() - 900000), // 15 minutes ago
-      isRead: false,
-    },
-    lastActivity: new Date(Date.now() - 900000),
-    isActive: true,
-    createdAt: new Date("2024-01-01"),
-    updatedAt: new Date(),
-  },
-  {
-    id: "f47b5109-bd62-468c-b024-d40b11ea78c2",
-    name: "Success Stories",
-    description: "Share your dating success stories and celebrate wins",
-    type: "topic",
-    category: "all",
-    memberCount: 156,
-    onlineCount: 31,
-    lastMessage: {
-      id: "msg_3",
-      chatRoomId: "f47b5109-bd62-468c-b024-d40b11ea78c2",
-      senderId: "user_321",
-      senderName: "Jessica L.",
-      content: "Just wanted to thank everyone for the advice! Had an amazing third date last night 💕",
-      messageType: "text",
-      timestamp: new Date(Date.now() - 1800000), // 30 minutes ago
-      isRead: false,
-    },
-    lastActivity: new Date(Date.now() - 1800000),
-    isActive: true,
-    createdAt: new Date("2024-01-01"),
-    updatedAt: new Date(),
-  },
-  {
-    id: "ca1d221d-5047-4168-9a46-e25de522179b",
-    name: "Global Chat",
-    description: "Open discussion for everyone",
-    type: "global",
-    category: "all",
-    memberCount: 342,
-    onlineCount: 67,
-    lastMessage: {
-      id: "msg_4",
-      chatRoomId: "ca1d221d-5047-4168-9a46-e25de522179b",
-      senderId: "user_654",
-      senderName: "Alex T.",
-      content: "Good morning everyone! Hope you all have a great day",
-      messageType: "text",
-      timestamp: new Date(Date.now() - 3600000), // 1 hour ago
-      isRead: false,
-    },
-    lastActivity: new Date(Date.now() - 3600000),
-    isActive: true,
-    createdAt: new Date("2024-01-01"),
-    updatedAt: new Date(),
-  },
-  {
-    id: "4c2bfb82-1161-40e3-895d-549b64ae4b26",
-    name: "Men's Room",
-    description: "Space for men to connect and share experiences",
-    type: "topic",
-    category: "men",
-    memberCount: 54,
-    onlineCount: 8,
-    lastActivity: new Date(Date.now() - 600000),
-    isActive: true,
-    createdAt: new Date("2024-01-01"),
-    updatedAt: new Date(),
-  },
-  {
-    id: "a9082cbb-2bc8-48eb-b35d-04997803232b",
-    name: "Women's Room",
-    description: "Space for women to connect and share experiences",
-    type: "topic",
-    category: "women",
-    memberCount: 78,
-    onlineCount: 12,
-    lastActivity: new Date(Date.now() - 1200000),
-    isActive: true,
-    createdAt: new Date("2024-01-01"),
-    updatedAt: new Date(),
-  },
-  {
-    id: "fef4dae9-7507-4832-b82e-69fb5e40fbb5",
-    name: "LGBTQ+ Room",
-    description: "Inclusive space for LGBTQ+ community members",
-    type: "topic",
-    category: "lgbtq+",
-    memberCount: 33,
-    onlineCount: 5,
-    lastActivity: new Date(Date.now() - 2400000),
-    isActive: true,
-    createdAt: new Date("2024-01-01"),
-    updatedAt: new Date(),
-  },
-];
+// Mock data removed - using real Supabase data only
 
 const useChatStore = create<ChatStore>()(
   persist(
     (set, get) => ({
-      // Initial state - Initialize with mock data so users see chat rooms immediately
-      chatRooms: mockChatRooms,
+      // Initial state - Start with empty array to force loading from Supabase
+      chatRooms: [],
       roomCategoryFilter: "all",
       currentChatRoom: null,
       messages: {},
@@ -286,19 +156,16 @@ const useChatStore = create<ChatStore>()(
           });
         } catch (error) {
           console.error("💥 Failed to load chat rooms:", error);
-
-          // Fallback to mock data on error
-          const category = get().roomCategoryFilter || "all";
-          const roomsToUse =
-            category && category !== "all"
-              ? mockChatRooms.filter((r) => (r.category || "all").toLowerCase() === category.toLowerCase())
-              : mockChatRooms;
+          const appError = error instanceof AppError ? error : parseSupabaseError(error);
 
           set({
-            chatRooms: roomsToUse,
-            error: error instanceof Error ? error.message : "Failed to load chat rooms",
+            chatRooms: [],
+            error: appError.userMessage,
             isLoading: false,
           });
+
+          // Don't fallback to mock data - show proper error state
+          throw appError;
         }
       },
 
@@ -353,7 +220,9 @@ const useChatStore = create<ChatStore>()(
           console.log(`✅ Successfully joined room: ${room.name}`);
         } catch (error) {
           console.error("💥 Failed to join chat room:", error);
-          set({ error: error instanceof Error ? error.message : "Failed to join chat room" });
+          const appError = error instanceof AppError ? error : parseSupabaseError(error);
+          set({ error: appError.userMessage });
+          throw appError;
         }
       },
 
@@ -406,10 +275,12 @@ const useChatStore = create<ChatStore>()(
           console.log(`📨 Loaded ${messages.length} messages for room ${roomId}`);
         } catch (error) {
           console.error("💥 Failed to load messages:", error);
+          const appError = error instanceof AppError ? error : parseSupabaseError(error);
           set({
-            error: error instanceof Error ? error.message : "Failed to load messages",
+            error: appError.userMessage,
             isLoading: false,
           });
+          throw appError;
         }
       },
 
@@ -456,14 +327,24 @@ const useChatStore = create<ChatStore>()(
       },
 
       addMessage: (message: ChatMessage) => {
-        set((state) => ({
-          messages: {
-            ...state.messages,
-            [message.chatRoomId]: [...(state.messages[message.chatRoomId] || []), message].sort(
-              (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
-            ),
-          },
-        }));
+        set((state) => {
+          const roomMessages = state.messages[message.chatRoomId] || [];
+
+          // Check if message already exists to avoid duplicates
+          const messageExists = roomMessages.some((msg) => msg.id === message.id);
+          if (messageExists) {
+            return state;
+          }
+
+          return {
+            messages: {
+              ...state.messages,
+              [message.chatRoomId]: [...roomMessages, message].sort(
+                (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
+              ),
+            },
+          };
+        });
       },
 
       // Add message immediately for real-time updates
@@ -588,38 +469,29 @@ const useChatStore = create<ChatStore>()(
       // Members
       loadMembers: async (roomId: string) => {
         try {
-          // Mock members data
-          const mockMembers: ChatMember[] = [
-            {
-              id: "member_1",
-              chatRoomId: roomId,
-              userId: "user_456",
-              userName: "Sarah M.",
-              joinedAt: new Date(Date.now() - 86400000),
-              role: "member",
-              isOnline: true,
-              lastSeen: new Date(),
-            },
-            {
-              id: "member_2",
-              chatRoomId: roomId,
-              userId: "user_789",
-              userName: "Mike R.",
-              joinedAt: new Date(Date.now() - 172800000),
-              role: "member",
-              isOnline: false,
-              lastSeen: new Date(Date.now() - 3600000),
-            },
-          ];
+          set({ isLoading: true });
+          console.log(`👥 Loading members for room ${roomId}...`);
+
+          // Load members from Supabase
+          const members = await realtimeChatService.getRoomMembers(roomId);
 
           set((state) => ({
             members: {
               ...state.members,
-              [roomId]: mockMembers,
+              [roomId]: members,
             },
+            isLoading: false,
           }));
+
+          console.log(`👥 Loaded ${members.length} members for room ${roomId}`);
         } catch (error) {
-          set({ error: error instanceof Error ? error.message : "Failed to load members" });
+          console.error("💥 Failed to load members:", error);
+          const appError = error instanceof AppError ? error : parseSupabaseError(error);
+          set({
+            error: appError.userMessage,
+            isLoading: false,
+          });
+          throw appError;
         }
       },
 
@@ -657,13 +529,35 @@ const useChatStore = create<ChatStore>()(
       // Supabase real-time message listener
       startListeningToMessages: (roomId: string) => {
         return supabaseChat.onMessagesSnapshot(roomId, (messages: ChatMessage[]) => {
-          set((state) => ({
-            messages: {
-              ...state.messages,
-              [roomId]: messages,
-            },
-          }));
+          try {
+            set((state) => ({
+              messages: {
+                ...state.messages,
+                [roomId]: messages,
+              },
+            }));
+          } catch (error) {
+            console.error("Subscription update error:", error);
+            const appError = error instanceof AppError ? error : parseSupabaseError(error);
+            set({ error: appError.userMessage });
+          }
         });
+      },
+
+      // Cleanup all subscriptions and connections
+      cleanup: async () => {
+        try {
+          await realtimeChatService.cleanup();
+          set({
+            connectionStatus: "disconnected",
+            currentChatRoom: null,
+            typingUsers: [],
+            onlineUsers: [],
+            error: null,
+          });
+        } catch (error) {
+          console.error("Failed to cleanup chat store:", error);
+        }
       },
     }),
     {

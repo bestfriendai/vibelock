@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Appearance } from 'react-native';
 
 export type Theme = "light" | "dark" | "system";
 
@@ -9,6 +10,7 @@ interface ThemeState {
   isDarkMode: boolean;
   setTheme: (theme: Theme) => void;
   toggleTheme: () => void;
+  getSystemTheme: () => "light" | "dark";
 }
 
 const useThemeStore = create<ThemeState>()(
@@ -16,6 +18,11 @@ const useThemeStore = create<ThemeState>()(
     (set, get) => ({
       theme: "dark", // Default to dark since the app is currently dark-themed
       isDarkMode: true,
+
+      getSystemTheme: () => {
+        const systemColorScheme = Appearance.getColorScheme();
+        return systemColorScheme === 'dark' ? 'dark' : 'light';
+      },
 
       setTheme: (theme: Theme) => {
         set((state) => {
@@ -26,9 +33,9 @@ const useThemeStore = create<ThemeState>()(
           } else if (theme === "dark") {
             isDarkMode = true;
           } else if (theme === "system") {
-            // For now, default to dark when system is selected
-            // In a full implementation, you'd check the system theme
-            isDarkMode = true;
+            // Use real system theme detection
+            const systemTheme = get().getSystemTheme();
+            isDarkMode = systemTheme === 'dark';
           }
 
           return {

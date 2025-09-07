@@ -2,17 +2,21 @@ import React, { useState, useEffect } from "react";
 import { View, Text, Pressable, Modal, TextInput, FlatList, Keyboard, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import { getCurrentLocation, reverseGeocodeLocation, searchLocations } from "../utils/location";
+import { getCurrentLocation, reverseGeocodeLocation, searchLocations, geocodeCityStateCached } from "../utils/location";
 
 interface Location {
   city: string;
   state: string;
   fullName: string;
+  coordinates?: {
+    latitude: number;
+    longitude: number;
+  };
 }
 
 interface LocationSelectorProps {
   currentLocation: Location;
-  onLocationChange: (location: Location) => void;
+  onLocationChange: (location: Location & { coordinates?: { latitude: number; longitude: number } }) => void;
 }
 
 // Expanded location data for nationwide autocomplete
@@ -143,6 +147,7 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
               city: result.city,
               state: result.state,
               fullName: `${result.city}, ${result.state}`,
+              coordinates: result.coordinates,
             }));
             setFilteredLocations(formattedResults);
           } catch (error) {
@@ -157,8 +162,28 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
     return () => clearTimeout(timeoutId);
   }, [searchText]);
 
-  const handleLocationSelect = (location: Location) => {
-    onLocationChange(location);
+  const handleLocationSelect = async (location: Location) => {
+    console.log('📍 Location selected:', location);
+
+    // Use provided coordinates when available, otherwise geocode with device for worldwide support
+    try {
+      let coordinates = location.coordinates;
+      if (!coordinates) {
+        coordinates = await geocodeCityStateCached(location.city, location.state) || undefined;
+      }
+
+      console.log('✅ Found coordinates:', coordinates);
+      // Pass location with coordinates to parent
+      onLocationChange({
+        ...location,
+        coordinates,
+      });
+    } catch (error) {
+      console.warn("Failed to get coordinates for location:", error);
+      // Fallback to location without coordinates
+      onLocationChange(location);
+    }
+
     setModalVisible(false);
     setSearchText("");
     setLocationError(null);
@@ -184,6 +209,7 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
           city: locationData.city,
           state: locationData.state,
           fullName: `${locationData.city}, ${locationData.state}`,
+          coordinates,
         };
         // Haptic feedback for successful location detection
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -201,7 +227,13 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
   };
 
   const renderLocationItem = ({ item }: { item: Location }) => (
-    <Pressable onPress={() => handleLocationSelect(item)} className="px-4 py-3 border-b border-surface-700">
+    <Pressable
+      onPress={() => {
+        console.log('🏙️ Location item pressed:', item.fullName);
+        handleLocationSelect(item);
+      }}
+      className="px-4 py-3 border-b border-surface-700"
+    >
       <Text className="text-text-primary font-medium">{item.fullName}</Text>
     </Pressable>
   );
@@ -210,7 +242,10 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
     <>
       <Pressable
         className="flex-row items-center bg-surface-700 px-3 py-2 rounded-full"
-        onPress={() => setModalVisible(true)}
+        onPress={() => {
+          console.log('🔘 Location selector pressed');
+          setModalVisible(true);
+        }}
       >
         <Ionicons name="location-outline" size={16} color="#F3F4F6" />
         <Text className="text-text-primary text-sm ml-1 font-medium">
@@ -227,7 +262,7 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
       >
         <View className="flex-1 bg-surface-900">
           {/* Header */}
-          <View className="flex-row items-center justify-between px-4 py-4 border-b border-surface-700">
+          <View className="flex-row items-center justify-between px-6 py-6 border-b border-surface-700">
             <Text className="text-text-primary text-lg font-semibold">Select Location</Text>
             <Pressable onPress={() => setModalVisible(false)} className="w-8 h-8 items-center justify-center">
               <Ionicons name="close" size={24} color="#F3F4F6" />

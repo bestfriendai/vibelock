@@ -52,6 +52,8 @@ class WebSocketService {
   }
 
   disconnect() {
+    console.log("🧹 Disconnecting WebSocket service");
+
     if (this.ws) {
       this.ws.close();
       this.ws = null;
@@ -65,7 +67,10 @@ class WebSocketService {
     this.isConnecting = false;
     this.reconnectAttempts = 0;
     this.messageQueue = [];
+    this.currentUserId = null;
+    this.currentChatRoomId = null;
     this.callbacks?.onConnectionStatusChange("disconnected");
+    this.callbacks = null;
   }
 
   joinRoom(chatRoomId: string) {

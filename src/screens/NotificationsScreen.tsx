@@ -21,12 +21,16 @@ export default function NotificationsScreen() {
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
-    initialize();
-  }, [initialize]);
-
-  useEffect(() => {
-    if (user?.id) loadNotifications(user.id);
-  }, [user?.id, loadNotifications]);
+    // Combine both initialization and loading notifications
+    const initializeAndLoad = async () => {
+      await initialize();
+      if (user?.id) {
+        await loadNotifications(user.id);
+      }
+    };
+    
+    initializeAndLoad();
+  }, [initialize, user?.id, loadNotifications]);
 
   const onRefresh = useCallback(async () => {
     if (!user?.id) return;
@@ -37,7 +41,7 @@ export default function NotificationsScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-surface-900">
-      <View className="px-4 py-4 border-b border-border bg-surface-800">
+      <View className="px-6 py-6 border-b border-border bg-surface-800">
         <View className="flex-row items-center justify-between">
           <Text className="text-text-primary text-2xl font-bold">Notifications</Text>
           {unreadCount > 0 && (
@@ -58,7 +62,7 @@ export default function NotificationsScreen() {
         renderItem={({ item }) => (
           <Pressable
             onPress={() => markAsRead(item.id)}
-            className={`px-4 py-3 border-b border-surface-700 ${item.isRead ? "bg-surface-900" : "bg-surface-800"}`}
+            className={`px-4 py-4 border-b border-surface-700 ${item.isRead ? "bg-surface-900" : "bg-surface-800"}`}
           >
             <View className="flex-row items-start">
               <View className="w-8 items-center mt-1">
@@ -79,7 +83,7 @@ export default function NotificationsScreen() {
           </Pressable>
         )}
         estimatedItemSize={72}
-        refreshControl={<RefreshControl refreshing={refreshing || isLoading} onRefresh={onRefresh} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#9CA3AF" />}
         ListEmptyComponent={
           !isLoading ? (
             <View className="items-center justify-center py-20">

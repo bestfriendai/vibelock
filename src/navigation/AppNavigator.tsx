@@ -4,6 +4,8 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 import { View, Pressable } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { useSafeAreaInsets, SafeAreaView } from "react-native-safe-area-context";
+import AdBanner from "../components/AdBanner";
 
 // Import screens
 import BrowseScreen from "../screens/BrowseScreen";
@@ -22,6 +24,7 @@ import ReviewDetailScreen from "../screens/ReviewDetailScreen";
 // Screens (new)
 import NotificationsScreen from "../screens/NotificationsScreen";
 import DeleteAccountScreen from "../screens/DeleteAccountScreen";
+import LocationSettingsScreen from "../screens/LocationSettingsScreen";
 
 // Import stores
 import useAuthStore from "../state/authStore";
@@ -52,6 +55,7 @@ export type RootStackParamList = {
 export type TabParamList = {
   BrowseStack: undefined;
   SearchStack: undefined;
+  CreateAction: undefined;
   ChatroomsStack: undefined;
   SettingsStack: undefined;
 };
@@ -78,6 +82,7 @@ export type SettingsStackParamList = {
   Settings: undefined;
   Notifications: undefined;
   DeleteAccount: undefined;
+  LocationSettings: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -87,27 +92,55 @@ const SearchStack = createNativeStackNavigator<SearchStackParamList>();
 const ChatroomsStack = createNativeStackNavigator<ChatroomsStackParamList>();
 const SettingsStack = createNativeStackNavigator<SettingsStackParamList>();
 
-function FloatingCreateButton() {
+function CreateTabButton() {
   const navigation = useNavigation<any>();
   const { isGuestMode } = useAuthStore();
-
-  const handlePress = () => {
-    if (isGuestMode) {
-      // Show guest mode prompt or navigate to sign up
-      navigation.navigate("SignUp");
-    } else {
-      navigation.navigate("CreateReview");
-    }
-  };
+  const insets = useSafeAreaInsets();
 
   return (
-    <Pressable
-      className="absolute bottom-16 self-center w-14 h-14 rounded-full bg-white items-center justify-center shadow-lg"
-      onPress={handlePress}
-      hitSlop={10}
+    <View
+      style={{
+        flex: 1,
+        alignItems: "center",
+        justifyContent: "center",
+        // Offset the button up slightly to make it more prominent
+        marginBottom: 8,
+      }}
     >
-      <Ionicons name="add" size={28} color="#000000" />
-    </Pressable>
+      <Pressable
+        onPress={() => navigation.navigate(isGuestMode ? "SignUp" : "CreateReview")}
+        hitSlop={16}
+        style={{
+          alignItems: "center",
+          justifyContent: "center",
+          width: 64,
+          height: 64,
+        }}
+        accessibilityRole="button"
+        accessibilityLabel="Create Review"
+      >
+        <View
+          style={{
+            width: 60,
+            height: 60,
+            borderRadius: 30,
+            backgroundColor: "#FFFFFF",
+            alignItems: "center",
+            justifyContent: "center",
+            shadowColor: "#000",
+            shadowOpacity: 0.3,
+            shadowRadius: 12,
+            shadowOffset: { width: 0, height: 6 },
+            elevation: 12,
+            // Add a subtle border for better definition
+            borderWidth: 1,
+            borderColor: "rgba(0,0,0,0.05)",
+          }}
+        >
+          <Ionicons name="add" size={32} color="#000000" />
+        </View>
+      </Pressable>
+    </View>
   );
 }
 
@@ -203,12 +236,20 @@ function SettingsStackNavigator() {
           headerBackTitle: "Back",
         }}
       />
+      <SettingsStack.Screen
+        name="LocationSettings"
+        component={LocationSettingsScreen}
+        options={{
+          headerShown: false,
+        }}
+      />
     </SettingsStack.Navigator>
   );
 }
 
 // Tab Navigator Component
 function TabNavigator() {
+  const insets = useSafeAreaInsets();
   return (
     <View className="flex-1 bg-surface-900">
       <Tab.Navigator
@@ -221,6 +262,10 @@ function TabNavigator() {
                 break;
               case "SearchStack":
                 iconName = focused ? "search" : "search-outline";
+                break;
+              case "CreateAction":
+                // Icon handled by custom tabBarButton
+                iconName = "add";
                 break;
               case "ChatroomsStack":
                 iconName = focused ? "chatbubbles" : "chatbubbles-outline";
@@ -235,13 +280,15 @@ function TabNavigator() {
           },
           tabBarActiveTintColor: "#FFFFFF",
           tabBarInactiveTintColor: "#9CA3AF",
+          tabBarHideOnKeyboard: true,
           tabBarStyle: {
             backgroundColor: "#000000",
             borderTopWidth: 1,
             borderTopColor: "#2A2A2F",
-            paddingBottom: 8,
-            paddingTop: 8,
-            height: 80,
+            // Height accounts for the iOS home indicator area
+            paddingBottom: Math.max(insets.bottom, 6),
+            paddingTop: 4,
+            height: 52 + (insets.bottom || 0),
           },
           tabBarLabelStyle: { fontSize: 12, fontWeight: "500" },
           headerShown: false,
@@ -249,12 +296,26 @@ function TabNavigator() {
       >
         <Tab.Screen name="BrowseStack" component={BrowseStackNavigator} options={{ tabBarLabel: "Browse" }} />
         <Tab.Screen name="SearchStack" component={SearchStackNavigator} options={{ tabBarLabel: "Search" }} />
+        <Tab.Screen
+          name="CreateAction"
+          component={View as any}
+          options={{
+            tabBarLabel: "",
+            tabBarButton: (props) => <CreateTabButton />,
+            tabBarIconStyle: { display: "none" },
+            tabBarItemStyle: {
+              flex: 1,
+              alignItems: "center",
+              justifyContent: "center",
+            },
+          }}
+        />
         <Tab.Screen name="ChatroomsStack" component={ChatroomsStackNavigator} options={{ tabBarLabel: "Chatrooms" }} />
         <Tab.Screen name="SettingsStack" component={SettingsStackNavigator} options={{ tabBarLabel: "Settings" }} />
       </Tab.Navigator>
 
-      {/* Floating Create Button */}
-      <FloatingCreateButton />
+      {/* Ad banner positioned at the tab navigator level for proper absolute positioning */}
+      <AdBanner placement="browse" />
     </View>
   );
 }

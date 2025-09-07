@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo } from "react";
 import { View, Text, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Review, MediaItem } from "../types";
@@ -11,7 +11,7 @@ interface Props {
   isLiked?: boolean;
 }
 
-export default function EnhancedReviewCard({ review, onMediaPress, onLike, isLiked = false }: Props) {
+const EnhancedReviewCard = memo(function EnhancedReviewCard({ review, onMediaPress, onLike, isLiked = false }: Props) {
   const formatDate = (date: Date) => {
     return date.toLocaleDateString("en-US", {
       year: "numeric",
@@ -71,4 +71,14 @@ export default function EnhancedReviewCard({ review, onMediaPress, onLike, isLik
       </View>
     </View>
   );
-}
+}, (prevProps, nextProps) => {
+  return (
+    prevProps.review.id === nextProps.review.id &&
+    prevProps.isLiked === nextProps.isLiked &&
+    prevProps.review.likeCount === nextProps.review.likeCount &&
+    prevProps.review.reviewText === nextProps.review.reviewText &&
+    prevProps.review.media?.length === nextProps.review.media?.length
+  );
+});
+
+export default EnhancedReviewCard;

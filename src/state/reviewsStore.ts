@@ -4,9 +4,11 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as FileSystem from "expo-file-system";
 import { manipulateAsync, SaveFormat } from "expo-image-manipulator";
 import { Review, FilterOptions, GreenFlag, RedFlag, MediaItem, SocialMediaHandles, Sentiment } from "../types";
+import { filterReviewsByDistanceAsync } from "../utils/location";
 import { supabaseReviews, supabaseStorage } from "../services/supabase";
 import useAuthStore from "./authStore";
 import { notificationService } from "../services/notificationService";
+import { AppError, parseSupabaseError } from "../utils/errorHandling";
 
 interface ReviewsState {
   reviews: Review[];
@@ -44,145 +46,7 @@ interface ReviewsActions {
 
 type ReviewsStore = ReviewsState & ReviewsActions;
 
-// Mock data for development with realistic profiles
-const mockReviews: Review[] = [
-  {
-    id: "1",
-    authorId: "seed_user",
-    reviewerAnonymousId: "anon_123",
-    reviewedPersonName: "Ava",
-    reviewedPersonLocation: { city: "Washington", state: "DC" },
-    category: "women",
-    profilePhoto: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=800&q=60",
-    greenFlags: ["good_communicator", "respectful"],
-    redFlags: [],
-    sentiment: "green",
-    reviewText: "Warm, easy to talk to, and very genuine.",
-    status: "approved",
-    likeCount: 12,
-    createdAt: new Date("2024-01-15"),
-    updatedAt: new Date("2024-01-15"),
-  },
-  {
-    id: "2",
-    authorId: "seed_user",
-    reviewerAnonymousId: "anon_456",
-    reviewedPersonName: "Jasmine",
-    reviewedPersonLocation: { city: "Alexandria", state: "VA" },
-    category: "women",
-    profilePhoto: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=800&q=60",
-    greenFlags: ["reliable", "honest"],
-    redFlags: [],
-    sentiment: "green",
-    reviewText: "Consistent and honest. Great energy overall.",
-    status: "approved",
-    likeCount: 8,
-    createdAt: new Date("2024-01-14"),
-    updatedAt: new Date("2024-01-14"),
-  },
-  {
-    id: "3",
-    authorId: "seed_user",
-    reviewerAnonymousId: "anon_789",
-    reviewedPersonName: "Taylor",
-    reviewedPersonLocation: { city: "Arlington", state: "VA" },
-    category: "all",
-    profilePhoto: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=800&q=60",
-    greenFlags: ["fun", "kind", "good_listener"],
-    redFlags: [],
-    sentiment: "green",
-    reviewText: "Thoughtful and fun to be around.",
-    status: "approved",
-    likeCount: 15,
-    createdAt: new Date("2024-01-13"),
-    updatedAt: new Date("2024-01-13"),
-  },
-  {
-    id: "4",
-    authorId: "seed_user",
-    reviewerAnonymousId: "anon_101",
-    reviewedPersonName: "Morgan",
-    reviewedPersonLocation: { city: "Bethesda", state: "MD" },
-    category: "men",
-    profilePhoto: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=800&q=60",
-    greenFlags: [],
-    redFlags: ["inconsistent"],
-    sentiment: "red",
-    reviewText: "Plans fall through often. Mixed signals.",
-    status: "approved",
-    likeCount: 23,
-    createdAt: new Date("2024-01-12"),
-    updatedAt: new Date("2024-01-12"),
-  },
-  {
-    id: "5",
-    authorId: "seed_user",
-    reviewerAnonymousId: "anon_202",
-    reviewedPersonName: "Jordan",
-    reviewedPersonLocation: { city: "Silver Spring", state: "MD" },
-    category: "men",
-    profilePhoto: "https://images.unsplash.com/photo-1520813792240-56fc4a3765a7?auto=format&fit=crop&w=800&q=60",
-    greenFlags: ["respectful", "kind"],
-    redFlags: [],
-    sentiment: "green",
-    reviewText: "Kind and respectful, really listens.",
-    status: "approved",
-    likeCount: 18,
-    createdAt: new Date("2024-01-11"),
-    updatedAt: new Date("2024-01-11"),
-  },
-  {
-    id: "6",
-    authorId: "seed_user",
-    reviewerAnonymousId: "anon_303",
-    reviewedPersonName: "Mia",
-    reviewedPersonLocation: { city: "Arlington", state: "VA" },
-    category: "women",
-    profilePhoto: "https://images.unsplash.com/photo-1527980965255-d3b416303d12?auto=format&fit=crop&w=800&q=60",
-    greenFlags: [],
-    redFlags: ["poor_communication"],
-    sentiment: "red",
-    reviewText: "Hard to reach and rarely follows up.",
-    status: "approved",
-    likeCount: 31,
-    createdAt: new Date("2024-01-10"),
-    updatedAt: new Date("2024-01-10"),
-  },
-  {
-    id: "7",
-    authorId: "seed_user",
-    reviewerAnonymousId: "anon_404",
-    reviewedPersonName: "Sophia",
-    reviewedPersonLocation: { city: "Washington", state: "DC" },
-    category: "women",
-    profilePhoto: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=800&q=60",
-    greenFlags: ["ambitious"],
-    redFlags: [],
-    sentiment: "green",
-    reviewText: "Driven and focused, very inspiring.",
-    status: "approved",
-    likeCount: 27,
-    createdAt: new Date("2024-01-09"),
-    updatedAt: new Date("2024-01-09"),
-  },
-  {
-    id: "8",
-    authorId: "seed_user",
-    reviewerAnonymousId: "anon_505",
-    reviewedPersonName: "Olivia",
-    reviewedPersonLocation: { city: "Alexandria", state: "VA" },
-    category: "women",
-    profilePhoto: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=800&q=60",
-    greenFlags: ["good_listener"],
-    redFlags: [],
-    sentiment: "green",
-    reviewText: "Listens and engages thoughtfully.",
-    status: "approved",
-    likeCount: 19,
-    createdAt: new Date("2024-01-08"),
-    updatedAt: new Date("2024-01-08"),
-  },
-];
+// Mock data removed - using real Supabase data only
 
 const useReviewsStore = create<ReviewsStore>()(
   persist(
@@ -274,30 +138,56 @@ const useReviewsStore = create<ReviewsStore>()(
             serverFilters.category = categoryToFilter;
           }
 
-          // Apply location filters based on radius
-          if (filters.radius && userLocation) {
-            if (filters.radius < 50) {
-              // Small radius: filter by city and state
-              serverFilters.city = userLocation.city;
-              serverFilters.state = userLocation.state;
-            } else if (filters.radius < 100) {
-              // Medium radius: filter by state only
-              serverFilters.state = userLocation.state;
-            }
-            // Large radius (>= 100): no location filter (nationwide)
+          // Decide strategy: if radius is specified and we have a user location,
+          // fetch a larger batch and apply precise client-side distance filtering
+          const radiusFilteringActive = typeof filters.radius === 'number' && !!filters.radius && !!userLocation;
+
+          if (__DEV__) {
+            console.log("🧭 Reviews load filters:", {
+              categoryToFilter,
+              serverFilters,
+              userLocation,
+              radius: filters.radius,
+              offset: refresh ? 0 : currentState.reviews.length,
+              radiusFilteringActive,
+            });
           }
 
-          // Load from Supabase with server-side filtering
-          const offset = refresh ? 0 : currentState.reviews.length;
-          const newReviews = await supabaseReviews.getReviews(20, offset, serverFilters);
+          // Load from Supabase
+          let newReviews: Review[] = [];
 
-          // If no reviews found and this is a refresh, show mock data
+          if (radiusFilteringActive && userLocation) {
+            // Over-fetch a larger recent set, then filter by distance locally
+            const fetchLimit = 200; // Adjust as needed
+            const fetchOffset = 0; // Always fresh for radius-based filtering
+            const baseSet = await supabaseReviews.getReviews(fetchLimit, fetchOffset, {
+              category: serverFilters.category,
+            });
+
+            newReviews = await filterReviewsByDistanceAsync(baseSet, userLocation, filters.radius!);
+
+            if (__DEV__) {
+              console.log("📏 Distance-filtered reviews:", {
+                requested: fetchLimit,
+                baseCount: baseSet.length,
+                filteredCount: newReviews.length,
+                radius: filters.radius,
+                center: userLocation,
+              });
+            }
+          } else {
+            const offset = refresh ? 0 : currentState.reviews.length;
+            newReviews = await supabaseReviews.getReviews(20, offset, serverFilters);
+          }
+
+          // If no reviews found and this is a refresh, show empty state
           if (refresh && newReviews.length === 0) {
             set({
-              reviews: mockReviews,
+              reviews: [],
               hasMore: false,
               lastVisible: null,
               isLoading: false,
+              error: "No reviews found. Be the first to create one!",
             });
             return;
           }
@@ -319,21 +209,16 @@ const useReviewsStore = create<ReviewsStore>()(
             });
           }
         } catch (error) {
-          // Fallback to mock data if Supabase fails
-          console.warn("Supabase failed, using mock data:", error);
-          if (refresh || get().reviews.length === 0) {
-            set({
-              reviews: mockReviews,
-              hasMore: false,
-              lastVisible: null,
-              isLoading: false,
-            });
-          } else {
-            set({
-              error: error instanceof Error ? error.message : "Failed to load reviews",
-              isLoading: false,
-            });
-          }
+          console.error("💥 Failed to load reviews:", error);
+          const appError = error instanceof AppError ? error : parseSupabaseError(error);
+
+          set({
+            error: appError.userMessage,
+            isLoading: false,
+          });
+
+          // Don't fallback to mock data - show proper error state
+          throw appError;
         }
       },
 

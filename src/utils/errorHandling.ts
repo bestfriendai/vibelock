@@ -282,12 +282,18 @@ export const handleComponentError = (error: any, componentName: string): string 
 // Network status checker
 export const checkNetworkStatus = async (): Promise<boolean> => {
   try {
-    // Try to fetch a small resource from Supabase
-    const response = await fetch("https://dqjhwqhelqwhvtpxccwj.supabase.co/rest/v1/", {
+    // Use environment variable for Supabase URL or fallback to a reliable endpoint
+    const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
+    const checkUrl = supabaseUrl 
+      ? `${supabaseUrl}/rest/v1/` 
+      : "https://www.google.com/generate_204"; // Google's connectivity check endpoint
+
+    const response = await fetch(checkUrl, {
       method: "HEAD",
+      // @ts-ignore - timeout is supported in React Native
       timeout: 5000,
     });
-    return response.ok;
+    return response.ok || response.status === 204;
   } catch {
     return false;
   }

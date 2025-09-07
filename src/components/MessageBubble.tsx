@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, Pressable, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming } from "react-native-reanimated";
@@ -39,6 +39,13 @@ export default function MessageBubble({ message, onReply, onReact, onLongPress }
 
   const scale = useSharedValue(1);
   const reactionScale = useSharedValue(0);
+
+  // Cleanup animations on unmount
+  useEffect(() => {
+    return () => {
+      reactionScale.value = 0;
+    };
+  }, []);
 
   const handleLongPress = () => {
     scale.value = withSpring(0.95, { duration: 100 }, () => {
@@ -116,7 +123,11 @@ export default function MessageBubble({ message, onReply, onReact, onLongPress }
       <Animated.View style={animatedStyle}>
         <Pressable
           onLongPress={handleLongPress}
-          delayLongPress={500}
+          delayLongPress={800}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel={`Message from ${message.senderName}: ${message.content}`}
+          accessibilityHint="Long press for message options"
           className={`${isOwn ? "bg-brand-red" : "bg-surface-700"} max-w-[80%] rounded-2xl px-3 py-2 relative`}
         >
           <Text className={`${isOwn ? "text-black" : "text-text-primary"} text-base leading-5`}>{message.content}</Text>

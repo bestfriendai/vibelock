@@ -12,6 +12,7 @@ export default function ProfileScreen() {
   const { user, logout, isGuestMode, setGuestMode } = useAuthStore();
   const { theme, isDarkMode, setTheme } = useThemeStore();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [notificationsEnabled] = useState(true);
 
   const handleLogout = () => {
@@ -23,11 +24,18 @@ export default function ProfileScreen() {
     logout();
   };
 
+  const handleDeleteAccount = () => {
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteAccount = () => {
+    setShowDeleteModal(false);
+    // Navigate to delete account screen or handle deletion
+    navigation.navigate("DeleteAccount");
+  };
+
   const handleLocationSettings = () => {
-    Alert.alert("Location Settings", "Update your location to see reviews and chat rooms in your area.", [
-      { text: "Cancel", style: "cancel" },
-      { text: "Update Location", onPress: () => console.log("Update location") },
-    ]);
+    navigation.navigate("LocationSettings");
   };
 
   const handleNotificationSettings = () => {
@@ -59,7 +67,7 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView className="flex-1 bg-surface-900">
       {/* Header */}
-      <View className="bg-black px-4 py-4">
+      <View className="bg-black px-6 py-6">
         <View className="flex-row items-center">
           <View className="w-10 h-10 mr-3">
             <Image
@@ -73,7 +81,7 @@ export default function ProfileScreen() {
       </View>
 
       <ScrollView className="flex-1">
-        <View className="px-4 py-6">
+        <View className="px-6 py-6">
           {/* Guest Mode Banner */}
           {isGuestMode && (
             <View className="bg-brand-red/20 border border-brand-red/30 rounded-lg p-4 mb-6">
@@ -128,7 +136,7 @@ export default function ProfileScreen() {
           {/* Settings Options */}
           <View className="bg-surface-800 rounded-lg mb-6">
             <Pressable
-              className="flex-row items-center justify-between p-4 border-b border-surface-700"
+              className="flex-row items-center justify-between p-5 border-b border-surface-700"
               onPress={handleLocationSettings}
             >
               <View className="flex-row items-center">
@@ -144,7 +152,7 @@ export default function ProfileScreen() {
             </Pressable>
 
             <Pressable
-              className="flex-row items-center justify-between p-4 border-b border-surface-700"
+              className="flex-row items-center justify-between p-5 border-b border-surface-700"
               onPress={handleNotificationSettings}
             >
               <View className="flex-row items-center">
@@ -155,18 +163,7 @@ export default function ProfileScreen() {
             </Pressable>
 
             {/* Theme Toggle */}
-            <Pressable
-              className="flex-row items-center justify-between p-4 border-b border-surface-700"
-              onPress={() => {
-                const newTheme = theme === "dark" ? "light" : "dark";
-                setTheme(newTheme);
-                Alert.alert(
-                  "Theme Changed",
-                  `Switched to ${newTheme} mode. Note: Full theme switching will be implemented in a future update.`,
-                  [{ text: "OK" }]
-                );
-              }}
-            >
+            <View className="flex-row items-center justify-between p-5 border-b border-surface-700">
               <View className="flex-row items-center">
                 <Ionicons name={isDarkMode ? "moon-outline" : "sunny-outline"} size={20} color="#9CA3AF" />
                 <Text className="text-text-primary font-medium ml-3">Theme</Text>
@@ -178,12 +175,17 @@ export default function ProfileScreen() {
                   onValueChange={() => {
                     const newTheme = isDarkMode ? "light" : "dark";
                     setTheme(newTheme);
+                    Alert.alert(
+                      "Theme Changed",
+                      `Switched to ${newTheme} mode. Note: Full theme switching will be implemented in a future update.`,
+                      [{ text: "OK" }]
+                    );
                   }}
                   trackColor={{ false: "#374151", true: "#1F2937" }}
                   thumbColor={isDarkMode ? "#FFFFFF" : "#9CA3AF"}
                 />
               </View>
-            </Pressable>
+            </View>
 
             {/** Privacy removed */}
 
@@ -231,7 +233,7 @@ export default function ProfileScreen() {
           </View>
 
           {/* Account Actions */}
-          <Pressable className="bg-surface-800 rounded-lg p-4 mb-3" onPress={() => navigation.navigate("DeleteAccount")}>
+          <Pressable className="bg-surface-800 rounded-lg p-4 mb-3" onPress={handleDeleteAccount}>
             <View className="flex-row items-center justify-center">
               <Ionicons name="trash-outline" size={20} color="#EF4444" />
               <Text className="text-red-500 font-medium ml-3">Delete Account</Text>
@@ -259,6 +261,19 @@ export default function ProfileScreen() {
         icon="log-out-outline"
         onConfirm={confirmLogout}
         onCancel={() => setShowLogoutModal(false)}
+      />
+
+      {/* Delete Account Confirmation Modal */}
+      <ConfirmationModal
+        visible={showDeleteModal}
+        title="Delete Account"
+        message="Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently removed."
+        confirmText="Delete Account"
+        cancelText="Cancel"
+        confirmColor="red"
+        icon="trash-outline"
+        onConfirm={confirmDeleteAccount}
+        onCancel={() => setShowDeleteModal(false)}
       />
     </SafeAreaView>
   );

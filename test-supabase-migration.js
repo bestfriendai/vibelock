@@ -6,10 +6,19 @@
  */
 
 const { createClient } = require('@supabase/supabase-js');
+require('dotenv').config();
 
-// Configuration with your Supabase anon key
-const SUPABASE_URL = 'https://dqjhwqhelqwhvtpxccwj.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRxamh3cWhlbHF3aHZ0cHhjY3dqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM0MjE4MjcsImV4cCI6MjA2ODk5NzgyN30.qZmbCZig2wy0ShcaXWZ6TxD-vpbrExSIEImHAvaFkMQ';
+// Load configuration from environment variables first
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.EXPO_PUBLIC_SUPABASE_URL;
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  console.error('❌ Missing required environment variables:');
+  if (!SUPABASE_URL) console.error('  - SUPABASE_URL or EXPO_PUBLIC_SUPABASE_URL is not set');
+  if (!SUPABASE_ANON_KEY) console.error('  - SUPABASE_ANON_KEY or EXPO_PUBLIC_SUPABASE_ANON_KEY is not set');
+  console.error('\nPlease set these in your .env before running the tests.');
+  process.exit(1);
+}
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo, useState } from "react";
 import { View, ScrollView, Pressable, Text } from "react-native";
 import { MediaItem } from "../types";
 import MediaThumbnail from "./MediaThumbnail";
@@ -10,11 +10,17 @@ interface Props {
   size?: number;
 }
 
-export default function MediaGallery({ media, onMediaPress, maxVisible = 4, size = 80 }: Props) {
+const MediaGallery = memo(function MediaGallery({ media, onMediaPress, maxVisible = 4, size = 80 }: Props) {
+  const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
+
   if (!media || media.length === 0) return null;
 
   const visibleMedia = media.slice(0, maxVisible);
   const remainingCount = media.length - maxVisible;
+
+  const handleImageLoad = (mediaId: string) => {
+    setLoadedImages(prev => new Set(prev).add(mediaId));
+  };
 
   return (
     <View className="mt-3">
@@ -38,11 +44,25 @@ export default function MediaGallery({ media, onMediaPress, maxVisible = 4, size
                 </View>
               </Pressable>
             ) : (
-              <MediaThumbnail media={item} size={size} onPress={() => onMediaPress(item, index)} />
+              <MediaThumbnail
+                media={item}
+                size={size}
+                onPress={() => onMediaPress(item, index)}
+                onLoad={() => handleImageLoad(item.id)}
+              />
             )}
           </View>
         ))}
       </ScrollView>
     </View>
   );
-}
+}, (prevProps, nextProps) => {
+  return (
+    prevProps.media.length === nextProps.media.length &&
+    prevProps.maxVisible === nextProps.maxVisible &&
+    prevProps.size === nextProps.size &&
+    prevProps.media.every((item, index) => item.id === nextProps.media[index]?.id)
+  );
+});
+
+export default MediaGallery;

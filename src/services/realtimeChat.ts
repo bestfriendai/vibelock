@@ -2,14 +2,18 @@
 import { supabase } from "../config/supabase";
 import { ChatRoom, ChatMessage, ChatMember } from "../types";
 import { RealtimeChannel } from "@supabase/supabase-js";
+import { AppError, ErrorType, parseSupabaseError } from "../utils/errorHandling";
 
 class RealtimeChatService {
   private channels: Map<string, RealtimeChannel> = new Map();
   private messageCallbacks: Map<string, (messages: ChatMessage[]) => void> = new Map();
+  private retryAttempts: Map<string, number> = new Map();
   private roomCallbacks: Map<string, (rooms: ChatRoom[]) => void> = new Map();
   private presenceCallbacks: Map<string, (members: ChatMember[]) => void> = new Map();
   private typingCallbacks: Map<string, (typingUsers: any[]) => void> = new Map();
   private typingTimeouts: Map<string, NodeJS.Timeout> = new Map();
+  private abortControllers: Map<string, AbortController> = new Map();
+  private pendingJoins: Set<string> = new Set();
 
   // Initialize real-time chat system
   async initialize() {
@@ -23,7 +27,7 @@ class RealtimeChatService {
         {
           event: "*",
           schema: "public",
-          table: "chat_rooms",
+          table: "chat_rooms_firebase",
         },
         (payload) => {
           console.log("📢 Room update:", payload);
@@ -93,11 +97,28 @@ class RealtimeChatService {
   async joinRoom(roomId: string, userId: string, userName: string) {
     console.log(`🚪 Joining room ${roomId} as ${userName}`);
 
+    // Prevent race conditions - check if join is already in progress
+    if (this.pendingJoins.has(roomId)) {
+      console.log(`⚠️ Join already in progress for room ${roomId}`);
+      // Wait for the pending join to complete
+      while (this.pendingJoins.has(roomId)) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      return this.channels.get(roomId)!;
+    }
+
     // Check if already connected to this room
     if (this.channels.has(roomId)) {
       console.log(`⚠️ Already connected to room ${roomId}`);
       return this.channels.get(roomId)!;
     }
+
+    // Mark join as in progress
+    this.pendingJoins.add(roomId);
+
+    // Create abort controller for this operation
+    const abortController = new AbortController();
+    this.abortControllers.set(roomId, abortController);
 
     try {
       // Create room-specific channel with better error handling
@@ -123,6 +144,8 @@ class RealtimeChatService {
               this.handleNewMessage(roomId, payload);
             } catch (error) {
               console.error("Error handling new message:", error);
+              const appError = error instanceof AppError ? error : parseSupabaseError(error);
+              // Don't throw here as it would break the subscription, just log
             }
           }
         )
@@ -132,6 +155,8 @@ class RealtimeChatService {
             this.handlePresenceSync(roomId);
           } catch (error) {
             console.error("Error handling presence sync:", error);
+            const appError = error instanceof AppError ? error : parseSupabaseError(error);
+            // Don't throw here as it would break the subscription, just log
           }
         })
         .on("presence", { event: "join" }, ({ key, newPresences }) => {
@@ -181,9 +206,11 @@ class RealtimeChatService {
                   });
                   break;
                 } catch (error) {
-                  console.warn(`Presence tracking attempt ${4 - retries} failed:`, error);
+                  if (!this.abortControllers.get(roomId)?.signal.aborted) {
+                    console.warn(`Presence tracking attempt ${4 - retries} failed:`, error);
+                  }
                   retries--;
-                  if (retries > 0) {
+                  if (retries > 0 && !this.abortControllers.get(roomId)?.signal.aborted) {
                     await new Promise(resolve => setTimeout(resolve, 1000));
                   }
                 }
@@ -196,10 +223,12 @@ class RealtimeChatService {
                   await this.loadRoomMessages(roomId);
                   break;
                 } catch (error) {
-                  console.warn(`Message loading attempt ${4 - retries} failed:`, error);
+                  if (!this.abortControllers.get(roomId)?.signal.aborted) {
+                    console.warn(`Message loading attempt ${4 - retries} failed:`, error);
+                  }
                   retries--;
-                  if (retries > 0) {
-                    await new Promise(resolve => setTimeout(resolve, 1000));
+                  if (retries > 0 && !this.abortControllers.get(roomId)?.signal.aborted) {
+                    await new Promise((resolve) => setTimeout(resolve, 1000));
                   }
                 }
               }
@@ -215,26 +244,57 @@ class RealtimeChatService {
             }, 5000);
           } else if (status === "TIMED_OUT") {
             console.error(`⏰ Subscription timed out for room ${roomId}`);
-            // Try to reconnect after a delay
+            // Implement exponential backoff for reconnection
+            const retryCount = this.retryAttempts.get(roomId) || 0;
+            const delay = Math.min(3000 * Math.pow(2, retryCount), 30000);
+            this.retryAttempts.set(roomId, retryCount + 1);
+
             setTimeout(() => {
-              console.log(`🔄 Attempting to reconnect to room ${roomId}`);
+              console.log(`🔄 Attempting to reconnect to room ${roomId} (attempt ${retryCount + 1})`);
               this.joinRoom(roomId, userId, userName);
-            }, 3000);
+            }, delay);
           }
         });
 
       this.channels.set(roomId, channel);
+
+      // Clear pending join and reset retry count on success
+      this.pendingJoins.delete(roomId);
+      this.retryAttempts.delete(roomId);
+
       return channel;
     } catch (error) {
       console.error("💥 Failed to join room:", error);
-      throw new Error(`Failed to join room ${roomId}: ${error}`);
+
+      // Clean up on failure
+      this.pendingJoins.delete(roomId);
+      this.abortControllers.delete(roomId);
+
+      const appError = error instanceof AppError ? error : parseSupabaseError(error);
+      throw new AppError(
+        `Failed to join room ${roomId}`,
+        ErrorType.SERVER,
+        "ROOM_JOIN_FAILED",
+        undefined,
+        true
+      );
     }
   }
 
   // Leave a chat room
   async leaveRoom(roomId: string) {
     console.log(`🚪 Leaving room ${roomId}`);
-    
+
+    // Cancel any pending operations
+    const abortController = this.abortControllers.get(roomId);
+    if (abortController) {
+      abortController.abort();
+      this.abortControllers.delete(roomId);
+    }
+
+    // Remove from pending joins if still pending
+    this.pendingJoins.delete(roomId);
+
     const channel = this.channels.get(roomId);
     if (channel) {
       await channel.untrack();
@@ -242,8 +302,18 @@ class RealtimeChatService {
       this.channels.delete(roomId);
     }
 
+    // Clean up all callbacks and state for this room
     this.messageCallbacks.delete(roomId);
     this.presenceCallbacks.delete(roomId);
+    this.typingCallbacks.delete(roomId);
+    this.retryAttempts.delete(roomId);
+
+    // Clear any typing timeouts for this room
+    const typingTimeout = this.typingTimeouts.get(roomId);
+    if (typingTimeout) {
+      clearTimeout(typingTimeout);
+      this.typingTimeouts.delete(roomId);
+    }
   }
 
   // Load messages for a room
@@ -297,6 +367,51 @@ class RealtimeChatService {
     } catch (error: any) {
       console.error("💥 Failed to load messages:", error);
       throw new Error(`Failed to load messages: ${error.message}`);
+    }
+  }
+
+  // Load members for a specific room
+  async getRoomMembers(roomId: string): Promise<ChatMember[]> {
+    try {
+      console.log(`👥 Loading members for room ${roomId}...`);
+
+      const { data, error } = await supabase
+        .from("chat_room_members_firebase")
+        .select(`
+          id,
+          chat_room_id,
+          user_id,
+          user_name,
+          joined_at,
+          role,
+          is_online,
+          last_seen
+        `)
+        .eq("chat_room_id", roomId)
+        .order("joined_at", { ascending: false });
+
+      if (error) {
+        console.error("❌ Error loading members:", error);
+        throw error;
+      }
+
+      const members = (data || []).map((member) => ({
+        id: member.id,
+        chatRoomId: member.chat_room_id,
+        userId: member.user_id,
+        userName: member.user_name || "User",
+        joinedAt: new Date(member.joined_at),
+        role: member.role || "member",
+        isOnline: member.is_online || false,
+        lastSeen: member.last_seen ? new Date(member.last_seen) : new Date(),
+      })) as ChatMember[];
+
+      console.log(`👥 Loaded ${members.length} members for room ${roomId}`);
+      return members;
+    } catch (error: any) {
+      console.error("💥 Failed to load members:", error);
+      const appError = error instanceof AppError ? error : parseSupabaseError(error);
+      throw appError;
     }
   }
 
@@ -504,9 +619,15 @@ class RealtimeChatService {
         timestamp: new Date(payload.timestamp),
       };
 
-      // Get current typing users and update
-      // This is a simplified implementation - in a real app you'd maintain state
-      callback(payload.isTyping ? [typingUser] : []);
+      // Emit per-user delta instead of overriding all users
+      // The callback should handle adding/removing individual users from the typing list
+      if (payload.isTyping) {
+        // User started typing - add to list
+        callback([typingUser]);
+      } else {
+        // User stopped typing - emit empty array with user info to signal removal
+        callback([{ ...typingUser, isTyping: false }]);
+      }
     }
   }
 
@@ -514,21 +635,33 @@ class RealtimeChatService {
   async cleanup() {
     console.log("🧹 Cleaning up real-time chat service");
 
+    // Abort all pending operations
+    this.abortControllers.forEach((controller) => {
+      controller.abort();
+    });
+    this.abortControllers.clear();
+
+    // Clear pending joins
+    this.pendingJoins.clear();
+
     // Clear all typing timeouts
     this.typingTimeouts.forEach((timeout) => {
       clearTimeout(timeout);
     });
     this.typingTimeouts.clear();
 
-    for (const [roomId, channel] of this.channels) {
+    // Unsubscribe from all channels
+    for (const [, channel] of this.channels) {
       await channel.unsubscribe();
     }
 
+    // Clear all maps
     this.channels.clear();
     this.messageCallbacks.clear();
     this.roomCallbacks.clear();
     this.presenceCallbacks.clear();
     this.typingCallbacks.clear();
+    this.retryAttempts.clear();
   }
 }
 

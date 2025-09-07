@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { View, Text } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 
 import useReviewsStore from "../state/reviewsStore";
@@ -12,10 +12,10 @@ import SegmentedTabs from "../components/SegmentedTabs";
 import LocationSelector from "../components/LocationSelector";
 import DistanceFilter from "../components/DistanceFilter";
 import { Review } from "../types";
-import AdBanner from "../components/AdBanner";
 
 export default function BrowseScreen() {
-  const { user } = useAuthStore();
+  const insets = useSafeAreaInsets();
+  const { user, updateUserLocation } = useAuthStore();
   const {
     reviews = [], // Provide default empty array
     isLoading = false,
@@ -80,36 +80,41 @@ export default function BrowseScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-surface-900">
-      {/* Header with Black Background */}
-      <View className="bg-black px-4 py-4">
-        <View className="flex-row items-center justify-between">
-          <View className="flex-row items-center">
-            <View className="w-10 h-10 rounded-full bg-surface-700 items-center justify-center mr-3">
-              <Text className="text-text-primary text-lg font-bold">LRT</Text>
-            </View>
-            <Text className="text-2xl font-bold text-text-primary">Locker Room Talk</Text>
-          </View>
-          <View className="bg-surface-700 px-3 py-1.5 rounded-full">
-            <Text className="text-text-primary text-sm font-medium">Guest</Text>
-          </View>
-        </View>
+    <SafeAreaView className="flex-1 bg-surface-900" edges={['bottom']}>
+      {/* Header with compact spacing and safe top padding */}
+      <View
+        className="bg-black px-6"
+        style={{ paddingTop: Math.max(insets.top + 2, 2), paddingBottom: 8 }}
+      >
+        {/* Title only (logo and guest pill removed) */}
+        <Text className="text-3xl font-extrabold text-text-primary">Locker Room Talk</Text>
 
         {/* Location + Radius */}
-        <View className="flex-row items-center justify-between mt-4">
+        <View className="flex-row items-center justify-between mt-3">
           <LocationSelector
+            key={`${user?.location.city}-${user?.location.state}`}
             currentLocation={{
               city: user?.location.city || "Washington",
               state: user?.location.state || "DC",
               fullName: `${user?.location.city || "Washington"}, ${user?.location.state || "DC"}`,
+              coordinates: user?.location.coordinates,
             }}
-            onLocationChange={(location) => {
-              // Update user location in auth store
-              const { updateUserLocation } = useAuthStore.getState();
-              updateUserLocation({
-                city: location.city,
-                state: location.state,
-              });
+            onLocationChange={async (location) => {
+              console.log('🌍 Location change requested:', location);
+              try {
+                // Update user location in auth store
+                await updateUserLocation({
+                  city: location.city,
+                  state: location.state,
+                  coordinates: location.coordinates,
+                });
+                console.log('✅ Location updated successfully');
+
+                // Reload reviews with new location
+                loadReviews(true);
+              } catch (error) {
+                console.error('❌ Failed to update location:', error);
+              }
             }}
           />
           <DistanceFilter
@@ -119,7 +124,7 @@ export default function BrowseScreen() {
         </View>
 
         {/* Category Filter Tabs */}
-        <View className="mt-4">
+        <View className="mt-3 pb-1">
           <SegmentedTabs
             tabs={[
               { key: "all", label: "All" },
@@ -133,15 +138,32 @@ export default function BrowseScreen() {
         </View>
       </View>
 
-      {/* Staggered Grid */}
-      <StaggeredGrid
-        data={reviews}
-        refreshing={refreshing}
-        onRefresh={onRefresh}
-        onReport={handleReport}
-        onLike={handleLike}
-        likedReviews={likedReviews}
-      />
+      {/* Content Area */}
+      {error ? (
+        <View className="flex-1 items-center justify-center px-8">
+          <Ionicons name="warning-outline" size={64} color="#EF4444" />
+          <Text className="text-red-400 text-xl font-medium mt-4 text-center">Error Loading Reviews</Text>
+          <Text className="text-text-secondary text-center mt-2">{error}</Text>
+          <Text className="text-text-muted text-center mt-2">Pull down to try again</Text>
+        </View>
+      ) : !isLoading && Array.isArray(reviews) && reviews.length === 0 ? (
+        <View className="flex-1 items-center justify-center">
+          <Ionicons name="heart-outline" size={64} color="#9CA3AF" />
+          <Text className="text-text-secondary text-xl font-medium mt-4">No reviews yet</Text>
+          <Text className="text-text-muted text-center mt-2 px-8">
+            Be the first to share your dating experience in your area
+          </Text>
+        </View>
+      ) : (
+        <StaggeredGrid
+          data={reviews}
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          onReport={handleReport}
+          onLike={handleLike}
+          likedReviews={likedReviews}
+        />
+      )}
 
       {/* Report Modal */}
       {selectedReview && (
@@ -156,30 +178,6 @@ export default function BrowseScreen() {
           itemName={`Review of ${selectedReview.reviewedPersonName}`}
         />
       )}
-
-      {/* Error State */}
-      {error && (
-        <View className="absolute inset-0 items-center justify-center px-8">
-          <Ionicons name="warning-outline" size={64} color="#EF4444" />
-          <Text className="text-red-400 text-xl font-medium mt-4 text-center">Error Loading Reviews</Text>
-          <Text className="text-text-secondary text-center mt-2">{error}</Text>
-          <Text className="text-text-muted text-center mt-2">Pull down to try again</Text>
-        </View>
-      )}
-
-      {/* Empty State */}
-      {!isLoading && !error && Array.isArray(reviews) && reviews.length === 0 && (
-        <View className="absolute inset-0 items-center justify-center">
-          <Ionicons name="heart-outline" size={64} color="#9CA3AF" />
-          <Text className="text-text-secondary text-xl font-medium mt-4">No reviews yet</Text>
-          <Text className="text-text-muted text-center mt-2 px-8">
-            Be the first to share your dating experience in your area
-          </Text>
-        </View>
-      )}
-
-      {/* Ad banner */}
-      <AdBanner placement="browse" />
     </SafeAreaView>
   );
 }

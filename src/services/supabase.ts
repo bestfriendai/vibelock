@@ -8,7 +8,7 @@ import { User, Review, ChatRoom, ChatMessage, Comment, Profile } from "../types"
 const retryWithBackoff = async <T>(
   fn: () => Promise<T>,
   maxRetries: number = 3,
-  baseDelay: number = 1000
+  baseDelay: number = 1000,
 ): Promise<T> => {
   let lastError: any;
 
@@ -30,7 +30,7 @@ const retryWithBackoff = async <T>(
 
       // Exponential backoff with jitter
       const delay = baseDelay * Math.pow(2, attempt) + Math.random() * 1000;
-      await new Promise(resolve => setTimeout(resolve, delay));
+      await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
 
@@ -187,6 +187,8 @@ export const supabaseUsers = {
         anonymous_id: userData.anonymousId,
         city: userData.location?.city,
         state: userData.location?.state,
+        latitude: userData.location?.coordinates?.latitude,
+        longitude: userData.location?.coordinates?.longitude,
         gender_preference: userData.genderPreference,
         gender: userData.gender,
         is_blocked: userData.isBlocked || false,
@@ -223,6 +225,10 @@ export const supabaseUsers = {
         location: {
           city: data.city || "Unknown",
           state: data.state || "Unknown",
+          coordinates: data.latitude && data.longitude ? {
+            latitude: parseFloat(data.latitude),
+            longitude: parseFloat(data.longitude),
+          } : undefined,
         },
         genderPreference: data.gender_preference || "all",
         gender: data.gender,
@@ -246,6 +252,8 @@ export const supabaseUsers = {
       if (updates.anonymousId) dbUpdates.anonymous_id = updates.anonymousId;
       if (updates.location?.city) dbUpdates.city = updates.location.city;
       if (updates.location?.state) dbUpdates.state = updates.location.state;
+      if (updates.location?.coordinates?.latitude) dbUpdates.latitude = updates.location.coordinates.latitude;
+      if (updates.location?.coordinates?.longitude) dbUpdates.longitude = updates.location.coordinates.longitude;
       if (updates.genderPreference) dbUpdates.gender_preference = updates.genderPreference;
       if (updates.gender) dbUpdates.gender = updates.gender;
       if (updates.isBlocked !== undefined) dbUpdates.is_blocked = updates.isBlocked;
@@ -339,6 +347,9 @@ export const supabaseReviews = {
     },
   ): Promise<Review[]> => {
     try {
+      if (__DEV__) {
+        console.log("📡 supabase.getReviews called:", { limit, offset, filters });
+      }
       let query = supabase.from("reviews_firebase").select("*").eq("status", "approved");
 
       // Apply category filter
@@ -346,13 +357,17 @@ export const supabaseReviews = {
         query = query.eq("category", filters.category);
       }
 
-      // Apply location filters
-      if (filters?.state) {
-        query = query.eq("reviewed_person_location->>state", filters.state);
+      // Apply location filters - use proper escaping for JSON field queries
+      if (filters?.state && typeof filters.state === 'string') {
+        // Sanitize state input to prevent injection
+        const sanitizedState = filters.state.replace(/['"\\]/g, '');
+        query = query.eq("reviewed_person_location->>state", sanitizedState);
       }
 
-      if (filters?.city) {
-        query = query.eq("reviewed_person_location->>city", filters.city);
+      if (filters?.city && typeof filters.city === 'string') {
+        // Sanitize city input to prevent injection
+        const sanitizedCity = filters.city.replace(/['"\\]/g, '');
+        query = query.eq("reviewed_person_location->>city", sanitizedCity);
       }
 
       // Apply ordering and pagination
@@ -361,6 +376,10 @@ export const supabaseReviews = {
       const { data, error } = await query;
 
       if (error) throw error;
+
+      if (__DEV__) {
+        console.log("✅ supabase.getReviews returned:", { count: data?.length ?? 0 });
+      }
 
       return data.map((item) => ({
         id: item.id,
@@ -791,32 +810,12 @@ export const supabaseSearch = {
     },
   ): Promise<Profile[]> => {
     try {
-      if (!query || query.trim().length < 2) {
+      if (!query || typeof query !== 'string' || query.trim().length < 2) {
         return [];
       }
 
-      let searchQuery = supabase
-        .from("reviews_firebase")
-        .select("reviewed_person_name, reviewed_person_location, category, created_at, updated_at")
-        .eq("status", "approved")
-        .ilike("reviewed_person_name", `${query.trim()}%`);
-
-      // Apply filters
-      if (filters?.category && filters.category !== "all") {
-        searchQuery = searchQuery.eq("category", filters.category);
-      }
-
-      if (filters?.state) {
-        searchQuery = searchQuery.eq("reviewed_person_location->>state", filters.state);
-      }
-
-      if (filters?.city) {
-        searchQuery = searchQuery.eq("reviewed_person_location->>city", filters.city);
-      }
-
-      const { data: searchData, error } = await searchQuery;
-
-      if (error) throw error;
+      // Sanitize search query to prevent SQL injection
+      const sanitizedQuery = query.trim().replace(/[%_'"\\]/g, "\\$&").slice(0, 100);
 
       // Aggregate results by person name and location
       const profileMap = new Map<
@@ -833,12 +832,25 @@ export const supabaseSearch = {
         }
       >();
 
-      // Get detailed review data for aggregation
-      const detailedQuery = supabase
+      // Get detailed review data for aggregation with filters
+      let detailedQuery = supabase
         .from("reviews_firebase")
         .select("*")
         .eq("status", "approved")
-        .ilike("reviewed_person_name", `${query.trim()}%`);
+        .ilike("reviewed_person_name", `${sanitizedQuery}%`);
+
+      // Apply filters
+      if (filters?.category && filters.category !== "all") {
+        detailedQuery = detailedQuery.eq("category", filters.category);
+      }
+
+      if (filters?.state) {
+        detailedQuery = detailedQuery.eq("reviewed_person_location->>state", filters.state);
+      }
+
+      if (filters?.city) {
+        detailedQuery = detailedQuery.eq("reviewed_person_location->>city", filters.city);
+      }
 
       const { data: detailedData, error: detailedError } = await detailedQuery;
       if (detailedError) throw detailedError;
@@ -991,7 +1003,8 @@ export const supabaseSearch = {
     try {
       const { data, error } = await supabase
         .from("chat_messages_firebase")
-        .select("*, chat_rooms(id, name)")
+        // Use the correct related table name that matches DB schema
+        .select("*, chat_rooms_firebase(id, name)")
         .ilike("content", `%${query}%`)
         .order("timestamp", { ascending: false })
         .limit(20);
@@ -1045,17 +1058,20 @@ export const supabaseReports = {
     description?: string;
   }): Promise<string> => {
     try {
+      // Validate and sanitize input data to prevent SQL injection
+      const sanitizedData = {
+        reporter_id: typeof reportData.reporterId === 'string' ? reportData.reporterId.slice(0, 36) : '',
+        reported_item_id: typeof reportData.reportedItemId === 'string' ? reportData.reportedItemId.slice(0, 36) : '',
+        reported_item_type: reportData.reportedItemType,
+        reason: reportData.reason,
+        description: reportData.description ? reportData.description.slice(0, 1000) : undefined,
+        status: "pending" as const,
+        created_at: new Date().toISOString(),
+      };
+
       const { data, error } = await supabase
         .from("reports")
-        .insert({
-          reporter_id: reportData.reporterId,
-          reported_item_id: reportData.reportedItemId,
-          reported_item_type: reportData.reportedItemType,
-          reason: reportData.reason,
-          description: reportData.description,
-          status: "pending",
-          created_at: new Date().toISOString(),
-        })
+        .insert(sanitizedData)
         .select("id")
         .single();
 

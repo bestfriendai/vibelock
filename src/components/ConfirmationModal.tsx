@@ -61,13 +61,23 @@ export default function ConfirmationModal({
   };
 
   return (
-    <Modal visible={visible} transparent animationType="none" onRequestClose={onCancel}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="none"
+      onRequestClose={onCancel}
+      accessible={true}
+      accessibilityViewIsModal={true}
+    >
       <Animated.View style={[animatedBackdropStyle]} className="flex-1 bg-black/50 items-center justify-center px-6">
         <Pressable className="absolute inset-0" onPress={onCancel} />
 
         <Animated.View
           style={[animatedModalStyle]}
           className="bg-surface-800 rounded-2xl p-6 w-full max-w-sm border border-surface-700"
+          accessible={true}
+          accessibilityRole="alert"
+          accessibilityLabel={`${title}: ${message}`}
         >
           {/* Icon */}
           <View className="items-center mb-4">
@@ -84,13 +94,24 @@ export default function ConfirmationModal({
 
           {/* Actions */}
           <View className="space-y-3">
-            <Pressable className={`${colorMap[confirmColor]} rounded-xl py-4 items-center`} onPress={onConfirm}>
+            <Pressable
+              className={`${colorMap[confirmColor]} rounded-xl py-4 items-center`}
+              onPress={onConfirm}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel={`${confirmText} - ${title}`}
+              accessibilityHint={`Double tap to ${confirmText.toLowerCase()}`}
+            >
               <Text className="text-white font-semibold text-lg">{confirmText}</Text>
             </Pressable>
 
             <Pressable
               className="bg-surface-700 border border-surface-600 rounded-xl py-4 items-center"
               onPress={onCancel}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel={`${cancelText} - dismiss dialog`}
+              accessibilityHint={`Double tap to ${cancelText.toLowerCase()} and close dialog`}
             >
               <Text className="text-text-primary font-medium">{cancelText}</Text>
             </Pressable>

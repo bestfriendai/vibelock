@@ -15,8 +15,8 @@ export const testCommentCreation = async (reviewId: string, content: string) => 
       userId: storeState.user?.id?.slice(-4)
     });
     
-    if (!storeState.isAuthenticated || !storeState.user) {
-      console.error("❌ Store says not authenticated");
+    if (!storeState.isAuthenticated || !storeState.user || storeState.isGuestMode) {
+      console.error("❌ Store says not authenticated or in guest mode");
       return false;
     }
     

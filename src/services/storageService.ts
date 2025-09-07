@@ -3,6 +3,8 @@ import * as FileSystem from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import { decode } from 'base64-arraybuffer';
+import { AppError, ErrorType, parseSupabaseError } from '../utils/errorHandling';
+import { Alert } from 'react-native';
 
 export interface UploadResult {
   success: boolean;
@@ -66,7 +68,8 @@ class StorageService {
 
       if (error) {
         console.error('Upload error:', error);
-        return { success: false, error: error.message };
+        const appError = parseSupabaseError(error);
+        throw appError;
       }
 
       // Get public URL
@@ -81,10 +84,8 @@ class StorageService {
       };
     } catch (error) {
       console.error('Storage service upload error:', error);
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Upload failed',
-      };
+      const appError = error instanceof AppError ? error : parseSupabaseError(error);
+      throw appError;
     }
   }
 
@@ -245,6 +246,7 @@ class StorageService {
       return manipResult.uri;
     } catch (error) {
       console.error('Image compression error:', error);
+      Alert.alert('Warning', 'Image not compressed. Upload may be large.');
       return uri; // Return original if compression fails
     }
   }
@@ -307,13 +309,15 @@ class StorageService {
 
       if (error) {
         console.error('List files error:', error);
-        return [];
+        const appError = parseSupabaseError(error);
+        throw appError;
       }
 
       return data || [];
     } catch (error) {
       console.error('Storage service list files error:', error);
-      return [];
+      const appError = error instanceof AppError ? error : parseSupabaseError(error);
+      throw appError;
     }
   }
 }

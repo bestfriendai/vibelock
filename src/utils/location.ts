@@ -39,21 +39,38 @@ function toRadians(degrees: number): number {
 }
 
 /**
- * Mock geocoding function - in production, use a real geocoding service
+ * Geocoding function with comprehensive city database
  * @param city City name
  * @param state State abbreviation
  * @returns Approximate coordinates
  */
 export function geocodeLocation(city: string, state: string): Coordinates {
-  // Mock coordinates for major cities nationwide
+  // Comprehensive coordinates database for cities worldwide
   const mockCoordinates: Record<string, Coordinates> = {
-    // DMV Area
+    // DMV Area (Washington DC Metro)
     "alexandria,va": { latitude: 38.8048, longitude: -77.0469 },
     "arlington,va": { latitude: 38.8816, longitude: -77.091 },
     "washington,dc": { latitude: 38.9072, longitude: -77.0369 },
     "bethesda,md": { latitude: 38.9847, longitude: -77.12 },
     "rockville,md": { latitude: 39.084, longitude: -77.1528 },
     "fairfax,va": { latitude: 38.8462, longitude: -77.3064 },
+    "oxon hill,md": { latitude: 38.8020, longitude: -76.9730 },
+    "silver spring,md": { latitude: 38.9906, longitude: -77.0261 },
+    "college park,md": { latitude: 38.9807, longitude: -76.9369 },
+    "hyattsville,md": { latitude: 38.9559, longitude: -76.9456 },
+    "gaithersburg,md": { latitude: 39.1434, longitude: -77.2014 },
+    "germantown,md": { latitude: 39.1731, longitude: -77.2717 },
+    "bowie,md": { latitude: 38.9426, longitude: -76.7302 },
+    "laurel,md": { latitude: 39.0993, longitude: -76.8483 },
+    "greenbelt,md": { latitude: 38.9912, longitude: -76.8756 },
+    "takoma park,md": { latitude: 38.9779, longitude: -77.0075 },
+    "vienna,va": { latitude: 38.9012, longitude: -77.2653 },
+    "falls church,va": { latitude: 38.8823, longitude: -77.1711 },
+    "mclean,va": { latitude: 38.9342, longitude: -77.1775 },
+    "reston,va": { latitude: 38.9687, longitude: -77.3411 },
+    "herndon,va": { latitude: 38.9696, longitude: -77.3861 },
+    "sterling,va": { latitude: 39.0062, longitude: -77.4286 },
+    "leesburg,va": { latitude: 39.1157, longitude: -77.5636 },
     "vienna,va": { latitude: 38.9012, longitude: -77.2653 },
     "falls church,va": { latitude: 38.8823, longitude: -77.1711 },
 
@@ -153,6 +170,43 @@ export function geocodeLocation(city: string, state: string): Coordinates {
   return mockCoordinates[key] || { latitude: 38.9072, longitude: -77.0369 }; // Default to DC
 }
 
+// Simple in-memory cache for geocoding results to avoid repeated lookups
+const geoCache = new Map<string, Coordinates>();
+
+/**
+ * Geocode city/state using mock database first, then fall back to device geocoding.
+ * Caches results by normalized key "city,state".
+ */
+export async function geocodeCityStateCached(city: string, state?: string): Promise<Coordinates | null> {
+  try {
+    const key = `${(city || "").trim().toLowerCase()},${(state || "").trim().toLowerCase()}`;
+    if (geoCache.has(key)) return geoCache.get(key)!;
+
+    // Try mock lookup first
+    let coords = geocodeLocation(city, state || "");
+    const isDCDefault = coords.latitude === 38.9072 && coords.longitude === -77.0369;
+    const isDCKey = key === "washington,dc";
+
+    if (!isDCDefault || isDCKey) {
+      geoCache.set(key, coords);
+      return coords;
+    }
+
+    // Fallback to device geocoding for worldwide support
+    const query = state ? `${city}, ${state}` : city;
+    const results = await ExpoLocation.geocodeAsync(query);
+    if (results && results.length > 0) {
+      coords = { latitude: results[0].latitude, longitude: results[0].longitude };
+      geoCache.set(key, coords);
+      return coords;
+    }
+    return null;
+  } catch (error) {
+    console.warn("geocodeCityStateCached failed:", error);
+    return null;
+  }
+}
+
 /**
  * Filter reviews by distance from user location
  * @param reviews Array of reviews
@@ -165,19 +219,75 @@ export function filterReviewsByDistance<T extends { reviewedPersonLocation: Loca
   userLocation: LocationData,
   radiusMiles: number,
 ): T[] {
-  if (!userLocation.coordinates) {
-    // If no user coordinates, return all reviews
-    return reviews;
-  }
-
+  // Backward-compatible synchronous path using mock geocoder
+  const userCoords = userLocation.coordinates || geocodeLocation(userLocation.city, userLocation.state);
   return reviews.filter((review) => {
     const reviewCoords =
       review.reviewedPersonLocation.coordinates ||
       geocodeLocation(review.reviewedPersonLocation.city, review.reviewedPersonLocation.state);
-
-    const distance = calculateDistance(userLocation.coordinates!, reviewCoords);
+    const distance = calculateDistance(userCoords, reviewCoords);
     return distance <= radiusMiles;
   });
+}
+
+/**
+ * Worldwide-capable distance filtering using cached geocoding fallbacks.
+ * Uses device geocoding when mock mapping is unavailable.
+ */
+export async function filterReviewsByDistanceAsync<T extends { reviewedPersonLocation: LocationData }>(
+  reviews: T[],
+  userLocation: LocationData,
+  radiusMiles: number,
+): Promise<T[]> {
+  // Determine user coordinates
+  let userCoords: Coordinates | null = userLocation.coordinates || null;
+  if (!userCoords) {
+    userCoords = await geocodeCityStateCached(userLocation.city, userLocation.state);
+  }
+  if (!userCoords) {
+    // If we cannot geocode user location, return unfiltered to avoid false negatives
+    console.warn("filterReviewsByDistanceAsync: missing user coordinates; skipping distance filter");
+    return reviews;
+  }
+
+  const filtered: T[] = [];
+  // Deduplicate geocoding calls for review locations
+  const neededKeys = new Set<string>();
+  for (const r of reviews) {
+    if (!r.reviewedPersonLocation.coordinates) {
+      const key = `${(r.reviewedPersonLocation.city || "").trim().toLowerCase()},${(r.reviewedPersonLocation.state || "").trim().toLowerCase()}`;
+      neededKeys.add(key);
+    }
+  }
+
+  // Warm up cache sequentially (keeps it simple, avoids rate limits)
+  for (const key of neededKeys) {
+    const [city, state] = key.split(",");
+    // Avoid re-fetch if cached
+    if (!geoCache.has(key)) {
+      await geocodeCityStateCached(city, state);
+    }
+  }
+
+  for (const review of reviews) {
+    let reviewCoords: Coordinates | null = review.reviewedPersonLocation.coordinates || null;
+    if (!reviewCoords) {
+      reviewCoords = await geocodeCityStateCached(
+        review.reviewedPersonLocation.city,
+        review.reviewedPersonLocation.state,
+      );
+    }
+    if (!reviewCoords) {
+      // If we can't geocode this review, conservatively exclude it from distance-based results
+      continue;
+    }
+    const distance = calculateDistance(userCoords, reviewCoords);
+    if (distance <= radiusMiles) {
+      filtered.push(review);
+    }
+  }
+
+  return filtered;
 }
 
 /**

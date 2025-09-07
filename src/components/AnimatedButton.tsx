@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Pressable, Text, PressableProps } from "react-native";
-import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming, runOnJS } from "react-native-reanimated";
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming, withRepeat, Easing, runOnJS } from "react-native-reanimated";
 import { cn } from "../utils/cn";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -28,6 +28,23 @@ export default function AnimatedButton({
 }: AnimatedButtonProps) {
   const scale = useSharedValue(1);
   const opacity = useSharedValue(1);
+  const rotation = useSharedValue(0);
+
+  // Loading spinner animation
+  useEffect(() => {
+    if (loading) {
+      rotation.value = withRepeat(
+        withTiming(360, {
+          duration: 1000,
+          easing: Easing.linear,
+        }),
+        -1,
+        false
+      );
+    } else {
+      rotation.value = 0;
+    }
+  }, [loading]);
 
   const handlePressIn = () => {
     scale.value = withSpring(0.95, {
@@ -54,6 +71,10 @@ export default function AnimatedButton({
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
     opacity: opacity.value,
+  }));
+
+  const spinnerStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${rotation.value}deg` }],
   }));
 
   const getVariantStyles = () => {
@@ -125,7 +146,10 @@ export default function AnimatedButton({
       {...props}
     >
       {loading ? (
-        <Animated.View className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+        <Animated.View
+          style={spinnerStyle}
+          className="w-5 h-5 border-2 border-current border-t-transparent rounded-full"
+        />
       ) : (
         <Text className={cn("font-semibold", getTextVariantStyles(), getTextSizeStyles(), textClassName)}>{title}</Text>
       )}

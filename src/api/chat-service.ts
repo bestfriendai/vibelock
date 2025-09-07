@@ -32,13 +32,21 @@ export const getAnthropicTextResponse = async (
       temperature: options?.temperature || 0.7,
     });
 
-    // Handle content blocks from the response
+    // Handle content blocks from the response with null checks
+    if (!response?.content || !Array.isArray(response.content)) {
+      throw new Error("Invalid response format: missing or invalid content");
+    }
+
     const content = response.content.reduce((acc, block) => {
-      if ("text" in block) {
+      if (block && "text" in block && typeof block.text === "string") {
         return acc + block.text;
       }
       return acc;
     }, "");
+
+    if (!content) {
+      throw new Error("No text content found in response");
+    }
 
     return {
       content,
@@ -81,8 +89,18 @@ export const getOpenAITextResponse = async (messages: AIMessage[], options?: AIR
       max_tokens: options?.maxTokens || 2048,
     });
 
+    // Validate response structure
+    if (!response?.choices || !Array.isArray(response.choices) || response.choices.length === 0) {
+      throw new Error("Invalid response format: missing or empty choices");
+    }
+
+    const content = response.choices[0]?.message?.content;
+    if (typeof content !== "string") {
+      throw new Error("Invalid response format: missing or invalid content");
+    }
+
     return {
-      content: response.choices[0]?.message?.content || "",
+      content,
       usage: {
         promptTokens: response.usage?.prompt_tokens || 0,
         completionTokens: response.usage?.completion_tokens || 0,
@@ -122,8 +140,18 @@ export const getGrokTextResponse = async (messages: AIMessage[], options?: AIReq
       max_tokens: options?.maxTokens || 2048,
     });
 
+    // Validate response structure
+    if (!response?.choices || !Array.isArray(response.choices) || response.choices.length === 0) {
+      throw new Error("Invalid response format: missing or empty choices");
+    }
+
+    const content = response.choices[0]?.message?.content;
+    if (typeof content !== "string") {
+      throw new Error("Invalid response format: missing or invalid content");
+    }
+
     return {
-      content: response.choices[0]?.message?.content || "",
+      content,
       usage: {
         promptTokens: response.usage?.prompt_tokens || 0,
         completionTokens: response.usage?.completion_tokens || 0,

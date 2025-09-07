@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { View, Text, Pressable } from "react-native";
 import NetInfo from "@react-native-community/netinfo";
 import { Ionicons } from "@expo/vector-icons";
@@ -6,7 +6,8 @@ import Animated, {
   useSharedValue, 
   useAnimatedStyle, 
   withSpring, 
-  withTiming 
+  withTiming,
+  runOnJS
 } from "react-native-reanimated";
 
 interface OfflineBannerProps {
@@ -18,11 +19,22 @@ export default function OfflineBanner({ onRetry }: OfflineBannerProps) {
   const [showBanner, setShowBanner] = useState(false);
   const translateY = useSharedValue(-100);
   const opacity = useSharedValue(0);
+  const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const hideBanner = () => {
+    setShowBanner(false);
+  };
 
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener(state => {
       const connected = !!(state.isConnected && state.isInternetReachable);
       setIsConnected(connected);
+
+      // Clear any existing timeout when connection state changes
+      if (hideTimeoutRef.current) {
+        clearTimeout(hideTimeoutRef.current);
+        hideTimeoutRef.current = null;
+      }
 
       if (!connected && !showBanner) {
         setShowBanner(true);
@@ -30,12 +42,21 @@ export default function OfflineBanner({ onRetry }: OfflineBannerProps) {
         opacity.value = withTiming(1);
       } else if (connected && showBanner) {
         translateY.value = withSpring(-100);
-        opacity.value = withTiming(0);
-        setTimeout(() => setShowBanner(false), 300);
+        opacity.value = withTiming(0, { duration: 300 }, (finished) => {
+          if (finished) {
+            runOnJS(hideBanner)();
+          }
+        });
       }
     });
 
-    return unsubscribe;
+    return () => {
+      unsubscribe();
+      // Clean up any pending timeout on unmount
+      if (hideTimeoutRef.current) {
+        clearTimeout(hideTimeoutRef.current);
+      }
+    };
   }, [showBanner, translateY, opacity]);
 
   const animatedStyle = useAnimatedStyle(() => {
@@ -53,9 +74,18 @@ export default function OfflineBanner({ onRetry }: OfflineBannerProps) {
     NetInfo.fetch().then(state => {
       const connected = !!(state.isConnected && state.isInternetReachable);
       if (connected) {
+        // Clear any existing timeout
+        if (hideTimeoutRef.current) {
+          clearTimeout(hideTimeoutRef.current);
+          hideTimeoutRef.current = null;
+        }
+        
         translateY.value = withSpring(-100);
-        opacity.value = withTiming(0);
-        setTimeout(() => setShowBanner(false), 300);
+        opacity.value = withTiming(0, { duration: 300 }, (finished) => {
+          if (finished) {
+            runOnJS(hideBanner)();
+          }
+        });
       }
     });
   };

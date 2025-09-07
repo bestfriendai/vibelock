@@ -1,10 +1,19 @@
 const { createClient } = require('@supabase/supabase-js');
 require('dotenv').config();
 
-const supabase = createClient(
-  process.env.EXPO_PUBLIC_SUPABASE_URL,
-  process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY
-);
+// Validate environment variables
+const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('❌ Missing required environment variables:');
+  if (!supabaseUrl) console.error('  - EXPO_PUBLIC_SUPABASE_URL is not set');
+  if (!supabaseAnonKey) console.error('  - EXPO_PUBLIC_SUPABASE_ANON_KEY is not set');
+  console.error('\nPlease ensure these variables are set in your .env file');
+  process.exit(1);
+}
+
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Test data
 const testUser = {
@@ -262,23 +271,61 @@ async function runComprehensiveTests() {
     // Test 9: Real-time Subscriptions
     console.log('\n9️⃣ Testing Real-time Subscriptions...');
     
-    const channel = supabase
-      .channel('test-channel')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'reviews_firebase'
-      }, (payload) => {
-        console.log('📡 Real-time event received:', payload.eventType);
-      })
-      .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          console.log('✅ Real-time subscription successful');
-          setTimeout(() => channel.unsubscribe(), 2000);
-        } else if (status === 'CHANNEL_ERROR') {
-          console.error('❌ Real-time subscription failed');
+    let channel = null;
+    let unsubscribeTimeout = null;
+    
+    // Set up process exit handlers for cleanup
+    const cleanupChannel = async () => {
+      if (unsubscribeTimeout) {
+        clearTimeout(unsubscribeTimeout);
+        unsubscribeTimeout = null;
+      }
+      if (channel) {
+        try {
+          await channel.unsubscribe();
+          console.log('✅ Channel unsubscribed');
+        } catch (err) {
+          console.error('⚠️ Error unsubscribing channel:', err.message);
         }
-      });
+      }
+    };
+    
+    // Register cleanup handlers
+    process.on('SIGINT', async () => {
+      console.log('\n⚠️ Received SIGINT, cleaning up...');
+      await cleanupChannel();
+      process.exit(0);
+    });
+    
+    process.on('SIGTERM', async () => {
+      console.log('\n⚠️ Received SIGTERM, cleaning up...');
+      await cleanupChannel();
+      process.exit(0);
+    });
+    
+    try {
+      channel = supabase
+        .channel('test-channel')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'reviews_firebase'
+        }, (payload) => {
+          console.log('📡 Real-time event received:', payload.eventType);
+        })
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            console.log('✅ Real-time subscription successful');
+            unsubscribeTimeout = setTimeout(async () => {
+              await cleanupChannel();
+            }, 2000);
+          } else if (status === 'CHANNEL_ERROR') {
+            console.error('❌ Real-time subscription failed');
+          }
+        });
+    } catch (err) {
+      console.error('❌ Error setting up real-time subscription:', err.message);
+    }
 
     // Test 10: Row Level Security
     console.log('\n🔒 Testing Row Level Security...');
@@ -298,21 +345,40 @@ async function runComprehensiveTests() {
     // Cleanup
     console.log('\n🧹 Cleaning up test data...');
     
-    // Delete test data
-    if (reviewData) {
-      await supabase.from('reviews_firebase').delete().eq('id', reviewData.id);
-    }
-    if (chatRoomData) {
-      await supabase.from('chat_rooms_firebase').delete().eq('id', chatRoomData.id);
-    }
-    if (notificationData) {
-      await supabase.from('notifications').delete().eq('id', notificationData.id);
-    }
-    if (pushTokenData) {
-      await supabase.from('push_tokens').delete().eq('id', pushTokenData.id);
-    }
-
-    console.log('✅ Cleanup completed');
+    const cleanupResults = await Promise.allSettled([
+      reviewData ? supabase.from('reviews_firebase').delete().eq('id', reviewData.id)
+        .then(res => ({ table: 'reviews_firebase', id: reviewData.id, ...res }))
+        : Promise.resolve(null),
+      chatRoomData ? supabase.from('chat_rooms_firebase').delete().eq('id', chatRoomData.id)
+        .then(res => ({ table: 'chat_rooms_firebase', id: chatRoomData.id, ...res }))
+        : Promise.resolve(null),
+      notificationData ? supabase.from('notifications').delete().eq('id', notificationData.id)
+        .then(res => ({ table: 'notifications', id: notificationData.id, ...res }))
+        : Promise.resolve(null),
+      pushTokenData ? supabase.from('push_tokens').delete().eq('id', pushTokenData.id)
+        .then(res => ({ table: 'push_tokens', id: pushTokenData.id, ...res }))
+        : Promise.resolve(null),
+    ]);
+    
+    // Report cleanup results
+    let successCount = 0;
+    let failCount = 0;
+    
+    cleanupResults.forEach((result, index) => {
+      if (result.status === 'fulfilled' && result.value !== null) {
+        if (result.value.error) {
+          failCount++;
+          console.error(`❌ Failed to delete from ${result.value.table} (id: ${result.value.id}):`, result.value.error.message);
+        } else {
+          successCount++;
+        }
+      } else if (result.status === 'rejected') {
+        failCount++;
+        console.error('❌ Cleanup operation failed:', result.reason);
+      }
+    });
+    
+    console.log(`✅ Cleanup completed: ${successCount} successful, ${failCount} failed`);
 
     // Sign out
     await supabase.auth.signOut();

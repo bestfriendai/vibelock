@@ -17,9 +17,18 @@ type NotificationRow = {
 };
 
 async function fetchPushTokens(userId: string) {
-  const url = Deno.env.get('SUPABASE_URL')!;
-  const key = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-  const resp = await fetch(`${url}/rest/v1/push_tokens?user_id=eq.${userId}&is_active=eq.true&select=token`, {
+  const url = Deno.env.get('SUPABASE_URL');
+  const key = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  
+  if (!url || !key) {
+    console.error('Missing environment variables: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
+    return [] as string[];
+  }
+  
+  // Sanitize user ID to prevent SQL injection
+  const sanitizedUserId = userId.replace(/[^a-zA-Z0-9-]/g, '');
+  
+  const resp = await fetch(`${url}/rest/v1/push_tokens?user_id=eq.${sanitizedUserId}&is_active=eq.true&select=token`, {
     headers: { apikey: key, Authorization: `Bearer ${key}` },
   });
   if (!resp.ok) return [] as string[];
@@ -28,9 +37,18 @@ async function fetchPushTokens(userId: string) {
 }
 
 async function markSent(id: string) {
-  const url = Deno.env.get('SUPABASE_URL')!;
-  const key = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-  await fetch(`${url}/rest/v1/notifications?id=eq.${id}`, {
+  const url = Deno.env.get('SUPABASE_URL');
+  const key = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  
+  if (!url || !key) {
+    console.error('Missing environment variables: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY');
+    return;
+  }
+  
+  // Sanitize ID to prevent SQL injection
+  const sanitizedId = id.replace(/[^a-zA-Z0-9-]/g, '');
+  
+  await fetch(`${url}/rest/v1/notifications?id=eq.${sanitizedId}`, {
     method: 'PATCH',
     headers: {
       apikey: key,

@@ -32,7 +32,7 @@ export default function DistanceFilter({ currentDistance, onDistanceChange }: Di
   const renderDistanceOption = ({ item }: { item: (typeof distanceOptions)[0] }) => (
     <Pressable
       onPress={() => handleDistanceSelect(item.value)}
-      className="px-4 py-4 border-b border-surface-700 flex-row items-center justify-between"
+      className="px-6 py-6 border-b border-surface-700 flex-row items-center justify-between"
     >
       <Text className="text-text-primary font-medium">{item.label}</Text>
       {currentDistance === item.value && <Ionicons name="checkmark" size={20} color="#FFFFFF" />}
@@ -60,7 +60,7 @@ export default function DistanceFilter({ currentDistance, onDistanceChange }: Di
       >
         <View className="flex-1 bg-surface-900">
           {/* Header */}
-          <View className="flex-row items-center justify-between px-4 py-4 border-b border-surface-700">
+          <View className="flex-row items-center justify-between px-6 py-6 border-b border-surface-700">
             <Text className="text-text-primary text-lg font-semibold">Distance Filter</Text>
             <Pressable onPress={() => setModalVisible(false)} className="w-8 h-8 items-center justify-center">
               <Ionicons name="close" size={24} color="#F3F4F6" />

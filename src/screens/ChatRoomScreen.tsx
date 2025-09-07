@@ -36,6 +36,10 @@ export default function ChatRoomScreen() {
   const [showMemberList, setShowMemberList] = useState(false);
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const [isNotificationToggling, setIsNotificationToggling] = useState(false);
+  const [isLoadingOlderMessages, setIsLoadingOlderMessages] = useState(false);
+  const mountedRef = useRef(true);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const {
     currentChatRoom,
@@ -83,11 +87,29 @@ export default function ChatRoomScreen() {
 
   useEffect(() => {
     joinChatRoom(roomId);
-    return () => leaveChatRoom(roomId);
+    return () => {
+      mountedRef.current = false;
+      // Clear any pending scroll timeout
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+        scrollTimeoutRef.current = null;
+      }
+      leaveChatRoom(roomId);
+    };
   }, [roomId]);
 
   useEffect(() => {
-    notificationService.getChatRoomSubscription(roomId).then(setIsSubscribed).catch(() => setIsSubscribed(false));
+    notificationService.getChatRoomSubscription(roomId)
+      .then(result => {
+        if (mountedRef.current) {
+          setIsSubscribed(result);
+        }
+      })
+      .catch(() => {
+        if (mountedRef.current) {
+          setIsSubscribed(false);
+        }
+      });
   }, [roomId]);
 
 
@@ -97,11 +119,18 @@ export default function ChatRoomScreen() {
   const onSend = (text: string) => {
     sendMessage(roomId, text);
     setReplyingTo(null);
+
+    // Clear any existing scroll timeout
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
+    }
+
     // scroll to bottom after send
-    setTimeout(() => {
-      if (listRef.current && roomMessages.length > 0) {
+    scrollTimeoutRef.current = setTimeout(() => {
+      if (mountedRef.current && listRef.current && roomMessages.length > 0) {
         listRef.current.scrollToIndex({ index: roomMessages.length - 1, animated: true });
       }
+      scrollTimeoutRef.current = null;
     }, 100);
   };
 
@@ -120,6 +149,21 @@ export default function ChatRoomScreen() {
     }
   };
 
+  const handleLoadOlderMessages = async () => {
+    if (isLoadingOlderMessages) return;
+
+    setIsLoadingOlderMessages(true);
+    try {
+      // Load older messages - this would typically involve pagination
+      // Load older messages - would need to implement pagination in chatStore
+      console.log('Loading older messages for room:', roomId);
+    } catch (error) {
+      console.error('Failed to load older messages:', error);
+    } finally {
+      setIsLoadingOlderMessages(false);
+    }
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-surface-900">
       <KeyboardAvoidingView
@@ -128,7 +172,7 @@ export default function ChatRoomScreen() {
         keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
       >
         {/* Enhanced Room Header */}
-        <View className="px-4 py-4 border-b border-border bg-surface-800 mt-2">
+        <View className="px-6 py-6 border-b border-border bg-surface-800">
           <View className="flex-row items-center justify-between">
             <View className="flex-1">
               <Text className="text-text-primary text-lg font-bold">{currentChatRoom?.name || "Chat"}</Text>
@@ -140,11 +184,27 @@ export default function ChatRoomScreen() {
             <View className="flex-row items-center space-x-3">
               <Pressable
                 onPress={async () => {
+                  if (isNotificationToggling) return;
+                  
+                  setIsNotificationToggling(true);
                   const next = !isSubscribed;
-                  setIsSubscribed(next);
-                  await notificationService.setChatRoomSubscription(roomId, next);
+                  
+                  try {
+                    await notificationService.setChatRoomSubscription(roomId, next);
+                    if (mountedRef.current) {
+                      setIsSubscribed(next);
+                    }
+                  } catch (error) {
+                    console.error('Failed to toggle notifications:', error);
+                    // Revert optimistic update
+                  } finally {
+                    if (mountedRef.current) {
+                      setIsNotificationToggling(false);
+                    }
+                  }
                 }}
-                className="p-2 rounded-full bg-surface-700"
+                disabled={isNotificationToggling}
+                className={`p-2 rounded-full bg-surface-700 ${isNotificationToggling ? 'opacity-50' : ''}`}
                 accessibilityLabel={isSubscribed ? "Disable chatroom notifications" : "Enable chatroom notifications"}
               >
                 <Ionicons name={isSubscribed ? "notifications" : "notifications-outline"} size={18} color="#9CA3AF" />
@@ -165,19 +225,25 @@ export default function ChatRoomScreen() {
           data={roomMessages}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => <MessageBubble message={item} onReply={handleReply} onReact={handleReact} />}
-          estimatedItemSize={64}
-          contentContainerStyle={{ padding: 12 }}
+          estimatedItemSize={120}
+          getItemType={(item) => {
+            // Dynamic sizing based on content
+            if (item.messageType === 'image' || item.messageType === 'media') return 'media';
+            if (item.content && item.content.length > 100) return 'long';
+            return 'short';
+          }}
+          contentContainerStyle={{ padding: 24 }}
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={
             roomMessages.length > 0 ? (
-              <View className="items-center py-4">
+              <View className="items-center py-6">
                 <Pressable
-                  onPress={() => loadOlderMessages(roomId)}
-                  disabled={isLoading}
-                  className={`bg-surface-700 rounded-full px-4 py-2 ${isLoading ? "opacity-50" : ""}`}
+                  onPress={handleLoadOlderMessages}
+                  disabled={isLoadingOlderMessages}
+                  className={`bg-surface-700 rounded-full px-6 py-3 ${isLoadingOlderMessages ? "opacity-50" : ""}`}
                 >
                   <Text className="text-text-secondary text-sm font-medium">
-                    {isLoading ? "Loading..." : "Load older messages"}
+                    {isLoadingOlderMessages ? "Loading..." : "Load older messages"}
                   </Text>
                 </Pressable>
               </View>
@@ -241,7 +307,7 @@ export default function ChatRoomScreen() {
             data={roomMembers}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
-              <View className="flex-row items-center px-4 py-3 border-b border-surface-700">
+              <View className="flex-row items-center px-6 py-4 border-b border-surface-700">
                 <View className="w-10 h-10 bg-brand-red rounded-full items-center justify-center mr-3">
                   <Text className="text-black font-bold">{item.userName.charAt(0).toUpperCase()}</Text>
                 </View>

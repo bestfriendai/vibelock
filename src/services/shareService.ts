@@ -2,8 +2,8 @@ import { Share, Alert } from "react-native";
 import * as Clipboard from "expo-clipboard";
 import { Review, Profile } from "../types";
 
-// Base URL for deep links - in production this would be your actual domain
-const BASE_URL = "https://lockerroom.app";
+// Base URL for deep links - configurable via environment variable
+const BASE_URL = process.env.EXPO_PUBLIC_APP_URL || "https://lockerroom.app";
 
 export const shareService = {
   // Generate deep link for a review

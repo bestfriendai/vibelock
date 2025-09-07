@@ -1,12 +1,22 @@
-import React, { useMemo, memo } from "react";
+import React, { useMemo, memo, useState, useEffect } from "react";
 import { View, RefreshControl, Text, Dimensions } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FlashList } from "@shopify/flash-list";
 import { Review } from "../types";
 import ProfileCard from "./ProfileCard";
 import ProfileCardSkeleton from "./ProfileCardSkeleton";
+import ErrorBoundary from "./ErrorBoundary";
 
 // Memoized ProfileCard to prevent unnecessary re-renders
-const MemoizedProfileCard = memo(ProfileCard);
+const MemoizedProfileCard = memo(ProfileCard, (prevProps, nextProps) => {
+  return (
+    prevProps.review.id === nextProps.review.id &&
+    prevProps.cardHeight === nextProps.cardHeight &&
+    prevProps.isLiked === nextProps.isLiked &&
+    prevProps.review.likeCount === nextProps.review.likeCount &&
+    prevProps.review.status === nextProps.review.status
+  );
+});
 
 interface Props {
   data?: Review[];
@@ -19,8 +29,7 @@ interface Props {
   onEndReachedThreshold?: number;
 }
 
-const { width: screenWidth } = Dimensions.get("window");
-const cardWidth = (screenWidth - 48) / 2; // Account for padding and gap
+// Responsive card width is now calculated in renderItem
 
 function StaggeredGrid({
   data,
@@ -32,13 +41,24 @@ function StaggeredGrid({
   onEndReached,
   onEndReachedThreshold = 0.1,
 }: Props) {
+  const insets = useSafeAreaInsets();
+  const [screenData, setScreenData] = useState(Dimensions.get("window"));
+
+  useEffect(() => {
+    const onChange = (result: { window: any }) => {
+      setScreenData(result.window);
+    };
+
+    const subscription = Dimensions.addEventListener("change", onChange);
+    return () => subscription?.remove();
+  }, []);
   // Calculate item heights for FlashList
   const itemsWithHeights = useMemo(() => {
     if (!data || !Array.isArray(data) || data.length === 0) {
       return [];
     }
 
-    return data.map((review, index) => {
+    return data.map((review) => {
       // Safety check: ensure review exists and has required properties
       if (!review || !review.id || !review.reviewText) {
         return { review, height: 280 }; // Default height for invalid reviews
@@ -53,8 +73,9 @@ function StaggeredGrid({
       if (textLength > 80) height += 40;
       if (textLength > 120) height += 20;
 
-      // Add some randomness for natural staggered look
-      const randomVariation = (index % 3) * 20 - 20; // -20, 0, or 20
+      // Add consistent randomness for natural staggered look using review ID as seed
+      const seed = review.id.split("").reduce((a, b) => a + b.charCodeAt(0), 0);
+      const randomVariation = (seed % 3) * 20 - 20; // -20, 0, or 20
       height += randomVariation;
 
       // Ensure minimum and maximum heights
@@ -64,9 +85,10 @@ function StaggeredGrid({
     });
   }, [data]);
 
-  // Render item function for FlashList
+  // Render item function for FlashList with responsive width
   const renderItem = ({ item, index }: { item: { review: Review; height: number }; index: number }) => {
     const { review, height } = item;
+    const cardWidth = (screenData.width - 48) / 2; // Use responsive screen width
 
     return (
       <View
@@ -106,7 +128,7 @@ function StaggeredGrid({
     }));
 
     return (
-      <View className="flex-1 p-4">
+      <View className="flex-1 p-6">
         <View className="flex-row">
           <View className="flex-1 mr-2">
             {skeletonItems
@@ -149,7 +171,7 @@ function StaggeredGrid({
           data={[]}
           renderItem={() => null}
           estimatedItemSize={280}
-          contentContainerStyle={{ padding: 16 }}
+          contentContainerStyle={{ padding: 24 }}
           refreshControl={
             onRefresh ? (
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#FFFFFF" colors={["#FFFFFF"]} />
@@ -163,24 +185,26 @@ function StaggeredGrid({
 
   return (
     <View className="flex-1">
-      <FlashList
-        data={itemsWithHeights}
-        renderItem={renderItem}
-        numColumns={2}
-        estimatedItemSize={280}
-        contentContainerStyle={{ padding: 16 }}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          onRefresh ? (
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#FFFFFF" colors={["#FFFFFF"]} />
-          ) : undefined
-        }
-        onEndReached={onEndReached}
-        onEndReachedThreshold={onEndReachedThreshold}
-        ListEmptyComponent={renderEmptyComponent}
-        // Add bottom spacing for floating button
-        ListFooterComponent={() => <View className="h-20" />}
-      />
+      <ErrorBoundary fallback={<Text className="text-red-400 p-4 text-center">Failed to load reviews</Text>}>
+        <FlashList
+          data={itemsWithHeights}
+          renderItem={renderItem}
+          numColumns={2}
+          estimatedItemSize={280}
+          contentContainerStyle={{ padding: 24 }}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            onRefresh ? (
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#FFFFFF" colors={["#FFFFFF"]} />
+            ) : undefined
+          }
+          onEndReached={onEndReached}
+          onEndReachedThreshold={onEndReachedThreshold}
+          ListEmptyComponent={renderEmptyComponent}
+          // Add dynamic bottom spacing for floating button and tab bar
+          ListFooterComponent={() => <View style={{ height: insets.bottom + 80 }} />}
+        />
+      </ErrorBoundary>
     </View>
   );
 }

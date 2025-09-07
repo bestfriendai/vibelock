@@ -3,11 +3,15 @@ import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { NavigationContainer } from "@react-navigation/native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { AppState } from "react-native";
 import * as Linking from "expo-linking";
 import AppNavigator from "./src/navigation/AppNavigator";
 import ErrorBoundary from "./src/components/ErrorBoundary";
 import OfflineBanner from "./src/components/OfflineBanner";
 import useAuthStore from "./src/state/authStore";
+import useChatStore from "./src/state/chatStore";
+import { notificationService } from "./src/services/notificationService";
+import { realtimeChatService } from "./src/services/realtimeChat";
 
 /*
 IMPORTANT NOTICE: DO NOT REMOVE
@@ -54,16 +58,34 @@ const linking = {
 
 export default function App() {
   const { initializeAuthListener } = useAuthStore();
+  const { cleanup: cleanupChat } = useChatStore();
 
   useEffect(() => {
     // Initialize Supabase auth state listener
     const unsubscribe = initializeAuthListener();
 
+    // Handle app state changes for cleanup
+    const handleAppStateChange = (nextAppState: string) => {
+      if (nextAppState === 'background' || nextAppState === 'inactive') {
+        console.log("🧹 App backgrounded, cleaning up resources");
+        // Don't fully cleanup on background, just reduce activity
+      }
+    };
+
+    const appStateSubscription = AppState.addEventListener('change', handleAppStateChange);
+
     // Cleanup listener on unmount
     return () => {
+      console.log("🧹 App unmounting, cleaning up all resources");
       unsubscribe();
+      appStateSubscription?.remove();
+
+      // Cleanup all services
+      cleanupChat();
+      notificationService.cleanup();
+      realtimeChatService.cleanup();
     };
-  }, [initializeAuthListener]);
+  }, [initializeAuthListener, cleanupChat]);
 
   return (
     <ErrorBoundary>

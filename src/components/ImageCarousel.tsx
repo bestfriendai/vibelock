@@ -64,12 +64,20 @@ export default function ImageCarousel({
         onScroll={handleScroll}
         scrollEventThrottle={16}
         className="rounded-xl overflow-hidden"
+        accessible={true}
+        accessibilityRole="scrollbar"
+        accessibilityLabel={`Image carousel with ${media.length} images`}
+        accessibilityHint="Swipe left or right to navigate between images"
       >
         {media.map((item) => (
           <Pressable
             key={item.id}
             onPress={handleImagePress}
             style={{ width: screenWidth - 32, height }} // Account for horizontal padding
+            accessible={true}
+            accessibilityRole="image"
+            accessibilityLabel={`Image ${media.indexOf(item) + 1} of ${media.length}`}
+            accessibilityHint="Double tap to view full screen"
           >
             <Image
               source={{ uri: item.uri }}
@@ -159,7 +167,12 @@ export default function ImageCarousel({
           {currentIndex > 0 && (
             <Pressable
               onPress={() => scrollToIndex(currentIndex - 1)}
-              className="absolute left-3 top-1/2 -translate-y-4 bg-surface-900/80 backdrop-blur-sm rounded-full p-3 border border-surface-700/50"
+              className="absolute left-3 top-1/2 -translate-y-4 bg-surface-900/80 backdrop-blur-sm rounded-full p-4 border border-surface-700/50"
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel={`Go to previous image, ${currentIndex} of ${media.length}`}
+              accessibilityHint="Double tap to view previous image"
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
               <Ionicons name="chevron-back" size={20} color="#F3F4F6" />
             </Pressable>
@@ -169,7 +182,12 @@ export default function ImageCarousel({
           {currentIndex < media.length - 1 && (
             <Pressable
               onPress={() => scrollToIndex(currentIndex + 1)}
-              className="absolute right-3 top-1/2 -translate-y-4 bg-surface-900/80 backdrop-blur-sm rounded-full p-3 border border-surface-700/50"
+              className="absolute right-3 top-1/2 -translate-y-4 bg-surface-900/80 backdrop-blur-sm rounded-full p-4 border border-surface-700/50"
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel={`Go to next image, ${currentIndex + 2} of ${media.length}`}
+              accessibilityHint="Double tap to view next image"
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
               <Ionicons name="chevron-forward" size={20} color="#F3F4F6" />
             </Pressable>

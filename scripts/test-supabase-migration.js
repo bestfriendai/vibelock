@@ -6,10 +6,24 @@
  */
 
 const { createClient } = require('@supabase/supabase-js');
+require('dotenv').config();
 
-// Configuration with your Supabase anon key
-const SUPABASE_URL = 'https://dqjhwqhelqwhvtpxccwj.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRxamh3cWhlbHF3aHZ0cHhjY3dqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM0MjE4MjcsImV4cCI6MjA2ODk5NzgyN30.qZmbCZig2wy0ShcaXWZ6TxD-vpbrExSIEImHAvaFkMQ';
+// Load configuration from environment variables
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.EXPO_PUBLIC_SUPABASE_URL;
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+
+// Validate environment variables
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  console.error('❌ Missing required environment variables:');
+  if (!SUPABASE_URL) {
+    console.error('  - SUPABASE_URL or EXPO_PUBLIC_SUPABASE_URL is not set');
+  }
+  if (!SUPABASE_ANON_KEY) {
+    console.error('  - SUPABASE_ANON_KEY or EXPO_PUBLIC_SUPABASE_ANON_KEY is not set');
+  }
+  console.error('\nPlease ensure these variables are set in your .env file or environment');
+  process.exit(1);
+}
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -117,10 +131,22 @@ async function testRealtimeSetup() {
         console.log('Realtime event received:', payload);
       });
     
-    await channel.subscribe();
+    const subscribeResult = await channel.subscribe();
     
-    // Clean up
-    await supabase.removeChannel(channel);
+    // Check subscription state
+    if (channel.state === 'SUBSCRIBED' || subscribeResult === 'SUBSCRIBED') {
+      console.log('✅ Channel subscribed successfully');
+      
+      // Clean up - only remove if successfully subscribed
+      try {
+        await supabase.removeChannel(channel);
+      } catch (removeError) {
+        console.error('⚠️ Error removing channel:', removeError.message);
+      }
+    } else {
+      console.error('❌ Channel subscription failed, state:', channel.state);
+      return false;
+    }
     
     console.log('✅ Realtime setup successful');
     return true;
@@ -192,9 +218,15 @@ async function runAllTests() {
   if (passedTests === tests.length) {
     console.log('🎉 All tests passed! Migration validation successful.');
     console.log('\n📝 Next steps:');
-    console.log('1. Update your .env file with the correct SUPABASE_ANON_KEY');
-    console.log('2. Test the app functionality manually');
-    console.log('3. Remove Firebase dependencies when ready');
+    console.log('1. Ensure environment variables are properly configured:');
+    console.log('   - SUPABASE_URL (or EXPO_PUBLIC_SUPABASE_URL) is set in .env or secret manager');
+    console.log('   - SUPABASE_ANON_KEY (or EXPO_PUBLIC_SUPABASE_ANON_KEY) is set in .env or secret manager');
+    console.log('2. Run tests to verify app functionality:');
+    console.log('   - npm test (or your configured test command)');
+    console.log('3. Verify the app works correctly using the environment variables');
+    console.log('4. Check and remove any remaining Firebase environment variables and dependencies:');
+    console.log('   - Review package.json for Firebase packages');
+    console.log('   - Remove FIREBASE_* environment variables from .env');
   } else {
     console.log('❌ Some tests failed. Please review the errors above.');
     process.exit(1);

@@ -104,9 +104,15 @@ export default function SignInScreen() {
 
   const handleTestConnection = async () => {
     console.log("🧪 Running connection test...");
-    await testSupabaseConnection();
-    if (email && password) {
-      await testAuthFlow(email, password);
+    try {
+      const connectionSuccess = await testSupabaseConnection();
+      if (connectionSuccess && email && password) {
+        await testAuthFlow(email, password);
+      } else if (!connectionSuccess) {
+        console.error("❌ Connection test failed");
+      }
+    } catch (error) {
+      console.error("❌ Test connection failed:", error);
     }
   };
 
