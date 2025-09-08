@@ -243,8 +243,8 @@ export async function filterReviewsByDistanceAsync<T extends { reviewedPersonLoc
     userCoords = await geocodeCityStateCached(userLocation.city, userLocation.state);
   }
   if (!userCoords) {
-    // If we cannot geocode user location, return unfiltered to avoid false negatives
-    console.warn("filterReviewsByDistanceAsync: missing user coordinates; skipping distance filter");
+    // If we cannot geocode user location, return all reviews since server-side filtering should have pre-filtered by city/state
+    console.warn("filterReviewsByDistanceAsync: missing user coordinates; returning server-filtered results without distance filtering");
     return reviews;
   }
 
@@ -259,7 +259,7 @@ export async function filterReviewsByDistanceAsync<T extends { reviewedPersonLoc
   }
 
   // Warm up cache sequentially (keeps it simple, avoids rate limits)
-  for (const key of neededKeys) {
+  for (const key of Array.from(neededKeys)) {
     const [city, state] = key.split(",");
     // Avoid re-fetch if cached
     if (!geoCache.has(key)) {

@@ -27,7 +27,10 @@ interface ReviewsActions {
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   setFilters: (filters: Partial<FilterOptions>) => void;
-  loadReviews: (refresh?: boolean) => Promise<void>;
+  loadReviews: (
+    refresh?: boolean,
+    overrideLocation?: { city: string; state: string; coordinates?: { latitude: number; longitude: number } },
+  ) => Promise<void>;
   createReview: (data: {
     reviewedPersonName: string;
     reviewedPersonLocation: { city: string; state: string };
@@ -104,24 +107,41 @@ const useReviewsStore = create<ReviewsStore>()(
         set({ error: null });
       },
 
-      loadReviews: async (refresh = false) => {
+      loadReviews: async (
+        refresh = false,
+        overrideLocation?: { city: string; state: string; coordinates?: { latitude: number; longitude: number } },
+      ) => {
         try {
           set({ isLoading: true, error: null });
 
           const currentState = get();
           const { filters } = get();
 
-          // Get user preference and location from auth store if available
+          // Get user preference and location from auth store if available, or use override
           let userPrefCategory: string | undefined;
-          let userLocation: { city: string; state: string } | undefined;
+          let userLocation:
+            | { city: string; state: string; coordinates?: { latitude: number; longitude: number } }
+            | undefined;
+
+          if (overrideLocation) {
+            // Use the provided location override (for immediate location changes)
+            userLocation = overrideLocation;
+          }
+
           try {
             // Get auth store state to avoid circular deps
             const authStore = useAuthStore.getState();
             userPrefCategory = authStore.user?.genderPreference;
-            userLocation = authStore.user?.location;
+
+            // Only use auth store location if no override provided
+            if (!overrideLocation) {
+              userLocation = authStore.user?.location;
+            }
           } catch {
             userPrefCategory = undefined;
-            userLocation = undefined;
+            if (!overrideLocation) {
+              userLocation = undefined;
+            }
           }
 
           // Build server-side filters
@@ -140,7 +160,22 @@ const useReviewsStore = create<ReviewsStore>()(
 
           // Decide strategy: if radius is specified and we have a user location,
           // fetch a larger batch and apply precise client-side distance filtering
-          const radiusFilteringActive = typeof filters.radius === 'number' && !!filters.radius && !!userLocation;
+          // (coordinates will be obtained during filtering if not already available)
+          const radiusFilteringActive = typeof filters.radius === "number" && !!filters.radius && !!userLocation;
+
+          // Apply location filters based on strategy
+          if (userLocation?.city && userLocation?.state) {
+            if (radiusFilteringActive) {
+              // For radius filtering: don't apply server-side location filters
+              // Let client-side distance filtering handle geographic boundaries worldwide
+              // This allows cross-city, cross-state, and international results within the radius
+              console.log("🌍 Radius filtering active - using worldwide search with distance filtering");
+            } else {
+              // For non-radius filtering: filter by exact city+state
+              serverFilters.city = userLocation.city;
+              serverFilters.state = userLocation.state;
+            }
+          }
 
           if (__DEV__) {
             console.log("🧭 Reviews load filters:", {
@@ -153,31 +188,61 @@ const useReviewsStore = create<ReviewsStore>()(
             });
           }
 
-          // Load from Supabase
+          // Load from Supabase with fallback strategy
           let newReviews: Review[] = [];
 
           if (radiusFilteringActive && userLocation) {
-            // Over-fetch a larger recent set, then filter by distance locally
-            const fetchLimit = 200; // Adjust as needed
-            const fetchOffset = 0; // Always fresh for radius-based filtering
-            const baseSet = await supabaseReviews.getReviews(fetchLimit, fetchOffset, {
-              category: serverFilters.category,
-            });
+            // Strategy 1: Server-side city+state filtering + client-side distance filtering
+            const fetchLimit = 200;
+            const fetchOffset = 0;
+            const baseSet = await supabaseReviews.getReviews(fetchLimit, fetchOffset, serverFilters);
 
-            newReviews = await filterReviewsByDistanceAsync(baseSet, userLocation, filters.radius!);
+            // Ensure user location has coordinates for distance filtering
+            let locationWithCoords = userLocation;
+            if (!userLocation.coordinates) {
+              console.log("🔍 User location missing coordinates, attempting to geocode...");
+              const { geocodeCityStateCached } = await import("../utils/location");
+              const coords = await geocodeCityStateCached(userLocation.city, userLocation.state);
+              if (coords) {
+                locationWithCoords = { ...userLocation, coordinates: coords };
+                console.log("✅ Successfully geocoded user location:", coords);
+              } else {
+                console.warn("❌ Failed to geocode user location, falling back to server-filtered results");
+              }
+            }
+
+            newReviews = await filterReviewsByDistanceAsync(baseSet, locationWithCoords, filters.radius!);
 
             if (__DEV__) {
               console.log("📏 Distance-filtered reviews:", {
                 requested: fetchLimit,
-                baseCount: baseSet.length,
-                filteredCount: newReviews.length,
+                baseSet: baseSet.length,
+                filtered: newReviews.length,
                 radius: filters.radius,
-                center: userLocation,
+                location: `${locationWithCoords.city}, ${locationWithCoords.state}`,
+                hasCoordinates: !!locationWithCoords.coordinates,
+                coordinates: locationWithCoords.coordinates,
               });
             }
+
+            // Note: No fallback needed since we're already doing worldwide search for radius filtering
           } else {
+            // Non-radius filtering: use server-side filters only
             const offset = refresh ? 0 : currentState.reviews.length;
             newReviews = await supabaseReviews.getReviews(20, offset, serverFilters);
+
+            // Fallback: If no results with city+state, try state-only
+            if (newReviews.length === 0 && refresh && serverFilters.city && serverFilters.state) {
+              console.log("🔄 No results with city+state filter, trying state-only filter...");
+              const stateOnlyFilters = { ...serverFilters };
+              delete stateOnlyFilters.city;
+
+              newReviews = await supabaseReviews.getReviews(20, offset, stateOnlyFilters);
+
+              if (__DEV__) {
+                console.log("📍 State-only filtered reviews:", newReviews.length);
+              }
+            }
           }
 
           // If no reviews found and this is a refresh, show empty state
