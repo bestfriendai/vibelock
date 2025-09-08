@@ -7,9 +7,10 @@ import { Ionicons } from "@expo/vector-icons";
 import useChatStore from "../state/chatStore";
 import { useAuthState } from "../utils/authUtils";
 import { RootStackParamList } from "../navigation/AppNavigator";
-import MessageBubble from "../components/MessageBubble";
-import ChatInput from "../components/ChatInput";
+import IMessageBubble from "../components/iMessageBubble";
+import IMessageInput from "../components/iMessageInput";
 import { ChatMessage } from "../types";
+import { useTheme } from "../providers/ThemeProvider";
 import { notificationService } from "../services/notificationService";
 
 export type ChatRoomRouteProp = RouteProp<RootStackParamList, "ChatRoom">;
@@ -30,7 +31,8 @@ function toDateSafe(value: any): Date {
 export default function ChatRoomScreen() {
   const { params } = useRoute<ChatRoomRouteProp>();
   const navigation = useNavigation<any>();
-  const { canAccessChat, needsSignIn } = useAuthState();
+  const { canAccessChat, needsSignIn, user } = useAuthState();
+  const { theme, colors, isDarkMode } = useTheme();
 
   const { roomId } = params;
   const [showMemberList, setShowMemberList] = useState(false);
@@ -54,8 +56,8 @@ export default function ChatRoomScreen() {
     isLoading
   } = useChatStore();
 
-  // Guard against guest access
-  if (!canAccessChat || needsSignIn) {
+  // Guard against guest access or missing user data
+  if (!canAccessChat || needsSignIn || !user) {
     return (
       <SafeAreaView className="flex-1 bg-black">
         <View className="flex-1 items-center justify-center px-6">
@@ -154,9 +156,7 @@ export default function ChatRoomScreen() {
 
     setIsLoadingOlderMessages(true);
     try {
-      // Load older messages - this would typically involve pagination
-      // Load older messages - would need to implement pagination in chatStore
-      console.log('Loading older messages for room:', roomId);
+      await loadOlderMessages(roomId);
     } catch (error) {
       console.error('Failed to load older messages:', error);
     } finally {
@@ -165,55 +165,39 @@ export default function ChatRoomScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-black">
+    <SafeAreaView
+      className="flex-1"
+      style={{ backgroundColor: colors.background }}
+    >
       <KeyboardAvoidingView
         className="flex-1"
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
       >
-        {/* Enhanced Room Header */}
-        <View className="px-4 py-2 border-b border-border bg-black sm:px-6">
+        {/* Simple iMessage-style header */}
+        <View
+          className="px-4 py-3 border-b"
+          style={{
+            backgroundColor: colors.surface[800],
+            borderColor: colors.border
+          }}
+        >
           <View className="flex-row items-center justify-between">
+            <Pressable
+              onPress={() => navigation.goBack()}
+              className="mr-3"
+            >
+              <Ionicons name="chevron-back" size={24} color={colors.brand.red} />
+            </Pressable>
             <View className="flex-1">
-              <Text className="text-text-primary text-lg font-bold">{currentChatRoom?.name || "Chat"}</Text>
-            </View>
-
-            <View className="flex-row items-center space-x-3">
-              <Pressable
-                onPress={async () => {
-                  if (isNotificationToggling) return;
-                  
-                  setIsNotificationToggling(true);
-                  const next = !isSubscribed;
-                  
-                  try {
-                    await notificationService.setChatRoomSubscription(roomId, next);
-                    if (mountedRef.current) {
-                      setIsSubscribed(next);
-                    }
-                  } catch (error) {
-                    console.error('Failed to toggle notifications:', error);
-                    // Revert optimistic update
-                  } finally {
-                    if (mountedRef.current) {
-                      setIsNotificationToggling(false);
-                    }
-                  }
-                }}
-                disabled={isNotificationToggling}
-                className={`p-2 rounded-full bg-surface-700 ${isNotificationToggling ? 'opacity-50' : ''}`}
-                accessibilityLabel={isSubscribed ? "Disable chatroom notifications" : "Enable chatroom notifications"}
+              <Text
+                className="text-lg font-semibold text-center"
+                style={{ color: colors.text.primary }}
               >
-                <Ionicons name={isSubscribed ? "notifications" : "notifications-outline"} size={18} color="#9CA3AF" />
-              </Pressable>
-              <Pressable onPress={() => setShowMemberList(true)} className="p-2 rounded-full bg-surface-700">
-                <Ionicons name="people" size={18} color="#9CA3AF" />
-              </Pressable>
-
-              <Pressable onPress={scrollToBottom} className="p-2 rounded-full bg-surface-700">
-                <Ionicons name="arrow-down" size={18} color="#9CA3AF" />
-              </Pressable>
+                {currentChatRoom?.name || "Anonymous Chat"}
+              </Text>
             </View>
+            <View className="w-6" />
           </View>
         </View>
 
@@ -221,15 +205,29 @@ export default function ChatRoomScreen() {
           ref={listRef}
           data={roomMessages}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => <MessageBubble message={item} onReply={handleReply} onReact={handleReact} />}
-          estimatedItemSize={120}
-          getItemType={(item) => {
-            // Dynamic sizing based on content
-            if (item.messageType === 'image' || item.messageType === 'media') return 'media';
-            if (item.content && item.content.length > 100) return 'long';
-            return 'short';
+          renderItem={({ item, index }) => {
+            if (!item || !item.id || !user) {
+              return null;
+            }
+            return (
+              <IMessageBubble
+                message={item}
+                isOwn={item.senderId === user.id}
+                previousMessage={roomMessages[index - 1]}
+                nextMessage={roomMessages[index + 1]}
+                onReply={handleReply}
+                onReact={handleReact}
+              />
+            );
           }}
-          contentContainerStyle={{ paddingHorizontal: 12, paddingTop: 0, paddingBottom: 0 }}
+          estimatedItemSize={60}
+          inverted // This fixes the scroll behavior
+          contentContainerStyle={{
+            paddingHorizontal: 16,
+            paddingTop: 16,
+            paddingBottom: 16,
+            backgroundColor: colors.background
+          }}
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={
             roomMessages.length > 0 ? (
@@ -269,9 +267,8 @@ export default function ChatRoomScreen() {
           </View>
         )}
 
-        <ChatInput
+        <IMessageInput
           onSend={onSend}
-          onTyping={(v) => setTyping(roomId, v)}
           replyingTo={
             replyingTo
               ? {

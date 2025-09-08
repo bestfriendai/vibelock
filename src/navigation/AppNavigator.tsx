@@ -5,7 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { View, Pressable } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets, SafeAreaView } from "react-native-safe-area-context";
-import AdBanner from "../components/AdBanner";
+import CustomTabBar from "../components/CustomTabBar";
 
 // Import screens
 import BrowseScreen from "../screens/BrowseScreen";
@@ -247,50 +247,52 @@ function SettingsStackNavigator() {
 
 // Tab Navigator Component
 function TabNavigator() {
-  const insets = useSafeAreaInsets();
   return (
     <View className="flex-1 bg-surface-900">
       <Tab.Navigator
-        screenOptions={({ route }) => ({
-          tabBarIcon: ({ focused, color, size }) => {
-            let iconName: keyof typeof Ionicons.glyphMap;
-            switch (route.name) {
-              case "BrowseStack":
-                iconName = focused ? "home" : "home-outline";
-                break;
-              case "SearchStack":
-                iconName = focused ? "search" : "search-outline";
-                break;
-              case "CreateAction":
-                // Icon handled by custom tabBarButton
-                iconName = "add";
-                break;
-              case "ChatroomsStack":
-                iconName = focused ? "chatbubbles" : "chatbubbles-outline";
-                break;
-              case "SettingsStack":
-                iconName = focused ? "person" : "person-outline";
-                break;
-              default:
-                iconName = "home-outline";
-            }
-            return <Ionicons name={iconName} size={size} color={color} />;
-          },
-          tabBarActiveTintColor: "#FFFFFF",
-          tabBarInactiveTintColor: "#9CA3AF",
-          tabBarHideOnKeyboard: true,
-          tabBarStyle: {
-            backgroundColor: "#000000",
-            borderTopWidth: 1,
-            borderTopColor: "#2A2A2F",
-            // Height accounts for the iOS home indicator area
-            paddingBottom: Math.max(insets.bottom, 6),
-            paddingTop: 4,
-            height: 52 + (insets.bottom || 0),
-          },
-          tabBarLabelStyle: { fontSize: 12, fontWeight: "500" },
-          headerShown: false,
-        })}
+        tabBar={(props) => <CustomTabBar {...props} />}
+        screenOptions={({ route }) => {
+          const insets = useSafeAreaInsets();
+          return {
+            tabBarIcon: ({ focused, color, size }) => {
+              let iconName: keyof typeof Ionicons.glyphMap;
+              switch (route.name) {
+                case "BrowseStack":
+                  iconName = focused ? "home" : "home-outline";
+                  break;
+                case "SearchStack":
+                  iconName = focused ? "search" : "search-outline";
+                  break;
+                case "CreateAction":
+                  // Icon handled by custom tabBarButton
+                  iconName = "add";
+                  break;
+                case "ChatroomsStack":
+                  iconName = focused ? "chatbubbles" : "chatbubbles-outline";
+                  break;
+                case "SettingsStack":
+                  iconName = focused ? "person" : "person-outline";
+                  break;
+                default:
+                  iconName = "home-outline";
+              }
+              return <Ionicons name={iconName} size={size} color={color} />;
+            },
+            tabBarActiveTintColor: "#FFFFFF",
+            tabBarInactiveTintColor: "#9CA3AF",
+            tabBarHideOnKeyboard: true,
+            tabBarStyle: {
+              backgroundColor: "#000000",
+              borderTopWidth: 1,
+              borderTopColor: "#2A2A2F",
+              paddingBottom: Math.max(insets.bottom, 6),
+              paddingTop: 4,
+              height: 52 + (insets.bottom || 0),
+            },
+            tabBarLabelStyle: { fontSize: 12, fontWeight: "500" },
+            headerShown: false,
+          };
+        }}
       >
         <Tab.Screen name="BrowseStack" component={BrowseStackNavigator} options={{ tabBarLabel: "Browse" }} />
         <Tab.Screen name="SearchStack" component={SearchStackNavigator} options={{ tabBarLabel: "Search" }} />
@@ -311,9 +313,6 @@ function TabNavigator() {
         <Tab.Screen name="ChatroomsStack" component={ChatroomsStackNavigator} options={{ tabBarLabel: "Chatrooms" }} />
         <Tab.Screen name="SettingsStack" component={SettingsStackNavigator} options={{ tabBarLabel: "Settings" }} />
       </Tab.Navigator>
-
-      {/* Ad banner positioned at the tab navigator level for proper absolute positioning */}
-      <AdBanner placement="browse" />
     </View>
   );
 }

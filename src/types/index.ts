@@ -179,6 +179,11 @@ export interface ChatMessage {
   isRead: boolean;
   isOwn?: boolean;
   replyTo?: string;
+  reactions?: {
+    emoji: string;
+    count: number;
+    users: string[];
+  }[];
 }
 
 export interface ChatMember {

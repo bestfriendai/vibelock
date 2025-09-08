@@ -2,8 +2,10 @@ import React, { useState, useEffect } from "react";
 import { View, Modal, Pressable, Text, StatusBar, Alert } from "react-native";
 import { Image } from "expo-image";
 import { VideoView, useVideoPlayer } from "expo-video";
+import { Video as ExpoAVVideo } from "expo-av";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
+import Constants from "expo-constants";
 import { MediaItem, Comment } from "../types";
 import { useResponsiveScreen } from "../utils/responsive";
 
@@ -29,14 +31,15 @@ export default function MediaViewer({
   const screenData = useResponsiveScreen();
   const { width: screenWidth, height: screenHeight } = screenData;
 
+  const isExpoGo = Constants.executionEnvironment === 'storeClient';
   const [videoError, setVideoError] = useState<string | null>(null);
   const [isVideoLoading, setIsVideoLoading] = useState(false);
 
-  // Video player for video media
+  // Video player for video media (only for dev builds)
   const videoPlayer = useVideoPlayer(
-    currentMedia?.type === "video" ? currentMedia.uri : null,
+    !isExpoGo && currentMedia?.type === "video" ? currentMedia.uri : null,
     (player) => {
-      if (currentMedia?.type === "video") {
+      if (!isExpoGo && currentMedia?.type === "video") {
         setIsVideoLoading(true);
         setVideoError(null);
 
@@ -117,15 +120,29 @@ export default function MediaViewer({
                       onPress={() => {
                         setVideoError(null);
                         setIsVideoLoading(true);
-                        if (videoPlayer) {
+                        if (!isExpoGo && videoPlayer?.isLoaded) {
                           videoPlayer.replay();
                         }
+                        // For Expo Go, the ExpoAVVideo component will handle retry automatically
                       }}
-                      className="mt-4 bg-primary-600 px-6 py-3 rounded-lg"
+                      className="mt-4 bg-brand-red px-6 py-3 rounded-lg"
                     >
                       <Text className="text-white font-medium">Retry</Text>
                     </Pressable>
                   </View>
+                ) : isExpoGo ? (
+                  // Use expo-av for Expo Go compatibility
+                  <ExpoAVVideo
+                    source={{ uri: currentMedia.uri }}
+                    useNativeControls
+                    resizeMode="contain"
+                    style={{
+                      width: screenWidth,
+                      height: screenHeight * 0.8,
+                    }}
+                    isLooping={false}
+                    shouldPlay={false}
+                  />
                 ) : (
                   <>
                     <VideoView

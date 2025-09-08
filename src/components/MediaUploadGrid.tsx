@@ -6,6 +6,7 @@ import * as ImagePicker from "expo-image-picker";
 import { MediaItem } from "../types";
 import { videoThumbnailService } from "../services/videoThumbnailService";
 import { formatVideoDurationFromMs, validateVideoFile } from "../utils/videoUtils";
+import { imageCompressionService } from "../services/imageCompressionService";
 import MediaViewer from "./MediaViewer";
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming } from "react-native-reanimated";
 import { useResponsiveScreen } from "../utils/responsive";
@@ -147,9 +148,38 @@ export default function MediaUploadGrid({ media, onMediaChange, maxItems = 6, re
         const newMediaItems: MediaItem[] = [];
 
         for (const [index, asset] of result.assets.entries()) {
+          let processedUri = asset.uri;
+
+          // Compress images before adding to media items
+          if (asset.type === "image") {
+            try {
+              const compressionResult = await imageCompressionService.compressImage(
+                asset.uri,
+                imageCompressionService.getRecommendedOptions('review')
+              );
+
+              if (compressionResult.success && compressionResult.uri) {
+                processedUri = compressionResult.uri;
+
+                // Log compression results
+                if (compressionResult.originalSize && compressionResult.compressedSize) {
+                  const originalSizeKB = Math.round(compressionResult.originalSize / 1024);
+                  const compressedSizeKB = Math.round(compressionResult.compressedSize / 1024);
+                  const savings = Math.round((1 - compressionResult.compressionRatio!) * 100);
+
+                  console.log(`📸 Image compressed: ${originalSizeKB}KB → ${compressedSizeKB}KB (${savings}% smaller)`);
+                }
+              } else {
+                console.warn('Image compression failed, using original:', compressionResult.error);
+              }
+            } catch (error) {
+              console.warn('Image compression error, using original:', error);
+            }
+          }
+
           const mediaItem: MediaItem = {
             id: `media_${Date.now()}_${index}_${Math.random().toString(36).substring(2, 11)}`,
-            uri: asset.uri,
+            uri: processedUri,
             type: asset.type === "video" ? "video" : "image",
             width: asset.width,
             height: asset.height,

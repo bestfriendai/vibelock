@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, Pressable } from "react-native";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { MediaItem } from "../types";
+import { videoThumbnailService } from "../services/videoThumbnailService";
 
 interface Props {
   media: MediaItem;
@@ -14,15 +15,52 @@ interface Props {
 
 export default function MediaThumbnail({ media, size = 80, onPress, showPlayIcon = true, onLoad }: Props) {
   const [imageError, setImageError] = useState(false);
+  const [videoThumbnail, setVideoThumbnail] = useState<string | null>(null);
+  const [thumbnailLoading, setThumbnailLoading] = useState(false);
   const isVideo = media.type === "video";
+
+  // Generate video thumbnail when component mounts
+  useEffect(() => {
+    if (isVideo && !videoThumbnail && !thumbnailLoading) {
+      setThumbnailLoading(true);
+      videoThumbnailService.generateThumbnail(media.uri)
+        .then((result) => {
+          if (result.success && result.uri) {
+            setVideoThumbnail(result.uri);
+          }
+        })
+        .catch((error) => {
+          console.warn('Failed to generate video thumbnail:', error);
+        })
+        .finally(() => {
+          setThumbnailLoading(false);
+        });
+    }
+  }, [isVideo, media.uri, videoThumbnail, thumbnailLoading]);
 
   return (
     <Pressable onPress={onPress} className="relative overflow-hidden rounded-xl" style={{ width: size, height: size }}>
       {isVideo ? (
-        // For videos, always show a placeholder with video icon
-        <View className="flex-1 bg-surface-700 items-center justify-center" style={{ width: size, height: size }}>
-          <Ionicons name="videocam" size={size * 0.4} color="#6B7280" />
-        </View>
+        videoThumbnail ? (
+          // Show video thumbnail if available
+          <Image
+            source={{ uri: videoThumbnail }}
+            style={{ width: size, height: size }}
+            contentFit="cover"
+            transition={200}
+            onLoad={onLoad}
+            onError={() => setImageError(true)}
+          />
+        ) : (
+          // Show video icon placeholder while loading or if no thumbnail
+          <View className="flex-1 bg-surface-700 items-center justify-center" style={{ width: size, height: size }}>
+            {thumbnailLoading ? (
+              <View className="w-4 h-4 border-2 border-gray-400 border-t-white rounded-full animate-spin" />
+            ) : (
+              <Ionicons name="videocam" size={size * 0.4} color="#6B7280" />
+            )}
+          </View>
+        )
       ) : imageError ? (
         // For images that failed to load
         <View className="flex-1 bg-surface-700 items-center justify-center" style={{ width: size, height: size }}>

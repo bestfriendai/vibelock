@@ -15,6 +15,8 @@ import { notificationService } from "./src/services/notificationService";
 import { realtimeChatService } from "./src/services/realtimeChat";
 import { adMobService } from "./src/services/adMobService";
 import { buildEnv } from "./src/utils/buildEnvironment";
+import { AdProvider } from "./src/contexts/AdContext";
+import { ThemeProvider } from "./src/providers/ThemeProvider";
 
 /*
 IMPORTANT NOTICE: DO NOT REMOVE
@@ -145,11 +147,14 @@ export default function App() {
     <ErrorBoundary>
       <GestureHandlerRootView className="flex-1">
         <SafeAreaProvider>
-          <NavigationContainer linking={linking}>
-            <AppNavigator />
-            <OfflineBanner />
-            <StatusBar style="light" backgroundColor="#000000" />
-          </NavigationContainer>
+          <ThemeProvider>
+            <AdProvider>
+              <NavigationContainer linking={linking}>
+                <AppNavigator />
+                <OfflineBanner />
+              </NavigationContainer>
+            </AdProvider>
+          </ThemeProvider>
         </SafeAreaProvider>
       </GestureHandlerRootView>
     </ErrorBoundary>

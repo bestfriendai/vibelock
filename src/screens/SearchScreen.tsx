@@ -1,12 +1,26 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { View, Text, TextInput, Pressable, ScrollView, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { supabaseSearch } from "../services/supabase";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useTheme } from "../providers/ThemeProvider";
+
+// Debounce utility
+const debounce = (func: Function, delay: number) => {
+  let timeoutId: NodeJS.Timeout;
+  return (...args: any[]) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => func.apply(null, args), delay);
+  };
+};
 
 export default function SearchScreen() {
   const navigation = useNavigation<any>();
+  const { colors } = useTheme();
+
+  // Search state
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
@@ -17,23 +31,111 @@ export default function SearchScreen() {
   }>({ reviews: [], comments: [], messages: [] });
   const [activeTab, setActiveTab] = useState<"all" | "reviews" | "comments" | "messages">("all");
 
-  const handleSearch = async () => {
-    if (searchQuery.trim().length < 2) {
+  // Enhanced search features
+  const [searchHistory, setSearchHistory] = useState<string[]>([]);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [filters, setFilters] = useState({
+    dateRange: 'all', // 'week', 'month', 'year', 'all'
+    sentiment: 'all', // 'positive', 'negative', 'neutral', 'all'
+    hasMedia: false,
+    location: '',
+  });
+
+  // Load search history on mount
+  useEffect(() => {
+    loadSearchHistory();
+  }, []);
+
+  const loadSearchHistory = async () => {
+    try {
+      const history = await AsyncStorage.getItem('search_history');
+      if (history) {
+        setSearchHistory(JSON.parse(history));
+      }
+    } catch (error) {
+      console.error('Failed to load search history:', error);
+    }
+  };
+
+  const saveToSearchHistory = async (query: string) => {
+    try {
+      const trimmedQuery = query.trim();
+      if (trimmedQuery.length < 2) return;
+
+      const updatedHistory = [
+        trimmedQuery,
+        ...searchHistory.filter(item => item !== trimmedQuery)
+      ].slice(0, 10); // Keep only last 10 searches
+
+      setSearchHistory(updatedHistory);
+      await AsyncStorage.setItem('search_history', JSON.stringify(updatedHistory));
+    } catch (error) {
+      console.error('Failed to save search history:', error);
+    }
+  };
+
+  const clearSearchHistory = async () => {
+    try {
+      setSearchHistory([]);
+      await AsyncStorage.removeItem('search_history');
+    } catch (error) {
+      console.error('Failed to clear search history:', error);
+    }
+  };
+
+  // Debounced suggestion generation
+  const generateSuggestions = useCallback(
+    debounce(async (query: string) => {
+      if (query.length < 2) {
+        setSuggestions([]);
+        return;
+      }
+
+      // Generate suggestions from search history
+      const historySuggestions = searchHistory
+        .filter(item => item.toLowerCase().includes(query.toLowerCase()))
+        .slice(0, 5);
+
+      // Add common search terms
+      const commonTerms = [
+        'dating experience', 'relationship', 'hookup', 'date night',
+        'personality', 'appearance', 'communication', 'chemistry',
+        'red flags', 'green flags', 'toxic', 'sweet', 'funny', 'boring'
+      ];
+
+      const commonSuggestions = commonTerms
+        .filter(term => term.toLowerCase().includes(query.toLowerCase()))
+        .slice(0, 3);
+
+      setSuggestions([...historySuggestions, ...commonSuggestions]);
+    }, 300),
+    [searchHistory]
+  );
+
+  const handleSearch = async (queryOverride?: string) => {
+    const query = queryOverride || searchQuery;
+
+    if (query.trim().length < 2) {
       setSearchError("Please enter at least 2 characters to search");
       return;
     }
-    
+
     setIsSearching(true);
     setSearchError(null);
-    
+    setShowSuggestions(false);
+
     try {
-      const results = await supabaseSearch.searchAll(searchQuery);
+      const results = await supabaseSearch.searchAll(query);
       setContentResults(results);
-      
+
+      // Save to search history
+      await saveToSearchHistory(query);
+
       // Show feedback if no results found
       const totalResults = results.reviews.length + results.comments.length + results.messages.length;
       if (totalResults === 0) {
-        setSearchError(`No results found for "${searchQuery}". Try different keywords or check your spelling.`);
+        setSearchError(`No results found for "${query}". Try different keywords or check your spelling.`);
       }
     } catch (e) {
       console.error('Search failed:', e);
@@ -44,22 +146,37 @@ export default function SearchScreen() {
     }
   };
 
+  const handleQueryChange = (text: string) => {
+    setSearchQuery(text);
+    setShowSuggestions(text.length > 0);
+    generateSuggestions(text);
+  };
+
   return (
-    <SafeAreaView className="flex-1 bg-surface-900">
+    <SafeAreaView className="flex-1" style={{ backgroundColor: colors.background }}>
       {/* Header */}
-      <View className="bg-black px-6 py-6">
-        <View className="flex-row items-center">
-          <View className="w-10 h-10 mr-3">
-            <Image
-              source={require("../../assets/logo-circular.png")}
-              style={{ width: 40, height: 40 }}
-              resizeMode="contain"
-            />
+      <View className="px-6 py-6" style={{ backgroundColor: colors.surface[800] }}>
+        <View className="flex-row items-center justify-between">
+          <View className="flex-row items-center">
+            <Pressable onPress={() => navigation.goBack()} className="mr-4">
+              <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
+            </Pressable>
+            <View>
+              <Text className="text-xl font-bold" style={{ color: colors.text.primary }}>
+                Search
+              </Text>
+              <Text className="text-sm" style={{ color: colors.text.secondary }}>
+                Find reviews, comments & messages
+              </Text>
+            </View>
           </View>
-          <View>
-            <Text className="text-2xl font-bold text-text-primary">Search</Text>
-            <Text className="text-text-secondary mt-1">Search reviews, comments & messages</Text>
-          </View>
+          {searchHistory.length > 0 && (
+            <Pressable onPress={clearSearchHistory}>
+              <Text className="text-sm" style={{ color: colors.brand.red }}>
+                Clear History
+              </Text>
+            </Pressable>
+          )}
         </View>
       </View>
 
@@ -74,15 +191,10 @@ export default function SearchScreen() {
                 placeholder="Enter keywords..."
                 placeholderTextColor="#9CA3AF"
                 value={searchQuery}
-                onChangeText={(text) => {
-                  setSearchQuery(text);
-                  // Clear error when user starts typing
-                  if (searchError) {
-                    setSearchError(null);
-                  }
-                }}
+                onChangeText={handleQueryChange}
                 autoCapitalize="none"
-                onSubmitEditing={handleSearch}
+                onSubmitEditing={() => handleSearch()}
+                onFocus={() => setShowSuggestions(searchQuery.length > 0)}
                 returnKeyType="search"
               />
               <View className="absolute right-3 top-3 flex-row items-center">
@@ -96,7 +208,69 @@ export default function SearchScreen() {
                 </Pressable>
               </View>
             </View>
-            
+
+            {/* Search Suggestions */}
+            {showSuggestions && (suggestions.length > 0 || searchHistory.length > 0) && (
+              <View
+                className="mt-2 rounded-lg border"
+                style={{
+                  backgroundColor: colors.surface[800],
+                  borderColor: colors.border
+                }}
+              >
+                {/* Recent Searches */}
+                {searchQuery.length === 0 && searchHistory.length > 0 && (
+                  <>
+                    <View className="px-4 py-2 border-b" style={{ borderColor: colors.border }}>
+                      <Text className="text-sm font-medium" style={{ color: colors.text.secondary }}>
+                        Recent Searches
+                      </Text>
+                    </View>
+                    {searchHistory.slice(0, 5).map((item, index) => (
+                      <Pressable
+                        key={index}
+                        onPress={() => {
+                          setSearchQuery(item);
+                          handleSearch(item);
+                        }}
+                        className="px-4 py-3 flex-row items-center"
+                      >
+                        <Ionicons name="time-outline" size={16} color={colors.text.muted} />
+                        <Text className="ml-3 flex-1" style={{ color: colors.text.primary }}>
+                          {item}
+                        </Text>
+                        <Ionicons name="arrow-up-outline" size={16} color={colors.text.muted} />
+                      </Pressable>
+                    ))}
+                  </>
+                )}
+
+                {/* Suggestions */}
+                {suggestions.length > 0 && (
+                  <>
+                    {searchQuery.length === 0 && searchHistory.length > 0 && (
+                      <View className="h-px" style={{ backgroundColor: colors.border }} />
+                    )}
+                    {suggestions.map((suggestion, index) => (
+                      <Pressable
+                        key={index}
+                        onPress={() => {
+                          setSearchQuery(suggestion);
+                          handleSearch(suggestion);
+                        }}
+                        className="px-4 py-3 flex-row items-center"
+                      >
+                        <Ionicons name="search-outline" size={16} color={colors.text.muted} />
+                        <Text className="ml-3 flex-1" style={{ color: colors.text.primary }}>
+                          {suggestion}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </>
+                )}
+              </View>
+            )}
+
             {/* Search Error */}
             {searchError && (
               <View className="mt-3 p-3 bg-red-900/20 border border-red-500/30 rounded-lg">

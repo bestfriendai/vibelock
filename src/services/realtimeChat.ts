@@ -317,9 +317,9 @@ class RealtimeChatService {
   }
 
   // Load messages for a room
-  async loadRoomMessages(roomId: string): Promise<ChatMessage[]> {
+  async loadRoomMessages(roomId: string, cursor?: string, limit: number = 50): Promise<ChatMessage[]> {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from("chat_messages_firebase")
         .select(`
           id,
@@ -333,37 +333,50 @@ class RealtimeChatService {
           is_read,
           reply_to
         `)
-        .eq("chat_room_id", roomId)
-        .order("timestamp", { ascending: true })
-        .limit(50);
+        .eq("chat_room_id", roomId);
+
+      // Add cursor-based pagination for older messages
+      if (cursor) {
+        query = query.lt("timestamp", cursor);
+      }
+
+      query = query
+        .order("timestamp", { ascending: false }) // Get newest first for pagination
+        .limit(limit);
+
+      const { data, error } = await query;
 
       if (error) {
         console.error("❌ Error loading messages:", error);
         throw error;
       }
 
-      const messages = (data || []).map((msg) => ({
-        id: msg.id,
-        chatRoomId: msg.chat_room_id,
-        senderId: msg.sender_id || "unknown",
-        senderName: msg.sender_name || "User",
-        senderAvatar: msg.sender_avatar,
-        content: msg.content,
-        messageType: (msg.message_type || "text") as any,
-        timestamp: new Date(msg.timestamp),
-        isRead: msg.is_read || false,
-        replyTo: msg.reply_to,
-      })) as ChatMessage[];
+      const messages = (data || [])
+        .map((msg) => ({
+          id: msg.id,
+          chatRoomId: msg.chat_room_id,
+          senderId: msg.sender_id || "unknown",
+          senderName: msg.sender_name || "User",
+          senderAvatar: msg.sender_avatar,
+          content: msg.content,
+          messageType: (msg.message_type || "text") as any,
+          timestamp: new Date(msg.timestamp),
+          isRead: msg.is_read || false,
+          replyTo: msg.reply_to,
+        })) as ChatMessage[];
 
-      console.log(`📨 Loaded ${messages.length} messages for room ${roomId}`);
+      // Reverse to get chronological order (oldest first)
+      const sortedMessages = cursor ? messages.reverse() : messages.reverse();
+
+      console.log(`📨 Loaded ${sortedMessages.length} messages for room ${roomId}`);
 
       // Notify callback if exists
       const callback = this.messageCallbacks.get(roomId);
       if (callback) {
-        callback(messages);
+        callback(sortedMessages);
       }
 
-      return messages;
+      return sortedMessages;
     } catch (error: any) {
       console.error("💥 Failed to load messages:", error);
       throw new Error(`Failed to load messages: ${error.message}`);
@@ -627,6 +640,36 @@ class RealtimeChatService {
       } else {
         // User stopped typing - emit empty array with user info to signal removal
         callback([{ ...typingUser, isTyping: false }]);
+      }
+    }
+  }
+
+  // Cleanup subscriptions for a specific room
+  async cleanupRoom(roomId: string) {
+    console.log(`🧹 Cleaning up subscriptions for room ${roomId}`);
+
+    // Clear typing timeout for this room
+    const typingKey = `${roomId}_typing`;
+    if (this.typingTimeouts.has(typingKey)) {
+      clearTimeout(this.typingTimeouts.get(typingKey));
+      this.typingTimeouts.delete(typingKey);
+    }
+
+    // Remove callbacks for this room
+    this.messageCallbacks.delete(roomId);
+    this.presenceCallbacks.delete(roomId);
+    this.typingCallbacks.delete(roomId);
+
+    // Unsubscribe from room-specific channels
+    const messagesChannelKey = `messages_${roomId}`;
+    const presenceChannelKey = `presence_${roomId}`;
+    const typingChannelKey = `typing_${roomId}`;
+
+    for (const key of [messagesChannelKey, presenceChannelKey, typingChannelKey]) {
+      const channel = this.channels.get(key);
+      if (channel) {
+        await channel.unsubscribe();
+        this.channels.delete(key);
       }
     }
   }

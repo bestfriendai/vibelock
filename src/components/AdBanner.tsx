@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import useSubscriptionStore from "../state/subscriptionStore";
 import { canUseAdMob, buildEnv } from "../utils/buildEnvironment";
 import { adMobService } from "../services/adMobService";
+import { useAdContext } from "../contexts/AdContext";
 
 interface Props {
   placement: "browse" | "chat";
@@ -81,53 +82,69 @@ const RealBannerAd: React.FC<{
 
 export default function AdBanner({ placement }: Props) {
   const { isPremium } = useSubscriptionStore();
-  const insets = useSafeAreaInsets();
+  const { setAdHeight, setAdVisible } = useAdContext();
   const [adLoaded, setAdLoaded] = useState(false);
   const [adError, setAdError] = useState<string | null>(null);
 
-  // Don't show ads to premium users
-  if (isPremium) return null;
+  // Don't show ads to premium users (but still show in development for demo)
+  if (isPremium && !buildEnv.isExpoGo && !buildEnv.isDevelopmentBuild) {
+    // Ensure ad context is updated when premium
+    useEffect(() => {
+      setAdVisible(false);
+      setAdHeight(0);
+    }, [setAdVisible, setAdHeight]);
+
+    return null;
+  }
 
   const handleAdLoad = () => {
     setAdLoaded(true);
     setAdError(null);
+    setAdVisible(true);
+    setAdHeight(60); // Standard banner height
   };
 
   const handleAdError = (error: string) => {
     console.error('Banner ad error:', error);
     setAdError(error);
     setAdLoaded(false);
+    setAdVisible(false);
+    setAdHeight(0);
   };
 
-  // Position above navigation bar as per user preference
-  const bottomPosition = 52 + (insets.bottom || 0) + 8;
+  // Update ad context when component unmounts
+  useEffect(() => {
+    return () => {
+      setAdVisible(false);
+      setAdHeight(0);
+    };
+  }, [setAdVisible, setAdHeight]);
 
   return (
-    <View
-      className="absolute left-0 right-0 items-center z-10"
-      style={{ bottom: bottomPosition }}
-    >
-      <View className="w-11/12 bg-surface-800 border border-surface-700 rounded-xl overflow-hidden">
-        {adError ? (
-          <View className="px-4 py-3 items-center">
-            <Text className="text-text-secondary text-xs">Ad unavailable</Text>
-          </View>
-        ) : canUseAdMob() ? (
-          <RealBannerAd
-            unitId={adMobService.getBannerAdUnitId() || ''}
-            onLoad={handleAdLoad}
-            onError={handleAdError}
-          />
-        ) : (
-          <MockBannerAd onLoad={handleAdLoad} onError={handleAdError} />
-        )}
+    <View className="bg-surface-800 border-t border-surface-700">
+      <View className="items-center py-2">
+        <View className="w-11/12 bg-surface-800 border border-surface-700 rounded-xl overflow-hidden">
+          {adError ? (
+            <View className="px-4 py-3 items-center">
+              <Text className="text-text-secondary text-xs">Ad unavailable</Text>
+            </View>
+          ) : canUseAdMob() ? (
+            <RealBannerAd
+              unitId={adMobService.getBannerAdUnitId() || ''}
+              onLoad={handleAdLoad}
+              onError={handleAdError}
+            />
+          ) : (
+            <MockBannerAd onLoad={handleAdLoad} onError={handleAdError} />
+          )}
 
-        {/* Ad label for transparency */}
-        {adLoaded && (
-          <View className="absolute top-1 right-1 bg-black/50 px-1 rounded">
-            <Text className="text-white text-[8px]">Ad</Text>
-          </View>
-        )}
+          {/* Ad label for transparency */}
+          {adLoaded && (
+            <View className="absolute top-1 right-1 bg-black/50 px-1 rounded">
+              <Text className="text-white text-[8px]">Ad</Text>
+            </View>
+          )}
+        </View>
       </View>
     </View>
   );

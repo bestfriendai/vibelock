@@ -6,6 +6,8 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Review } from "../types";
 import { RootStackParamList } from "../navigation/AppNavigator";
 import useReviewsStore from "../state/reviewsStore";
+import { useTheme } from "../providers/ThemeProvider";
+import { socialSharingService } from "../services/socialSharingService";
 
 interface ReviewCardProps {
   review: Review;
@@ -16,6 +18,7 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 export default function ReviewCard({ review }: ReviewCardProps) {
   const navigation = useNavigation<NavigationProp>();
   const { likeReview } = useReviewsStore();
+  const { theme, colors, isDarkMode } = useTheme();
 
   const handlePersonPress = () => {
     navigation.navigate("PersonProfile", {
@@ -26,6 +29,10 @@ export default function ReviewCard({ review }: ReviewCardProps) {
 
   const handleLike = () => {
     likeReview(review.id);
+  };
+
+  const handleShare = () => {
+    socialSharingService.showShareOptions(review);
   };
 
   const formatDate = (date: Date) => {
@@ -41,20 +48,44 @@ export default function ReviewCard({ review }: ReviewCardProps) {
   };
 
   return (
-    <View className="bg-surface-800 rounded-2xl p-6 mb-4 border border-surface-700">
+    <View
+      className="rounded-2xl p-6 mb-4 border"
+      style={{
+        backgroundColor: colors.surface[800],
+        borderColor: colors.border
+      }}
+    >
       {/* Header */}
       <Pressable onPress={handlePersonPress} className="mb-4">
         <View className="flex-row items-center">
-          <View className="w-12 h-12 bg-brand-red rounded-full items-center justify-center">
-            <Text className="text-white font-bold text-lg">{review.reviewedPersonName.charAt(0).toUpperCase()}</Text>
+          <View
+            className="w-12 h-12 rounded-full items-center justify-center"
+            style={{ backgroundColor: colors.brand.red }}
+          >
+            <Text className="text-white font-bold text-lg">
+              {review.reviewedPersonName.charAt(0).toUpperCase()}
+            </Text>
           </View>
           <View className="ml-3 flex-1">
-            <Text className="text-lg font-semibold text-text-primary">{review.reviewedPersonName}</Text>
-            <Text className="text-text-secondary text-sm">
+            <Text
+              className="text-lg font-semibold"
+              style={{ color: colors.text.primary }}
+            >
+              {review.reviewedPersonName}
+            </Text>
+            <Text
+              className="text-sm"
+              style={{ color: colors.text.secondary }}
+            >
               {review.reviewedPersonLocation.city}, {review.reviewedPersonLocation.state}
             </Text>
           </View>
-          <Text className="text-text-muted text-sm">{formatDate(review.createdAt)}</Text>
+          <Text
+            className="text-sm"
+            style={{ color: colors.text.muted }}
+          >
+            {formatDate(review.createdAt)}
+          </Text>
         </View>
       </Pressable>
 
@@ -62,10 +93,27 @@ export default function ReviewCard({ review }: ReviewCardProps) {
       <Text className="text-text-primary mb-4 leading-6 text-base">{truncateText(review.reviewText)}</Text>
 
       {/* Footer */}
-      <View className="flex-row items-center justify-end pt-4 border-t border-surface-700">
-        <Pressable onPress={handleLike} className="flex-row items-center bg-brand-red/10 px-3 py-2 rounded-full">
-          <Ionicons name="heart" size={16} color="#FFFFFF" />
-          <Text className="text-brand-red text-sm ml-1 font-medium">{review.likeCount}</Text>
+      <View className="flex-row items-center justify-between pt-4 border-t" style={{ borderColor: colors.border }}>
+        <Pressable
+          onPress={handleShare}
+          className="flex-row items-center px-3 py-2 rounded-full"
+          style={{ backgroundColor: colors.surface[700] }}
+        >
+          <Ionicons name="share-outline" size={16} color={colors.text.muted} />
+          <Text className="text-sm ml-1 font-medium" style={{ color: colors.text.muted }}>
+            Share
+          </Text>
+        </Pressable>
+
+        <Pressable
+          onPress={handleLike}
+          className="flex-row items-center px-3 py-2 rounded-full"
+          style={{ backgroundColor: colors.brand.red + '20' }}
+        >
+          <Ionicons name="heart" size={16} color={colors.brand.red} />
+          <Text className="text-sm ml-1 font-medium" style={{ color: colors.brand.red }}>
+            {review.likeCount}
+          </Text>
         </Pressable>
       </View>
 

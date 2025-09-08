@@ -7,6 +7,9 @@ import useAuthStore from "../state/authStore";
 import useThemeStore from "../state/themeStore";
 import useSubscriptionStore from "../state/subscriptionStore";
 import ConfirmationModal from "../components/ConfirmationModal";
+import PremiumThemeToggle from "../components/PremiumThemeToggle";
+import UserStatsCard from "../components/UserStatsCard";
+import { useTheme } from "../providers/ThemeProvider";
 import { PaywallAdaptive } from "../components/subscription/PaywallAdaptive";
 import { LegalModal } from "../components/legal/LegalModal";
 import { buildEnv } from "../utils/buildEnvironment";
@@ -16,6 +19,7 @@ export default function ProfileScreen() {
   const navigation = useNavigation<any>();
   const { user, logout, isGuestMode, setGuestMode } = useAuthStore();
   const { theme, isDarkMode, setTheme } = useThemeStore();
+  const { colors } = useTheme();
   const { isPremium, isLoading, restorePurchases } = useSubscriptionStore();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -161,30 +165,7 @@ export default function ProfileScreen() {
               <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
             </Pressable>
 
-            {/* Theme Toggle */}
-            <View className="flex-row items-center justify-between p-5 border-b border-surface-700">
-              <View className="flex-row items-center">
-                <Ionicons name={isDarkMode ? "moon-outline" : "sunny-outline"} size={20} color="#9CA3AF" />
-                <Text className="text-text-primary font-medium ml-3">Theme</Text>
-              </View>
-              <View className="flex-row items-center">
-                <Text className="text-text-secondary text-sm mr-3 capitalize">{theme}</Text>
-                <Switch
-                  value={isDarkMode}
-                  onValueChange={() => {
-                    const newTheme = isDarkMode ? "light" : "dark";
-                    setTheme(newTheme);
-                    Alert.alert(
-                      "Theme Changed",
-                      `Switched to ${newTheme} mode. Note: Full theme switching will be implemented in a future update.`,
-                      [{ text: "OK" }]
-                    );
-                  }}
-                  trackColor={{ false: "#374151", true: "#1F2937" }}
-                  thumbColor={isDarkMode ? "#FFFFFF" : "#9CA3AF"}
-                />
-              </View>
-            </View>
+            {/* Premium Theme Toggle - moved outside of settings card */}
 
             {/** Privacy removed */}
 
@@ -196,6 +177,12 @@ export default function ProfileScreen() {
               <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
             </Pressable>
           </View>
+
+          {/* User Statistics */}
+          <UserStatsCard />
+
+          {/* Premium Theme Toggle */}
+          <PremiumThemeToggle />
 
           {/* Subscription Section */}
           <View className="bg-surface-800 rounded-lg mb-6">

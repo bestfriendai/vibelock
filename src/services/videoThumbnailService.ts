@@ -1,6 +1,7 @@
 import * as FileSystem from 'expo-file-system';
 import { Platform } from 'react-native';
 import * as ImageManipulator from 'expo-image-manipulator';
+import Constants from 'expo-constants';
 
 export interface ThumbnailResult {
   success: boolean;
@@ -10,11 +11,10 @@ export interface ThumbnailResult {
 
 class VideoThumbnailService {
   private thumbnailCache = new Map<string, string>();
+  private isExpoGo = Constants.executionEnvironment === 'storeClient';
 
   /**
-   * Generate thumbnail for video
-   * Simplified approach - just return success without actual thumbnail generation
-   * The UI will handle showing video icons instead
+   * Generate thumbnail for video with Expo Go fallback support
    */
   async generateThumbnail(videoUri: string, timeStamp?: number): Promise<ThumbnailResult> {
     try {
@@ -35,19 +35,63 @@ class VideoThumbnailService {
         }
       }
 
-      // For now, we'll indicate success but not provide a thumbnail URI
-      // This tells the UI that the video is valid but to show a video icon instead
-      this.thumbnailCache.set(cacheKey, 'video-placeholder');
+      // Use different approaches based on environment
+      if (this.isExpoGo) {
+        return await this.generateThumbnailFallback(videoUri, timeStamp);
+      } else {
+        return await this.generateThumbnailNative(videoUri, timeStamp);
+      }
+    } catch (error) {
+      console.error('Video thumbnail generation failed:', error);
+      return await this.generateThumbnailFallback(videoUri, timeStamp);
+    }
+  }
+
+  /**
+   * Generate thumbnail using native expo-video-thumbnails (dev builds only)
+   */
+  private async generateThumbnailNative(videoUri: string, timeStamp?: number): Promise<ThumbnailResult> {
+    try {
+      // Dynamic import to avoid issues in Expo Go
+      const VideoThumbnails = await import('expo-video-thumbnails');
+
+      const { uri } = await VideoThumbnails.getThumbnailAsync(videoUri, {
+        time: timeStamp || 1000,
+        quality: 1,
+      });
+
+      const cacheKey = `${videoUri}_${timeStamp || 0}`;
+      this.thumbnailCache.set(cacheKey, uri);
 
       return {
         success: true,
-        uri: undefined, // No actual thumbnail, UI will show video icon
+        uri,
       };
     } catch (error) {
-      console.error('Video thumbnail generation failed:', error);
+      console.warn('Native thumbnail generation failed, falling back:', error);
+      return await this.generateThumbnailFallback(videoUri, timeStamp);
+    }
+  }
+
+  /**
+   * Fallback thumbnail generation for Expo Go
+   */
+  private async generateThumbnailFallback(videoUri: string, timeStamp?: number): Promise<ThumbnailResult> {
+    try {
+      // Create a placeholder thumbnail
+      const placeholderUri = await this.createVideoPlaceholder();
+
+      const cacheKey = `${videoUri}_${timeStamp || 0}`;
+      this.thumbnailCache.set(cacheKey, placeholderUri);
+
+      return {
+        success: true,
+        uri: placeholderUri,
+      };
+    } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : 'Failed to generate fallback thumbnail',
       };
     }
   }
@@ -55,7 +99,7 @@ class VideoThumbnailService {
   /**
    * Create a simple placeholder for video thumbnails
    */
-  private async createVideoPlaceholder(): Promise<ThumbnailResult> {
+  private async createVideoPlaceholder(): Promise<string> {
     try {
       // Create a simple colored rectangle as a placeholder
       const result = await ImageManipulator.manipulateAsync(
@@ -69,15 +113,10 @@ class VideoThumbnailService {
         }
       );
 
-      return {
-        success: true,
-        uri: result.uri,
-      };
+      return result.uri;
     } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Failed to create placeholder',
-      };
+      // Return a data URI as ultimate fallback
+      return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
     }
   }
 
@@ -121,8 +160,15 @@ class VideoThumbnailService {
    * Check if video thumbnails are supported on current platform
    */
   isSupported(): boolean {
-    // expo-video-thumbnails works on both iOS and Android
+    // Native thumbnails only work in dev builds, fallback always available
     return Platform.OS === 'ios' || Platform.OS === 'android';
+  }
+
+  /**
+   * Check if native thumbnail generation is available
+   */
+  isNativeSupported(): boolean {
+    return !this.isExpoGo && (Platform.OS === 'ios' || Platform.OS === 'android');
   }
 
   /**

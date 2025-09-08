@@ -9,6 +9,9 @@ import MediaUploadGrid from "../components/MediaUploadGrid";
 import SocialMediaInput from "../components/SocialMediaInput";
 import LocationSelector from "../components/LocationSelector";
 import useAuthStore from "../state/authStore";
+import useSubscriptionStore from "../state/subscriptionStore";
+import PremiumBadge from "../components/PremiumBadge";
+import { imageCompressionService } from "../services/imageCompressionService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const DRAFT_KEY = "create-review-draft";
@@ -22,6 +25,7 @@ interface Location {
 export default function CreateReviewScreen() {
   const navigation = useNavigation<any>();
   const { user, isGuestMode } = useAuthStore();
+  const { isPremium } = useSubscriptionStore();
   const [firstName, setFirstName] = useState("");
   const [selectedLocation, setSelectedLocation] = useState<Location>({
     city: user?.location.city || "Washington",
@@ -87,7 +91,10 @@ export default function CreateReviewScreen() {
 
   const imagesCount = useMemo(() => media.filter((m) => m.type === "image").length, [media]);
 
-  // Enhanced validation
+  // Enhanced validation with premium limits
+  const maxReviewLength = isPremium ? 1000 : 500;
+  const maxMediaCount = isPremium ? 10 : 6;
+
   const validation = useMemo(() => {
     const errors: string[] = [];
 
@@ -100,7 +107,9 @@ export default function CreateReviewScreen() {
 
     if (!reviewText.trim()) errors.push("Review text is required");
     else if (reviewText.trim().length < 10) errors.push("Review must be at least 10 characters");
-    else if (reviewText.trim().length > 500) errors.push("Review must be less than 500 characters");
+    else if (reviewText.trim().length > maxReviewLength) {
+      errors.push(`Review must be less than ${maxReviewLength} characters`);
+    }
 
     if (imagesCount < 1) errors.push("At least one photo is required");
 
@@ -111,7 +120,7 @@ export default function CreateReviewScreen() {
       errors,
       firstError: errors[0] || null
     };
-  }, [firstName, selectedLocation, reviewText, imagesCount, sentiment]);
+  }, [firstName, selectedLocation, reviewText, imagesCount, sentiment, maxReviewLength]);
 
   const hasRequired = validation.isValid;
 
@@ -326,14 +335,28 @@ export default function CreateReviewScreen() {
                   onChangeText={setReviewText}
                   multiline
                   textAlignVertical="top"
-                  maxLength={500}
+                  maxLength={maxReviewLength}
                 />
                 <View className="flex-row justify-between items-center mt-2">
-                  <Text className="text-text-muted text-sm">
-                    {reviewText.length < 10 ? 'Minimum 10 characters' : 'Looking good!'}
-                  </Text>
-                  <Text className={`text-sm ${reviewText.length > 450 ? 'text-yellow-400' : reviewText.length > 480 ? 'text-red-400' : 'text-text-muted'}`}>
-                    {reviewText.length}/500
+                  <View className="flex-row items-center">
+                    <Text className="text-text-muted text-sm">
+                      {reviewText.length < 10 ? 'Minimum 10 characters' : 'Looking good!'}
+                    </Text>
+                    {isPremium && (
+                      <View className="ml-2">
+                        <PremiumBadge size="small" variant="pill" showText={false} />
+                      </View>
+                    )}
+                  </View>
+                  <Text className={`text-sm ${
+                    reviewText.length > maxReviewLength * 0.9 ? 'text-yellow-400' :
+                    reviewText.length > maxReviewLength * 0.95 ? 'text-red-400' :
+                    'text-text-muted'
+                  }`}>
+                    {reviewText.length}/{maxReviewLength}
+                    {!isPremium && reviewText.length > 400 && (
+                      <Text className="text-amber-400"> • Upgrade for 1000 chars</Text>
+                    )}
                   </Text>
                 </View>
               </View>

@@ -230,6 +230,7 @@ const useChatStore = create<ChatStore>()(
         console.log(`🚪 Leaving chat room: ${roomId}`);
 
         await realtimeChatService.leaveRoom(roomId);
+        await realtimeChatService.cleanupRoom(roomId);
 
         const currentRoom = get().currentChatRoom;
         if (currentRoom && currentRoom.id === roomId) {
@@ -400,18 +401,24 @@ const useChatStore = create<ChatStore>()(
             return;
           }
 
-          // Get the oldest message timestamp for pagination
+          // Get the oldest message timestamp for cursor-based pagination
           const oldestMessage = currentMessages[0];
-          const beforeTimestamp = oldestMessage.timestamp;
+          const cursor = oldestMessage.timestamp.toISOString();
 
-          // Load older messages from Supabase
-          const olderMessages = await supabaseChat.getMessages(roomId, 20, beforeTimestamp);
+          // Load older messages using realtimeChatService with cursor
+          const olderMessages = await realtimeChatService.loadRoomMessages(roomId, cursor, 20);
 
           if (olderMessages.length > 0) {
+            // Merge messages and deduplicate by ID
+            const allMessages = [...olderMessages, ...currentMessages];
+            const uniqueMessages = Array.from(
+              new Map(allMessages.map(msg => [msg.id, msg])).values()
+            ).sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+
             set((state) => ({
               messages: {
                 ...state.messages,
-                [roomId]: [...olderMessages, ...currentMessages],
+                [roomId]: uniqueMessages,
               },
               isLoading: false,
             }));
