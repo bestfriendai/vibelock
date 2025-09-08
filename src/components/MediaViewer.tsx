@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { View, Modal, Pressable, Text, StatusBar } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Modal, Pressable, Text, StatusBar, Alert } from "react-native";
 import { Image } from "expo-image";
 import { VideoView, useVideoPlayer } from "expo-video";
 import { Ionicons } from "@expo/vector-icons";
@@ -29,12 +29,37 @@ export default function MediaViewer({
   const screenData = useResponsiveScreen();
   const { width: screenWidth, height: screenHeight } = screenData;
 
+  const [videoError, setVideoError] = useState<string | null>(null);
+  const [isVideoLoading, setIsVideoLoading] = useState(false);
+
   // Video player for video media
-  const videoPlayer = useVideoPlayer(currentMedia?.type === "video" ? currentMedia.uri : null, (player) => {
-    if (currentMedia?.type === "video") {
-      player.play();
+  const videoPlayer = useVideoPlayer(
+    currentMedia?.type === "video" ? currentMedia.uri : null,
+    (player) => {
+      if (currentMedia?.type === "video") {
+        setIsVideoLoading(true);
+        setVideoError(null);
+
+        // Simple auto-play approach
+        try {
+          player.play();
+          setIsVideoLoading(false);
+        } catch (error) {
+          console.error('Video player error:', error);
+          setVideoError('Failed to load video');
+          setIsVideoLoading(false);
+        }
+      }
     }
-  });
+  );
+
+  // Reset video state when media changes
+  useEffect(() => {
+    if (currentMedia?.type === "video") {
+      setVideoError(null);
+      setIsVideoLoading(true);
+    }
+  }, [currentMedia?.id]);
 
   const navigateMedia = (direction: "prev" | "next") => {
     if (direction === "prev" && currentIndex > 0) {
@@ -81,16 +106,49 @@ export default function MediaViewer({
                 transition={200}
               />
             ) : (
-              <VideoView
-                player={videoPlayer}
-                style={{
-                  width: screenWidth,
-                  height: screenHeight * 0.8,
-                }}
-                allowsFullscreen
-                nativeControls
-                contentFit="contain"
-              />
+              <View style={{ width: screenWidth, height: screenHeight * 0.8 }}>
+                {videoError ? (
+                  <View className="flex-1 items-center justify-center bg-surface-800">
+                    <Ionicons name="warning-outline" size={48} color="#EF4444" />
+                    <Text className="text-text-primary text-lg mt-4 text-center px-4">
+                      {videoError}
+                    </Text>
+                    <Pressable
+                      onPress={() => {
+                        setVideoError(null);
+                        setIsVideoLoading(true);
+                        if (videoPlayer) {
+                          videoPlayer.replay();
+                        }
+                      }}
+                      className="mt-4 bg-primary-600 px-6 py-3 rounded-lg"
+                    >
+                      <Text className="text-white font-medium">Retry</Text>
+                    </Pressable>
+                  </View>
+                ) : (
+                  <>
+                    <VideoView
+                      player={videoPlayer}
+                      style={{
+                        width: screenWidth,
+                        height: screenHeight * 0.8,
+                      }}
+                      allowsFullscreen
+                      nativeControls
+                      contentFit="contain"
+                    />
+                    {isVideoLoading && (
+                      <View className="absolute inset-0 bg-black/50 items-center justify-center">
+                        <View className="bg-white/90 rounded-lg p-4 items-center">
+                          <View className="w-8 h-8 border-2 border-gray-300 border-t-primary-600 rounded-full animate-spin mb-2" />
+                          <Text className="text-gray-800 font-medium">Loading video...</Text>
+                        </View>
+                      </View>
+                    )}
+                  </>
+                )}
+              </View>
             )}
           </View>
 

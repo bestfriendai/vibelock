@@ -1,18 +1,27 @@
 import React, { useState } from "react";
-import { View, Text, Pressable, ScrollView, Alert, Switch, Image } from "react-native";
+import { View, Text, Pressable, ScrollView, Alert, Switch, Image, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import useAuthStore from "../state/authStore";
 import useThemeStore from "../state/themeStore";
+import useSubscriptionStore from "../state/subscriptionStore";
 import ConfirmationModal from "../components/ConfirmationModal";
+import { PaywallAdaptive } from "../components/subscription/PaywallAdaptive";
+import { LegalModal } from "../components/legal/LegalModal";
+import { buildEnv } from "../utils/buildEnvironment";
+import VideoTestComponent from "../components/VideoTestComponent";
 
 export default function ProfileScreen() {
   const navigation = useNavigation<any>();
   const { user, logout, isGuestMode, setGuestMode } = useAuthStore();
   const { theme, isDarkMode, setTheme } = useThemeStore();
+  const { isPremium, isLoading, restorePurchases } = useSubscriptionStore();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showPaywall, setShowPaywall] = useState(false);
+  const [showLegalModal, setShowLegalModal] = useState(false);
+  const [legalModalTab, setLegalModalTab] = useState<'privacy' | 'terms'>('privacy');
   const [notificationsEnabled] = useState(true);
 
   const handleLogout = () => {
@@ -50,17 +59,7 @@ export default function ProfileScreen() {
     ]);
   };
 
-  const handleTermsOfService = () => {
-    Alert.alert("Terms of Service", "View our terms of service and user agreement.", [
-      { text: "OK", style: "default" },
-    ]);
-  };
 
-  const handlePrivacyPolicy = () => {
-    Alert.alert("Privacy Policy", "Learn how we protect your privacy and handle your data.", [
-      { text: "OK", style: "default" },
-    ]);
-  };
 
   // Firebase test removed per product direction
 
@@ -198,29 +197,118 @@ export default function ProfileScreen() {
             </Pressable>
           </View>
 
-          {/* App Info */}
+          {/* Subscription Section */}
           <View className="bg-surface-800 rounded-lg mb-6">
+            <View className="p-5 border-b border-surface-700">
+              <View className="flex-row items-center justify-between">
+                <View className="flex-row items-center">
+                  <Ionicons
+                    name={isPremium ? "diamond" : "diamond-outline"}
+                    size={20}
+                    color={isPremium ? "#FFD700" : "#9CA3AF"}
+                  />
+                  <Text className="text-text-primary font-medium ml-3">
+                    {isPremium ? "Locker Room Plus" : "Upgrade to Plus"}
+                  </Text>
+                </View>
+
+                {isPremium ? (
+                  <View className="bg-green-500/20 px-3 py-1 rounded-full">
+                    <Text className="text-green-400 text-xs font-medium">
+                      {buildEnv.isExpoGo ? 'Demo' : 'Active'}
+                    </Text>
+                  </View>
+                ) : (
+                  <Pressable
+                    onPress={() => setShowPaywall(true)}
+                    className="bg-brand-red px-4 py-2 rounded-lg"
+                  >
+                    <Text className="text-white font-medium text-sm">
+                      {buildEnv.isExpoGo ? 'Try Demo' : 'Upgrade'}
+                    </Text>
+                  </Pressable>
+                )}
+              </View>
+
+              <Text className="text-text-secondary text-sm mt-2">
+                {isPremium
+                  ? `Enjoying ad-free experience and premium features${buildEnv.isExpoGo ? ' (Demo)' : ''}`
+                  : `Unlock advanced features and remove ads${buildEnv.isExpoGo ? ' (Demo available)' : ''}`
+                }
+              </Text>
+            </View>
+
+            {isPremium && (
+              <Pressable
+                onPress={async () => {
+                  try {
+                    await restorePurchases();
+                    const message = buildEnv.isExpoGo
+                      ? 'Demo restore successful!'
+                      : 'Purchases restored successfully';
+                    Alert.alert('Success', message);
+                  } catch (error) {
+                    const message = buildEnv.isExpoGo
+                      ? 'Demo restore failed'
+                      : 'Failed to restore purchases';
+                    Alert.alert('Error', message);
+                  }
+                }}
+                className="p-5"
+                disabled={isLoading}
+              >
+                <View className="flex-row items-center">
+                  <Ionicons name="refresh-outline" size={20} color="#9CA3AF" />
+                  <Text className="text-text-primary font-medium ml-3">
+                    Restore Purchases
+                  </Text>
+                  {isLoading && (
+                    <ActivityIndicator size="small" color="#FF6B6B" className="ml-2" />
+                  )}
+                </View>
+              </Pressable>
+            )}
+          </View>
+
+          {/* Legal Documents */}
+          <View className="bg-surface-800 rounded-lg mb-6">
+            <View className="p-5 border-b border-surface-700">
+              <Text className="text-text-primary font-semibold">Legal</Text>
+            </View>
+
             <Pressable
-              className="flex-row items-center justify-between p-4 border-b border-surface-700"
-              onPress={handleTermsOfService}
+              onPress={() => {
+                setLegalModalTab('privacy');
+                setShowLegalModal(true);
+              }}
+              className="p-5 border-b border-surface-700"
+            >
+              <View className="flex-row items-center">
+                <Ionicons name="shield-checkmark-outline" size={20} color="#9CA3AF" />
+                <Text className="text-text-primary font-medium ml-3">Privacy Policy</Text>
+                <View className="flex-1" />
+                <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
+              </View>
+            </Pressable>
+
+            <Pressable
+              onPress={() => {
+                setLegalModalTab('terms');
+                setShowLegalModal(true);
+              }}
+              className="p-5"
             >
               <View className="flex-row items-center">
                 <Ionicons name="document-text-outline" size={20} color="#9CA3AF" />
                 <Text className="text-text-primary font-medium ml-3">Terms of Service</Text>
+                <View className="flex-1" />
+                <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
               </View>
-              <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
             </Pressable>
+          </View>
 
-            <Pressable
-              className="flex-row items-center justify-between p-4 border-b border-surface-700"
-              onPress={handlePrivacyPolicy}
-            >
-              <View className="flex-row items-center">
-                <Ionicons name="lock-closed-outline" size={20} color="#9CA3AF" />
-                <Text className="text-text-primary font-medium ml-3">Privacy Policy</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
-            </Pressable>
+          {/* App Info */}
+          <View className="bg-surface-800 rounded-lg mb-6">
             {/** Firebase Test and Location Filter Demo removed */}
 
             <View className="flex-row items-center justify-between p-4">
@@ -231,6 +319,13 @@ export default function ProfileScreen() {
               <Text className="text-text-secondary">1.0.0</Text>
             </View>
           </View>
+
+          {/* Video Test Component - Temporary for testing */}
+          {__DEV__ && (
+            <View className="mb-6">
+              <VideoTestComponent />
+            </View>
+          )}
 
           {/* Account Actions */}
           <Pressable className="bg-surface-800 rounded-lg p-4 mb-3" onPress={handleDeleteAccount}>
@@ -274,6 +369,16 @@ export default function ProfileScreen() {
         icon="trash-outline"
         onConfirm={confirmDeleteAccount}
         onCancel={() => setShowDeleteModal(false)}
+      />
+
+      {/* Paywall Modal */}
+      <PaywallAdaptive visible={showPaywall} onClose={() => setShowPaywall(false)} />
+
+      {/* Legal Modal */}
+      <LegalModal
+        visible={showLegalModal}
+        onClose={() => setShowLegalModal(false)}
+        initialTab={legalModalTab}
       />
     </SafeAreaView>
   );

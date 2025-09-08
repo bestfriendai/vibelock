@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Alert } from "react-native";
 import { User } from "../types";
 import { supabaseAuth, supabaseUsers } from "../services/supabase";
 import { AppError, ErrorType, parseSupabaseError } from '../utils/errorHandling';
@@ -147,9 +148,16 @@ const useAuthStore = create<AuthStore>()(
             errorMessage = error.message;
           }
 
+          // Show specific error dialog
+          Alert.alert(
+            "Sign In Failed",
+            errorMessage,
+            [{ text: "OK", style: "default" }]
+          );
+
           set((state) => ({
             ...state,
-            error: errorMessage,
+            error: null, // Don't set error state since we're showing dialog
             isLoading: false,
             isAuthenticated: false,
             user: null,
@@ -210,9 +218,16 @@ const useAuthStore = create<AuthStore>()(
             errorMessage = error.message;
           }
 
+          // Show specific error dialog
+          Alert.alert(
+            "Registration Failed",
+            errorMessage,
+            [{ text: "OK", style: "default" }]
+          );
+
           set((state) => ({
             ...state,
-            error: errorMessage,
+            error: null, // Don't set error state since we're showing dialog
             isLoading: false,
             isAuthenticated: false,
             user: null,

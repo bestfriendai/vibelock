@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { View, Text, Pressable } from "react-native";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
@@ -13,19 +13,33 @@ interface Props {
 }
 
 export default function MediaThumbnail({ media, size = 80, onPress, showPlayIcon = true, onLoad }: Props) {
+  const [imageError, setImageError] = useState(false);
   const isVideo = media.type === "video";
-  const imageUri = media.thumbnailUri || media.uri;
 
   return (
     <Pressable onPress={onPress} className="relative overflow-hidden rounded-xl" style={{ width: size, height: size }}>
-      <Image
-        source={{ uri: imageUri }}
-        style={{ width: size, height: size }}
-        contentFit="cover"
-        transition={200}
-        placeholder="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
-        onLoad={onLoad}
-      />
+      {isVideo ? (
+        // For videos, always show a placeholder with video icon
+        <View className="flex-1 bg-surface-700 items-center justify-center" style={{ width: size, height: size }}>
+          <Ionicons name="videocam" size={size * 0.4} color="#6B7280" />
+        </View>
+      ) : imageError ? (
+        // For images that failed to load
+        <View className="flex-1 bg-surface-700 items-center justify-center" style={{ width: size, height: size }}>
+          <Ionicons name="image-outline" size={size * 0.4} color="#6B7280" />
+        </View>
+      ) : (
+        // For regular images
+        <Image
+          source={{ uri: media.uri }}
+          style={{ width: size, height: size }}
+          contentFit="cover"
+          transition={200}
+          placeholder="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+          onLoad={onLoad}
+          onError={() => setImageError(true)}
+        />
+      )}
 
       {/* Video play overlay */}
       {isVideo && showPlayIcon && (

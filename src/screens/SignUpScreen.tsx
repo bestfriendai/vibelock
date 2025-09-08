@@ -20,10 +20,11 @@ import AnimatedInput from "../components/AnimatedInput";
 import useAuthStore from "../state/authStore";
 import LocationSelector from "../components/LocationSelector";
 import SegmentedTabs from "../components/SegmentedTabs";
+import { LegalAcceptance } from "../components/legal/LegalAcceptance";
 
 export default function SignUpScreen() {
   const navigation = useNavigation<any>();
-  const [step, setStep] = useState(1); // Progressive disclosure: 1 = basic info, 2 = preferences
+  const [step, setStep] = useState(1); // Progressive disclosure: 1 = basic info, 2 = preferences, 3 = legal
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -32,6 +33,7 @@ export default function SignUpScreen() {
   const [gender, setGender] = useState<"man" | "woman" | "nonbinary" | "lgbtq+" | string | undefined>(undefined);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [legalAccepted, setLegalAccepted] = useState(false);
 
   // Form validation errors
   const [emailError, setEmailError] = useState("");
@@ -141,11 +143,22 @@ export default function SignUpScreen() {
       return;
     }
 
-    setStep(2);
+    setStep(3); // Go to legal acceptance step
+  };
+
+  const handleLegalAcceptance = () => {
+    setLegalAccepted(true);
+    setStep(2); // Go to preferences step after legal acceptance
   };
 
   const handleSubmit = async () => {
     clearError();
+
+    // Ensure legal acceptance
+    if (!legalAccepted) {
+      Alert.alert("Legal Agreement Required", "Please accept the Terms of Service and Privacy Policy to create your account.");
+      return;
+    }
 
     // Use default location if not provided
     const defaultLocation = location || { city: "Washington", state: "DC" };
@@ -159,6 +172,12 @@ export default function SignUpScreen() {
 
   const handleSkipPreferences = async () => {
     clearError();
+
+    // Ensure legal acceptance
+    if (!legalAccepted) {
+      Alert.alert("Legal Agreement Required", "Please accept the Terms of Service and Privacy Policy to create your account.");
+      return;
+    }
 
     // Use default values and location
     const defaultLocation = { city: "Washington", state: "DC" };
@@ -228,7 +247,7 @@ export default function SignUpScreen() {
                   <>
                     {/* Step 1: Basic Account Info */}
                     <View className="mb-4">
-                      <Text className="text-text-muted text-center mb-6">Step 1 of 2: Create your account</Text>
+                      <Text className="text-text-muted text-center mb-6">Step 1 of 3: Create your account</Text>
                     </View>
 
                     <AnimatedInput
@@ -293,17 +312,35 @@ export default function SignUpScreen() {
                       onPress={handleNext}
                       className="mt-8"
                     />
+                  </>
+                ) : step === 3 ? (
+                  <>
+                    {/* Step 2: Legal Acceptance */}
+                    <View className="mb-4">
+                      <Text className="text-text-muted text-center mb-6">Step 2 of 3: Legal Agreement</Text>
+                    </View>
 
-                    <Text className="text-text-muted text-xs text-center leading-5">
-                      By continuing, you agree to our <Text className="text-brand-red">Terms of Service</Text> and{" "}
-                      <Text className="text-brand-red">Privacy Policy</Text>
-                    </Text>
+                    <LegalAcceptance
+                      onAccept={handleLegalAcceptance}
+                      required={true}
+                      showTitle={false}
+                    />
+
+                    <View className="mt-6">
+                      <AnimatedButton
+                        title="Back"
+                        variant="ghost"
+                        size="small"
+                        onPress={() => setStep(1)}
+                        textClassName="text-text-secondary"
+                      />
+                    </View>
                   </>
                 ) : (
                   <>
-                    {/* Step 2: Preferences (Optional) */}
+                    {/* Step 3: Preferences (Optional) */}
                     <View className="mb-4">
-                      <Text className="text-text-muted text-center mb-2">Step 2 of 2: Personalize your experience</Text>
+                      <Text className="text-text-muted text-center mb-2">Step 3 of 3: Personalize your experience</Text>
                       <Text className="text-text-muted text-center text-sm">
                         These settings help us show you relevant content. You can change them later.
                       </Text>
@@ -357,12 +394,7 @@ export default function SignUpScreen() {
                       />
                     </View>
 
-                    {/* Global Error */}
-                    {error && (
-                      <View className="bg-brand-red/20 border border-brand-red/30 rounded-lg p-4">
-                        <Text className="text-brand-red text-center font-medium">{error}</Text>
-                      </View>
-                    )}
+
 
                     <View className="space-y-3 mt-8">
                       <AnimatedButton
@@ -385,7 +417,7 @@ export default function SignUpScreen() {
                         title="Back"
                         variant="ghost"
                         size="small"
-                        onPress={() => setStep(1)}
+                        onPress={() => setStep(3)} // Go back to legal step
                         textClassName="text-text-secondary"
                       />
                     </View>

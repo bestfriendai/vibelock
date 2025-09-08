@@ -97,27 +97,60 @@ export const handleSupabaseError = (error: any): string => {
   // Handle specific Supabase auth errors
   if (error?.message) {
     const message = error.message.toLowerCase();
-    if (message.includes("invalid login credentials")) {
-      return "Invalid email or password. Please check your credentials and try again.";
+
+    // Email validation errors
+    if (message.includes("email address") && message.includes("invalid")) {
+      return "Email not valid, try a different email";
     }
-    if ((message.includes("email address") && message.includes("invalid")) || message.includes("invalid email address")) {
-      return "Please enter a valid email address.";
-    }
-    if (message.includes("email not confirmed")) {
-      return "Please check your email and click the confirmation link before signing in.";
-    }
-    if (message.includes("user already registered")) {
-      return "An account with this email already exists. Please sign in instead.";
-    }
-    if (message.includes("password should be at least")) {
-      return "Password must be at least 6 characters long.";
+    if (message.includes("invalid email address")) {
+      return "Email not valid, try a different email";
     }
     if (message.includes("invalid email")) {
-      return "Please enter a valid email address.";
+      return "Email not valid, try a different email";
     }
+
+    // Authentication errors
+    if (message.includes("invalid login credentials")) {
+      return "Email/Password is incorrect";
+    }
+    if (message.includes("email not confirmed")) {
+      return "Please check your email and click the confirmation link before signing in";
+    }
+
+    // Registration errors
+    if (message.includes("user already registered")) {
+      return "An account with this email already exists. Please sign in instead";
+    }
+    if (message.includes("user not found")) {
+      return "No account found with this email. Please sign up first";
+    }
+
+    // Password errors
+    if (message.includes("password should be at least")) {
+      return "Password must be at least 6 characters long";
+    }
+    if (message.includes("password is too weak")) {
+      return "Password is too weak. Please choose a stronger password";
+    }
+
+    // Network errors
     if (message.includes("network")) {
-      return "Network error. Please check your internet connection and try again.";
+      return "Network error. Please check your internet connection and try again";
     }
+    if (message.includes("timeout")) {
+      return "Request timed out. Please check your connection and try again";
+    }
+
+    // Rate limiting
+    if (message.includes("too many requests")) {
+      return "Too many attempts. Please wait a moment and try again";
+    }
+
+    // Server errors
+    if (message.includes("internal server error")) {
+      return "Server error. Please try again in a moment";
+    }
+
     return error.message;
   }
 

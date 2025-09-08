@@ -16,6 +16,12 @@ interface Props {
   commentCounts?: Record<string, number>; // mediaId -> comment count
 }
 
+function formatDuration(seconds: number): string {
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs.toString().padStart(2, "0")}`;
+}
+
 export default function ImageCarousel({
   media,
   height = 300,
@@ -79,13 +85,24 @@ export default function ImageCarousel({
             accessibilityLabel={`Image ${media.indexOf(item) + 1} of ${media.length}`}
             accessibilityHint="Double tap to view full screen"
           >
-            <Image
-              source={{ uri: item.uri }}
-              style={{ width: "100%", height }}
-              contentFit="cover"
-              transition={200}
-              placeholder="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
-            />
+            {item.type === "video" ? (
+              // Show video placeholder
+              <View
+                style={{ width: "100%", height }}
+                className="bg-surface-700 items-center justify-center"
+              >
+                <Ionicons name="videocam" size={60} color="#6B7280" />
+              </View>
+            ) : (
+              // Show regular image
+              <Image
+                source={{ uri: item.uri }}
+                style={{ width: "100%", height }}
+                contentFit="cover"
+                transition={200}
+                placeholder="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+              />
+            )}
 
             {/* Video play overlay */}
             {item.type === "video" && (
@@ -93,6 +110,14 @@ export default function ImageCarousel({
                 <View className="bg-white/90 rounded-full p-3">
                   <Ionicons name="play" size={24} color="#000" />
                 </View>
+                {/* Video duration badge */}
+                {item.duration && (
+                  <View className="absolute bottom-4 right-4 bg-black/70 px-2 py-1 rounded">
+                    <Text className="text-white text-sm font-medium">
+                      {formatDuration(item.duration)}
+                    </Text>
+                  </View>
+                )}
               </View>
             )}
 

@@ -10,8 +10,11 @@ import ErrorBoundary from "./src/components/ErrorBoundary";
 import OfflineBanner from "./src/components/OfflineBanner";
 import useAuthStore from "./src/state/authStore";
 import useChatStore from "./src/state/chatStore";
+import useSubscriptionStore from "./src/state/subscriptionStore";
 import { notificationService } from "./src/services/notificationService";
 import { realtimeChatService } from "./src/services/realtimeChat";
+import { adMobService } from "./src/services/adMobService";
+import { buildEnv } from "./src/utils/buildEnvironment";
 
 /*
 IMPORTANT NOTICE: DO NOT REMOVE
@@ -59,10 +62,49 @@ const linking = {
 export default function App() {
   const { initializeAuthListener } = useAuthStore();
   const { cleanup: cleanupChat } = useChatStore();
+  const { initializeRevenueCat } = useSubscriptionStore();
 
   useEffect(() => {
-    // Initialize Supabase auth state listener
-    const unsubscribe = initializeAuthListener();
+    const initializeApp = async () => {
+      try {
+        console.log('🚀 App Environment:', {
+          isExpoGo: buildEnv.isExpoGo,
+          isDevelopmentBuild: buildEnv.isDevelopmentBuild,
+          hasNativeModules: buildEnv.hasNativeModules,
+        });
+
+        // Initialize Supabase auth state listener (always available)
+        const unsubscribe = initializeAuthListener();
+
+        // Initialize monetization services conditionally
+        if (buildEnv.hasNativeModules) {
+          console.log('💰 Initializing native monetization services...');
+          await Promise.all([
+            adMobService.initialize(),
+            initializeRevenueCat(),
+          ]);
+        } else {
+          console.log('🎭 Using mock monetization services for Expo Go...');
+          await Promise.all([
+            adMobService.initialize(), // Will use mock implementation
+            initializeRevenueCat(), // Will use mock implementation
+          ]);
+        }
+
+        console.log('✅ App initialization complete');
+        return unsubscribe;
+      } catch (error) {
+        console.error('❌ App initialization error:', error);
+        // Don't crash the app, continue with limited functionality
+        return initializeAuthListener();
+      }
+    };
+
+    let unsubscribe: (() => void) | null = null;
+
+    initializeApp().then((unsub) => {
+      unsubscribe = unsub;
+    });
 
     // Handle app state changes for cleanup
     const handleAppStateChange = (nextAppState: string) => {
@@ -77,7 +119,7 @@ export default function App() {
     // Cleanup listener on unmount
     return () => {
       console.log("🧹 App unmounting, cleaning up all resources");
-      unsubscribe();
+      unsubscribe?.();
       appStateSubscription?.remove();
 
       // Cleanup all services
@@ -85,7 +127,19 @@ export default function App() {
       notificationService.cleanup();
       realtimeChatService.cleanup();
     };
-  }, [initializeAuthListener, cleanupChat]);
+  }, [initializeAuthListener, cleanupChat, initializeRevenueCat]);
+
+  // Initialize RevenueCat with user ID when authenticated
+  useEffect(() => {
+    const unsubscribe = useAuthStore.subscribe((state) => {
+      if (state.user?.id) {
+        console.log('👤 User authenticated, initializing RevenueCat with user ID');
+        initializeRevenueCat(state.user.id);
+      }
+    });
+
+    return unsubscribe;
+  }, [initializeRevenueCat]);
 
   return (
     <ErrorBoundary>

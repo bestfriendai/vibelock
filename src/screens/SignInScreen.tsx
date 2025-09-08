@@ -190,12 +190,7 @@ export default function SignInScreen() {
                   onRightIconPress={() => setShowPassword(!showPassword)}
                 />
 
-                {/* Global Error */}
-                {error && (
-                  <View className="bg-brand-red/20 border border-brand-red/30 rounded-lg p-4">
-                    <Text className="text-brand-red text-center font-medium">{error}</Text>
-                  </View>
-                )}
+
 
                 {/* Submit Button */}
                 <AnimatedButton

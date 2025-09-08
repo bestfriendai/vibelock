@@ -1,0 +1,56 @@
+import React, { useState } from 'react';
+import { View, Text, Pressable } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import useSubscriptionStore from '../state/subscriptionStore';
+import { PaywallAdaptive } from './subscription/PaywallAdaptive';
+
+interface FeatureGateProps {
+  feature: 'premium' | 'pro';
+  children: React.ReactNode;
+  fallback?: React.ReactNode;
+  showUpgradePrompt?: boolean;
+}
+
+export const FeatureGate: React.FC<FeatureGateProps> = ({ 
+  feature, 
+  children, 
+  fallback,
+  showUpgradePrompt = true
+}) => {
+  const { isPremium, isPro } = useSubscriptionStore();
+  const [showPaywall, setShowPaywall] = useState(false);
+
+  const hasAccess = feature === 'premium' ? (isPremium || isPro) : isPro;
+
+  if (hasAccess) {
+    return <>{children}</>;
+  }
+
+  if (fallback) {
+    return <>{fallback}</>;
+  }
+
+  if (!showUpgradePrompt) {
+    return null;
+  }
+
+  return (
+    <>
+      <Pressable 
+        onPress={() => setShowPaywall(true)}
+        className="bg-surface-800 border border-surface-700 rounded-lg p-4 items-center"
+      >
+        <Ionicons name="lock-closed" size={32} color="#9CA3AF" />
+        <Text className="text-text-primary font-semibold mt-2">Premium Feature</Text>
+        <Text className="text-text-secondary text-sm text-center mt-1">
+          Upgrade to Locker Room Plus to unlock this feature
+        </Text>
+        <View className="bg-brand-red px-4 py-2 rounded-lg mt-3">
+          <Text className="text-white font-medium">Upgrade Now</Text>
+        </View>
+      </Pressable>
+      
+      <PaywallAdaptive visible={showPaywall} onClose={() => setShowPaywall(false)} />
+    </>
+  );
+};

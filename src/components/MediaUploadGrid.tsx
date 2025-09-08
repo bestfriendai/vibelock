@@ -4,6 +4,8 @@ import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { MediaItem } from "../types";
+import { videoThumbnailService } from "../services/videoThumbnailService";
+import { formatVideoDurationFromMs, validateVideoFile } from "../utils/videoUtils";
 import MediaViewer from "./MediaViewer";
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming } from "react-native-reanimated";
 import { useResponsiveScreen } from "../utils/responsive";
@@ -100,6 +102,21 @@ export default function MediaUploadGrid({ media, onMediaChange, maxItems = 6, re
           duration: asset.duration || undefined,
         };
 
+        // Validate videos but don't generate thumbnails
+        if (newMediaItem.type === "video") {
+          try {
+            // Validate video file first
+            const validation = await validateVideoFile(asset.uri);
+            if (!validation.isValid) {
+              Alert.alert("Video Error", validation.error || "Invalid video file");
+              return;
+            }
+            // Video is valid, UI will show video icon automatically
+          } catch (error) {
+            console.warn("Failed to validate video:", error);
+          }
+        }
+
         onMediaChange([...media, newMediaItem]);
       }
     } catch (error) {
@@ -127,14 +144,36 @@ export default function MediaUploadGrid({ media, onMediaChange, maxItems = 6, re
       });
 
       if (!result.canceled && result.assets.length > 0) {
-        const newMediaItems: MediaItem[] = result.assets.map((asset, index) => ({
-          id: `media_${Date.now()}_${index}_${Math.random().toString(36).substring(2, 11)}`,
-          uri: asset.uri,
-          type: asset.type === "video" ? "video" : "image",
-          width: asset.width,
-          height: asset.height,
-          duration: asset.duration || undefined,
-        }));
+        const newMediaItems: MediaItem[] = [];
+
+        for (const [index, asset] of result.assets.entries()) {
+          const mediaItem: MediaItem = {
+            id: `media_${Date.now()}_${index}_${Math.random().toString(36).substring(2, 11)}`,
+            uri: asset.uri,
+            type: asset.type === "video" ? "video" : "image",
+            width: asset.width,
+            height: asset.height,
+            duration: asset.duration || undefined,
+          };
+
+          // Validate videos but don't generate thumbnails
+          if (mediaItem.type === "video") {
+            try {
+              // Validate video file first
+              const validation = await validateVideoFile(asset.uri);
+              if (!validation.isValid) {
+                console.warn("Invalid video file:", validation.error);
+                // Skip this video
+                continue;
+              }
+              // Video is valid, UI will show video icon automatically
+            } catch (error) {
+              console.warn("Failed to validate video:", error);
+            }
+          }
+
+          newMediaItems.push(mediaItem);
+        }
 
         onMediaChange([...media, ...newMediaItems]);
       }
@@ -205,7 +244,9 @@ export default function MediaUploadGrid({ media, onMediaChange, maxItems = 6, re
                   </View>
                   {item.duration && (
                     <View className="absolute bottom-2 right-2 bg-black/70 px-2 py-1 rounded">
-                      <Text className="text-white text-xs font-medium">{Math.floor(item.duration / 1000)}s</Text>
+                      <Text className="text-white text-xs font-medium">
+                        {formatVideoDurationFromMs(item.duration)}
+                      </Text>
                     </View>
                   )}
                 </View>
