@@ -23,6 +23,12 @@ interface Location {
   city: string;
   state: string;
   fullName: string;
+  type?: 'city' | 'college';
+  institutionType?: string;
+  coordinates?: {
+    latitude: number;
+    longitude: number;
+  };
 }
 
 export default function CreateReviewScreen() {
@@ -34,7 +40,10 @@ export default function CreateReviewScreen() {
   const [selectedLocation, setSelectedLocation] = useState<Location>({
     city: user?.location.city || "Washington",
     state: user?.location.state || "DC",
-    fullName: `${user?.location.city || "Washington"}, ${user?.location.state || "DC"}`,
+    fullName: user?.location.fullName || `${user?.location.city || "Washington"}, ${user?.location.state || "DC"}`,
+    type: user?.location.type,
+    institutionType: user?.location.institutionType,
+    coordinates: user?.location.coordinates,
   });
   const [reviewText, setReviewText] = useState("");
   const [sentiment, setSentiment] = useState<Sentiment | null>(null);
@@ -63,6 +72,9 @@ export default function CreateReviewScreen() {
               city: draft.city,
               state: draft.state,
               fullName: `${draft.city}, ${draft.state}`,
+              type: draft.type,
+              institutionType: draft.institutionType,
+              coordinates: draft.coordinates,
             });
           }
           setReviewText(draft.reviewText || "");
@@ -183,7 +195,10 @@ export default function CreateReviewScreen() {
       setSelectedLocation({
         city: user?.location.city || "Washington",
         state: user?.location.state || "DC",
-        fullName: `${user?.location.city || "Washington"}, ${user?.location.state || "DC"}`,
+        fullName: user?.location.fullName || `${user?.location.city || "Washington"}, ${user?.location.state || "DC"}`,
+        type: user?.location.type,
+        institutionType: user?.location.institutionType,
+        coordinates: user?.location.coordinates,
       });
       setReviewText("");
       setSentiment(null);

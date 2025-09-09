@@ -5,6 +5,8 @@ export interface LocationData {
   city: string;
   state: string;
   fullName: string;
+  type?: 'city' | 'college';
+  institutionType?: string;
   coordinates?: {
     latitude: number;
     longitude: number;

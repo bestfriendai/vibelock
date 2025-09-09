@@ -240,6 +240,9 @@ export const supabaseUsers = {
             latitude: parseFloat(data.latitude),
             longitude: parseFloat(data.longitude),
           } : undefined,
+          type: data.location_type as 'city' | 'college' | undefined,
+          fullName: data.location_full_name,
+          institutionType: data.institution_type,
         },
         genderPreference: data.gender_preference || "all",
         gender: data.gender,
@@ -265,6 +268,9 @@ export const supabaseUsers = {
       if (updates.location?.state) dbUpdates.state = updates.location.state;
       if (updates.location?.coordinates?.latitude) dbUpdates.latitude = updates.location.coordinates.latitude;
       if (updates.location?.coordinates?.longitude) dbUpdates.longitude = updates.location.coordinates.longitude;
+      if (updates.location?.type) dbUpdates.location_type = updates.location.type;
+      if (updates.location?.fullName) dbUpdates.location_full_name = updates.location.fullName;
+      if (updates.location?.institutionType) dbUpdates.institution_type = updates.location.institutionType;
       if (updates.genderPreference) dbUpdates.gender_preference = updates.genderPreference;
       if (updates.gender) dbUpdates.gender = updates.gender;
       if (updates.isBlocked !== undefined) dbUpdates.is_blocked = updates.isBlocked;

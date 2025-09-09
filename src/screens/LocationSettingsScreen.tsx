@@ -11,6 +11,8 @@ interface Location {
   city: string;
   state: string;
   fullName: string;
+  type?: 'city' | 'college';
+  institutionType?: string;
   coordinates?: {
     latitude: number;
     longitude: number;
@@ -26,7 +28,9 @@ export default function LocationSettingsScreen() {
   const currentLocation: Location = {
     city: user?.location.city || "Unknown",
     state: user?.location.state || "Unknown",
-    fullName: `${user?.location.city || "Unknown"}, ${user?.location.state || "Unknown"}`,
+    fullName: user?.location.fullName || `${user?.location.city || "Unknown"}, ${user?.location.state || "Unknown"}`,
+    type: user?.location.type,
+    institutionType: user?.location.institutionType,
     coordinates: user?.location.coordinates,
   };
 
@@ -37,6 +41,9 @@ export default function LocationSettingsScreen() {
         city: location.city,
         state: location.state,
         coordinates: location.coordinates,
+        type: location.type,
+        fullName: location.fullName,
+        institutionType: location.institutionType,
       });
       
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);

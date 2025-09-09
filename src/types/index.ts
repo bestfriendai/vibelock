@@ -11,6 +11,10 @@ export interface User {
       latitude: number;
       longitude: number;
     };
+    // College-specific fields
+    type?: 'city' | 'college';
+    fullName?: string;
+    institutionType?: string;
   };
   // The user's gender/category preference for filtering content
   genderPreference: "all" | "men" | "women" | "lgbtq+";

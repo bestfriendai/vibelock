@@ -41,12 +41,14 @@ export default function BrowseScreen() {
   useEffect(() => {
     const initializeLocation = async () => {
       if (user?.location?.city && user?.location?.state) {
-        // Use existing user location
+        // Use existing user location, preserving college information if available
         setCurrentLocation({
           city: user.location.city,
           state: user.location.state,
-          fullName: `${user.location.city}, ${user.location.state}`,
+          fullName: user.location.fullName || `${user.location.city}, ${user.location.state}`,
           coordinates: user.location.coordinates,
+          type: user.location.type,
+          institutionType: user.location.institutionType,
         });
         return;
       }
@@ -65,6 +67,9 @@ export default function BrowseScreen() {
             city: result.location.city,
             state: result.location.state,
             coordinates: result.location.coordinates,
+            type: result.location.type,
+            fullName: result.location.fullName,
+            institutionType: result.location.institutionType,
           });
 
           console.log(`📍 Location detected via ${result.source}:`, result.location.fullName);
@@ -179,6 +184,9 @@ export default function BrowseScreen() {
                       city: result.location.city,
                       state: result.location.state,
                       coordinates: result.location.coordinates,
+                      type: result.location.type,
+                      fullName: result.location.fullName,
+                      institutionType: result.location.institutionType,
                     });
                   } else {
                     setLocationError(result.error || 'Location detection failed');
@@ -222,6 +230,9 @@ export default function BrowseScreen() {
                     city: location.city,
                     state: location.state,
                     coordinates: location.coordinates,
+                    type: location.type,
+                    fullName: location.fullName,
+                    institutionType: location.institutionType,
                   }).catch((error) => {
                     console.error('❌ Failed to update user location in auth store:', error);
                   });

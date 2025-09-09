@@ -4,11 +4,14 @@ import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { getCurrentLocation, reverseGeocodeLocation, searchLocations, geocodeCityStateCached } from "../utils/location";
 import { useTheme } from "../providers/ThemeProvider";
+import { searchColleges, CollegeSearchResult } from "../services/collegeService";
 
 interface Location {
   city: string;
   state: string;
   fullName: string;
+  type?: 'city' | 'college';
+  institutionType?: string;
   coordinates?: {
     latitude: number;
     longitude: number;
@@ -130,7 +133,9 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
       if (searchText.trim() === "") {
         setFilteredLocations(mockLocations);
       } else {
-        // First filter local mock data
+        const results: Location[] = [];
+
+        // First filter local mock data (cities)
         const localFiltered = mockLocations.filter(
           (location) =>
             location.fullName.toLowerCase().includes(searchText.toLowerCase()) ||
@@ -138,25 +143,43 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
             location.state.toLowerCase().includes(searchText.toLowerCase()),
         );
 
-        // If we have local results, use them
-        if (localFiltered.length > 0) {
-          setFilteredLocations(localFiltered);
-        } else {
-          // Try geocoding search for broader results
+        // Add city results
+        results.push(...localFiltered.map(loc => ({ ...loc, type: 'city' as const })));
+
+        // Search for colleges
+        try {
+          const collegeResults = await searchColleges(searchText, 5);
+          const formattedCollegeResults: Location[] = collegeResults.map((college) => ({
+            city: college.city,
+            state: college.state,
+            fullName: college.fullName,
+            type: 'college' as const,
+            institutionType: college.institutionType,
+            coordinates: college.coordinates,
+          }));
+          results.push(...formattedCollegeResults);
+        } catch (error) {
+          console.warn('College search failed:', error);
+        }
+
+        // If no local results, try geocoding search for broader city results
+        if (localFiltered.length === 0) {
           try {
             const searchResults = await searchLocations(searchText);
             const formattedResults: Location[] = searchResults.map((result) => ({
               city: result.city,
               state: result.state,
               fullName: `${result.city}, ${result.state}`,
+              type: 'city' as const,
               coordinates: result.coordinates,
             }));
-            setFilteredLocations(formattedResults);
+            results.push(...formattedResults);
           } catch (error) {
-            // Fall back to local filtered results even if empty
-            setFilteredLocations(localFiltered);
+            console.warn('Geocoding search failed:', error);
           }
         }
+
+        setFilteredLocations(results);
       }
     };
 
@@ -175,11 +198,26 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
       }
 
       console.log('✅ Found coordinates:', coordinates);
-      // Pass location with coordinates to parent
-      onLocationChange({
+
+      // For college selections, ensure we have both college info and city/state data
+      const locationData: Location = {
         ...location,
         coordinates,
-      });
+        // Ensure city and state are always available for location-based functionality
+        city: location.city,
+        state: location.state,
+        // For colleges, preserve the full name and type information
+        ...(location.type === 'college' && {
+          type: 'college',
+          institutionType: location.institutionType,
+          fullName: location.fullName,
+        }),
+      };
+
+      console.log('📍 Final location data:', locationData);
+
+      // Pass location with coordinates to parent
+      onLocationChange(locationData);
     } catch (error) {
       console.warn("Failed to get coordinates for location:", error);
       // Fallback to location without coordinates
@@ -236,7 +274,24 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
       }}
       className="px-4 py-3 border-b border-surface-700"
     >
-      <Text className="font-medium" style={{ color: colors.text.primary }}>{item.fullName}</Text>
+      <View className="flex-row items-center">
+        <Ionicons
+          name={item.type === 'college' ? 'school-outline' : 'location-outline'}
+          size={18}
+          color={colors.text.secondary}
+          style={{ marginRight: 12 }}
+        />
+        <View className="flex-1">
+          <Text className="font-medium" style={{ color: colors.text.primary }}>
+            {item.type === 'college' ? item.fullName.split(' - ')[0] : item.fullName}
+          </Text>
+          {item.type === 'college' && (
+            <Text className="text-sm mt-1" style={{ color: colors.text.secondary }}>
+              {item.city}, {item.state} • {item.institutionType?.replace('_', ' ')}
+            </Text>
+          )}
+        </View>
+      </View>
     </Pressable>
   );
 
@@ -250,9 +305,16 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
           setModalVisible(true);
         }}
       >
-        <Ionicons name="location-outline" size={16} color="#FFFFFF" />
+        <Ionicons
+          name={currentLocation.type === 'college' ? 'school-outline' : 'location-outline'}
+          size={16}
+          color="#FFFFFF"
+        />
         <Text className="text-sm ml-1 font-medium" style={{ color: "#FFFFFF" }}>
-          {currentLocation.city}, {currentLocation.state}
+          {currentLocation.type === 'college'
+            ? currentLocation.fullName?.split(' - ')[0] || `${currentLocation.city}, ${currentLocation.state}`
+            : `${currentLocation.city}, ${currentLocation.state}`
+          }
         </Text>
         <Ionicons name="chevron-down" size={16} color="#FFFFFF" style={{ marginLeft: 4 }} />
       </Pressable>
@@ -274,20 +336,23 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
 
           {/* Search Input */}
           <View className="px-4 py-3 border-b border-surface-700">
-            <View className="flex-row items-center bg-surface-800 rounded-lg px-3 py-2">
-              <Ionicons name="search" size={20} color="#9CA3AF" />
+            <View className="flex-row items-center rounded-lg px-3 py-2" style={{ backgroundColor: colors.surface[800] }}>
+              <Ionicons name="search" size={20} color={colors.text.muted} />
               <TextInput
                 value={searchText}
                 onChangeText={setSearchText}
-                placeholder="Search cities..."
+                placeholder="Search cities or schools..."
                 placeholderTextColor={colors.text.muted}
                 className="flex-1 ml-2"
-                style={{ color: colors.text.primary }}
+                style={{
+                  color: colors.text.primary,
+                  fontSize: 16,
+                }}
                 autoFocus
               />
               {searchText.length > 0 && (
                 <Pressable onPress={() => setSearchText("")}>
-                  <Ionicons name="close-circle" size={20} color="#9CA3AF" />
+                  <Ionicons name="close-circle" size={20} color={colors.text.muted} />
                 </Pressable>
               )}
             </View>

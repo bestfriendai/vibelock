@@ -9,6 +9,8 @@ export interface Coordinates {
 export interface LocationData {
   city: string;
   state: string;
+  type?: 'city' | 'college';
+  institutionType?: string;
   coordinates?: Coordinates;
 }
 

@@ -33,6 +33,9 @@ interface AuthActions {
     city: string;
     state: string;
     coordinates?: { latitude: number; longitude: number };
+    type?: 'city' | 'college';
+    fullName?: string;
+    institutionType?: string;
   }) => Promise<void>;
   initializeAuthListener: () => () => void;
 }
@@ -270,8 +273,12 @@ const useAuthStore = create<AuthStore>()(
             ? {
                 ...state.user,
                 location: {
-                  ...location,
+                  city: location.city,
+                  state: location.state,
                   coordinates: location.coordinates,
+                  type: location.type,
+                  fullName: location.fullName,
+                  institutionType: location.institutionType,
                 },
               }
             : null,
@@ -285,6 +292,9 @@ const useAuthStore = create<AuthStore>()(
               city: location.city,
               state: location.state,
               coordinates: location.coordinates,
+              type: location.type,
+              fullName: location.fullName,
+              institutionType: location.institutionType,
             },
           });
           console.log("✅ Location saved to database successfully");
