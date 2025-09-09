@@ -90,7 +90,12 @@ export default function ReviewCard({ review }: ReviewCardProps) {
       </Pressable>
 
       {/* Review Text */}
-      <Text className="text-text-primary mb-4 leading-6 text-base">{truncateText(review.reviewText)}</Text>
+      <Text
+        className="mb-4 leading-6 text-base"
+        style={{ color: colors.text.primary }}
+      >
+        {truncateText(review.reviewText)}
+      </Text>
 
       {/* Footer */}
       <View className="flex-row items-center justify-between pt-4 border-t" style={{ borderColor: colors.border }}>

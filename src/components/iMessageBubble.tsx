@@ -61,17 +61,17 @@ export default function IMessageBubble({
 
   const getBubbleColor = () => {
     if (isOwn) {
-      return '#007AFF'; // iOS blue
+      return colors.brand.red; // Use theme red instead of iOS blue
     } else {
-      return isDarkMode ? colors.surface[700] : '#E5E5EA'; // iOS gray
+      return colors.surface[700]; // Use theme surface color
     }
   };
 
   const getTextColor = () => {
     if (isOwn) {
-      return 'white';
+      return '#FFFFFF'; // White text on red background
     } else {
-      return isDarkMode ? colors.text.primary : '#000000';
+      return colors.text.primary; // Theme-aware text
     }
   };
 

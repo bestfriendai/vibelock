@@ -3,6 +3,7 @@ import { View, Text, Pressable, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming } from "react-native-reanimated";
 import { ChatMessage } from "../types";
+import { useTheme } from "../providers/ThemeProvider";
 
 interface Props {
   message: ChatMessage;
@@ -31,6 +32,7 @@ function toDateSafe(value: any): Date {
 }
 
 export default function MessageBubble({ message, onReply, onReact, onLongPress }: Props) {
+  const { colors } = useTheme();
   const isOwn = message.isOwn;
   const isSystem =
     message.messageType === "system" || message.messageType === "join" || message.messageType === "leave";
@@ -99,8 +101,11 @@ export default function MessageBubble({ message, onReply, onReact, onLongPress }
   if (isSystem) {
     return (
       <View className="items-center my-1">
-        <View className="bg-surface-800/50 px-3 py-1 rounded-full">
-          <Text className="text-text-muted text-xs">{message.content}</Text>
+        <View
+          className="px-3 py-1 rounded-full"
+          style={{ backgroundColor: colors.surface[800] + '80' }}
+        >
+          <Text className="text-xs" style={{ color: colors.text.muted }}>{message.content}</Text>
         </View>
       </View>
     );
@@ -111,14 +116,27 @@ export default function MessageBubble({ message, onReply, onReact, onLongPress }
       {/* Reply indicator */}
       {message.replyTo && (
         <View className={`max-w-[70%] mb-0.5 ${isOwn ? "items-end" : "items-start"}`}>
-          <View className="bg-surface-600/50 rounded-lg px-2 py-1 border-l-2 border-brand-red/50">
-            <Text className="text-text-muted text-xs">Replying to message</Text>
+          <View
+            className="rounded-lg px-2 py-1 border-l-2"
+            style={{
+              backgroundColor: colors.surface[600] + '80',
+              borderLeftColor: colors.brand.red + '80'
+            }}
+          >
+            <Text className="text-xs" style={{ color: colors.text.muted }}>Replying to message</Text>
           </View>
         </View>
       )}
 
       {/* Sender name for group chats */}
-      {!isOwn && <Text className="text-text-secondary text-xs mb-0.5 ml-1 font-medium">{message.senderName}</Text>}
+      {!isOwn && (
+        <Text
+          className="text-xs mb-0.5 ml-1 font-medium"
+          style={{ color: colors.text.secondary }}
+        >
+          {message.senderName}
+        </Text>
+      )}
 
       <Animated.View style={animatedStyle}>
         <Pressable
@@ -128,13 +146,28 @@ export default function MessageBubble({ message, onReply, onReact, onLongPress }
           accessibilityRole="button"
           accessibilityLabel={`Message from ${message.senderName}: ${message.content}`}
           accessibilityHint="Long press for message options"
-          className={`${isOwn ? "bg-brand-red" : "bg-surface-700"} max-w-[80%] rounded-2xl px-3 py-2 relative`}
+          className="max-w-[80%] rounded-2xl px-3 py-2 relative"
+          style={{
+            backgroundColor: isOwn ? colors.brand.red : colors.surface[700]
+          }}
         >
-          <Text className={`${isOwn ? "text-black" : "text-text-primary"} text-base leading-5`}>{message.content}</Text>
+          <Text
+            className="text-base leading-5"
+            style={{
+              color: isOwn ? '#FFFFFF' : colors.text.primary
+            }}
+          >
+            {message.content}
+          </Text>
 
           {/* Message status and timestamp */}
           <View className="flex-row items-center justify-between mt-1">
-            <Text className={`text-[10px] ${isOwn ? "text-black/70" : "text-text-muted"}`}>
+            <Text
+              className="text-[10px]"
+              style={{
+                color: isOwn ? 'rgba(255,255,255,0.7)' : colors.text.muted
+              }}
+            >
               {formatTime(message.timestamp)}
             </Text>
 
@@ -152,8 +185,14 @@ export default function MessageBubble({ message, onReply, onReact, onLongPress }
 
           {/* Selected reaction */}
           {selectedReaction && (
-            <View className="absolute -bottom-2 -right-1 bg-surface-800 rounded-full px-1.5 py-0.5 border border-surface-600">
-              <Text className="text-xs">{selectedReaction}</Text>
+            <View
+              className="absolute -bottom-2 -right-1 rounded-full px-1.5 py-0.5 border"
+              style={{
+                backgroundColor: colors.surface[800],
+                borderColor: colors.surface[600]
+              }}
+            >
+              <Text className="text-xs" style={{ color: colors.text.primary }}>{selectedReaction}</Text>
             </View>
           )}
         </Pressable>

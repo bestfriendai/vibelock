@@ -5,6 +5,7 @@ import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming } fr
 import * as ImagePicker from "expo-image-picker";
 import * as DocumentPicker from "expo-document-picker";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTheme } from "../providers/ThemeProvider";
 
 interface Props {
   onSend: (text: string) => void;
@@ -38,6 +39,7 @@ const emojis = [
 ];
 
 export default function ChatInput({ onSend, onTyping, onSendMedia, replyingTo, onCancelReply }: Props) {
+  const { colors } = useTheme();
   const [text, setText] = useState("");
   const [showEmojis, setShowEmojis] = useState(false);
   const [showAttachments, setShowAttachments] = useState(false);
@@ -245,21 +247,36 @@ export default function ChatInput({ onSend, onTyping, onSendMedia, replyingTo, o
 
         {/* Emoji button */}
         <Pressable onPress={toggleEmojis} className="p-2 mr-2">
-          <Ionicons name="happy" size={24} color={showEmojis ? "#FFFFFF" : "#9CA3AF"} />
+          <Ionicons
+            name="happy"
+            size={24}
+            color={showEmojis ? colors.brand.red : colors.text.muted}
+          />
         </Pressable>
 
         {/* Send/Voice button */}
         {text.trim() ? (
-          <Pressable className="bg-brand-red rounded-full p-2" onPress={handleSend}>
-            <Ionicons name="send" size={20} color="#000" />
+          <Pressable
+            className="rounded-full p-2"
+            style={{ backgroundColor: colors.brand.red }}
+            onPress={handleSend}
+          >
+            <Ionicons name="send" size={20} color="#FFFFFF" />
           </Pressable>
         ) : (
           <Pressable
-            className={`rounded-full p-2 ${isRecording ? "bg-brand-red" : "bg-surface-700"}`}
+            className="rounded-full p-2"
+            style={{
+              backgroundColor: isRecording ? colors.brand.red : colors.surface[700]
+            }}
             onPress={startVoiceRecording}
             onLongPress={startVoiceRecording}
           >
-            <Ionicons name="mic" size={20} color={isRecording ? "#000" : "#9CA3AF"} />
+            <Ionicons
+              name="mic"
+              size={20}
+              color={isRecording ? "#FFFFFF" : colors.text.muted}
+            />
           </Pressable>
         )}
       </View>

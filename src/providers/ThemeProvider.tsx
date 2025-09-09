@@ -15,10 +15,10 @@ export const lightTheme = {
       500: '#CED4DA',    // Border/divider color
     },
     text: {
-      primary: '#212529',    // High contrast black for main text (AAA)
-      secondary: '#495057',  // Medium gray for secondary text (AA)
-      muted: '#6C757D',      // Light gray for muted text (AA)
-      accent: '#D63384',     // Pink accent for highlights
+      primary: '#000000',    // Pure black for main text (AAA)
+      secondary: '#374151',  // Darker gray for secondary text (AAA)
+      muted: '#6B7280',      // Medium gray for muted text (AA)
+      accent: '#DC2626',     // Red accent for highlights
     },
     border: '#DEE2E6',       // Consistent border color
     brand: {
@@ -45,13 +45,13 @@ export const lightTheme = {
   }
 };
 
-// Dark theme colors - Enhanced for consistency
+// Dark theme colors - Pure black theme
 export const darkTheme = {
   colors: {
-    background: '#0B0B0F',
+    background: '#000000',
     surface: {
-      900: '#0B0B0F',    // Main background - deep dark
-      800: '#141418',    // Card background - dark gray
+      900: '#000000',    // Main background - pure black
+      800: '#000000',    // Card background - pure black
       700: '#1D1D22',    // Secondary surface - medium dark
       600: '#26262C',    // Tertiary surface - lighter dark
       500: '#2F2F35',    // Border/divider color

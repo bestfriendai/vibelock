@@ -17,8 +17,8 @@ module.exports = {
           warm: "#FFA726",
         },
         surface: {
-          900: "#0B0B0F",
-          800: "#141418",
+          900: "#000000",
+          800: "#000000",
           700: "#1D1D22",
           600: "#26262C",
           500: "#2F2F35",
@@ -52,10 +52,10 @@ module.exports = {
             500: "#CED4DA",
           },
           text: {
-            primary: "#212529",
-            secondary: "#6C757D",
-            muted: "#ADB5BD",
-            accent: "#FF8A65",
+            primary: "#000000",
+            secondary: "#374151",
+            muted: "#6B7280",
+            accent: "#DC2626",
           },
           border: "#E9ECEF",
           accent: {

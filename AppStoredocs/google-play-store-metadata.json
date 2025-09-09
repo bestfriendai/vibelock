@@ -1,0 +1,153 @@
+{
+  "appInformation": {
+    "title": "LockerRoom Talk: Dating Safety Reviews & Chat",
+    "shortDescription": "Dating safety app with anonymous reviews, real-time chat & community for all users",
+    "packageName": "com.lockerroomtalk.app",
+    "primaryLanguage": "English (United States)",
+    "categories": {
+      "primary": "Lifestyle",
+      "secondary": "Social"
+    },
+    "contentRating": "Mature 17+",
+    "targetAudience": "Ages 17 and up"
+  },
+  
+  "versionInformation": {
+    "version": "1.0.0",
+    "versionCode": 1,
+    "releaseNotes": "🎉 Welcome to LockerRoom Talk - your essential platform for dating safety and community engagement!\n\n✨ Key Features:\n• Anonymous reviews with green/red flags, media uploads, and location tagging\n• Real-time chatrooms and direct messaging with reactions and presence indicators\n• Advanced search filters for location, category, sentiment, and distance\n• Instant access without ID verification or waitlists\n• Global coverage with worldwide location-based insights\n• Premium ad-free experience with enhanced tools\n\nJoin users worldwide to share experiences and build a safer dating environment. Start today!"
+  },
+
+  "appDescription": {
+    "fullDescription": "LockerRoom Talk - Your Comprehensive Dating Safety Platform\n\n🔥 DATING SAFETY FOR ALL USERS - INSTANT ACCESS, GLOBAL COMMUNITY\n\nLockerRoom Talk revolutionizes dating safety by providing an open platform for anonymous reviews, real-time conversations, and community support. Break free from restrictions with no ID verification, no waitlists, and immediate access to insights from users worldwide.\n\n✨ INSTANT ACCESS\n• No ID verification or background checks - start immediately\n• No waitlists or approvals - join the community today\n• Guest browsing mode for quick exploration\n• 30-second registration for seamless onboarding\n\n🌍 WELCOMING & GLOBAL\n• Open to users of all backgrounds and orientations\n• Worldwide coverage - not limited to specific regions\n• Smart location-based discovery for relevant advice\n• International community building safer dating worldwide\n\n💬 REAL-TIME COMMUNITY\n• Live chatrooms organized by topics like dating tips and experiences\n• Direct messaging with typing indicators, emoji reactions, and online status\n• Group discussions for broader support and engagement\n• Real-time presence to connect with active users\n• Message history pagination for easy review\n\n📝 ADVANCED REVIEW SYSTEM\n• Anonymous sharing with structured green/red flags for clear insights\n• Rich media support: upload photos, videos, and attachments\n• Location tagging at city/state level for local relevance\n• Sentiment analysis to track positive/negative trends\n• Optional social media links for added context without compromising privacy\n\n🔍 SUPERIOR SEARCH & DISCOVERY\n• Unified search across reviews, comments, and messages\n• Advanced filters: location, category (e.g., casual, serious), distance, sentiment\n• Trending content and popular reviews for timely information\n• Smart recommendations tailored to your interests\n• Deep linking for simple sharing of specific reviews or profiles\n\n🛡️ COMPREHENSIVE SAFETY\n• Anonymous reviews to protect your identity\n• Robust reporting and personal blocking tools\n• AI-powered content filtering and professional human moderation\n• Community guidelines for respectful interactions\n• Granular privacy settings for user control\n\n📱 GLOBAL & USER-FRIENDLY\n• Works anywhere in the world with accurate distance calculations\n• Multi-city search with expanded radius for premium users\n• Offline support for viewing cached content\n• Push notifications for messages, updates, and activity alerts\n• Cross-platform deep linking for easy sharing\n\n🎯 PREMIUM FEATURES\n• Ad-free experience for uninterrupted browsing\n• Extended location search for broader discovery\n• Advanced analytics and insights on trends\n• Custom themes and profile options\n• Priority support for faster assistance\n• Enhanced privacy and exclusive community tools\n\n📊 PERFECT FOR:\n• Users researching dates through honest, anonymous reviews\n• Anyone seeking real-time advice and community support\n• Privacy-conscious individuals avoiding verification\n• Global users wanting location-specific insights\n• Those building networks for safer relationships\n\n🌟 COMPETITIVE ADVANTAGES:\n• Instant access vs. waitlists and verifications\n• Real-time chat vs. static comment systems\n• Global reach vs. regional limitations\n• Strong privacy and safety vs. basic protections\n• Open community vs. restricted access\n\nJoin thousands creating a safer dating world. Share your experiences, learn from others, and connect securely with LockerRoom Talk.\n\nKEYWORDS: dating safety, dating reviews, anonymous reviews, dating chat, dating advice, relationship safety, dating experiences, online dating protection, dating community, real-time messaging, global dating, privacy dating, safe dating, user reviews, community chat",
+    
+    "tags": [
+      "dating",
+      "safety",
+      "reviews",
+      "chat",
+      "anonymous",
+      "community",
+      "advice",
+      "experiences",
+      "protection",
+      "relationships",
+      "social",
+      "messaging",
+      "real-time",
+      "global",
+      "privacy",
+      "secure"
+    ]
+  },
+
+  "contactInformation": {
+    "developerName": "LockerRoom Talk Inc.",
+    "email": "support@lockerroomtalk.app",
+    "website": "https://lockerroomtalk.app",
+    "privacyPolicy": "https://lockerroomtalk.app/privacy",
+    "supportURL": "https://lockerroomtalk.app/support"
+  },
+
+  "inAppProducts": {
+    "subscriptions": [
+      {
+        "productId": "premium_monthly",
+        "title": "LockerRoom Talk Premium Monthly",
+        "description": "Unlimited access to premium features: ad-free experience, advanced search, extended location radius, custom themes, priority support, and enhanced privacy.",
+        "price": "$9.99",
+        "billingPeriod": "P1M"
+      },
+      {
+        "productId": "premium_annual", 
+        "title": "LockerRoom Talk Premium Annual",
+        "description": "Full year of premium access with 17% savings. Includes ad-free browsing, advanced search, extended location, custom themes, priority support, and more.",
+        "price": "$99.99",
+        "billingPeriod": "P1Y"
+      }
+    ]
+  },
+
+  "marketingAssets": {
+    "featureGraphic": {
+      "description": "Feature graphic highlighting anonymous reviews, real-time chat, and global community for dating safety",
+      "dimensions": "1024x500",
+      "keywords": ["dating safety", "reviews", "chat", "community", "anonymous", "global"]
+    },
+    
+    "screenshots": [
+      {
+        "type": "phone",
+        "description": "Main feed with anonymous dating reviews, location tags, and safety insights",
+        "keywords": ["reviews", "feed", "location", "safety", "anonymous"]
+      },
+      {
+        "type": "phone", 
+        "description": "Real-time chatroom with active discussions, typing indicators, and reactions",
+        "keywords": ["chat", "real-time", "community", "messaging", "reactions"]
+      },
+      {
+        "type": "phone",
+        "description": "Premium upgrade screen showing ad-free and advanced feature benefits",
+        "keywords": ["premium", "ad-free", "features", "subscription", "upgrade"]
+      },
+      {
+        "type": "phone",
+        "description": "Advanced search with filters for location, category, and distance",
+        "keywords": ["search", "filters", "location", "advanced", "discovery"]
+      },
+      {
+        "type": "phone",
+        "description": "Safety tools including reporting, blocking, and privacy settings",
+        "keywords": ["safety", "reporting", "privacy", "moderation", "controls"]
+      }
+    ]
+  },
+
+  "asoStrategy": {
+    "primaryKeywords": [
+      "dating",
+      "safety",
+      "reviews",
+      "chat",
+      "anonymous",
+      "community",
+      "advice",
+      "experiences",
+      "protection"
+    ],
+    
+    "longTailKeywords": [
+      "dating safety app",
+      "anonymous dating reviews",
+      "dating chat community",
+      "relationship safety app",
+      "online dating protection",
+      "dating advice community",
+      "global dating safety",
+      "privacy dating reviews",
+      "safe dating experiences",
+      "user dating reviews"
+    ],
+    
+    "competitorKeywords": [
+      "dating reviews app",
+      "dating background check",
+      "dating verification",
+      "dating community app",
+      "anonymous dating app",
+      "women safety dating",
+      "men dating experiences"
+    ],
+    
+    "targetRankings": {
+      "dating": "Top 10",
+      "dating safety": "Top 5",
+      "dating reviews": "Top 5",
+      "dating chat": "Top 5",
+      "anonymous dating": "Top 5",
+      "dating community": "Top 10",
+      "global dating": "Top 10"
+    }
+  }
+}

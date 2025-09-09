@@ -17,6 +17,7 @@ import { adMobService } from "./src/services/adMobService";
 import { buildEnv } from "./src/utils/buildEnvironment";
 import { AdProvider } from "./src/contexts/AdContext";
 import { ThemeProvider } from "./src/providers/ThemeProvider";
+import AppOpenAdHandler from "./src/components/AppOpenAdHandler";
 
 /*
 IMPORTANT NOTICE: DO NOT REMOVE
@@ -152,6 +153,7 @@ export default function App() {
               <NavigationContainer linking={linking}>
                 <AppNavigator />
                 <OfflineBanner />
+                <AppOpenAdHandler />
               </NavigationContainer>
             </AdProvider>
           </ThemeProvider>

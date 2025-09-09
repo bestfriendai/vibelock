@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { View, Text, TextInput, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { SocialMediaHandles } from "../types";
+import { useTheme } from "../providers/ThemeProvider";
 
 interface SocialPlatform {
   key: keyof SocialMediaHandles;
@@ -63,6 +64,7 @@ interface Props {
 }
 
 export default function SocialMediaInput({ socialMedia, onSocialMediaChange }: Props) {
+  const { colors } = useTheme();
   const [errors, setErrors] = useState<Partial<SocialMediaHandles>>({});
   const [focused, setFocused] = useState<keyof SocialMediaHandles | null>(null);
 
@@ -129,23 +131,30 @@ export default function SocialMediaInput({ socialMedia, onSocialMediaChange }: P
             {/* Platform Label */}
             <View className="flex-row items-center mb-2">
               <Ionicons name={platform.icon} size={20} color={platform.color} />
-              <Text className="text-text-primary font-medium ml-2">{platform.label}</Text>
+              <Text className="font-medium ml-2" style={{ color: colors.text.primary }}>{platform.label}</Text>
             </View>
 
             {/* Input Container */}
             <View
-              className={`flex-row items-center bg-surface-800 border rounded-xl px-4 py-3 ${
-                isFocused ? "border-brand-red" : error ? "border-red-500" : "border-border"
-              }`}
+              className="flex-row items-center border rounded-xl px-4 py-3"
+              style={{
+                backgroundColor: colors.surface[800],
+                borderColor: isFocused ? colors.brand.red : error ? "#EF4444" : colors.border,
+              }}
             >
               {/* Prefix */}
-              {platform.prefix && <Text className="text-text-secondary font-medium mr-1">{platform.prefix}</Text>}
+              {platform.prefix && (
+                <Text className="font-medium mr-1" style={{ color: colors.text.secondary }}>
+                  {platform.prefix}
+                </Text>
+              )}
 
               {/* Text Input */}
               <TextInput
-                className="flex-1 text-text-primary font-medium"
+                className="flex-1 font-medium"
+                style={{ color: colors.text.primary }}
                 placeholder={platform.placeholder}
-                placeholderTextColor="#6B7280"
+                placeholderTextColor={colors.text.muted}
                 value={value}
                 onChangeText={(text) => handleInputChange(platform, text)}
                 onFocus={() => handleFocus(platform.key)}
@@ -159,7 +168,7 @@ export default function SocialMediaInput({ socialMedia, onSocialMediaChange }: P
               {/* Clear Button */}
               {hasValue && (
                 <Pressable onPress={() => clearInput(platform.key)} className="ml-2 p-1" hitSlop={8}>
-                  <Ionicons name="close-circle" size={20} color="#6B7280" />
+                  <Ionicons name="close-circle" size={20} color={colors.text.muted} />
                 </Pressable>
               )}
             </View>
@@ -168,13 +177,13 @@ export default function SocialMediaInput({ socialMedia, onSocialMediaChange }: P
             {error && (
               <View className="flex-row items-center mt-2">
                 <Ionicons name="warning" size={14} color="#EF4444" />
-                <Text className="text-red-500 text-sm ml-1">{error}</Text>
+                <Text className="text-sm ml-1" style={{ color: "#EF4444" }}>{error}</Text>
               </View>
             )}
 
             {/* Character Count */}
             {hasValue && (
-              <Text className="text-text-muted text-xs mt-1 text-right">
+              <Text className="text-xs mt-1 text-right" style={{ color: colors.text.muted }}>
                 {value.length}/{platform.maxLength}
               </Text>
             )}
@@ -183,41 +192,18 @@ export default function SocialMediaInput({ socialMedia, onSocialMediaChange }: P
       })}
 
       {/* Privacy Notice */}
-      <View className="bg-surface-800 rounded-xl p-4 mt-4">
+      <View className="rounded-xl p-4 mt-4" style={{ backgroundColor: colors.surface[800] }}>
         <View className="flex-row items-start">
-          <Ionicons name="information-circle" size={20} color="#9CA3AF" />
+          <Ionicons name="information-circle" size={20} color={colors.text.muted} />
           <View className="ml-3 flex-1">
-            <Text className="text-text-secondary font-medium mb-1">Privacy Notice</Text>
-            <Text className="text-text-muted text-sm leading-5">
+            <Text className="font-medium mb-1" style={{ color: colors.text.secondary }}>Privacy Notice</Text>
+            <Text className="text-sm leading-5" style={{ color: colors.text.muted }}>
               Social media handles will be displayed publicly in your review to help others verify your experience. Only
               add handles you're comfortable sharing.
             </Text>
           </View>
         </View>
       </View>
-
-      {/* Summary */}
-      {Object.values(socialMedia).some((handle) => handle) && (
-        <View className="bg-surface-800 rounded-xl p-4">
-          <Text className="text-text-primary font-medium mb-2">Your Social Media</Text>
-          <View className="space-y-2">
-            {SOCIAL_PLATFORMS.map((platform) => {
-              const handle = socialMedia[platform.key];
-              if (!handle) return null;
-
-              return (
-                <View key={platform.key} className="flex-row items-center">
-                  <Ionicons name={platform.icon} size={16} color={platform.color} />
-                  <Text className="text-text-secondary ml-2">
-                    {platform.prefix}
-                    {handle}
-                  </Text>
-                </View>
-              );
-            })}
-          </View>
-        </View>
-      )}
     </View>
   );
 }

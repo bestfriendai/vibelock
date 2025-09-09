@@ -20,5 +20,16 @@
   ],
   "[typescript]": {
     "editor.defaultFormatter": "denoland.vscode-deno"
+  },
+  "mcp": {
+    "servers": {
+      "revenuecat": {
+        "type": "http",
+        "url": "https://mcp.revenuecat.ai/mcp",
+        "headers": {
+          "Authorization": "Bearer sk_NwaebOrtgTNIWxHRYqbMFkxYNmXlf"
+        }
+      }
+    }
   }
 }

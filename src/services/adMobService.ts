@@ -1,5 +1,6 @@
 import { Platform } from 'react-native';
 import { canUseAdMob, buildEnv } from '../utils/buildEnvironment';
+import { ADMOB_CONFIG, getAdUnitId } from '../config/admobConfig';
 
 // Mock types for Expo Go
 interface MockInterstitialAd {
@@ -12,7 +13,11 @@ interface MockInterstitialAd {
 class AdMobService {
   private initialized = false;
   private interstitialAd: any = null;
+  private appOpenAd: any = null;
   private mockInterstitialAd: MockInterstitialAd | null = null;
+  private lastAppOpenAdTime = 0;
+  private postCreationCount = 0;
+  private chatExitCount = 0;
 
   async initialize() {
     if (this.initialized) return;
@@ -33,12 +38,13 @@ class AdMobService {
 
       await mobileAds().setRequestConfiguration({
         maxAdContentRating: MaxAdContentRating.PG,
-        tagForChildDirectedTreatment: false,
-        tagForUnderAgeOfConsent: false,
-        testDeviceIdentifiers: __DEV__ ? ['EMULATOR'] : [],
+        tagForChildDirectedTreatment: ADMOB_CONFIG.SETTINGS.tagForChildDirectedTreatment,
+        tagForUnderAgeOfConsent: ADMOB_CONFIG.SETTINGS.tagForUnderAgeOfConsent,
+        testDeviceIdentifiers: ADMOB_CONFIG.SETTINGS.testDeviceIdentifiers,
       });
 
       await this.initializeInterstitialAd();
+      await this.initializeAppOpenAd();
       this.initialized = true;
       console.log('AdMob initialized successfully');
     } catch (error) {
@@ -69,14 +75,9 @@ class AdMobService {
     if (!canUseAdMob()) return;
 
     try {
-      const { InterstitialAd, TestIds, AdEventType } = await import('react-native-google-mobile-ads');
-      
-      const adUnitId = __DEV__
-        ? TestIds.INTERSTITIAL
-        : Platform.select({
-            ios: process.env.EXPO_PUBLIC_ADMOB_IOS_INTERSTITIAL_ID,
-            android: process.env.EXPO_PUBLIC_ADMOB_ANDROID_INTERSTITIAL_ID,
-          });
+      const { InterstitialAd, AdEventType } = await import('react-native-google-mobile-ads');
+
+      const adUnitId = this.getInterstitialAdUnitId();
 
       if (!adUnitId) {
         console.warn('Interstitial ad unit ID not configured');
@@ -84,7 +85,7 @@ class AdMobService {
       }
 
       this.interstitialAd = InterstitialAd.createForAdRequest(adUnitId);
-      
+
       this.interstitialAd.addAdEventListener(AdEventType.LOADED, () => {
         console.log('Interstitial ad loaded');
       });
@@ -93,9 +94,50 @@ class AdMobService {
         console.error('Interstitial ad error:', error);
       });
 
+      this.interstitialAd.addAdEventListener(AdEventType.CLOSED, () => {
+        console.log('Interstitial ad closed');
+        // Preload next ad
+        this.interstitialAd.load();
+      });
+
       this.interstitialAd.load();
     } catch (error) {
       console.error('Failed to initialize interstitial ad:', error);
+    }
+  }
+
+  private async initializeAppOpenAd() {
+    if (!canUseAdMob()) return;
+
+    try {
+      const { AppOpenAd, AdEventType } = await import('react-native-google-mobile-ads');
+
+      const adUnitId = this.getAppOpenAdUnitId();
+
+      if (!adUnitId) {
+        console.warn('App Open ad unit ID not configured');
+        return;
+      }
+
+      this.appOpenAd = AppOpenAd.createForAdRequest(adUnitId);
+
+      this.appOpenAd.addAdEventListener(AdEventType.LOADED, () => {
+        console.log('App Open ad loaded');
+      });
+
+      this.appOpenAd.addAdEventListener(AdEventType.ERROR, (error: any) => {
+        console.error('App Open ad error:', error);
+      });
+
+      this.appOpenAd.addAdEventListener(AdEventType.CLOSED, () => {
+        console.log('App Open ad closed');
+        // Preload next ad
+        this.appOpenAd.load();
+      });
+
+      this.appOpenAd.load();
+    } catch (error) {
+      console.error('Failed to initialize App Open ad:', error);
     }
   }
 
@@ -135,16 +177,105 @@ class AdMobService {
     }
 
     try {
-      const TestIds = require('react-native-google-mobile-ads').TestIds;
-      return __DEV__
-        ? TestIds.ADAPTIVE_BANNER
-        : Platform.select({
-            ios: process.env.EXPO_PUBLIC_ADMOB_IOS_BANNER_ID,
-            android: process.env.EXPO_PUBLIC_ADMOB_ANDROID_BANNER_ID,
-          });
+      return getAdUnitId('BANNER');
     } catch {
       return 'mock-banner-unit-id';
     }
+  }
+
+  getInterstitialAdUnitId(): string | undefined {
+    if (!canUseAdMob()) {
+      return 'mock-interstitial-unit-id'; // Mock ID for Expo Go
+    }
+
+    try {
+      return getAdUnitId('INTERSTITIAL');
+    } catch {
+      return 'mock-interstitial-unit-id';
+    }
+  }
+
+  getAppOpenAdUnitId(): string | undefined {
+    if (!canUseAdMob()) {
+      return 'mock-app-open-unit-id'; // Mock ID for Expo Go
+    }
+
+    try {
+      return getAdUnitId('APP_OPEN');
+    } catch {
+      return 'mock-app-open-unit-id';
+    }
+  }
+
+  /**
+   * Check if interstitial ad should be shown based on placement rules
+   */
+  shouldShowInterstitialAd(placement: 'postCreation' | 'appLaunch' | 'navigation' | 'chatExit'): boolean {
+    if (!canUseAdMob()) return false;
+
+    const placementConfig = ADMOB_CONFIG.PLACEMENTS.INTERSTITIAL[placement];
+    if (!placementConfig.enabled) return false;
+
+    switch (placement) {
+      case 'postCreation':
+        this.postCreationCount++;
+        return this.postCreationCount % placementConfig.frequency === 0;
+
+      case 'chatExit':
+        this.chatExitCount++;
+        return this.chatExitCount % placementConfig.frequency === 0;
+
+      default:
+        return true;
+    }
+  }
+
+  /**
+   * Show App Open ad if conditions are met
+   */
+  async showAppOpenAd(): Promise<boolean> {
+    if (!canUseAdMob()) {
+      console.log('Mock: Showing App Open ad');
+      return true;
+    }
+
+    const appOpenConfig = ADMOB_CONFIG.PLACEMENTS.APP_OPEN;
+    if (!appOpenConfig.enabled) {
+      return false;
+    }
+
+    // Check cooldown period
+    const now = Date.now();
+    const cooldownMs = appOpenConfig.cooldownMinutes * 60 * 1000;
+    if (now - this.lastAppOpenAdTime < cooldownMs) {
+      console.log('App Open ad on cooldown');
+      return false;
+    }
+
+    if (!this.appOpenAd?.loaded) {
+      console.log('App Open ad not ready');
+      return false;
+    }
+
+    try {
+      this.appOpenAd.show();
+      this.lastAppOpenAdTime = now;
+      return true;
+    } catch (error) {
+      console.error('Failed to show App Open ad:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Show interstitial ad for specific placement
+   */
+  async showInterstitialAdForPlacement(placement: 'postCreation' | 'chatExit'): Promise<boolean> {
+    if (!this.shouldShowInterstitialAd(placement)) {
+      return false;
+    }
+
+    return this.showInterstitialAd();
   }
 }
 

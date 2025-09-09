@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Pressable, Text } from "react-native";
+import { useTheme } from "../providers/ThemeProvider";
 
 interface TabItem {
   key: string;
@@ -13,6 +14,8 @@ interface SegmentedTabsProps {
 }
 
 export default function SegmentedTabs({ tabs, value, onChange }: SegmentedTabsProps) {
+  const { colors } = useTheme();
+
   return (
     <View className="flex-row items-center justify-between px-4">
       {tabs.map((t) => {
@@ -30,11 +33,19 @@ export default function SegmentedTabs({ tabs, value, onChange }: SegmentedTabsPr
             accessibilityHint={`Switch to ${t.label} category`}
           >
             <Text
-              className={active ? "text-text-primary font-semibold text-sm" : "text-text-secondary font-medium text-sm"}
+              className={`text-sm ${active ? "font-semibold" : "font-medium"}`}
+              style={{
+                color: active ? colors.text.primary : colors.text.secondary
+              }}
             >
               {t.label}
             </Text>
-            <View className={`h-0.5 mt-2 w-full ${active ? "bg-brand-red" : "bg-transparent"}`} />
+            <View
+              className="h-0.5 mt-2 w-full"
+              style={{
+                backgroundColor: active ? colors.brand.red : 'transparent'
+              }}
+            />
           </Pressable>
         );
       })}

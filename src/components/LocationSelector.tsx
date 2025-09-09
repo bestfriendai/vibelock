@@ -243,17 +243,18 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
   return (
     <>
       <Pressable
-        className="flex-row items-center bg-surface-700 px-3 py-2 rounded-full"
+        className="flex-row items-center px-3 py-2 rounded-full"
+        style={{ backgroundColor: "#000000" }}
         onPress={() => {
           console.log('🔘 Location selector pressed');
           setModalVisible(true);
         }}
       >
-        <Ionicons name="location-outline" size={16} color={colors.text.primary} />
-        <Text className="text-sm ml-1 font-medium" style={{ color: colors.text.primary }}>
+        <Ionicons name="location-outline" size={16} color="#FFFFFF" />
+        <Text className="text-sm ml-1 font-medium" style={{ color: "#FFFFFF" }}>
           {currentLocation.city}, {currentLocation.state}
         </Text>
-        <Ionicons name="chevron-down" size={16} color={colors.text.primary} style={{ marginLeft: 4 }} />
+        <Ionicons name="chevron-down" size={16} color="#FFFFFF" style={{ marginLeft: 4 }} />
       </Pressable>
 
       <Modal

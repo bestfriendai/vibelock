@@ -2,6 +2,7 @@ import React from "react";
 import { View, Text, Pressable, Modal } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming } from "react-native-reanimated";
+import { useTheme } from "../providers/ThemeProvider";
 
 interface Props {
   visible: boolean;
@@ -26,6 +27,7 @@ export default function ConfirmationModal({
   onConfirm,
   onCancel,
 }: Props) {
+  const { colors } = useTheme();
   const scale = useSharedValue(0.9);
   const opacity = useSharedValue(0);
 
@@ -48,16 +50,22 @@ export default function ConfirmationModal({
     opacity: opacity.value,
   }));
 
-  const colorMap = {
-    red: "bg-brand-red",
-    green: "bg-green-500",
-    blue: "bg-blue-500",
+  const getConfirmButtonColor = () => {
+    switch (confirmColor) {
+      case 'green': return colors.accent.green;
+      case 'blue': return colors.accent.blue;
+      case 'red':
+      default: return colors.brand.red;
+    }
   };
 
-  const iconColorMap = {
-    red: "#FFFFFF",
-    green: "#22C55E",
-    blue: "#3B82F6",
+  const getIconColor = () => {
+    switch (confirmColor) {
+      case 'green': return colors.accent.green;
+      case 'blue': return colors.accent.blue;
+      case 'red':
+      default: return colors.brand.red;
+    }
   };
 
   return (
@@ -73,47 +81,71 @@ export default function ConfirmationModal({
         <Pressable className="absolute inset-0" onPress={onCancel} />
 
         <Animated.View
-          style={[animatedModalStyle]}
-          className="bg-surface-800 rounded-2xl p-6 w-full max-w-sm border border-surface-700"
+          style={[
+            animatedModalStyle,
+            {
+              backgroundColor: colors.surface[800],
+              borderColor: colors.surface[700]
+            }
+          ]}
+          className="rounded-2xl p-6 w-full max-w-sm border"
           accessible={true}
           accessibilityRole="alert"
           accessibilityLabel={`${title}: ${message}`}
         >
           {/* Icon */}
           <View className="items-center mb-4">
-            <View className={`w-16 h-16 ${colorMap[confirmColor]}/20 rounded-full items-center justify-center`}>
-              <Ionicons name={icon} size={24} color={iconColorMap[confirmColor]} />
+            <View
+              className="w-16 h-16 rounded-full items-center justify-center"
+              style={{ backgroundColor: getIconColor() + '20' }}
+            >
+              <Ionicons name={icon} size={24} color={getIconColor()} />
             </View>
           </View>
 
           {/* Title */}
-          <Text className="text-text-primary text-xl font-bold text-center mb-3">{title}</Text>
+          <Text
+            className="text-xl font-bold text-center mb-3"
+            style={{ color: colors.text.primary }}
+          >
+            {title}
+          </Text>
 
           {/* Message */}
-          <Text className="text-text-secondary text-center mb-8 leading-6">{message}</Text>
+          <Text
+            className="text-center mb-8 leading-6"
+            style={{ color: colors.text.secondary }}
+          >
+            {message}
+          </Text>
 
           {/* Actions */}
           <View className="space-y-3">
             <Pressable
-              className={`${colorMap[confirmColor]} rounded-xl py-4 items-center`}
+              className="rounded-xl py-4 items-center"
+              style={{ backgroundColor: getConfirmButtonColor() }}
               onPress={onConfirm}
               accessible={true}
               accessibilityRole="button"
               accessibilityLabel={`${confirmText} - ${title}`}
               accessibilityHint={`Double tap to ${confirmText.toLowerCase()}`}
             >
-              <Text className="text-white font-semibold text-lg">{confirmText}</Text>
+              <Text className="font-semibold text-lg" style={{ color: '#FFFFFF' }}>{confirmText}</Text>
             </Pressable>
 
             <Pressable
-              className="bg-surface-700 border border-surface-600 rounded-xl py-4 items-center"
+              className="rounded-xl py-4 items-center border"
+              style={{
+                backgroundColor: colors.surface[700],
+                borderColor: colors.surface[600]
+              }}
               onPress={onCancel}
               accessible={true}
               accessibilityRole="button"
               accessibilityLabel={`${cancelText} - dismiss dialog`}
               accessibilityHint={`Double tap to ${cancelText.toLowerCase()} and close dialog`}
             >
-              <Text className="text-text-primary font-medium">{cancelText}</Text>
+              <Text className="font-medium" style={{ color: colors.text.primary }}>{cancelText}</Text>
             </Pressable>
           </View>
         </Animated.View>

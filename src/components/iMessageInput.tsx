@@ -136,14 +136,14 @@ export default function IMessageInput({
             disabled={!text.trim()}
             className="w-8 h-8 rounded-full items-center justify-center"
             style={{
-              backgroundColor: text.trim() ? '#007AFF' : colors.text.muted,
+              backgroundColor: text.trim() ? colors.brand.red : colors.text.muted,
               marginBottom: 4,
             }}
           >
-            <Ionicons 
-              name="arrow-up" 
-              size={16} 
-              color="white" 
+            <Ionicons
+              name="arrow-up"
+              size={16}
+              color="#FFFFFF"
             />
           </Pressable>
         </View>
