@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode } from "react";
 
 interface AdContextType {
   adHeight: number;
@@ -24,17 +24,13 @@ export const AdProvider: React.FC<AdProviderProps> = ({ children }) => {
     setAdVisible,
   };
 
-  return (
-    <AdContext.Provider value={value}>
-      {children}
-    </AdContext.Provider>
-  );
+  return <AdContext.Provider value={value}>{children}</AdContext.Provider>;
 };
 
 export const useAdContext = (): AdContextType => {
   const context = useContext(AdContext);
   if (context === undefined) {
-    throw new Error('useAdContext must be used within an AdProvider');
+    throw new Error("useAdContext must be used within an AdProvider");
   }
   return context;
 };
@@ -42,7 +38,7 @@ export const useAdContext = (): AdContextType => {
 // Hook to get safe area insets accounting for ads
 export const useAdSafeArea = () => {
   const { adHeight, adVisible } = useAdContext();
-  
+
   return {
     bottom: adVisible ? adHeight : 0,
     adHeight: adVisible ? adHeight : 0,

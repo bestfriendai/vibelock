@@ -1,8 +1,8 @@
-import React from 'react';
-import { View } from 'react-native';
-import { BottomTabBar, BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import AdBanner from './AdBanner';
-import { useTheme } from '../providers/ThemeProvider';
+import React from "react";
+import { View } from "react-native";
+import { BottomTabBar, BottomTabBarProps } from "@react-navigation/bottom-tabs";
+import AdBanner from "./AdBanner";
+import { useTheme } from "../providers/ThemeProvider";
 
 export default function CustomTabBar(props: BottomTabBarProps) {
   const { colors } = useTheme();

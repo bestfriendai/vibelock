@@ -52,19 +52,25 @@ export default function ConfirmationModal({
 
   const getConfirmButtonColor = () => {
     switch (confirmColor) {
-      case 'green': return colors.accent.green;
-      case 'blue': return colors.accent.blue;
-      case 'red':
-      default: return colors.brand.red;
+      case "green":
+        return colors.accent.green;
+      case "blue":
+        return colors.accent.blue;
+      case "red":
+      default:
+        return colors.brand.red;
     }
   };
 
   const getIconColor = () => {
     switch (confirmColor) {
-      case 'green': return colors.accent.green;
-      case 'blue': return colors.accent.blue;
-      case 'red':
-      default: return colors.brand.red;
+      case "green":
+        return colors.accent.green;
+      case "blue":
+        return colors.accent.blue;
+      case "red":
+      default:
+        return colors.brand.red;
     }
   };
 
@@ -85,8 +91,8 @@ export default function ConfirmationModal({
             animatedModalStyle,
             {
               backgroundColor: colors.surface[800],
-              borderColor: colors.surface[700]
-            }
+              borderColor: colors.surface[700],
+            },
           ]}
           className="rounded-2xl p-6 w-full max-w-sm border"
           accessible={true}
@@ -97,25 +103,19 @@ export default function ConfirmationModal({
           <View className="items-center mb-4">
             <View
               className="w-16 h-16 rounded-full items-center justify-center"
-              style={{ backgroundColor: getIconColor() + '20' }}
+              style={{ backgroundColor: getIconColor() + "20" }}
             >
               <Ionicons name={icon} size={24} color={getIconColor()} />
             </View>
           </View>
 
           {/* Title */}
-          <Text
-            className="text-xl font-bold text-center mb-3"
-            style={{ color: colors.text.primary }}
-          >
+          <Text className="text-xl font-bold text-center mb-3" style={{ color: colors.text.primary }}>
             {title}
           </Text>
 
           {/* Message */}
-          <Text
-            className="text-center mb-8 leading-6"
-            style={{ color: colors.text.secondary }}
-          >
+          <Text className="text-center mb-8 leading-6" style={{ color: colors.text.secondary }}>
             {message}
           </Text>
 
@@ -130,14 +130,16 @@ export default function ConfirmationModal({
               accessibilityLabel={`${confirmText} - ${title}`}
               accessibilityHint={`Double tap to ${confirmText.toLowerCase()}`}
             >
-              <Text className="font-semibold text-lg" style={{ color: '#FFFFFF' }}>{confirmText}</Text>
+              <Text className="font-semibold text-lg" style={{ color: "#FFFFFF" }}>
+                {confirmText}
+              </Text>
             </Pressable>
 
             <Pressable
               className="rounded-xl py-4 items-center border"
               style={{
                 backgroundColor: colors.surface[700],
-                borderColor: colors.surface[600]
+                borderColor: colors.surface[600],
               }}
               onPress={onCancel}
               accessible={true}
@@ -145,7 +147,9 @@ export default function ConfirmationModal({
               accessibilityLabel={`${cancelText} - dismiss dialog`}
               accessibilityHint={`Double tap to ${cancelText.toLowerCase()} and close dialog`}
             >
-              <Text className="font-medium" style={{ color: colors.text.primary }}>{cancelText}</Text>
+              <Text className="font-medium" style={{ color: colors.text.primary }}>
+                {cancelText}
+              </Text>
             </Pressable>
           </View>
         </Animated.View>

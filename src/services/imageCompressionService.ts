@@ -1,11 +1,11 @@
-import * as ImageManipulator from 'expo-image-manipulator';
-import * as FileSystem from 'expo-file-system';
+import * as ImageManipulator from "expo-image-manipulator";
+import * as FileSystem from "expo-file-system";
 
 export interface CompressionOptions {
   maxWidth?: number;
   maxHeight?: number;
   quality?: number; // 0-1
-  format?: 'jpeg' | 'png';
+  format?: "jpeg" | "png";
   maxSizeKB?: number; // Maximum file size in KB
 }
 
@@ -23,31 +23,28 @@ class ImageCompressionService {
     maxWidth: 1920,
     maxHeight: 1920,
     quality: 0.8,
-    format: 'jpeg',
+    format: "jpeg",
     maxSizeKB: 500, // 500KB max
   };
 
   /**
    * Compress an image with smart optimization
    */
-  async compressImage(
-    imageUri: string, 
-    options: CompressionOptions = {}
-  ): Promise<CompressionResult> {
+  async compressImage(imageUri: string, options: CompressionOptions = {}): Promise<CompressionResult> {
     try {
       const finalOptions = { ...ImageCompressionService.DEFAULT_OPTIONS, ...options };
-      
+
       // Get original file info
       const originalInfo = await FileSystem.getInfoAsync(imageUri);
       if (!originalInfo.exists) {
         return {
           success: false,
-          error: 'Image file does not exist'
+          error: "Image file does not exist",
         };
       }
 
       const originalSize = originalInfo.size || 0;
-      
+
       // If image is already small enough, return as-is
       if (finalOptions.maxSizeKB && originalSize <= finalOptions.maxSizeKB * 1024) {
         return {
@@ -69,7 +66,7 @@ class ImageCompressionService {
         imageInfo.width,
         imageInfo.height,
         finalOptions.maxWidth!,
-        finalOptions.maxHeight!
+        finalOptions.maxHeight!,
       );
 
       // Start with initial compression
@@ -87,7 +84,7 @@ class ImageCompressionService {
           finalOptions.maxSizeKB,
           finalOptions.format!,
           newWidth,
-          newHeight
+          newHeight,
         );
       }
 
@@ -101,12 +98,11 @@ class ImageCompressionService {
         compressedSize,
         compressionRatio: originalSize > 0 ? compressedSize / originalSize : 1,
       };
-
     } catch (error) {
-      console.error('Image compression failed:', error);
+      console.error("Image compression failed:", error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Compression failed'
+        error: error instanceof Error ? error.message : "Compression failed",
       };
     }
   }
@@ -114,17 +110,14 @@ class ImageCompressionService {
   /**
    * Compress multiple images in batch
    */
-  async compressImages(
-    imageUris: string[],
-    options: CompressionOptions = {}
-  ): Promise<CompressionResult[]> {
+  async compressImages(imageUris: string[], options: CompressionOptions = {}): Promise<CompressionResult[]> {
     const results: CompressionResult[] = [];
-    
+
     for (const uri of imageUris) {
       const result = await this.compressImage(uri, options);
       results.push(result);
     }
-    
+
     return results;
   }
 
@@ -135,28 +128,28 @@ class ImageCompressionService {
     originalWidth: number,
     originalHeight: number,
     maxWidth: number,
-    maxHeight: number
+    maxHeight: number,
   ): { width: number; height: number } {
     const aspectRatio = originalWidth / originalHeight;
-    
+
     let newWidth = originalWidth;
     let newHeight = originalHeight;
-    
+
     // Scale down if too wide
     if (newWidth > maxWidth) {
       newWidth = maxWidth;
       newHeight = newWidth / aspectRatio;
     }
-    
+
     // Scale down if too tall
     if (newHeight > maxHeight) {
       newHeight = maxHeight;
       newWidth = newHeight * aspectRatio;
     }
-    
+
     return {
       width: Math.round(newWidth),
-      height: Math.round(newHeight)
+      height: Math.round(newHeight),
     };
   }
 
@@ -170,21 +163,19 @@ class ImageCompressionService {
       height: number;
       quality: number;
       format: string;
-    }
+    },
   ): Promise<{ uri: string }> {
     const actions: ImageManipulator.Action[] = [];
-    
+
     // Add resize action
     actions.push({
       resize: {
         width: params.width,
         height: params.height,
-      }
+      },
     });
 
-    const format = params.format === 'png' 
-      ? ImageManipulator.SaveFormat.PNG 
-      : ImageManipulator.SaveFormat.JPEG;
+    const format = params.format === "png" ? ImageManipulator.SaveFormat.PNG : ImageManipulator.SaveFormat.JPEG;
 
     return await ImageManipulator.manipulateAsync(uri, actions, {
       compress: params.quality,
@@ -200,7 +191,7 @@ class ImageCompressionService {
     maxSizeKB: number,
     format: string,
     width: number,
-    height: number
+    height: number,
   ): Promise<{ uri: string }> {
     let currentUri = uri;
     let quality = 0.8;
@@ -210,21 +201,21 @@ class ImageCompressionService {
     while (attempts < maxAttempts) {
       const fileInfo = await FileSystem.getInfoAsync(currentUri);
       const fileSizeKB = (fileInfo.size || 0) / 1024;
-      
+
       if (fileSizeKB <= maxSizeKB) {
         break;
       }
-      
+
       // Reduce quality for next attempt
       quality = Math.max(0.1, quality - 0.15);
-      
+
       const result = await this.performCompression(currentUri, {
         width,
         height,
         quality,
         format,
       });
-      
+
       currentUri = result.uri;
       attempts++;
     }
@@ -235,35 +226,35 @@ class ImageCompressionService {
   /**
    * Get compression recommendations based on use case
    */
-  getRecommendedOptions(useCase: 'profile' | 'review' | 'thumbnail'): CompressionOptions {
+  getRecommendedOptions(useCase: "profile" | "review" | "thumbnail"): CompressionOptions {
     switch (useCase) {
-      case 'profile':
+      case "profile":
         return {
           maxWidth: 800,
           maxHeight: 800,
           quality: 0.85,
-          format: 'jpeg',
+          format: "jpeg",
           maxSizeKB: 200,
         };
-      
-      case 'review':
+
+      case "review":
         return {
           maxWidth: 1920,
           maxHeight: 1920,
           quality: 0.8,
-          format: 'jpeg',
+          format: "jpeg",
           maxSizeKB: 800,
         };
-      
-      case 'thumbnail':
+
+      case "thumbnail":
         return {
           maxWidth: 400,
           maxHeight: 400,
           quality: 0.7,
-          format: 'jpeg',
+          format: "jpeg",
           maxSizeKB: 100,
         };
-      
+
       default:
         return ImageCompressionService.DEFAULT_OPTIONS;
     }
@@ -273,13 +264,13 @@ class ImageCompressionService {
    * Format file size for display
    */
   formatFileSize(bytes: number): string {
-    if (bytes === 0) return '0 B';
-    
+    if (bytes === 0) return "0 B";
+
     const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const sizes = ["B", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
   }
 }
 

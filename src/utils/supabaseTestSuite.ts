@@ -1,5 +1,12 @@
 // Comprehensive Supabase Integration Test Suite
-import { supabaseAuth, supabaseUsers, supabaseReviews, supabaseChat, supabaseStorage, supabaseSearch } from "../services/supabase";
+import {
+  supabaseAuth,
+  supabaseUsers,
+  supabaseReviews,
+  supabaseChat,
+  supabaseStorage,
+  supabaseSearch,
+} from "../services/supabase";
 import { supabase } from "../config/supabase";
 import { storageService } from "../services/storageService";
 import { realtimeChatService } from "../services/realtimeChat";
@@ -34,27 +41,27 @@ class SupabaseTestSuite {
     // Connection Tests
     await this.testBasicConnection();
     await this.testDatabaseSchema();
-    
+
     // Authentication Tests
     await this.testAuthService();
-    
+
     // Database Operation Tests
     await this.testUserOperations();
     await this.testReviewOperations();
     await this.testChatOperations();
-    
+
     // Real-time Tests
     await this.testRealtimeSubscriptions();
-    
+
     // Storage Tests
     await this.testStorageOperations();
-    
+
     // Error Handling Tests
     await this.testErrorHandling();
 
     const duration = Date.now() - this.startTime;
-    const passedTests = this.results.filter(r => r.success).length;
-    const failedTests = this.results.filter(r => !r.success).length;
+    const passedTests = this.results.filter((r) => r.success).length;
+    const failedTests = this.results.filter((r) => !r.success).length;
 
     const summary: TestSuiteResult = {
       totalTests: this.results.length,
@@ -81,9 +88,14 @@ class SupabaseTestSuite {
   private async testDatabaseSchema() {
     await this.runTest("Database Schema", async () => {
       const requiredTables = [
-        "users", "reviews_firebase", "comments_firebase", 
-        "chat_rooms_firebase", "chat_messages_firebase", 
-        "notifications", "push_tokens", "reports"
+        "users",
+        "reviews_firebase",
+        "comments_firebase",
+        "chat_rooms_firebase",
+        "chat_messages_firebase",
+        "notifications",
+        "push_tokens",
+        "reports",
       ];
 
       for (const table of requiredTables) {
@@ -113,7 +125,7 @@ class SupabaseTestSuite {
     await this.runTest("User Operations - Get Profile", async () => {
       const user = await supabaseAuth.getCurrentUser();
       if (!user) return "No user to test with";
-      
+
       const profile = await supabaseUsers.getUserProfile(user.id);
       return profile ? "Profile retrieved" : "No profile found";
     });
@@ -197,19 +209,19 @@ class SupabaseTestSuite {
     try {
       const message = await testFn();
       const duration = Date.now() - startTime;
-      
+
       this.results.push({
         name,
         success: true,
         message,
         duration,
       });
-      
+
       console.log(`✅ ${name}: ${message} (${duration}ms)`);
     } catch (error: any) {
       const duration = Date.now() - startTime;
       const errorMessage = error instanceof Error ? error.message : String(error);
-      
+
       this.results.push({
         name,
         success: false,
@@ -217,32 +229,32 @@ class SupabaseTestSuite {
         duration,
         error,
       });
-      
+
       console.error(`❌ ${name}: ${errorMessage} (${duration}ms)`);
     }
   }
 
   // Get test results summary
   getResultsSummary(): string {
-    const passed = this.results.filter(r => r.success).length;
-    const failed = this.results.filter(r => !r.success).length;
+    const passed = this.results.filter((r) => r.success).length;
+    const failed = this.results.filter((r) => !r.success).length;
     const total = this.results.length;
-    
+
     let summary = `\n🧪 Test Results Summary:\n`;
     summary += `Total Tests: ${total}\n`;
     summary += `Passed: ${passed} ✅\n`;
     summary += `Failed: ${failed} ❌\n`;
     summary += `Success Rate: ${((passed / total) * 100).toFixed(1)}%\n\n`;
-    
+
     if (failed > 0) {
       summary += `Failed Tests:\n`;
       this.results
-        .filter(r => !r.success)
-        .forEach(r => {
+        .filter((r) => !r.success)
+        .forEach((r) => {
           summary += `- ${r.name}: ${r.message}\n`;
         });
     }
-    
+
     return summary;
   }
 

@@ -52,7 +52,7 @@ export default function ReviewCard({ review }: ReviewCardProps) {
       className="rounded-2xl p-6 mb-4 border"
       style={{
         backgroundColor: colors.surface[800],
-        borderColor: colors.border
+        borderColor: colors.border,
       }}
     >
       {/* Header */}
@@ -62,38 +62,24 @@ export default function ReviewCard({ review }: ReviewCardProps) {
             className="w-12 h-12 rounded-full items-center justify-center"
             style={{ backgroundColor: colors.brand.red }}
           >
-            <Text className="text-white font-bold text-lg">
-              {review.reviewedPersonName.charAt(0).toUpperCase()}
-            </Text>
+            <Text className="text-white font-bold text-lg">{review.reviewedPersonName.charAt(0).toUpperCase()}</Text>
           </View>
           <View className="ml-3 flex-1">
-            <Text
-              className="text-lg font-semibold"
-              style={{ color: colors.text.primary }}
-            >
+            <Text className="text-lg font-semibold" style={{ color: colors.text.primary }}>
               {review.reviewedPersonName}
             </Text>
-            <Text
-              className="text-sm"
-              style={{ color: colors.text.secondary }}
-            >
+            <Text className="text-sm" style={{ color: colors.text.secondary }}>
               {review.reviewedPersonLocation.city}, {review.reviewedPersonLocation.state}
             </Text>
           </View>
-          <Text
-            className="text-sm"
-            style={{ color: colors.text.muted }}
-          >
+          <Text className="text-sm" style={{ color: colors.text.muted }}>
             {formatDate(review.createdAt)}
           </Text>
         </View>
       </Pressable>
 
       {/* Review Text */}
-      <Text
-        className="mb-4 leading-6 text-base"
-        style={{ color: colors.text.primary }}
-      >
+      <Text className="mb-4 leading-6 text-base" style={{ color: colors.text.primary }}>
         {truncateText(review.reviewText)}
       </Text>
 
@@ -113,7 +99,7 @@ export default function ReviewCard({ review }: ReviewCardProps) {
         <Pressable
           onPress={handleLike}
           className="flex-row items-center px-3 py-2 rounded-full"
-          style={{ backgroundColor: colors.brand.red + '20' }}
+          style={{ backgroundColor: colors.brand.red + "20" }}
         >
           <Ionicons name="heart" size={16} color={colors.brand.red} />
           <Text className="text-sm ml-1 font-medium" style={{ color: colors.brand.red }}>

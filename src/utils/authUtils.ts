@@ -3,7 +3,7 @@ import { supabase } from "../config/supabase";
 import { supabaseAuth } from "../services/supabase";
 import useAuthStore from "../state/authStore";
 import { User } from "../types";
-import { AppError, ErrorType, parseSupabaseError } from './errorHandling';
+import { AppError, ErrorType, parseSupabaseError } from "./errorHandling";
 
 /**
  * Unified authentication checker that ensures consistency across the app
@@ -18,7 +18,9 @@ export const getAuthenticatedUser = async (): Promise<{ user: User | null; supab
     // If store says authenticated but Supabase doesn't, DON'T auto-clear
     // This could be a temporary network issue or session refresh timing
     if (storeState.isAuthenticated && storeState.user && !supabaseUser) {
-      console.warn("🔄 Auth state mismatch: Store authenticated but Supabase not. Allowing store state to take precedence.");
+      console.warn(
+        "🔄 Auth state mismatch: Store authenticated but Supabase not. Allowing store state to take precedence.",
+      );
       // Return store state - let the auth listener handle any real logout
       return { user: storeState.user, supabaseUser: null };
     }
@@ -35,7 +37,7 @@ export const getAuthenticatedUser = async (): Promise<{ user: User | null; supab
 
     return {
       user: isFullyAuthenticated ? storeState.user : null,
-      supabaseUser: isFullyAuthenticated ? supabaseUser : null
+      supabaseUser: isFullyAuthenticated ? supabaseUser : null,
     };
   } catch (error) {
     console.error("Error checking authentication:", error);
@@ -53,13 +55,13 @@ export const useAuthState = () => {
   const { user, isAuthenticated, isGuestMode, isLoading } = useAuthStore();
 
   // Debug logging - add null safety
-  if (__DEV__ && typeof __DEV__ !== 'undefined') {
+  if (__DEV__ && typeof __DEV__ !== "undefined") {
     console.log("🔍 useAuthState:", {
       hasUser: !!user,
       isAuthenticated,
       isGuestMode,
       isLoading,
-      userId: user?.id?.slice(-4) || 'undefined'
+      userId: user?.id?.slice(-4) || "undefined",
     });
   }
 
@@ -72,7 +74,7 @@ export const useAuthState = () => {
     canComment: isAuthenticated && !!user && !isGuestMode,
     canCreateReview: isAuthenticated && !!user && !isGuestMode,
     canAccessChat: isAuthenticated && !!user && !isGuestMode,
-    needsSignIn: !isAuthenticated || !user || isGuestMode
+    needsSignIn: !isAuthenticated || !user || isGuestMode,
   };
 };
 
@@ -80,19 +82,15 @@ export const useAuthState = () => {
  * Async authentication check with error handling
  * Use this in services and async operations
  */
-export const requireAuthentication = async (action: string = "perform this action"): Promise<{ user: User; supabaseUser: any }> => {
+export const requireAuthentication = async (
+  action: string = "perform this action",
+): Promise<{ user: User; supabaseUser: any }> => {
   const { user, supabaseUser } = await getAuthenticatedUser();
 
   // Be more lenient - if we have either a user OR supabaseUser, allow the action
   // The auth listener will eventually sync the states
   if (!user && !supabaseUser) {
-    throw new AppError(
-      `Must be signed in to ${action}`,
-      ErrorType.AUTH,
-      'AUTHENTICATION_REQUIRED',
-      401,
-      false
-    );
+    throw new AppError(`Must be signed in to ${action}`, ErrorType.AUTH, "AUTHENTICATION_REQUIRED", 401, false);
   }
 
   // If we have store user but no supabase user, try to get supabase user again
@@ -106,11 +104,11 @@ export const requireAuthentication = async (action: string = "perform this actio
     // Create a minimal user object from supabase user
     const minimalUser: User = {
       id: supabaseUser.id,
-      email: supabaseUser.email || '',
-      anonymousId: supabaseUser.email?.split('@')[0] || `User ${supabaseUser.id.slice(-4)}`,
-      location: { city: 'Unknown', state: 'Unknown' },
-      genderPreference: 'all',
-      createdAt: new Date(supabaseUser.created_at || Date.now())
+      email: supabaseUser.email || "",
+      anonymousId: supabaseUser.email?.split("@")[0] || `User ${supabaseUser.id.slice(-4)}`,
+      location: { city: "Unknown", state: "Unknown" },
+      genderPreference: "all",
+      createdAt: new Date(supabaseUser.created_at || Date.now()),
     };
     return { user: minimalUser, supabaseUser };
   }
@@ -121,17 +119,17 @@ export const requireAuthentication = async (action: string = "perform this actio
 /**
  * Check if user can perform a specific action
  */
-export const canPerformAction = (action: 'comment' | 'create_review' | 'access_chat' | 'report'): boolean => {
+export const canPerformAction = (action: "comment" | "create_review" | "access_chat" | "report"): boolean => {
   const { isAuthenticated, user, isGuestMode } = useAuthStore.getState();
-  
+
   // All actions require authentication and not being in guest mode
   const baseRequirement = isAuthenticated && !!user && !isGuestMode;
-  
+
   switch (action) {
-    case 'comment':
-    case 'create_review':
-    case 'access_chat':
-    case 'report':
+    case "comment":
+    case "create_review":
+    case "access_chat":
+    case "report":
       return baseRequirement;
     default:
       return false;
@@ -143,7 +141,7 @@ export const canPerformAction = (action: 'comment' | 'create_review' | 'access_c
  */
 export const getUserDisplayName = (user?: User | null): string => {
   if (!user) return "Anonymous";
-  return user.anonymousId || user.email?.split('@')[0] || `User ${user.id?.slice(-4) || 'Unknown'}`;
+  return user.anonymousId || user.email?.split("@")[0] || `User ${user.id?.slice(-4) || "Unknown"}`;
 };
 
 /**
@@ -164,7 +162,8 @@ export const refreshSessionIfNeeded = async (): Promise<boolean> => {
     const now = Math.floor(Date.now() / 1000);
     const timeUntilExpiry = expiresAt - now;
 
-    if (timeUntilExpiry < 300) { // Less than 5 minutes
+    if (timeUntilExpiry < 300) {
+      // Less than 5 minutes
       console.log("🔄 Session expiring soon, refreshing...");
       const { data, error } = await supabase.auth.refreshSession();
 

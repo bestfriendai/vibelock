@@ -1,15 +1,10 @@
-import React, { useState } from 'react';
-import { View, Text, Pressable, Modal, Dimensions } from 'react-native';
-import Animated, { 
-  useSharedValue, 
-  useAnimatedStyle, 
-  withSpring, 
-  withTiming 
-} from 'react-native-reanimated';
-import * as Haptics from 'expo-haptics';
-import { useTheme } from '../providers/ThemeProvider';
+import React, { useState } from "react";
+import { View, Text, Pressable, Modal, Dimensions } from "react-native";
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming } from "react-native-reanimated";
+import * as Haptics from "expo-haptics";
+import { useTheme } from "../providers/ThemeProvider";
 
-const { width: screenWidth } = Dimensions.get('window');
+const { width: screenWidth } = Dimensions.get("window");
 
 interface Reaction {
   emoji: string;
@@ -25,7 +20,7 @@ interface MessageReactionsProps {
   onShowReactionPicker: (messageId: string) => void;
 }
 
-const QUICK_REACTIONS = ['❤️', '😂', '😮', '😢', '😡', '👍', '👎', '🔥'];
+const QUICK_REACTIONS = ["❤️", "😂", "😮", "😢", "😡", "👍", "👎", "🔥"];
 
 export const MessageReactions: React.FC<MessageReactionsProps> = ({
   messageId,
@@ -35,7 +30,7 @@ export const MessageReactions: React.FC<MessageReactionsProps> = ({
 }) => {
   const { colors } = useTheme();
   const [showQuickReactions, setShowQuickReactions] = useState(false);
-  
+
   const scale = useSharedValue(1);
   const opacity = useSharedValue(0);
 
@@ -74,19 +69,14 @@ export const MessageReactions: React.FC<MessageReactionsProps> = ({
               onPress={() => handleReaction(reaction.emoji)}
               className="flex-row items-center mr-1 mb-1 px-2 py-1 rounded-full"
               style={{
-                backgroundColor: reaction.hasReacted 
-                  ? colors.brand.red + '20' 
-                  : colors.surface[700],
+                backgroundColor: reaction.hasReacted ? colors.brand.red + "20" : colors.surface[700],
                 borderWidth: reaction.hasReacted ? 1 : 0,
-                borderColor: reaction.hasReacted ? colors.brand.red : 'transparent',
+                borderColor: reaction.hasReacted ? colors.brand.red : "transparent",
               }}
             >
               <Text className="text-sm">{reaction.emoji}</Text>
               {reaction.count > 1 && (
-                <Text 
-                  className="text-xs ml-1 font-medium"
-                  style={{ color: colors.text.primary }}
-                >
+                <Text className="text-xs ml-1 font-medium" style={{ color: colors.text.primary }}>
                   {reaction.count}
                 </Text>
               )}
@@ -102,26 +92,15 @@ export const MessageReactions: React.FC<MessageReactionsProps> = ({
         className="mt-1"
         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
       >
-        <Text 
-          className="text-xs"
-          style={{ color: colors.text.muted }}
-        >
+        <Text className="text-xs" style={{ color: colors.text.muted }}>
           + React
         </Text>
       </Pressable>
 
       {/* Quick Reactions Modal */}
-      <Modal
-        visible={showQuickReactions}
-        transparent
-        animationType="none"
-        onRequestClose={closeQuickReactions}
-      >
-        <Pressable 
-          className="flex-1 bg-black/50 justify-center items-center"
-          onPress={closeQuickReactions}
-        >
-          <Animated.View 
+      <Modal visible={showQuickReactions} transparent animationType="none" onRequestClose={closeQuickReactions}>
+        <Pressable className="flex-1 bg-black/50 justify-center items-center" onPress={closeQuickReactions}>
+          <Animated.View
             style={[
               quickReactionsStyle,
               {
@@ -130,7 +109,7 @@ export const MessageReactions: React.FC<MessageReactionsProps> = ({
                 paddingHorizontal: 16,
                 paddingVertical: 12,
                 maxWidth: screenWidth - 40,
-              }
+              },
             ]}
           >
             <View className="flex-row items-center">
@@ -144,7 +123,7 @@ export const MessageReactions: React.FC<MessageReactionsProps> = ({
                   <Text className="text-2xl">{emoji}</Text>
                 </Pressable>
               ))}
-              
+
               {/* More Reactions Button */}
               <Pressable
                 onPress={() => {
@@ -154,10 +133,7 @@ export const MessageReactions: React.FC<MessageReactionsProps> = ({
                 className="w-12 h-12 items-center justify-center mx-1 rounded-full"
                 style={{ backgroundColor: colors.surface[600] }}
               >
-                <Text 
-                  className="text-lg font-bold"
-                  style={{ color: colors.text.primary }}
-                >
+                <Text className="text-lg font-bold" style={{ color: colors.text.primary }}>
                   +
                 </Text>
               </Pressable>

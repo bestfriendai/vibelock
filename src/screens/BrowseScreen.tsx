@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { View, Text, Pressable } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -22,6 +22,7 @@ export default function BrowseScreen() {
   const [currentLocation, setCurrentLocation] = useState<LocationData | null>(null);
   const [locationLoading, setLocationLoading] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
   const {
     reviews = [], // Provide default empty array
     isLoading = false,
@@ -74,11 +75,11 @@ export default function BrowseScreen() {
 
           console.log(`📍 Location detected via ${result.source}:`, result.location.fullName);
         } else {
-          setLocationError(result.error || 'Location detection failed');
+          setLocationError(result.error || "Location detection failed");
         }
       } catch (error) {
-        console.error('Location initialization failed:', error);
-        setLocationError('Failed to detect location');
+        console.error("Location initialization failed:", error);
+        setLocationError("Failed to detect location");
       } finally {
         setLocationLoading(false);
       }
@@ -89,10 +90,17 @@ export default function BrowseScreen() {
 
   // Memoize the initial load function to prevent infinite re-renders
   const loadInitialData = useCallback(async () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = new AbortController();
+
     try {
       await loadReviews(true);
-    } catch (error) {
-      console.error("Error loading reviews:", error);
+    } catch (error: any) {
+      if (error.name !== "AbortError") {
+        console.error("Error loading reviews:", error);
+      }
     }
   }, [loadReviews]);
 
@@ -114,8 +122,13 @@ export default function BrowseScreen() {
 
   // Reload when filters change (category, radius) or user location changes
   useEffect(() => {
-    loadWithFilters();
-  }, [filters.category, filters.radius, user?.location.city, user?.location.state, loadWithFilters]);
+    loadInitialData();
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, [filters.category, filters.radius, user?.location.city, user?.location.state, loadInitialData]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -140,25 +153,18 @@ export default function BrowseScreen() {
   };
 
   return (
-    <SafeAreaView
-      className="flex-1"
-      style={{ backgroundColor: colors.background }}
-      edges={['bottom']}
-    >
+    <SafeAreaView className="flex-1" style={{ backgroundColor: colors.background }} edges={["bottom"]}>
       {/* Header with compact spacing and safe top padding */}
       <View
         className="px-6"
         style={{
           backgroundColor: colors.surface[800],
           paddingTop: Math.max(insets.top + 2, 2),
-          paddingBottom: 8
+          paddingBottom: 8,
         }}
       >
         {/* Title only (logo and guest pill removed) */}
-        <Text
-          className="text-3xl font-extrabold"
-          style={{ color: colors.text.primary }}
-        >
+        <Text className="text-3xl font-extrabold" style={{ color: colors.text.primary }}>
           Locker Room Talk
         </Text>
 
@@ -189,10 +195,10 @@ export default function BrowseScreen() {
                       institutionType: result.location.institutionType,
                     });
                   } else {
-                    setLocationError(result.error || 'Location detection failed');
+                    setLocationError(result.error || "Location detection failed");
                   }
                 } catch (error) {
-                  setLocationError('Failed to detect location');
+                  setLocationError("Failed to detect location");
                 } finally {
                   setLocationLoading(false);
                 }
@@ -207,14 +213,16 @@ export default function BrowseScreen() {
           ) : (
             <LocationSelector
               key={`${currentLocation?.city}-${currentLocation?.state}`}
-              currentLocation={currentLocation || {
-                city: "Unknown",
-                state: "",
-                fullName: "Location unavailable",
-                coordinates: undefined,
-              }}
+              currentLocation={
+                currentLocation || {
+                  city: "Unknown",
+                  state: "",
+                  fullName: "Location unavailable",
+                  coordinates: undefined,
+                }
+              }
               onLocationChange={async (location) => {
-                console.log('🌍 Location change requested:', location);
+                console.log("🌍 Location change requested:", location);
                 try {
                   setCurrentLocation(location);
 
@@ -234,12 +242,12 @@ export default function BrowseScreen() {
                     fullName: location.fullName,
                     institutionType: location.institutionType,
                   }).catch((error) => {
-                    console.error('❌ Failed to update user location in auth store:', error);
+                    console.error("❌ Failed to update user location in auth store:", error);
                   });
 
-                  console.log('✅ Location updated and reviews reloaded');
+                  console.log("✅ Location updated and reviews reloaded");
                 } catch (error) {
-                  console.error('❌ Failed to update location:', error);
+                  console.error("❌ Failed to update location:", error);
                 }
               }}
             />
@@ -270,13 +278,19 @@ export default function BrowseScreen() {
         <View className="flex-1 items-center justify-center px-8">
           <Ionicons name="warning-outline" size={64} color="#EF4444" />
           <Text className="text-red-400 text-xl font-medium mt-4 text-center">Error Loading Reviews</Text>
-          <Text className="text-center mt-2" style={{ color: colors.text.secondary }}>{error}</Text>
-          <Text className="text-center mt-2" style={{ color: colors.text.muted }}>Pull down to try again</Text>
+          <Text className="text-center mt-2" style={{ color: colors.text.secondary }}>
+            {error}
+          </Text>
+          <Text className="text-center mt-2" style={{ color: colors.text.muted }}>
+            Pull down to try again
+          </Text>
         </View>
       ) : !isLoading && Array.isArray(reviews) && reviews.length === 0 ? (
         <View className="flex-1 items-center justify-center">
           <Ionicons name="heart-outline" size={64} color="#9CA3AF" />
-          <Text className="text-xl font-medium mt-4" style={{ color: colors.text.secondary }}>No reviews yet</Text>
+          <Text className="text-xl font-medium mt-4" style={{ color: colors.text.secondary }}>
+            No reviews yet
+          </Text>
           <Text className="text-center mt-2 px-8" style={{ color: colors.text.muted }}>
             Be the first to share your dating experience in your area
           </Text>

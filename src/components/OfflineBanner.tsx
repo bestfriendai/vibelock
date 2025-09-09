@@ -2,13 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { View, Text, Pressable } from "react-native";
 import NetInfo from "@react-native-community/netinfo";
 import { Ionicons } from "@expo/vector-icons";
-import Animated, { 
-  useSharedValue, 
-  useAnimatedStyle, 
-  withSpring, 
-  withTiming,
-  runOnJS
-} from "react-native-reanimated";
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming, runOnJS } from "react-native-reanimated";
 
 interface OfflineBannerProps {
   onRetry?: () => void;
@@ -26,7 +20,7 @@ export default function OfflineBanner({ onRetry }: OfflineBannerProps) {
   };
 
   useEffect(() => {
-    const unsubscribe = NetInfo.addEventListener(state => {
+    const unsubscribe = NetInfo.addEventListener((state) => {
       const connected = !!(state.isConnected && state.isInternetReachable);
       setIsConnected(connected);
 
@@ -71,7 +65,7 @@ export default function OfflineBanner({ onRetry }: OfflineBannerProps) {
       onRetry();
     }
     // Check connection again
-    NetInfo.fetch().then(state => {
+    NetInfo.fetch().then((state) => {
       const connected = !!(state.isConnected && state.isInternetReachable);
       if (connected) {
         // Clear any existing timeout
@@ -79,7 +73,7 @@ export default function OfflineBanner({ onRetry }: OfflineBannerProps) {
           clearTimeout(hideTimeoutRef.current);
           hideTimeoutRef.current = null;
         }
-        
+
         translateY.value = withSpring(-100);
         opacity.value = withTiming(0, { duration: 300 }, (finished) => {
           if (finished) {
@@ -95,22 +89,17 @@ export default function OfflineBanner({ onRetry }: OfflineBannerProps) {
   }
 
   return (
-    <Animated.View 
+    <Animated.View
       style={[animatedStyle]}
       className="absolute top-0 left-0 right-0 z-50 bg-red-600 px-4 py-3 flex-row items-center justify-between"
     >
       <View className="flex-row items-center flex-1">
         <Ionicons name="cloud-offline-outline" size={20} color="white" />
-        <Text className="text-white font-medium ml-2 flex-1">
-          No internet connection
-        </Text>
+        <Text className="text-white font-medium ml-2 flex-1">No internet connection</Text>
       </View>
-      
+
       {onRetry && (
-        <Pressable
-          onPress={handleRetry}
-          className="bg-white/20 rounded-lg px-3 py-1 ml-3"
-        >
+        <Pressable onPress={handleRetry} className="bg-white/20 rounded-lg px-3 py-1 ml-3">
           <Text className="text-white font-medium text-sm">Retry</Text>
         </Pressable>
       )}

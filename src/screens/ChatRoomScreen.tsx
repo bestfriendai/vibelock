@@ -104,16 +104,11 @@ export default function ChatRoomScreen() {
       <SafeAreaView className="flex-1 bg-black">
         <View className="flex-1 items-center justify-center px-6">
           <Ionicons name="chatbubbles-outline" size={64} color="#6B7280" />
-          <Text className="text-text-primary text-xl font-bold mt-4 text-center">
-            Sign In Required
-          </Text>
+          <Text className="text-text-primary text-xl font-bold mt-4 text-center">Sign In Required</Text>
           <Text className="text-text-secondary text-center mt-2 leading-6">
             You need to sign in to join chat rooms and participate in conversations.
           </Text>
-          <Pressable
-            onPress={() => navigation.navigate("SignIn")}
-            className="bg-brand-red rounded-xl px-6 py-3 mt-6"
-          >
+          <Pressable onPress={() => navigation.navigate("SignIn")} className="bg-brand-red rounded-xl px-6 py-3 mt-6">
             <Text className="text-black font-semibold text-base">Sign In</Text>
           </Pressable>
           <Pressable onPress={() => navigation.goBack()} className="mt-4">
@@ -212,10 +207,7 @@ export default function ChatRoomScreen() {
               <Ionicons name="chevron-back" size={24} color={colors.brand.red} />
             </Pressable>
             <View className="flex-1">
-              <Text
-                className="text-lg font-semibold text-center"
-                style={{ color: colors.text.primary }}
-              >
+              <Text className="text-lg font-semibold text-center" style={{ color: colors.text.primary }}>
                 {currentChatRoom?.name || "Anonymous Chat"}
               </Text>
             </View>
@@ -274,9 +266,7 @@ export default function ChatRoomScreen() {
                 <Pressable
                   onPress={handleLoadOlderMessages}
                   disabled={isLoadingOlderMessages}
-                  className={`bg-surface-700 rounded-full px-2.5 py-1 ${
-                    isLoadingOlderMessages ? "opacity-50" : ""
-                  }`}
+                  className={`bg-surface-700 rounded-full px-2.5 py-1 ${isLoadingOlderMessages ? "opacity-50" : ""}`}
                 >
                   <Text className="text-text-secondary text-xs font-medium">
                     {isLoadingOlderMessages ? "Loading..." : "Load older messages"}
@@ -336,9 +326,7 @@ export default function ChatRoomScreen() {
       >
         <SafeAreaView className="flex-1 bg-black">
           <View className="flex-row items-center justify-between px-4 py-3 border-b border-border sm:px-6">
-            <Text className="text-text-primary text-lg font-bold">
-              Members ({roomMembers.length})
-            </Text>
+            <Text className="text-text-primary text-lg font-bold">Members ({roomMembers.length})</Text>
             <Pressable onPress={() => setShowMemberList(false)} className="p-2">
               <Ionicons name="close" size={24} color="#9CA3AF" />
             </Pressable>
@@ -350,16 +338,12 @@ export default function ChatRoomScreen() {
             renderItem={({ item }) => (
               <View className="flex-row items-center px-4 py-3 border-b border-surface-700 sm:px-6 sm:py-4">
                 <View className="w-10 h-10 bg-brand-red rounded-full items-center justify-center mr-3">
-                  <Text className="text-black font-bold">
-                    {item.userName.charAt(0).toUpperCase()}
-                  </Text>
+                  <Text className="text-black font-bold">{item.userName.charAt(0).toUpperCase()}</Text>
                 </View>
                 <View className="flex-1">
                   <Text className="text-text-primary font-medium">{item.userName}</Text>
                   <Text className="text-text-muted text-xs">
-                    {item.isOnline
-                      ? "Online"
-                      : `Last seen ${toDateSafe(item.lastSeen).toLocaleDateString()}`}
+                    {item.isOnline ? "Online" : `Last seen ${toDateSafe(item.lastSeen).toLocaleDateString()}`}
                   </Text>
                 </View>
                 {item.isOnline && <View className="w-2 h-2 bg-green-500 rounded-full" />}
@@ -369,9 +353,7 @@ export default function ChatRoomScreen() {
             ListEmptyComponent={
               <View className="items-center justify-center py-12">
                 <Ionicons name="people-outline" size={48} color="#6B7280" />
-                <Text className="text-text-secondary text-lg font-medium mt-4">
-                  No members found
-                </Text>
+                <Text className="text-text-secondary text-lg font-medium mt-4">No members found</Text>
               </View>
             }
           />

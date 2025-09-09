@@ -4,7 +4,7 @@ const plugin = require("tailwindcss/plugin");
 module.exports = {
   content: ["./App.tsx", "./app/**/*.{js,jsx,ts,tsx}", "./src/**/*.{js,jsx,ts,tsx}"],
   presets: [require("nativewind/preset")],
-  darkMode: 'class',
+  darkMode: "class",
   corePlugins: { space: false },
   theme: {
     extend: {

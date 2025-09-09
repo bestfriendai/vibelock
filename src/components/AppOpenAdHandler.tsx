@@ -1,12 +1,12 @@
-import React, { useEffect, useRef } from 'react';
-import { AppState, AppStateStatus } from 'react-native';
-import { adMobService } from '../services/adMobService';
-import useSubscriptionStore from '../state/subscriptionStore';
-import { canUseAdMob } from '../utils/buildEnvironment';
+import React, { useEffect, useRef } from "react";
+import { AppState, AppStateStatus } from "react-native";
+import { adMobService } from "../services/adMobService";
+import useSubscriptionStore from "../state/subscriptionStore";
+import { canUseAdMob } from "../utils/buildEnvironment";
 
 /**
  * AppOpenAdHandler - Manages App Open ads based on app state changes
- * 
+ *
  * This component should be placed at the root level of your app to handle
  * app open ads when the user returns to the app from background.
  */
@@ -25,29 +25,29 @@ const AppOpenAdHandler: React.FC = () => {
       appState.current = nextAppState;
 
       // App is coming to foreground from background
-      if (previousState === 'background' && nextAppState === 'active') {
+      if (previousState === "background" && nextAppState === "active") {
         const now = Date.now();
         const backgroundDuration = now - lastBackgroundTime.current;
-        
+
         // Only show app open ad if app was in background for more than 30 seconds
         // This prevents ads from showing on quick app switches
         if (backgroundDuration > 30000) {
-          console.log('App returned from background, attempting to show App Open ad');
+          console.log("App returned from background, attempting to show App Open ad");
           try {
             await adMobService.showAppOpenAd();
           } catch (error) {
-            console.error('Failed to show App Open ad:', error);
+            console.error("Failed to show App Open ad:", error);
           }
         }
       }
 
       // Track when app goes to background
-      if (nextAppState === 'background') {
+      if (nextAppState === "background") {
         lastBackgroundTime.current = Date.now();
       }
     };
 
-    const subscription = AppState.addEventListener('change', handleAppStateChange);
+    const subscription = AppState.addEventListener("change", handleAppStateChange);
 
     return () => {
       subscription?.remove();

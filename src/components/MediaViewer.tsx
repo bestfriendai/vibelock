@@ -31,7 +31,7 @@ export default function MediaViewer({
   const screenData = useResponsiveScreen();
   const { width: screenWidth, height: screenHeight } = screenData;
 
-  const isExpoGo = Constants.executionEnvironment === 'storeClient';
+  const isExpoGo = Constants.executionEnvironment === "storeClient";
   const [videoError, setVideoError] = useState<string | null>(null);
   const [isVideoLoading, setIsVideoLoading] = useState(false);
 
@@ -48,12 +48,12 @@ export default function MediaViewer({
           player.play();
           setIsVideoLoading(false);
         } catch (error) {
-          console.error('Video player error:', error);
-          setVideoError('Failed to load video');
+          console.error("Video player error:", error);
+          setVideoError("Failed to load video");
           setIsVideoLoading(false);
         }
       }
-    }
+    },
   );
 
   // Reset video state when media changes
@@ -113,9 +113,7 @@ export default function MediaViewer({
                 {videoError ? (
                   <View className="flex-1 items-center justify-center bg-surface-800">
                     <Ionicons name="warning-outline" size={48} color="#EF4444" />
-                    <Text className="text-text-primary text-lg mt-4 text-center px-4">
-                      {videoError}
-                    </Text>
+                    <Text className="text-text-primary text-lg mt-4 text-center px-4">{videoError}</Text>
                     <Pressable
                       onPress={() => {
                         setVideoError(null);

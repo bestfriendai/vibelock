@@ -1,26 +1,21 @@
-import React, { useState } from 'react';
-import { View, Text, Pressable } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import useSubscriptionStore from '../state/subscriptionStore';
-import { PaywallAdaptive } from './subscription/PaywallAdaptive';
+import React, { useState } from "react";
+import { View, Text, Pressable } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import useSubscriptionStore from "../state/subscriptionStore";
+import { PaywallAdaptive } from "./subscription/PaywallAdaptive";
 
 interface FeatureGateProps {
-  feature: 'premium' | 'pro';
+  feature: "premium" | "pro";
   children: React.ReactNode;
   fallback?: React.ReactNode;
   showUpgradePrompt?: boolean;
 }
 
-export const FeatureGate: React.FC<FeatureGateProps> = ({ 
-  feature, 
-  children, 
-  fallback,
-  showUpgradePrompt = true
-}) => {
+export const FeatureGate: React.FC<FeatureGateProps> = ({ feature, children, fallback, showUpgradePrompt = true }) => {
   const { isPremium, isPro } = useSubscriptionStore();
   const [showPaywall, setShowPaywall] = useState(false);
 
-  const hasAccess = feature === 'premium' ? (isPremium || isPro) : isPro;
+  const hasAccess = feature === "premium" ? isPremium || isPro : isPro;
 
   if (hasAccess) {
     return <>{children}</>;
@@ -36,7 +31,7 @@ export const FeatureGate: React.FC<FeatureGateProps> = ({
 
   return (
     <>
-      <Pressable 
+      <Pressable
         onPress={() => setShowPaywall(true)}
         className="bg-surface-800 border border-surface-700 rounded-lg p-4 items-center"
       >
@@ -49,7 +44,7 @@ export const FeatureGate: React.FC<FeatureGateProps> = ({
           <Text className="text-white font-medium">Upgrade Now</Text>
         </View>
       </Pressable>
-      
+
       <PaywallAdaptive visible={showPaywall} onClose={() => setShowPaywall(false)} />
     </>
   );

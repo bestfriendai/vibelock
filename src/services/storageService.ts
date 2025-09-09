@@ -1,10 +1,10 @@
-import { supabase } from '../config/supabase';
-import * as FileSystem from 'expo-file-system';
-import * as ImagePicker from 'expo-image-picker';
-import * as ImageManipulator from 'expo-image-manipulator';
-import { decode } from 'base64-arraybuffer';
-import { AppError, ErrorType, parseSupabaseError } from '../utils/errorHandling';
-import { Alert } from 'react-native';
+import { supabase } from "../config/supabase";
+import * as FileSystem from "expo-file-system";
+import * as ImagePicker from "expo-image-picker";
+import * as ImageManipulator from "expo-image-manipulator";
+import { decode } from "base64-arraybuffer";
+import { AppError, ErrorType, parseSupabaseError } from "../utils/errorHandling";
+import { Alert } from "react-native";
 
 export interface UploadResult {
   success: boolean;
@@ -23,29 +23,136 @@ export interface FileUploadOptions {
 
 class StorageService {
   private readonly buckets = {
-    AVATARS: 'avatars',
-    REVIEW_IMAGES: 'review-images',
-    CHAT_MEDIA: 'chat-media',
-    DOCUMENTS: 'documents',
+    AVATARS: "avatars",
+    REVIEW_IMAGES: "review-images",
+    CHAT_MEDIA: "chat-media",
+    DOCUMENTS: "documents",
+  };
+
+  // File validation constants
+  private readonly ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+  private readonly ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/quicktime'];
+  private readonly ALLOWED_AUDIO_TYPES = ['audio/mp4', 'audio/mpeg', 'audio/wav'];
+  private readonly MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+
+  // Magic bytes for file type validation
+  private readonly MAGIC_BYTES = {
+    'image/jpeg': [[0xFF, 0xD8, 0xFF]],
+    'image/png': [[0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]],
+    'image/webp': [[0x52, 0x49, 0x46, 0x46], [0x57, 0x45, 0x42, 0x50]], // RIFF...WEBP
+    'video/mp4': [[0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70], [0x00, 0x00, 0x00, 0x20, 0x66, 0x74, 0x79, 0x70]],
+    'video/quicktime': [[0x00, 0x00, 0x00, 0x14, 0x66, 0x74, 0x79, 0x70, 0x71, 0x74]],
+    'audio/mp4': [[0x00, 0x00, 0x00, 0x20, 0x66, 0x74, 0x79, 0x70, 0x4D, 0x34, 0x41]],
+    'audio/mpeg': [[0xFF, 0xFB], [0xFF, 0xF3], [0xFF, 0xF2]],
+    'audio/wav': [[0x52, 0x49, 0x46, 0x46]]
   };
 
   /**
-   * Upload a file to Supabase storage
+   * Sanitize file path to prevent directory traversal attacks
    */
-  async uploadFile(
-    fileUri: string,
-    options: FileUploadOptions
-  ): Promise<UploadResult> {
+  private sanitizePath(path: string): string {
+    let sanitized = path
+      .replace(/\.\.\//g, "") // Remove traversal sequences
+      .replace(/\\/g, "/") // Normalize backslashes
+      .replace(/\/+/g, "/"); // Normalize slashes
+
+    sanitized = sanitized.replace(/^\/+|\/+$/g, "");
+
+    if (sanitized.includes("..")) {
+      throw new AppError("Invalid file path", ErrorType.VALIDATION, "PATH_TRAVERSAL");
+    }
+    return sanitized;
+  }
+
+  /**
+   * Comprehensive file validation including size, MIME type, and magic bytes
+   */
+  private async validateFile(fileUri: string, expectedType: 'image' | 'video' | 'audio'): Promise<void> {
+    const fileInfo = await FileSystem.getInfoAsync(fileUri);
+    if (!fileInfo.exists) {
+      throw new AppError('File does not exist', ErrorType.VALIDATION, 'FILE_NOT_FOUND');
+    }
+
+    // Check file size
+    if (fileInfo.size && fileInfo.size > this.MAX_FILE_SIZE) {
+      throw new AppError('File too large (max 50MB)', ErrorType.VALIDATION, 'FILE_TOO_LARGE');
+    }
+
+    // Validate MIME type
+    const contentType = this.getContentType(fileUri);
+    const allowedTypes = expectedType === 'image' ? this.ALLOWED_IMAGE_TYPES :
+                        expectedType === 'video' ? this.ALLOWED_VIDEO_TYPES :
+                        this.ALLOWED_AUDIO_TYPES;
+
+    if (!allowedTypes.includes(contentType)) {
+      throw new AppError(`Invalid file type: ${contentType}`, ErrorType.VALIDATION, 'INVALID_FILE_TYPE');
+    }
+
+    // Check file header (magic bytes) to prevent MIME type spoofing
+    await this.validateFileHeader(fileUri, contentType);
+  }
+
+
+
+  /**
+   * Validate file header using magic bytes to prevent MIME type spoofing
+   */
+  private async validateFileHeader(fileUri: string, expectedType: string): Promise<void> {
     try {
-      // Validate file exists
-      const fileInfo = await FileSystem.getInfoAsync(fileUri);
-      if (!fileInfo.exists) {
-        return { success: false, error: 'File does not exist' };
+      const base64 = await FileSystem.readAsStringAsync(fileUri, {
+        encoding: FileSystem.EncodingType.Base64,
+        length: 20 // Read first 20 bytes
+      });
+
+      const bytes = atob(base64);
+      const header = Array.from(bytes).map(char => char.charCodeAt(0));
+
+      // Validate magic bytes for the expected file type
+      const isValidHeader = this.checkMagicBytes(header, expectedType);
+      if (!isValidHeader) {
+        throw new AppError('File header validation failed', ErrorType.VALIDATION, 'INVALID_FILE_HEADER');
       }
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      throw new AppError('Failed to validate file header', ErrorType.VALIDATION, 'HEADER_VALIDATION_ERROR');
+    }
+  }
+
+  /**
+   * Check if file header matches expected magic bytes
+   */
+  private checkMagicBytes(header: number[], expectedType: string): boolean {
+    const magicBytes = this.MAGIC_BYTES[expectedType as keyof typeof this.MAGIC_BYTES];
+    if (!magicBytes) return false;
+
+    return magicBytes.some(pattern => {
+      if (header.length < pattern.length) return false;
+      return pattern.every((byte, index) => header[index] === byte);
+    });
+  }
+
+  /**
+   * Upload a file to Supabase storage with comprehensive security validation
+   */
+  async uploadFile(fileUri: string, options: FileUploadOptions): Promise<UploadResult> {
+    try {
+      // Determine file type for validation
+      const contentType = options.contentType || this.getContentType(fileUri);
+      let expectedType: 'image' | 'video' | 'audio' = 'image';
+
+      if (this.ALLOWED_VIDEO_TYPES.includes(contentType)) {
+        expectedType = 'video';
+      } else if (this.ALLOWED_AUDIO_TYPES.includes(contentType)) {
+        expectedType = 'audio';
+      }
+
+      // Comprehensive file validation (size, MIME type, magic bytes)
+      await this.validateFile(fileUri, expectedType);
 
       // Generate file name if not provided
       const fileName = options.fileName || this.generateFileName(fileUri);
-      const filePath = options.folder ? `${options.folder}/${fileName}` : fileName;
+      const rawFilePath = options.folder ? `${options.folder}/${fileName}` : fileName;
+      const filePath = this.sanitizePath(rawFilePath);
 
       // Read file as base64
       const base64 = await FileSystem.readAsStringAsync(fileUri, {
@@ -55,27 +162,20 @@ class StorageService {
       // Convert base64 to ArrayBuffer
       const arrayBuffer = decode(base64);
 
-      // Determine content type
-      const contentType = options.contentType || this.getContentType(fileUri);
-
-      // Upload to Supabase
-      const { data, error } = await supabase.storage
-        .from(options.bucket)
-        .upload(filePath, arrayBuffer, {
-          contentType,
-          upsert: options.upsert || false,
-        });
+      // Upload to Supabase (contentType already determined above)
+      const { data, error } = await supabase.storage.from(options.bucket).upload(filePath, arrayBuffer, {
+        contentType,
+        upsert: options.upsert || false,
+      });
 
       if (error) {
-        console.error('Upload error:', error);
+        console.error("Upload error:", error);
         const appError = parseSupabaseError(error);
         throw appError;
       }
 
       // Get public URL
-      const { data: urlData } = supabase.storage
-        .from(options.bucket)
-        .getPublicUrl(data.path);
+      const { data: urlData } = supabase.storage.from(options.bucket).getPublicUrl(data.path);
 
       return {
         success: true,
@@ -83,7 +183,7 @@ class StorageService {
         path: data.path,
       };
     } catch (error) {
-      console.error('Storage service upload error:', error);
+      console.error("Storage service upload error:", error);
       const appError = error instanceof AppError ? error : parseSupabaseError(error);
       throw appError;
     }
@@ -97,7 +197,7 @@ class StorageService {
       bucket: this.buckets.AVATARS,
       folder: userId,
       fileName: `avatar-${Date.now()}.jpg`,
-      contentType: 'image/jpeg',
+      contentType: "image/jpeg",
       upsert: true,
     });
   }
@@ -110,7 +210,7 @@ class StorageService {
       bucket: this.buckets.REVIEW_IMAGES,
       folder: reviewId,
       fileName: `review-image-${Date.now()}.jpg`,
-      contentType: 'image/jpeg',
+      contentType: "image/jpeg",
     });
   }
 
@@ -119,8 +219,8 @@ class StorageService {
    */
   async uploadChatMedia(fileUri: string, userId: string, chatRoomId: string): Promise<UploadResult> {
     const contentType = this.getContentType(fileUri);
-    const extension = fileUri.split('.').pop()?.toLowerCase() || 'jpg';
-    
+    const extension = fileUri.split(".").pop()?.toLowerCase() || "jpg";
+
     return this.uploadFile(fileUri, {
       bucket: this.buckets.CHAT_MEDIA,
       folder: `${userId}/${chatRoomId}`,
@@ -133,8 +233,8 @@ class StorageService {
    * Upload chat audio
    */
   async uploadChatAudio(fileUri: string, userId: string, chatRoomId: string): Promise<UploadResult> {
-    const extension = fileUri.split('.').pop()?.toLowerCase() || 'm4a';
-    
+    const extension = fileUri.split(".").pop()?.toLowerCase() || "m4a";
+
     return this.uploadFile(fileUri, {
       bucket: this.buckets.CHAT_MEDIA,
       folder: `${userId}/${chatRoomId}/audio`,
@@ -150,7 +250,7 @@ class StorageService {
     return this.uploadFile(fileUri, {
       bucket: this.buckets.DOCUMENTS,
       folder: `${userId}/${documentType}`,
-      contentType: 'application/pdf',
+      contentType: "application/pdf",
     });
   }
 
@@ -159,18 +259,16 @@ class StorageService {
    */
   async deleteFile(bucket: string, filePath: string): Promise<boolean> {
     try {
-      const { error } = await supabase.storage
-        .from(bucket)
-        .remove([filePath]);
+      const { error } = await supabase.storage.from(bucket).remove([filePath]);
 
       if (error) {
-        console.error('Delete error:', error);
+        console.error("Delete error:", error);
         return false;
       }
 
       return true;
     } catch (error) {
-      console.error('Storage service delete error:', error);
+      console.error("Storage service delete error:", error);
       return false;
     }
   }
@@ -179,9 +277,7 @@ class StorageService {
    * Get public URL for a file
    */
   getPublicUrl(bucket: string, filePath: string): string {
-    const { data } = supabase.storage
-      .from(bucket)
-      .getPublicUrl(filePath);
+    const { data } = supabase.storage.from(bucket).getPublicUrl(filePath);
 
     return data.publicUrl;
   }
@@ -191,18 +287,16 @@ class StorageService {
    */
   async createSignedUrl(bucket: string, filePath: string, expiresIn: number = 3600): Promise<string | null> {
     try {
-      const { data, error } = await supabase.storage
-        .from(bucket)
-        .createSignedUrl(filePath, expiresIn);
+      const { data, error } = await supabase.storage.from(bucket).createSignedUrl(filePath, expiresIn);
 
       if (error) {
-        console.error('Signed URL error:', error);
+        console.error("Signed URL error:", error);
         return null;
       }
 
       return data.signedUrl;
     } catch (error) {
-      console.error('Storage service signed URL error:', error);
+      console.error("Storage service signed URL error:", error);
       return null;
     }
   }
@@ -210,17 +304,19 @@ class StorageService {
   /**
    * Pick image from gallery or camera
    */
-  async pickImage(options: {
-    allowsEditing?: boolean;
-    aspect?: [number, number];
-    quality?: number;
-    source?: 'gallery' | 'camera';
-  } = {}): Promise<ImagePicker.ImagePickerResult> {
+  async pickImage(
+    options: {
+      allowsEditing?: boolean;
+      aspect?: [number, number];
+      quality?: number;
+      source?: "gallery" | "camera";
+    } = {},
+  ): Promise<ImagePicker.ImagePickerResult> {
     try {
       // Request permissions
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') {
-        throw new Error('Media library permission not granted');
+      if (status !== "granted") {
+        throw new Error("Media library permission not granted");
       }
 
       const pickerOptions: ImagePicker.ImagePickerOptions = {
@@ -232,10 +328,10 @@ class StorageService {
 
       let result: ImagePicker.ImagePickerResult;
 
-      if (options.source === 'camera') {
+      if (options.source === "camera") {
         const { status: cameraStatus } = await ImagePicker.requestCameraPermissionsAsync();
-        if (cameraStatus !== 'granted') {
-          throw new Error('Camera permission not granted');
+        if (cameraStatus !== "granted") {
+          throw new Error("Camera permission not granted");
         }
         result = await ImagePicker.launchCameraAsync(pickerOptions);
       } else {
@@ -244,7 +340,7 @@ class StorageService {
 
       return result;
     } catch (error) {
-      console.error('Image picker error:', error);
+      console.error("Image picker error:", error);
       throw error;
     }
   }
@@ -257,13 +353,13 @@ class StorageService {
       const manipResult = await ImageManipulator.manipulateAsync(
         uri,
         [{ resize: { width: 1024 } }], // Resize to max width of 1024px
-        { compress: quality, format: ImageManipulator.SaveFormat.JPEG }
+        { compress: quality, format: ImageManipulator.SaveFormat.JPEG },
       );
 
       return manipResult.uri;
     } catch (error) {
-      console.error('Image compression error:', error);
-      Alert.alert('Warning', 'Image not compressed. Upload may be large.');
+      console.error("Image compression error:", error);
+      Alert.alert("Warning", "Image not compressed. Upload may be large.");
       return uri; // Return original if compression fails
     }
   }
@@ -272,7 +368,7 @@ class StorageService {
    * Generate a unique file name
    */
   private generateFileName(fileUri: string): string {
-    const extension = fileUri.split('.').pop() || 'jpg';
+    const extension = fileUri.split(".").pop() || "jpg";
     const timestamp = Date.now();
     const random = Math.random().toString(36).substring(2, 15);
     return `${timestamp}-${random}.${extension}`;
@@ -282,48 +378,48 @@ class StorageService {
    * Get content type from file URI
    */
   private getContentType(fileUri: string): string {
-    const extension = fileUri.split('.').pop()?.toLowerCase();
-    
+    const extension = fileUri.split(".").pop()?.toLowerCase();
+
     switch (extension) {
       // Images
-      case 'jpg':
-      case 'jpeg':
-        return 'image/jpeg';
-      case 'png':
-        return 'image/png';
-      case 'gif':
-        return 'image/gif';
-      case 'webp':
-        return 'image/webp';
-      
+      case "jpg":
+      case "jpeg":
+        return "image/jpeg";
+      case "png":
+        return "image/png";
+      case "gif":
+        return "image/gif";
+      case "webp":
+        return "image/webp";
+
       // Videos
-      case 'mp4':
-        return 'video/mp4';
-      case 'mov':
-        return 'video/quicktime';
-      case 'avi':
-        return 'video/x-msvideo';
-      
+      case "mp4":
+        return "video/mp4";
+      case "mov":
+        return "video/quicktime";
+      case "avi":
+        return "video/x-msvideo";
+
       // Audio
-      case 'mp3':
-        return 'audio/mpeg';
-      case 'm4a':
-        return 'audio/mp4';
-      case 'wav':
-        return 'audio/wav';
-      case 'aac':
-        return 'audio/aac';
-      
+      case "mp3":
+        return "audio/mpeg";
+      case "m4a":
+        return "audio/mp4";
+      case "wav":
+        return "audio/wav";
+      case "aac":
+        return "audio/aac";
+
       // Documents
-      case 'pdf':
-        return 'application/pdf';
-      case 'doc':
-        return 'application/msword';
-      case 'docx':
-        return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-        
+      case "pdf":
+        return "application/pdf";
+      case "doc":
+        return "application/msword";
+      case "docx":
+        return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
       default:
-        return 'application/octet-stream';
+        return "application/octet-stream";
     }
   }
 
@@ -339,22 +435,20 @@ class StorageService {
    */
   async listFiles(bucket: string, folder?: string, limit: number = 100): Promise<any[]> {
     try {
-      const { data, error } = await supabase.storage
-        .from(bucket)
-        .list(folder, {
-          limit,
-          offset: 0,
-        });
+      const { data, error } = await supabase.storage.from(bucket).list(folder, {
+        limit,
+        offset: 0,
+      });
 
       if (error) {
-        console.error('List files error:', error);
+        console.error("List files error:", error);
         const appError = parseSupabaseError(error);
         throw appError;
       }
 
       return data || [];
     } catch (error) {
-      console.error('Storage service list files error:', error);
+      console.error("Storage service list files error:", error);
       const appError = error instanceof AppError ? error : parseSupabaseError(error);
       throw appError;
     }

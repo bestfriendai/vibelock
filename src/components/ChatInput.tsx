@@ -133,7 +133,7 @@ export default function ChatInput({ onSend, onTyping, onSendMedia, replyingTo, o
     try {
       const result = await DocumentPicker.getDocumentAsync({
         // Use SDK constant to avoid JSX parser confusion with "/*"
-        type: '*/*',
+        type: "*/*",
         copyToCacheDirectory: true,
       });
 
@@ -172,20 +172,20 @@ export default function ChatInput({ onSend, onTyping, onSendMedia, replyingTo, o
 
   return (
     <View className="bg-black border-t border-border" style={{ paddingBottom: Math.min(insets.bottom, 12) }}>
-        {/* Reply indicator */}
-        {replyingTo && (
-          <View className="flex-row items-center justify-between px-4 py-2 bg-surface-800/50 border-b border-border">
-            <View className="flex-1">
-              <Text className="text-text-secondary text-xs font-medium">Replying to {replyingTo.senderName}</Text>
-              <Text className="text-text-muted text-sm" numberOfLines={1}>
-                {replyingTo.content}
-              </Text>
-            </View>
-            <Pressable onPress={onCancelReply} className="p-1">
-              <Ionicons name="close" size={16} color="#9CA3AF" />
-            </Pressable>
+      {/* Reply indicator */}
+      {replyingTo && (
+        <View className="flex-row items-center justify-between px-4 py-2 bg-surface-800/50 border-b border-border">
+          <View className="flex-1">
+            <Text className="text-text-secondary text-xs font-medium">Replying to {replyingTo.senderName}</Text>
+            <Text className="text-text-muted text-sm" numberOfLines={1}>
+              {replyingTo.content}
+            </Text>
           </View>
-        )}
+          <Pressable onPress={onCancelReply} className="p-1">
+            <Ionicons name="close" size={16} color="#9CA3AF" />
+          </Pressable>
+        </View>
+      )}
 
       {/* Emoji picker */}
       {showEmojis && (
@@ -247,36 +247,24 @@ export default function ChatInput({ onSend, onTyping, onSendMedia, replyingTo, o
 
         {/* Emoji button */}
         <Pressable onPress={toggleEmojis} className="p-2 mr-2">
-          <Ionicons
-            name="happy"
-            size={24}
-            color={showEmojis ? colors.brand.red : colors.text.muted}
-          />
+          <Ionicons name="happy" size={24} color={showEmojis ? colors.brand.red : colors.text.muted} />
         </Pressable>
 
         {/* Send/Voice button */}
         {text.trim() ? (
-          <Pressable
-            className="rounded-full p-2"
-            style={{ backgroundColor: colors.brand.red }}
-            onPress={handleSend}
-          >
+          <Pressable className="rounded-full p-2" style={{ backgroundColor: colors.brand.red }} onPress={handleSend}>
             <Ionicons name="send" size={20} color="#FFFFFF" />
           </Pressable>
         ) : (
           <Pressable
             className="rounded-full p-2"
             style={{
-              backgroundColor: isRecording ? colors.brand.red : colors.surface[700]
+              backgroundColor: isRecording ? colors.brand.red : colors.surface[700],
             }}
             onPress={startVoiceRecording}
             onLongPress={startVoiceRecording}
           >
-            <Ionicons
-              name="mic"
-              size={20}
-              color={isRecording ? "#FFFFFF" : colors.text.muted}
-            />
+            <Ionicons name="mic" size={20} color={isRecording ? "#FFFFFF" : colors.text.muted} />
           </Pressable>
         )}
       </View>

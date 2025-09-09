@@ -1,7 +1,16 @@
 import React, { useState } from "react";
 import { View, Text, Pressable, TextInput, Modal, Alert, ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming, FadeIn, FadeOut, SlideInUp, SlideOutDown } from "react-native-reanimated";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+  FadeIn,
+  FadeOut,
+  SlideInUp,
+  SlideOutDown,
+} from "react-native-reanimated";
 import useSafetyStore from "../state/safetyStore";
 
 interface ReportModalProps {
@@ -93,7 +102,9 @@ export default function ReportModal({ visible, onClose, itemId, itemType, itemNa
 
             {/* Reason Selection */}
             <View className="mb-6">
-              <Text className="text-lg font-semibold text-text-primary mb-4">Why are you reporting this {itemType}?</Text>
+              <Text className="text-lg font-semibold text-text-primary mb-4">
+                Why are you reporting this {itemType}?
+              </Text>
 
               <View className="space-y-3">
                 {REPORT_REASONS.map((reason) => (

@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Appearance } from 'react-native';
+import { Appearance } from "react-native";
 
 export type Theme = "light" | "dark" | "system";
 
@@ -21,13 +21,13 @@ const useThemeStore = create<ThemeState>()(
 
       getSystemTheme: () => {
         const systemColorScheme = Appearance.getColorScheme();
-        return systemColorScheme === 'dark' ? 'dark' : 'light';
+        return systemColorScheme === "dark" ? "dark" : "light";
       },
 
       setTheme: (theme: Theme) => {
         set((state) => {
           let isDarkMode = state.isDarkMode;
-          
+
           if (theme === "light") {
             isDarkMode = false;
           } else if (theme === "dark") {
@@ -35,7 +35,7 @@ const useThemeStore = create<ThemeState>()(
           } else if (theme === "system") {
             // Use real system theme detection
             const systemTheme = get().getSystemTheme();
-            isDarkMode = systemTheme === 'dark';
+            isDarkMode = systemTheme === "dark";
           }
 
           return {
@@ -54,8 +54,8 @@ const useThemeStore = create<ThemeState>()(
     {
       name: "theme-storage",
       storage: createJSONStorage(() => AsyncStorage),
-    }
-  )
+    },
+  ),
 );
 
 export default useThemeStore;

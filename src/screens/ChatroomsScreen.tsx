@@ -13,12 +13,9 @@ import { useNavigation } from "@react-navigation/native";
 export default function ChatroomsScreen() {
   const navigation = useNavigation<any>();
   const { colors } = useTheme();
-  const { chatRooms, loadChatRooms, isLoading, onlineUsers, setRoomCategoryFilter, typingUsers } =
-    useChatStore();
+  const { chatRooms, loadChatRooms, isLoading, onlineUsers, setRoomCategoryFilter, typingUsers } = useChatStore();
   const { user, canAccessChat, needsSignIn } = useAuthState();
-  const [category, setCategory] = useState<"all" | "men" | "women" | "lgbtq+">(
-    user?.genderPreference || "all",
-  );
+  const [category, setCategory] = useState<"all" | "men" | "women" | "lgbtq+">(user?.genderPreference || "all");
   const [query, setQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
 
@@ -56,10 +53,7 @@ export default function ChatroomsScreen() {
     return (
       <SafeAreaView className="flex-1" style={{ backgroundColor: colors.background }}>
         <View className="flex-1 justify-center items-center px-6">
-          <View
-            className="rounded-2xl p-8 w-full max-w-sm"
-            style={{ backgroundColor: colors.surface[800] }}
-          >
+          <View className="rounded-2xl p-8 w-full max-w-sm" style={{ backgroundColor: colors.surface[800] }}>
             <View className="items-center mb-6">
               <View
                 className="w-16 h-16 rounded-full items-center justify-center mb-4"
@@ -69,10 +63,7 @@ export default function ChatroomsScreen() {
                   💬
                 </Text>
               </View>
-              <Text
-                className="text-2xl font-bold mb-2 text-center"
-                style={{ color: colors.text.primary }}
-              >
+              <Text className="text-2xl font-bold mb-2 text-center" style={{ color: colors.text.primary }}>
                 Join Chat Rooms
               </Text>
               <Text className="text-center" style={{ color: colors.text.secondary }}>
@@ -174,9 +165,7 @@ export default function ChatroomsScreen() {
           !isLoading ? (
             <View className="items-center justify-center py-20">
               <Ionicons name="chatbubbles-outline" size={48} color="#9CA3AF" />
-              <Text className="text-text-secondary text-lg font-medium mt-4">
-                No chat rooms found
-              </Text>
+              <Text className="text-text-secondary text-lg font-medium mt-4">No chat rooms found</Text>
               <Text className="text-text-muted text-center mt-2">Try adjusting your search</Text>
             </View>
           ) : null

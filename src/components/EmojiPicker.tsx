@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import { View, Text, Pressable, Modal, ScrollView, TextInput, Dimensions } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
-import { useTheme } from '../providers/ThemeProvider';
+import React, { useState } from "react";
+import { View, Text, Pressable, Modal, ScrollView, TextInput, Dimensions } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
+import { useTheme } from "../providers/ThemeProvider";
 
-const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 
 interface EmojiPickerProps {
   visible: boolean;
@@ -14,37 +14,141 @@ interface EmojiPickerProps {
 
 // Emoji categories with popular emojis
 const EMOJI_CATEGORIES = {
-  recent: ['❤️', '😂', '😮', '😢', '😡', '👍', '👎', '🔥', '💯', '✨'],
+  recent: ["❤️", "😂", "😮", "😢", "😡", "👍", "👎", "🔥", "💯", "✨"],
   smileys: [
-    '😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂', '🙂', '🙃',
-    '😉', '😊', '😇', '🥰', '😍', '🤩', '😘', '😗', '😚', '😙',
-    '😋', '😛', '😜', '🤪', '😝', '🤑', '🤗', '🤭', '🤫', '🤔',
-    '🤐', '🤨', '😐', '😑', '😶', '😏', '😒', '🙄', '😬', '🤥',
-    '😔', '😪', '🤤', '😴', '😷', '🤒', '🤕', '🤢', '🤮', '🤧',
+    "😀",
+    "😃",
+    "😄",
+    "😁",
+    "😆",
+    "😅",
+    "🤣",
+    "😂",
+    "🙂",
+    "🙃",
+    "😉",
+    "😊",
+    "😇",
+    "🥰",
+    "😍",
+    "🤩",
+    "😘",
+    "😗",
+    "😚",
+    "😙",
+    "😋",
+    "😛",
+    "😜",
+    "🤪",
+    "😝",
+    "🤑",
+    "🤗",
+    "🤭",
+    "🤫",
+    "🤔",
+    "🤐",
+    "🤨",
+    "😐",
+    "😑",
+    "😶",
+    "😏",
+    "😒",
+    "🙄",
+    "😬",
+    "🤥",
+    "😔",
+    "😪",
+    "🤤",
+    "😴",
+    "😷",
+    "🤒",
+    "🤕",
+    "🤢",
+    "🤮",
+    "🤧",
   ],
   hearts: [
-    '❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍', '🤎', '💔',
-    '❣️', '💕', '💞', '💓', '💗', '💖', '💘', '💝', '💟', '♥️',
+    "❤️",
+    "🧡",
+    "💛",
+    "💚",
+    "💙",
+    "💜",
+    "🖤",
+    "🤍",
+    "🤎",
+    "💔",
+    "❣️",
+    "💕",
+    "💞",
+    "💓",
+    "💗",
+    "💖",
+    "💘",
+    "💝",
+    "💟",
+    "♥️",
   ],
   gestures: [
-    '👍', '👎', '👌', '🤌', '🤏', '✌️', '🤞', '🤟', '🤘', '🤙',
-    '👈', '👉', '👆', '🖕', '👇', '☝️', '👋', '🤚', '🖐️', '✋',
-    '🖖', '👏', '🙌', '🤲', '🤝', '🙏', '✍️', '💪', '🦾', '🦿',
+    "👍",
+    "👎",
+    "👌",
+    "🤌",
+    "🤏",
+    "✌️",
+    "🤞",
+    "🤟",
+    "🤘",
+    "🤙",
+    "👈",
+    "👉",
+    "👆",
+    "🖕",
+    "👇",
+    "☝️",
+    "👋",
+    "🤚",
+    "🖐️",
+    "✋",
+    "🖖",
+    "👏",
+    "🙌",
+    "🤲",
+    "🤝",
+    "🙏",
+    "✍️",
+    "💪",
+    "🦾",
+    "🦿",
   ],
   objects: [
-    '🔥', '💯', '✨', '🎉', '🎊', '💥', '💫', '⭐', '🌟', '⚡',
-    '💎', '🏆', '🥇', '🥈', '🥉', '🏅', '🎖️', '🏵️', '🎗️', '🎫',
+    "🔥",
+    "💯",
+    "✨",
+    "🎉",
+    "🎊",
+    "💥",
+    "💫",
+    "⭐",
+    "🌟",
+    "⚡",
+    "💎",
+    "🏆",
+    "🥇",
+    "🥈",
+    "🥉",
+    "🏅",
+    "🎖️",
+    "🏵️",
+    "🎗️",
+    "🎫",
   ],
 };
 
-export const EmojiPicker: React.FC<EmojiPickerProps> = ({
-  visible,
-  onClose,
-  onEmojiSelect,
-}) => {
+export const EmojiPicker: React.FC<EmojiPickerProps> = ({ visible, onClose, onEmojiSelect }) => {
   const { colors } = useTheme();
-  const [selectedCategory, setSelectedCategory] = useState('recent');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState("recent");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const handleEmojiSelect = (emoji: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -59,11 +163,11 @@ export const EmojiPicker: React.FC<EmojiPickerProps> = ({
 
   const getFilteredEmojis = () => {
     const emojis = EMOJI_CATEGORIES[selectedCategory as keyof typeof EMOJI_CATEGORIES] || [];
-    
+
     if (!searchQuery) return emojis;
-    
+
     // Simple search - in a real app, you'd use a more sophisticated emoji search
-    return emojis.filter(emoji => {
+    return emojis.filter((emoji) => {
       // This is a simplified search - you could add emoji names/keywords
       return true; // For now, return all emojis when searching
     });
@@ -71,35 +175,30 @@ export const EmojiPicker: React.FC<EmojiPickerProps> = ({
 
   const getCategoryIcon = (category: string) => {
     switch (category) {
-      case 'recent': return 'time-outline';
-      case 'smileys': return 'happy-outline';
-      case 'hearts': return 'heart-outline';
-      case 'gestures': return 'hand-left-outline';
-      case 'objects': return 'star-outline';
-      default: return 'happy-outline';
+      case "recent":
+        return "time-outline";
+      case "smileys":
+        return "happy-outline";
+      case "hearts":
+        return "heart-outline";
+      case "gestures":
+        return "hand-left-outline";
+      case "objects":
+        return "star-outline";
+      default:
+        return "happy-outline";
     }
   };
 
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      presentationStyle="pageSheet"
-      onRequestClose={onClose}
-    >
-      <View 
-        className="flex-1"
-        style={{ backgroundColor: colors.background }}
-      >
+    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
+      <View className="flex-1" style={{ backgroundColor: colors.background }}>
         {/* Header */}
-        <View 
+        <View
           className="flex-row items-center justify-between p-4 border-b"
           style={{ borderBottomColor: colors.border }}
         >
-          <Text 
-            className="text-lg font-semibold"
-            style={{ color: colors.text.primary }}
-          >
+          <Text className="text-lg font-semibold" style={{ color: colors.text.primary }}>
             Choose Reaction
           </Text>
           <Pressable onPress={onClose}>
@@ -109,10 +208,7 @@ export const EmojiPicker: React.FC<EmojiPickerProps> = ({
 
         {/* Search Bar */}
         <View className="p-4">
-          <View 
-            className="flex-row items-center px-3 py-2 rounded-lg"
-            style={{ backgroundColor: colors.surface[700] }}
-          >
+          <View className="flex-row items-center px-3 py-2 rounded-lg" style={{ backgroundColor: colors.surface[700] }}>
             <Ionicons name="search" size={20} color={colors.text.muted} />
             <TextInput
               className="flex-1 ml-2 text-base"
@@ -126,10 +222,7 @@ export const EmojiPicker: React.FC<EmojiPickerProps> = ({
         </View>
 
         {/* Category Tabs */}
-        <View 
-          className="flex-row px-4 pb-2 border-b"
-          style={{ borderBottomColor: colors.border }}
-        >
+        <View className="flex-row px-4 pb-2 border-b" style={{ borderBottomColor: colors.border }}>
           {Object.keys(EMOJI_CATEGORIES).map((category) => (
             <Pressable
               key={category}

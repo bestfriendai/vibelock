@@ -1,6 +1,14 @@
 import React, { useEffect } from "react";
 import { Pressable, Text, PressableProps } from "react-native";
-import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming, withRepeat, Easing, runOnJS } from "react-native-reanimated";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+  withRepeat,
+  Easing,
+  runOnJS,
+} from "react-native-reanimated";
 import { cn } from "../utils/cn";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -39,7 +47,7 @@ export default function AnimatedButton({
           easing: Easing.linear,
         }),
         -1,
-        false
+        false,
       );
     } else {
       rotation.value = 0;

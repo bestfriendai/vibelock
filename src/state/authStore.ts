@@ -2,10 +2,10 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Alert } from "react-native";
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
 import { User } from "../types";
 import { supabaseAuth, supabaseUsers } from "../services/supabase";
-import { AppError, ErrorType, parseSupabaseError } from '../utils/errorHandling';
+import { AppError, ErrorType, parseSupabaseError } from "../utils/errorHandling";
 
 interface AuthState {
   user: User | null;
@@ -33,7 +33,7 @@ interface AuthActions {
     city: string;
     state: string;
     coordinates?: { latitude: number; longitude: number };
-    type?: 'city' | 'college';
+    type?: "city" | "college";
     fullName?: string;
     institutionType?: string;
   }) => Promise<void>;
@@ -71,7 +71,7 @@ const useAuthStore = create<AuthStore>()(
           console.log("🔄 Auth state updated:", {
             hasUser: !!user,
             isAuthenticated: !!user,
-            userId: user?.id?.slice(-4)
+            userId: user?.id?.slice(-4),
           });
         }
       },
@@ -153,11 +153,7 @@ const useAuthStore = create<AuthStore>()(
           }
 
           // Show specific error dialog
-          Alert.alert(
-            "Sign In Failed",
-            errorMessage,
-            [{ text: "OK", style: "default" }]
-          );
+          Alert.alert("Sign In Failed", errorMessage, [{ text: "OK", style: "default" }]);
 
           set((state) => ({
             ...state,
@@ -223,11 +219,7 @@ const useAuthStore = create<AuthStore>()(
           }
 
           // Show specific error dialog
-          Alert.alert(
-            "Registration Failed",
-            errorMessage,
-            [{ text: "OK", style: "default" }]
-          );
+          Alert.alert("Registration Failed", errorMessage, [{ text: "OK", style: "default" }]);
 
           set((state) => ({
             ...state,
@@ -336,7 +328,7 @@ const useAuthStore = create<AuthStore>()(
                 console.warn(`Session fetch attempt ${4 - retries} failed:`, error);
                 retries--;
                 if (retries > 0) {
-                  await new Promise(resolve => setTimeout(resolve, 1000));
+                  await new Promise((resolve) => setTimeout(resolve, 1000));
                 }
               }
             }
@@ -354,7 +346,7 @@ const useAuthStore = create<AuthStore>()(
                   console.warn(`Profile fetch attempt ${4 - retries} failed:`, error);
                   retries--;
                   if (retries > 0) {
-                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    await new Promise((resolve) => setTimeout(resolve, 1000));
                   }
                 }
               }
@@ -407,7 +399,9 @@ const useAuthStore = create<AuthStore>()(
         initializeSession();
 
         // Set up the auth state change listener with proper synchronization
-        const { data: { subscription } } = supabaseAuth.onAuthStateChanged(async (supabaseUser) => {
+        const {
+          data: { subscription },
+        } = supabaseAuth.onAuthStateChanged(async (supabaseUser) => {
           // Prevent concurrent auth state processing
           if (isProcessingAuthChange || isInitializing) {
             console.log("🔄 Auth change ignored - already processing");
@@ -444,9 +438,9 @@ const useAuthStore = create<AuthStore>()(
                   const appError = new AppError(
                     "User profile not found",
                     ErrorType.AUTH,
-                    'PROFILE_NOT_FOUND',
+                    "PROFILE_NOT_FOUND",
                     undefined,
-                    false
+                    false,
                   );
                   set((state) => ({
                     ...state,

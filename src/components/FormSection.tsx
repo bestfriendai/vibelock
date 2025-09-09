@@ -44,14 +44,20 @@ export default function FormSection({
     <View
       className={`mb-6 ${className}`}
       accessible={true}
-      accessibilityLabel={`${title} section${required ? ', required' : ''}`}
+      accessibilityLabel={`${title} section${required ? ", required" : ""}`}
     >
       {/* Section Header */}
       <View className="mb-6">
         <View className="flex-row items-center justify-between">
           <View className="flex-row items-center">
-            <Text className="text-xl font-bold" style={{ color: colors.text.primary }}>{title}</Text>
-            {required && <Text className="text-xl font-bold ml-1" style={{ color: colors.brand.red }}>*</Text>}
+            <Text className="text-xl font-bold" style={{ color: colors.text.primary }}>
+              {title}
+            </Text>
+            {required && (
+              <Text className="text-xl font-bold ml-1" style={{ color: colors.brand.red }}>
+                *
+              </Text>
+            )}
           </View>
 
           {/* Validation Icon */}
@@ -60,7 +66,11 @@ export default function FormSection({
           )}
         </View>
 
-        {subtitle && <Text className="text-base mt-1 leading-5" style={{ color: getValidationColor() }}>{subtitle}</Text>}
+        {subtitle && (
+          <Text className="text-base mt-1 leading-5" style={{ color: getValidationColor() }}>
+            {subtitle}
+          </Text>
+        )}
       </View>
 
       {/* Section Content */}
@@ -71,7 +81,9 @@ export default function FormSection({
         <View className="mt-3 p-3 border rounded-xl" style={{ backgroundColor: "#EF444410", borderColor: "#EF444420" }}>
           <View className="flex-row items-center">
             <Ionicons name="alert-circle" size={16} color="#EF4444" />
-            <Text className="text-sm font-medium ml-2" style={{ color: "#EF4444" }}>{error}</Text>
+            <Text className="text-sm font-medium ml-2" style={{ color: "#EF4444" }}>
+              {error}
+            </Text>
           </View>
         </View>
       )}
@@ -81,7 +93,9 @@ export default function FormSection({
         <View className="mt-3 p-3 border rounded-xl" style={{ backgroundColor: "#22C55E10", borderColor: "#22C55E20" }}>
           <View className="flex-row items-center">
             <Ionicons name="checkmark-circle" size={16} color="#22C55E" />
-            <Text className="text-sm font-medium ml-2" style={{ color: "#22C55E" }}>{success}</Text>
+            <Text className="text-sm font-medium ml-2" style={{ color: "#22C55E" }}>
+              {success}
+            </Text>
           </View>
         </View>
       )}

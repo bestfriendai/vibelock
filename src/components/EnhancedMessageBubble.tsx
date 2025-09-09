@@ -214,11 +214,7 @@ export default function EnhancedMessageBubble({
       case "document":
         return (
           <View className="flex-row items-center p-2">
-            <Ionicons
-              name="document"
-              size={24}
-              color={isOwn ? "#FFFFFF" : colors.text.primary}
-            />
+            <Ionicons name="document" size={24} color={isOwn ? "#FFFFFF" : colors.text.primary} />
             <View className="ml-2 flex-1">
               <Text
                 className="text-sm font-medium"
@@ -314,9 +310,9 @@ export default function EnhancedMessageBubble({
           {message.reactions && message.reactions.length > 0 && (
             <MessageReactions
               messageId={message.id}
-              reactions={message.reactions.map(r => ({
+              reactions={message.reactions.map((r) => ({
                 ...r,
-                hasReacted: false // TODO: Implement proper user reaction tracking
+                hasReacted: false, // TODO: Implement proper user reaction tracking
               }))}
               onReact={onReact || (() => {})}
               onShowReactionPicker={onShowReactionPicker || (() => {})}

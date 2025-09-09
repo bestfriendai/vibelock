@@ -87,10 +87,7 @@ export default function ImageCarousel({
           >
             {item.type === "video" ? (
               // Show video placeholder
-              <View
-                style={{ width: "100%", height }}
-                className="bg-surface-700 items-center justify-center"
-              >
+              <View style={{ width: "100%", height }} className="bg-surface-700 items-center justify-center">
                 <Ionicons name="videocam" size={60} color="#6B7280" />
               </View>
             ) : (
@@ -113,9 +110,7 @@ export default function ImageCarousel({
                 {/* Video duration badge */}
                 {item.duration && (
                   <View className="absolute bottom-4 right-4 bg-black/70 px-2 py-1 rounded">
-                    <Text className="text-white text-sm font-medium">
-                      {formatDuration(item.duration)}
-                    </Text>
+                    <Text className="text-white text-sm font-medium">{formatDuration(item.duration)}</Text>
                   </View>
                 )}
               </View>

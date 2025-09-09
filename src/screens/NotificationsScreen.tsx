@@ -8,15 +8,8 @@ import useAuthStore from "../state/authStore";
 
 export default function NotificationsScreen() {
   const { user } = useAuthStore();
-  const {
-    notifications,
-    unreadCount,
-    isLoading,
-    initialize,
-    loadNotifications,
-    markAsRead,
-    markAllAsRead,
-  } = useNotificationStore();
+  const { notifications, unreadCount, isLoading, initialize, loadNotifications, markAsRead, markAllAsRead } =
+    useNotificationStore();
 
   const [refreshing, setRefreshing] = useState(false);
 
@@ -28,7 +21,7 @@ export default function NotificationsScreen() {
         await loadNotifications(user.id);
       }
     };
-    
+
     initializeAndLoad();
   }, [initialize, user?.id, loadNotifications]);
 
@@ -74,7 +67,9 @@ export default function NotificationsScreen() {
               <View className="flex-1">
                 <Text className="text-text-primary font-medium">{item.title}</Text>
                 {!!item.body && (
-                  <Text className="text-text-secondary mt-1" numberOfLines={2}>{item.body}</Text>
+                  <Text className="text-text-secondary mt-1" numberOfLines={2}>
+                    {item.body}
+                  </Text>
                 )}
                 <Text className="text-text-muted text-xs mt-1">{item.createdAt.toLocaleString()}</Text>
               </View>
@@ -99,4 +94,3 @@ export default function NotificationsScreen() {
     </SafeAreaView>
   );
 }
-

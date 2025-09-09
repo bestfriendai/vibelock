@@ -1,12 +1,19 @@
-import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { notificationService, NotificationData } from '../services/notificationService';
+import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { notificationService, NotificationData } from "../services/notificationService";
 
 export interface Notification {
   id: string;
   userId: string;
-  type: 'new_review' | 'new_comment' | 'new_message' | 'new_like' | 'review_approved' | 'review_rejected' | 'safety_alert';
+  type:
+    | "new_review"
+    | "new_comment"
+    | "new_message"
+    | "new_like"
+    | "review_approved"
+    | "review_rejected"
+    | "safety_alert";
   title: string;
   body: string;
   data?: Record<string, any>;
@@ -26,16 +33,16 @@ interface NotificationState {
 interface NotificationActions {
   // Initialization
   initialize: () => Promise<void>;
-  
+
   // Notification management
   loadNotifications: (userId: string) => Promise<void>;
   addNotification: (notification: Notification) => void;
   markAsRead: (notificationId: string) => Promise<void>;
   markAllAsRead: (userId: string) => Promise<void>;
-  
+
   // Local notifications
   sendLocalNotification: (notification: NotificationData) => Promise<void>;
-  
+
   // State management
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
@@ -59,35 +66,43 @@ const useNotificationStore = create<NotificationStore>()(
       initialize: async () => {
         try {
           if (get().isInitialized) return;
-          
+
           set({ isLoading: true, error: null });
-          
+
           // Initialize the notification service
           await notificationService.initialize();
-          
+
           // Set up notification listeners
           notificationService.addNotificationReceivedListener((notification) => {
-            console.log('Notification received:', notification);
+            console.log("Notification received:", notification);
             // Handle foreground notifications
             const notificationData: NotificationData = {
-              type: (notification.request.content.data?.type as 'new_review' | 'new_comment' | 'new_message' | 'new_like' | 'review_approved' | 'review_rejected' | 'safety_alert') || 'new_message',
-              title: notification.request.content.title || 'New Notification',
-              body: notification.request.content.body || '',
+              type:
+                (notification.request.content.data?.type as
+                  | "new_review"
+                  | "new_comment"
+                  | "new_message"
+                  | "new_like"
+                  | "review_approved"
+                  | "review_rejected"
+                  | "safety_alert") || "new_message",
+              title: notification.request.content.title || "New Notification",
+              body: notification.request.content.body || "",
               data: notification.request.content.data,
             };
-            
+
             // You could show a custom in-app notification here
           });
 
           notificationService.addNotificationResponseListener((response) => {
-            console.log('Notification response:', response);
+            console.log("Notification response:", response);
             // Handle notification tap
             const data = response.notification.request.content.data;
-            
+
             // Navigate to appropriate screen based on notification type
-            if (data?.type === 'new_review' && data?.reviewId) {
+            if (data?.type === "new_review" && data?.reviewId) {
               // Navigate to review detail
-            } else if (data?.type === 'new_message' && data?.chatRoomId) {
+            } else if (data?.type === "new_message" && data?.chatRoomId) {
               // Navigate to chat room
             }
           });
@@ -95,7 +110,7 @@ const useNotificationStore = create<NotificationStore>()(
           set({ isInitialized: true, isLoading: false });
         } catch (error) {
           set({
-            error: error instanceof Error ? error.message : 'Failed to initialize notifications',
+            error: error instanceof Error ? error.message : "Failed to initialize notifications",
             isLoading: false,
           });
         }
@@ -127,7 +142,7 @@ const useNotificationStore = create<NotificationStore>()(
           });
         } catch (error) {
           set({
-            error: error instanceof Error ? error.message : 'Failed to load notifications',
+            error: error instanceof Error ? error.message : "Failed to load notifications",
             isLoading: false,
           });
         }
@@ -146,13 +161,13 @@ const useNotificationStore = create<NotificationStore>()(
 
           set((state) => ({
             notifications: state.notifications.map((notif) =>
-              notif.id === notificationId ? { ...notif, isRead: true } : notif
+              notif.id === notificationId ? { ...notif, isRead: true } : notif,
             ),
             unreadCount: Math.max(0, state.unreadCount - 1),
           }));
         } catch (error) {
           set({
-            error: error instanceof Error ? error.message : 'Failed to mark notification as read',
+            error: error instanceof Error ? error.message : "Failed to mark notification as read",
           });
         }
       },
@@ -167,7 +182,7 @@ const useNotificationStore = create<NotificationStore>()(
           }));
         } catch (error) {
           set({
-            error: error instanceof Error ? error.message : 'Failed to mark all notifications as read',
+            error: error instanceof Error ? error.message : "Failed to mark all notifications as read",
           });
         }
       },
@@ -177,7 +192,7 @@ const useNotificationStore = create<NotificationStore>()(
           await notificationService.sendLocalNotification(notification);
         } catch (error) {
           set({
-            error: error instanceof Error ? error.message : 'Failed to send local notification',
+            error: error instanceof Error ? error.message : "Failed to send local notification",
           });
         }
       },
@@ -187,7 +202,7 @@ const useNotificationStore = create<NotificationStore>()(
           const unreadCount = await notificationService.getUnreadCount(userId);
           set({ unreadCount });
         } catch (error) {
-          console.error('Failed to update unread count:', error);
+          console.error("Failed to update unread count:", error);
         }
       },
 
@@ -204,15 +219,15 @@ const useNotificationStore = create<NotificationStore>()(
       },
     }),
     {
-      name: 'notification-storage',
+      name: "notification-storage",
       storage: createJSONStorage(() => AsyncStorage),
       // Only persist notifications and unread count, not loading states
       partialize: (state) => ({
         notifications: state.notifications,
         unreadCount: state.unreadCount,
       }),
-    }
-  )
+    },
+  ),
 );
 
 export default useNotificationStore;

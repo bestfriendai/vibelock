@@ -66,7 +66,7 @@ const useSubscriptionStore = create<SubscriptionState>()(
 
       initializeRevenueCat: async (userId?: string) => {
         if (!canUseRevenueCat()) {
-          console.log('RevenueCat not available in Expo Go - using mock implementation');
+          console.log("RevenueCat not available in Expo Go - using mock implementation");
           // Mock successful initialization
           set({ isLoading: false });
           return;
@@ -76,8 +76,8 @@ const useSubscriptionStore = create<SubscriptionState>()(
           set({ isLoading: true });
 
           // Dynamic import for development builds only
-          const Purchases = (await import('react-native-purchases')).default;
-          const { Platform } = await import('react-native');
+          const Purchases = (await import("react-native-purchases")).default;
+          const { Platform } = await import("react-native");
 
           const apiKey = Platform.select({
             ios: process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY,
@@ -85,7 +85,7 @@ const useSubscriptionStore = create<SubscriptionState>()(
           });
 
           if (!apiKey) {
-            throw new Error('RevenueCat API key not found');
+            throw new Error("RevenueCat API key not found");
           }
 
           Purchases.setDebugLogsEnabled(__DEV__);
@@ -97,17 +97,17 @@ const useSubscriptionStore = create<SubscriptionState>()(
 
           if (userId) {
             Purchases.setAttributes({
-              'user_id': userId,
-              'created_at': new Date().toISOString(),
+              user_id: userId,
+              created_at: new Date().toISOString(),
             });
           }
 
           await get().checkSubscriptionStatus();
           await get().loadOfferings();
 
-          console.log('RevenueCat initialized successfully');
+          console.log("RevenueCat initialized successfully");
         } catch (error) {
-          console.error('RevenueCat initialization failed:', error);
+          console.error("RevenueCat initialization failed:", error);
           set({ isLoading: false });
         }
       },
@@ -120,21 +120,19 @@ const useSubscriptionStore = create<SubscriptionState>()(
         }
 
         try {
-          const Purchases = (await import('react-native-purchases')).default;
+          const Purchases = (await import("react-native-purchases")).default;
           const customerInfo = await Purchases.getCustomerInfo();
           get().updateCustomerInfo(customerInfo);
         } catch (error) {
-          console.error('Failed to check subscription status:', error);
+          console.error("Failed to check subscription status:", error);
           set({ isLoading: false });
         }
       },
 
       updateCustomerInfo: (info: CustomerInfo) => {
-        const isPremium = 'premium' in info.entitlements.active;
-        const isPro = 'pro' in info.entitlements.active;
-        const activeSubscription = info.entitlements.active['premium']
-          || info.entitlements.active['pro']
-          || null;
+        const isPremium = "premium" in info.entitlements.active;
+        const isPro = "pro" in info.entitlements.active;
+        const activeSubscription = info.entitlements.active["premium"] || info.entitlements.active["pro"] || null;
 
         set({
           customerInfo: info,
@@ -150,26 +148,26 @@ const useSubscriptionStore = create<SubscriptionState>()(
           // Mock offerings for Expo Go
           const mockOfferings: PurchasesOffering[] = [
             {
-              identifier: 'default',
+              identifier: "default",
               availablePackages: [
                 {
-                  identifier: 'monthly',
-                  packageType: 'MONTHLY',
+                  identifier: "monthly",
+                  packageType: "MONTHLY",
                   storeProduct: {
-                    title: 'Monthly Premium',
-                    description: 'Premium features monthly',
-                    priceString: '$4.99',
-                    price: '4.99',
+                    title: "Monthly Premium",
+                    description: "Premium features monthly",
+                    priceString: "$4.99",
+                    price: "4.99",
                   },
                 },
                 {
-                  identifier: 'annual',
-                  packageType: 'ANNUAL',
+                  identifier: "annual",
+                  packageType: "ANNUAL",
                   storeProduct: {
-                    title: 'Annual Premium',
-                    description: 'Premium features yearly',
-                    priceString: '$29.99',
-                    price: '29.99',
+                    title: "Annual Premium",
+                    description: "Premium features yearly",
+                    priceString: "$29.99",
+                    price: "29.99",
                   },
                 },
               ],
@@ -180,11 +178,11 @@ const useSubscriptionStore = create<SubscriptionState>()(
         }
 
         try {
-          const Purchases = (await import('react-native-purchases')).default;
+          const Purchases = (await import("react-native-purchases")).default;
           const offerings = await Purchases.getOfferings();
           set({ offerings: Object.values(offerings.all) });
         } catch (error) {
-          console.error('Failed to load offerings:', error);
+          console.error("Failed to load offerings:", error);
         }
       },
 
@@ -192,7 +190,7 @@ const useSubscriptionStore = create<SubscriptionState>()(
         if (!canUseRevenueCat()) {
           // Mock purchase for Expo Go - simulate success
           set({ isLoading: true });
-          await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate network delay
+          await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulate network delay
           set({ isPremium: true, isLoading: false });
 
           const mockCustomerInfo: CustomerInfo = {
@@ -205,14 +203,14 @@ const useSubscriptionStore = create<SubscriptionState>()(
 
         try {
           set({ isLoading: true });
-          const Purchases = (await import('react-native-purchases')).default;
+          const Purchases = (await import("react-native-purchases")).default;
           const { customerInfo } = await Purchases.purchasePackage(packageToPurchase);
           get().updateCustomerInfo(customerInfo);
           return customerInfo;
         } catch (error: any) {
           set({ isLoading: false });
           if (!error.userCancelled) {
-            console.error('Purchase error:', error);
+            console.error("Purchase error:", error);
             throw error;
           }
           return null;
@@ -230,13 +228,13 @@ const useSubscriptionStore = create<SubscriptionState>()(
 
         try {
           set({ isLoading: true });
-          const Purchases = (await import('react-native-purchases')).default;
+          const Purchases = (await import("react-native-purchases")).default;
           const customerInfo = await Purchases.restorePurchases();
           get().updateCustomerInfo(customerInfo);
           return customerInfo;
         } catch (error) {
           set({ isLoading: false });
-          console.error('Restore purchases error:', error);
+          console.error("Restore purchases error:", error);
           throw error;
         }
       },
@@ -253,4 +251,3 @@ const useSubscriptionStore = create<SubscriptionState>()(
 );
 
 export default useSubscriptionStore;
-

@@ -50,10 +50,7 @@ export default function CommentInput({
             <Text className="text-text-secondary text-base">Sign in to join the conversation</Text>
             <Text className="text-text-muted text-sm mt-1">Share your thoughts and connect with others</Text>
           </View>
-          <Pressable
-            onPress={onSignInPress}
-            className="bg-brand-red rounded-lg px-4 py-2 ml-3"
-          >
+          <Pressable onPress={onSignInPress} className="bg-brand-red rounded-lg px-4 py-2 ml-3">
             <Text className="text-black font-semibold text-sm">Sign In</Text>
           </Pressable>
         </View>

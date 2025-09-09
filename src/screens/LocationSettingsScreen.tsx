@@ -11,7 +11,7 @@ interface Location {
   city: string;
   state: string;
   fullName: string;
-  type?: 'city' | 'college';
+  type?: "city" | "college";
   institutionType?: string;
   coordinates?: {
     latitude: number;
@@ -34,7 +34,9 @@ export default function LocationSettingsScreen() {
     coordinates: user?.location.coordinates,
   };
 
-  const handleLocationChange = async (location: Location & { coordinates?: { latitude: number; longitude: number } }) => {
+  const handleLocationChange = async (
+    location: Location & { coordinates?: { latitude: number; longitude: number } },
+  ) => {
     setIsUpdatingLocation(true);
     try {
       await updateUserLocation({
@@ -45,21 +47,17 @@ export default function LocationSettingsScreen() {
         fullName: location.fullName,
         institutionType: location.institutionType,
       });
-      
+
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Alert.alert(
         "Location Updated",
         `Your location has been updated to ${location.fullName}${location.coordinates ? " with GPS coordinates" : ""}.`,
-        [{ text: "OK" }]
+        [{ text: "OK" }],
       );
     } catch (error) {
       console.error("Failed to update location:", error);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert(
-        "Update Failed",
-        "Failed to update your location. Please try again.",
-        [{ text: "OK" }]
-      );
+      Alert.alert("Update Failed", "Failed to update your location. Please try again.", [{ text: "OK" }]);
     } finally {
       setIsUpdatingLocation(false);
     }
@@ -73,7 +71,7 @@ export default function LocationSettingsScreen() {
         Alert.alert(
           "Location Access Denied",
           "Please enable location services and grant permission to use your current location.",
-          [{ text: "OK" }]
+          [{ text: "OK" }],
         );
         return;
       }
@@ -86,22 +84,18 @@ export default function LocationSettingsScreen() {
           fullName: `${locationData.city}, ${locationData.state}`,
           coordinates,
         };
-        
+
         await handleLocationChange(location);
       } else {
-        Alert.alert(
-          "Location Error",
-          "Unable to determine your location. Please try selecting manually.",
-          [{ text: "OK" }]
-        );
+        Alert.alert("Location Error", "Unable to determine your location. Please try selecting manually.", [
+          { text: "OK" },
+        ]);
       }
     } catch (error) {
       console.error("GPS location error:", error);
-      Alert.alert(
-        "Location Error",
-        "Failed to get your current location. Please try again or select manually.",
-        [{ text: "OK" }]
-      );
+      Alert.alert("Location Error", "Failed to get your current location. Please try again or select manually.", [
+        { text: "OK" },
+      ]);
     } finally {
       setIsUsingGPS(false);
     }
@@ -123,9 +117,7 @@ export default function LocationSettingsScreen() {
           <Text className="text-text-primary font-semibold text-lg mb-3">Current Location</Text>
           <View className="flex-row items-center">
             <Ionicons name="location" size={20} color="#9CA3AF" />
-            <Text className="text-text-secondary ml-2 flex-1">
-              {currentLocation.fullName}
-            </Text>
+            <Text className="text-text-secondary ml-2 flex-1">{currentLocation.fullName}</Text>
             {user?.location.coordinates && (
               <View className="bg-green-500/20 px-2 py-1 rounded">
                 <Text className="text-green-400 text-xs font-medium">GPS</Text>
@@ -134,7 +126,8 @@ export default function LocationSettingsScreen() {
           </View>
           {user?.location.coordinates && (
             <Text className="text-text-tertiary text-sm mt-2">
-              Coordinates: {user.location.coordinates.latitude.toFixed(4)}, {user.location.coordinates.longitude.toFixed(4)}
+              Coordinates: {user.location.coordinates.latitude.toFixed(4)},{" "}
+              {user.location.coordinates.longitude.toFixed(4)}
             </Text>
           )}
         </View>
@@ -158,10 +151,7 @@ export default function LocationSettingsScreen() {
         {/* Manual Location Selection */}
         <View className="bg-surface-800 rounded-lg p-5 mb-6">
           <Text className="text-text-primary font-semibold text-lg mb-4">Select Location</Text>
-          <LocationSelector
-            currentLocation={currentLocation}
-            onLocationChange={handleLocationChange}
-          />
+          <LocationSelector currentLocation={currentLocation} onLocationChange={handleLocationChange} />
         </View>
 
         {/* Info */}
@@ -170,8 +160,8 @@ export default function LocationSettingsScreen() {
             <Ionicons name="information-circle-outline" size={20} color="#9CA3AF" />
             <View className="ml-3 flex-1">
               <Text className="text-text-secondary text-sm">
-                Your location is used to show reviews and chat rooms in your area. 
-                Using GPS provides more accurate distance filtering.
+                Your location is used to show reviews and chat rooms in your area. Using GPS provides more accurate
+                distance filtering.
               </Text>
             </View>
           </View>

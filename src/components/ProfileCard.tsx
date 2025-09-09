@@ -110,13 +110,13 @@ export default function ProfileCard({ review, cardHeight = 280, onReport, onLike
     shareScale.value = withSpring(0.8, { duration: 100 }, () => {
       shareScale.value = withSpring(1, { duration: 100 });
     });
-    
+
     try {
       await shareService.shareReview(review);
     } catch (error) {
       // Log the error for diagnostics
-      console.error('Failed to share review:', error);
-      
+      console.error("Failed to share review:", error);
+
       // You could show a toast or alert here if you have a toast service
       // For now, we'll just ensure the animation completes even on error
     }

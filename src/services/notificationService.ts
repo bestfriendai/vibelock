@@ -254,14 +254,9 @@ class NotificationService {
       console.error("Failed to get push token:", error);
 
       // Retry mechanism for transient failures
-      if (
-        this.retryAttempts < this.maxRetries &&
-        !(error instanceof AppError && error.type === ErrorType.SERVER)
-      ) {
+      if (this.retryAttempts < this.maxRetries && !(error instanceof AppError && error.type === ErrorType.SERVER)) {
         this.retryAttempts++;
-        console.log(
-          `Retrying push token retrieval (attempt ${this.retryAttempts}/${this.maxRetries})`,
-        );
+        console.log(`Retrying push token retrieval (attempt ${this.retryAttempts}/${this.maxRetries})`);
 
         await new Promise((resolve) => setTimeout(resolve, this.retryDelay * this.retryAttempts));
         return this.getPushToken();
@@ -283,9 +278,7 @@ class NotificationService {
    */
   private async registerPushToken(token: string): Promise<void> {
     try {
-      const { supabaseUser } = await import("../utils/authUtils").then(
-        (m) => m.getAuthenticatedUser(),
-      );
+      const { supabaseUser } = await import("../utils/authUtils").then((m) => m.getAuthenticatedUser());
       if (!supabaseUser) {
         console.warn("User not authenticated, cannot register push token");
         return;
@@ -461,10 +454,7 @@ class NotificationService {
    */
   async markAsRead(notificationId: string): Promise<void> {
     try {
-      const { error } = await supabase
-        .from("notifications")
-        .update({ is_read: true })
-        .eq("id", notificationId);
+      const { error } = await supabase.from("notifications").update({ is_read: true }).eq("id", notificationId);
 
       if (error) {
         console.error("Failed to mark notification as read:", error);
@@ -590,9 +580,7 @@ class NotificationService {
 
   async getChatRoomSubscription(roomId: string): Promise<boolean> {
     try {
-      const { supabaseUser } = await import("../utils/authUtils").then(
-        (m) => m.getAuthenticatedUser(),
-      );
+      const { supabaseUser } = await import("../utils/authUtils").then((m) => m.getAuthenticatedUser());
       if (!supabaseUser) return false;
 
       const { data, error } = await supabase
@@ -616,9 +604,7 @@ class NotificationService {
 
   async toggleChatRoomSubscription(roomId: string): Promise<void> {
     try {
-      const { supabaseUser } = await import("../utils/authUtils").then(
-        (m) => m.getAuthenticatedUser(),
-      );
+      const { supabaseUser } = await import("../utils/authUtils").then((m) => m.getAuthenticatedUser());
       if (!supabaseUser) return;
 
       const currentSubscription = await this.getChatRoomSubscription(roomId);
@@ -631,9 +617,7 @@ class NotificationService {
   /**
    * Listen for notification responses
    */
-  addNotificationResponseListener(
-    listener: (response: Notifications.NotificationResponse) => void,
-  ) {
+  addNotificationResponseListener(listener: (response: Notifications.NotificationResponse) => void) {
     const subscription = Notifications.addNotificationResponseReceivedListener(listener);
     this.notificationListeners.push(subscription);
     return subscription;

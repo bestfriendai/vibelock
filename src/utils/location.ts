@@ -9,7 +9,7 @@ export interface Coordinates {
 export interface LocationData {
   city: string;
   state: string;
-  type?: 'city' | 'college';
+  type?: "city" | "college";
   institutionType?: string;
   coordinates?: Coordinates;
 }
@@ -56,7 +56,7 @@ export function geocodeLocation(city: string, state: string): Coordinates {
     "bethesda,md": { latitude: 38.9847, longitude: -77.12 },
     "rockville,md": { latitude: 39.084, longitude: -77.1528 },
     "fairfax,va": { latitude: 38.8462, longitude: -77.3064 },
-    "oxon hill,md": { latitude: 38.8020, longitude: -76.9730 },
+    "oxon hill,md": { latitude: 38.802, longitude: -76.973 },
     "silver spring,md": { latitude: 38.9906, longitude: -77.0261 },
     "college park,md": { latitude: 38.9807, longitude: -76.9369 },
     "hyattsville,md": { latitude: 38.9559, longitude: -76.9456 },
@@ -246,7 +246,9 @@ export async function filterReviewsByDistanceAsync<T extends { reviewedPersonLoc
   }
   if (!userCoords) {
     // If we cannot geocode user location, return all reviews since server-side filtering should have pre-filtered by city/state
-    console.warn("filterReviewsByDistanceAsync: missing user coordinates; returning server-filtered results without distance filtering");
+    console.warn(
+      "filterReviewsByDistanceAsync: missing user coordinates; returning server-filtered results without distance filtering",
+    );
     return reviews;
   }
 

@@ -1,5 +1,5 @@
-import { Platform } from 'react-native';
-import * as FileSystem from 'expo-file-system';
+import { Platform } from "react-native";
+import * as FileSystem from "expo-file-system";
 
 /**
  * Format video duration from seconds to MM:SS format
@@ -21,9 +21,9 @@ export function formatVideoDurationFromMs(milliseconds: number): string {
  * Check if a URI is a video file based on extension
  */
 export function isVideoFile(uri: string): boolean {
-  const videoExtensions = ['.mp4', '.mov', '.avi', '.mkv', '.webm', '.m4v'];
+  const videoExtensions = [".mp4", ".mov", ".avi", ".mkv", ".webm", ".m4v"];
   const lowerUri = uri.toLowerCase();
-  return videoExtensions.some(ext => lowerUri.includes(ext));
+  return videoExtensions.some((ext) => lowerUri.includes(ext));
 }
 
 /**
@@ -34,7 +34,7 @@ export async function getVideoFileSize(uri: string): Promise<number | null> {
     const fileInfo = await FileSystem.getInfoAsync(uri);
     return fileInfo.exists ? fileInfo.size || null : null;
   } catch (error) {
-    console.error('Failed to get video file size:', error);
+    console.error("Failed to get video file size:", error);
     return null;
   }
 }
@@ -43,13 +43,13 @@ export async function getVideoFileSize(uri: string): Promise<number | null> {
  * Format file size to human readable format
  */
 export function formatFileSize(bytes: number): string {
-  if (bytes === 0) return '0 Bytes';
-  
+  if (bytes === 0) return "0 Bytes";
+
   const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const sizes = ["Bytes", "KB", "MB", "GB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
 }
 
 /**
@@ -63,23 +63,23 @@ export function isVideoDurationValid(duration: number, maxDurationSeconds: numbe
  * Get video MIME type based on file extension
  */
 export function getVideoMimeType(uri: string): string {
-  const extension = uri.toLowerCase().split('.').pop();
-  
+  const extension = uri.toLowerCase().split(".").pop();
+
   switch (extension) {
-    case 'mp4':
-      return 'video/mp4';
-    case 'mov':
-      return 'video/quicktime';
-    case 'avi':
-      return 'video/x-msvideo';
-    case 'mkv':
-      return 'video/x-matroska';
-    case 'webm':
-      return 'video/webm';
-    case 'm4v':
-      return 'video/x-m4v';
+    case "mp4":
+      return "video/mp4";
+    case "mov":
+      return "video/quicktime";
+    case "avi":
+      return "video/x-msvideo";
+    case "mkv":
+      return "video/x-matroska";
+    case "webm":
+      return "video/webm";
+    case "m4v":
+      return "video/x-m4v";
     default:
-      return 'video/mp4'; // Default fallback
+      return "video/mp4"; // Default fallback
   }
 }
 
@@ -87,13 +87,16 @@ export function getVideoMimeType(uri: string): string {
  * Check if video thumbnails are supported on current platform
  */
 export function areVideoThumbnailsSupported(): boolean {
-  return Platform.OS === 'ios' || Platform.OS === 'android';
+  return Platform.OS === "ios" || Platform.OS === "android";
 }
 
 /**
  * Validate video file before processing
  */
-export async function validateVideoFile(uri: string, maxSizeMB: number = 50): Promise<{
+export async function validateVideoFile(
+  uri: string,
+  maxSizeMB: number = 50,
+): Promise<{
   isValid: boolean;
   error?: string;
 }> {
@@ -101,27 +104,27 @@ export async function validateVideoFile(uri: string, maxSizeMB: number = 50): Pr
     // Check if file exists
     const fileInfo = await FileSystem.getInfoAsync(uri);
     if (!fileInfo.exists) {
-      return { isValid: false, error: 'Video file does not exist' };
+      return { isValid: false, error: "Video file does not exist" };
     }
 
     // Check file size
     if (fileInfo.size && fileInfo.size > maxSizeMB * 1024 * 1024) {
-      return { 
-        isValid: false, 
-        error: `Video file is too large. Maximum size is ${maxSizeMB}MB` 
+      return {
+        isValid: false,
+        error: `Video file is too large. Maximum size is ${maxSizeMB}MB`,
       };
     }
 
     // Check if it's a video file
     if (!isVideoFile(uri)) {
-      return { isValid: false, error: 'File is not a supported video format' };
+      return { isValid: false, error: "File is not a supported video format" };
     }
 
     return { isValid: true };
   } catch (error) {
-    return { 
-      isValid: false, 
-      error: error instanceof Error ? error.message : 'Unknown validation error' 
+    return {
+      isValid: false,
+      error: error instanceof Error ? error.message : "Unknown validation error",
     };
   }
 }
@@ -129,8 +132,8 @@ export async function validateVideoFile(uri: string, maxSizeMB: number = 50): Pr
 /**
  * Generate a unique filename for video
  */
-export function generateVideoFileName(originalUri: string, prefix: string = 'video'): string {
-  const extension = originalUri.split('.').pop() || 'mp4';
+export function generateVideoFileName(originalUri: string, prefix: string = "video"): string {
+  const extension = originalUri.split(".").pop() || "mp4";
   const timestamp = Date.now();
   const random = Math.random().toString(36).substring(2, 8);
   return `${prefix}_${timestamp}_${random}.${extension}`;
@@ -141,5 +144,5 @@ export function generateVideoFileName(originalUri: string, prefix: string = 'vid
  */
 export function isVideoPlayerSupported(): boolean {
   // expo-video supports iOS and Android
-  return Platform.OS === 'ios' || Platform.OS === 'android';
+  return Platform.OS === "ios" || Platform.OS === "android";
 }

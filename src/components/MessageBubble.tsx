@@ -14,22 +14,7 @@ interface Props {
 
 const reactions = ["❤️", "👍", "😂", "😮", "😢", "😡"];
 
-// Normalize various timestamp representations to a Date
-function toDateSafe(value: any): Date {
-  try {
-    if (!value) return new Date();
-    if (value instanceof Date) return value;
-    if (typeof value?.toDate === "function") return value.toDate(); // Firestore Timestamp
-    if (typeof value === "number") {
-      // Treat values < 1e12 as seconds (Firestore), otherwise ms
-      return new Date(value < 1e12 ? value * 1000 : value);
-    }
-    if (typeof value === "string") return new Date(value);
-    return new Date();
-  } catch {
-    return new Date();
-  }
-}
+import { toDateSafe } from "../utils/dateUtils";
 
 export default function MessageBubble({ message, onReply, onReact, onLongPress }: Props) {
   const { colors } = useTheme();
@@ -101,11 +86,10 @@ export default function MessageBubble({ message, onReply, onReact, onLongPress }
   if (isSystem) {
     return (
       <View className="items-center my-1">
-        <View
-          className="px-3 py-1 rounded-full"
-          style={{ backgroundColor: colors.surface[800] + '80' }}
-        >
-          <Text className="text-xs" style={{ color: colors.text.muted }}>{message.content}</Text>
+        <View className="px-3 py-1 rounded-full" style={{ backgroundColor: colors.surface[800] + "80" }}>
+          <Text className="text-xs" style={{ color: colors.text.muted }}>
+            {message.content}
+          </Text>
         </View>
       </View>
     );
@@ -119,21 +103,20 @@ export default function MessageBubble({ message, onReply, onReact, onLongPress }
           <View
             className="rounded-lg px-2 py-1 border-l-2"
             style={{
-              backgroundColor: colors.surface[600] + '80',
-              borderLeftColor: colors.brand.red + '80'
+              backgroundColor: colors.surface[600] + "80",
+              borderLeftColor: colors.brand.red + "80",
             }}
           >
-            <Text className="text-xs" style={{ color: colors.text.muted }}>Replying to message</Text>
+            <Text className="text-xs" style={{ color: colors.text.muted }}>
+              Replying to message
+            </Text>
           </View>
         </View>
       )}
 
       {/* Sender name for group chats */}
       {!isOwn && (
-        <Text
-          className="text-xs mb-0.5 ml-1 font-medium"
-          style={{ color: colors.text.secondary }}
-        >
+        <Text className="text-xs mb-0.5 ml-1 font-medium" style={{ color: colors.text.secondary }}>
           {message.senderName}
         </Text>
       )}
@@ -148,13 +131,13 @@ export default function MessageBubble({ message, onReply, onReact, onLongPress }
           accessibilityHint="Long press for message options"
           className="max-w-[80%] rounded-2xl px-3 py-2 relative"
           style={{
-            backgroundColor: isOwn ? colors.brand.red : colors.surface[700]
+            backgroundColor: isOwn ? colors.brand.red : colors.surface[700],
           }}
         >
           <Text
             className="text-base leading-5"
             style={{
-              color: isOwn ? '#FFFFFF' : colors.text.primary
+              color: isOwn ? "#FFFFFF" : colors.text.primary,
             }}
           >
             {message.content}
@@ -165,7 +148,7 @@ export default function MessageBubble({ message, onReply, onReact, onLongPress }
             <Text
               className="text-[10px]"
               style={{
-                color: isOwn ? 'rgba(255,255,255,0.7)' : colors.text.muted
+                color: isOwn ? "rgba(255,255,255,0.7)" : colors.text.muted,
               }}
             >
               {formatTime(message.timestamp)}
@@ -189,10 +172,12 @@ export default function MessageBubble({ message, onReply, onReact, onLongPress }
               className="absolute -bottom-2 -right-1 rounded-full px-1.5 py-0.5 border"
               style={{
                 backgroundColor: colors.surface[800],
-                borderColor: colors.surface[600]
+                borderColor: colors.surface[600],
               }}
             >
-              <Text className="text-xs" style={{ color: colors.text.primary }}>{selectedReaction}</Text>
+              <Text className="text-xs" style={{ color: colors.text.primary }}>
+                {selectedReaction}
+              </Text>
             </View>
           )}
         </Pressable>

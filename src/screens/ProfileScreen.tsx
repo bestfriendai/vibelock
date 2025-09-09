@@ -25,7 +25,7 @@ export default function ProfileScreen() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showPaywall, setShowPaywall] = useState(false);
   const [showLegalModal, setShowLegalModal] = useState(false);
-  const [legalModalTab, setLegalModalTab] = useState<'privacy' | 'terms'>('privacy');
+  const [legalModalTab, setLegalModalTab] = useState<"privacy" | "terms">("privacy");
   const [notificationsEnabled] = useState(true);
 
   const handleLogout = () => {
@@ -63,8 +63,6 @@ export default function ProfileScreen() {
     ]);
   };
 
-
-
   // Firebase test removed per product direction
 
   return (
@@ -79,7 +77,9 @@ export default function ProfileScreen() {
               resizeMode="contain"
             />
           </View>
-          <Text className="text-2xl font-bold" style={{ color: colors.text.primary }}>Settings</Text>
+          <Text className="text-2xl font-bold" style={{ color: colors.text.primary }}>
+            Settings
+          </Text>
         </View>
       </View>
 
@@ -91,12 +91,14 @@ export default function ProfileScreen() {
               className="border rounded-lg p-4 mb-6"
               style={{
                 backgroundColor: `${colors.brand.red}20`,
-                borderColor: `${colors.brand.red}30`
+                borderColor: `${colors.brand.red}30`,
               }}
             >
               <View className="flex-row items-center mb-3">
                 <Ionicons name="eye-outline" size={20} color={colors.brand.red} />
-                <Text className="font-semibold ml-2" style={{ color: colors.brand.red }}>Browsing as Guest</Text>
+                <Text className="font-semibold ml-2" style={{ color: colors.brand.red }}>
+                  Browsing as Guest
+                </Text>
               </View>
               <Text className="mb-4" style={{ color: colors.text.secondary }}>
                 Create an account to share reviews, join chat rooms, and get personalized recommendations.
@@ -120,7 +122,9 @@ export default function ProfileScreen() {
                     navigation.navigate("SignIn");
                   }}
                 >
-                  <Text className="font-semibold" style={{ color: colors.text.primary }}>Sign In</Text>
+                  <Text className="font-semibold" style={{ color: colors.text.primary }}>
+                    Sign In
+                  </Text>
                 </Pressable>
               </View>
             </View>
@@ -130,16 +134,21 @@ export default function ProfileScreen() {
           {!isGuestMode && (
             <View className="rounded-lg p-4 mb-6" style={{ backgroundColor: colors.surface[800] }}>
               <View className="flex-row items-center">
-                <View className="w-16 h-16 rounded-full items-center justify-center" style={{ backgroundColor: colors.brand.red }}>
+                <View
+                  className="w-16 h-16 rounded-full items-center justify-center"
+                  style={{ backgroundColor: colors.brand.red }}
+                >
                   <Text className="text-black text-xl font-bold">
-                    {user?.email ? user.email.charAt(0).toUpperCase() : 'A'}
+                    {user?.email ? user.email.charAt(0).toUpperCase() : "A"}
                   </Text>
                 </View>
                 <View className="ml-4 flex-1">
-                  <Text className="text-lg font-semibold" style={{ color: colors.text.primary }}>Anonymous User</Text>
+                  <Text className="text-lg font-semibold" style={{ color: colors.text.primary }}>
+                    Anonymous User
+                  </Text>
                   <Text style={{ color: colors.text.secondary }}>{user?.email}</Text>
                   <Text className="text-sm" style={{ color: colors.text.muted }}>
-                    {user?.location?.city || 'Unknown'}, {user?.location?.state || 'Unknown'}
+                    {user?.location?.city || "Unknown"}, {user?.location?.state || "Unknown"}
                   </Text>
                 </View>
               </View>
@@ -155,7 +164,9 @@ export default function ProfileScreen() {
             >
               <View className="flex-row items-center">
                 <Ionicons name="location-outline" size={20} color={colors.text.muted} />
-                <Text className="font-medium ml-3" style={{ color: colors.text.primary }}>Location</Text>
+                <Text className="font-medium ml-3" style={{ color: colors.text.primary }}>
+                  Location
+                </Text>
               </View>
               <View className="flex-row items-center">
                 <Text className="mr-2" style={{ color: colors.text.secondary }}>
@@ -172,7 +183,9 @@ export default function ProfileScreen() {
             >
               <View className="flex-row items-center">
                 <Ionicons name="notifications-outline" size={20} color={colors.text.muted} />
-                <Text className="font-medium ml-3" style={{ color: colors.text.primary }}>Notifications</Text>
+                <Text className="font-medium ml-3" style={{ color: colors.text.primary }}>
+                  Notifications
+                </Text>
               </View>
               <Ionicons name="chevron-forward" size={16} color={colors.text.muted} />
             </Pressable>
@@ -184,13 +197,13 @@ export default function ProfileScreen() {
             <Pressable className="flex-row items-center justify-between p-4" onPress={handleHelpSupport}>
               <View className="flex-row items-center">
                 <Ionicons name="help-circle-outline" size={20} color={colors.text.muted} />
-                <Text className="font-medium ml-3" style={{ color: colors.text.primary }}>Help & Support</Text>
+                <Text className="font-medium ml-3" style={{ color: colors.text.primary }}>
+                  Help & Support
+                </Text>
               </View>
               <Ionicons name="chevron-forward" size={16} color={colors.text.muted} />
             </Pressable>
           </View>
-
-
 
           {/* Premium Theme Toggle */}
           <PremiumThemeToggle onShowPaywall={() => setShowPaywall(true)} />
@@ -213,7 +226,7 @@ export default function ProfileScreen() {
                 {isPremium ? (
                   <View className="px-3 py-1 rounded-full" style={{ backgroundColor: "#22C55E20" }}>
                     <Text className="text-xs font-medium" style={{ color: "#22C55E" }}>
-                      {buildEnv.isExpoGo ? 'Demo' : 'Active'}
+                      {buildEnv.isExpoGo ? "Demo" : "Active"}
                     </Text>
                   </View>
                 ) : (
@@ -222,18 +235,15 @@ export default function ProfileScreen() {
                     className="px-4 py-2 rounded-lg"
                     style={{ backgroundColor: colors.brand.red }}
                   >
-                    <Text className="text-white font-medium text-sm">
-                      {buildEnv.isExpoGo ? 'Try Demo' : 'Upgrade'}
-                    </Text>
+                    <Text className="text-white font-medium text-sm">{buildEnv.isExpoGo ? "Try Demo" : "Upgrade"}</Text>
                   </Pressable>
                 )}
               </View>
 
               <Text className="text-sm mt-2" style={{ color: colors.text.secondary }}>
                 {isPremium
-                  ? `Enjoying ad-free experience and premium features${buildEnv.isExpoGo ? ' (Demo)' : ''}`
-                  : `Unlock advanced features and remove ads${buildEnv.isExpoGo ? ' (Demo available)' : ''}`
-                }
+                  ? `Enjoying ad-free experience and premium features${buildEnv.isExpoGo ? " (Demo)" : ""}`
+                  : `Unlock advanced features and remove ads${buildEnv.isExpoGo ? " (Demo available)" : ""}`}
               </Text>
             </View>
 
@@ -242,15 +252,11 @@ export default function ProfileScreen() {
                 onPress={async () => {
                   try {
                     await restorePurchases();
-                    const message = buildEnv.isExpoGo
-                      ? 'Demo restore successful!'
-                      : 'Purchases restored successfully';
-                    Alert.alert('Success', message);
+                    const message = buildEnv.isExpoGo ? "Demo restore successful!" : "Purchases restored successfully";
+                    Alert.alert("Success", message);
                   } catch (error) {
-                    const message = buildEnv.isExpoGo
-                      ? 'Demo restore failed'
-                      : 'Failed to restore purchases';
-                    Alert.alert('Error', message);
+                    const message = buildEnv.isExpoGo ? "Demo restore failed" : "Failed to restore purchases";
+                    Alert.alert("Error", message);
                   }
                 }}
                 className="p-5"
@@ -261,9 +267,7 @@ export default function ProfileScreen() {
                   <Text className="font-medium ml-3" style={{ color: colors.text.primary }}>
                     Restore Purchases
                   </Text>
-                  {isLoading && (
-                    <ActivityIndicator size="small" color={colors.brand.red} className="ml-2" />
-                  )}
+                  {isLoading && <ActivityIndicator size="small" color={colors.brand.red} className="ml-2" />}
                 </View>
               </Pressable>
             )}
@@ -272,12 +276,14 @@ export default function ProfileScreen() {
           {/* Legal Documents */}
           <View className="rounded-lg mb-6" style={{ backgroundColor: colors.surface[800] }}>
             <View className="p-5 border-b" style={{ borderBottomColor: colors.surface[700] }}>
-              <Text className="font-semibold" style={{ color: colors.text.primary }}>Legal</Text>
+              <Text className="font-semibold" style={{ color: colors.text.primary }}>
+                Legal
+              </Text>
             </View>
 
             <Pressable
               onPress={() => {
-                setLegalModalTab('privacy');
+                setLegalModalTab("privacy");
                 setShowLegalModal(true);
               }}
               className="p-5 border-b"
@@ -285,7 +291,9 @@ export default function ProfileScreen() {
             >
               <View className="flex-row items-center">
                 <Ionicons name="shield-checkmark-outline" size={20} color={colors.text.muted} />
-                <Text className="font-medium ml-3" style={{ color: colors.text.primary }}>Privacy Policy</Text>
+                <Text className="font-medium ml-3" style={{ color: colors.text.primary }}>
+                  Privacy Policy
+                </Text>
                 <View className="flex-1" />
                 <Ionicons name="chevron-forward" size={16} color={colors.text.muted} />
               </View>
@@ -293,14 +301,16 @@ export default function ProfileScreen() {
 
             <Pressable
               onPress={() => {
-                setLegalModalTab('terms');
+                setLegalModalTab("terms");
                 setShowLegalModal(true);
               }}
               className="p-5"
             >
               <View className="flex-row items-center">
                 <Ionicons name="document-text-outline" size={20} color={colors.text.muted} />
-                <Text className="font-medium ml-3" style={{ color: colors.text.primary }}>Terms of Service</Text>
+                <Text className="font-medium ml-3" style={{ color: colors.text.primary }}>
+                  Terms of Service
+                </Text>
                 <View className="flex-1" />
                 <Ionicons name="chevron-forward" size={16} color={colors.text.muted} />
               </View>
@@ -314,7 +324,9 @@ export default function ProfileScreen() {
             <View className="flex-row items-center justify-between p-4">
               <View className="flex-row items-center">
                 <Ionicons name="information-circle-outline" size={20} color={colors.text.muted} />
-                <Text className="font-medium ml-3" style={{ color: colors.text.primary }}>Version</Text>
+                <Text className="font-medium ml-3" style={{ color: colors.text.primary }}>
+                  Version
+                </Text>
               </View>
               <Text style={{ color: colors.text.secondary }}>1.0.0</Text>
             </View>
@@ -328,7 +340,11 @@ export default function ProfileScreen() {
           )}
 
           {/* Account Actions */}
-          <Pressable className="rounded-lg p-4 mb-3" style={{ backgroundColor: colors.surface[800] }} onPress={handleDeleteAccount}>
+          <Pressable
+            className="rounded-lg p-4 mb-3"
+            style={{ backgroundColor: colors.surface[800] }}
+            onPress={handleDeleteAccount}
+          >
             <View className="flex-row items-center justify-center">
               <Ionicons name="trash-outline" size={20} color="#EF4444" />
               <Text className="text-red-500 font-medium ml-3">Delete Account</Text>
@@ -375,11 +391,7 @@ export default function ProfileScreen() {
       <PaywallAdaptive visible={showPaywall} onClose={() => setShowPaywall(false)} />
 
       {/* Legal Modal */}
-      <LegalModal
-        visible={showLegalModal}
-        onClose={() => setShowLegalModal(false)}
-        initialTab={legalModalTab}
-      />
+      <LegalModal visible={showLegalModal} onClose={() => setShowLegalModal(false)} initialTab={legalModalTab} />
     </SafeAreaView>
   );
 }

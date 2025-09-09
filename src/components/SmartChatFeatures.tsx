@@ -1,11 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, Pressable, ScrollView, Modal } from "react-native";
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  withTiming,
-} from "react-native-reanimated";
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming } from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../providers/ThemeProvider";
 import { ChatMember } from "../types";
@@ -132,9 +127,7 @@ export default function SmartChatFeatures({
             },
           ]}
         >
-          <Text className="text-white text-xs text-center font-medium">
-            {getConnectionStatusText()}
-          </Text>
+          <Text className="text-white text-xs text-center font-medium">{getConnectionStatusText()}</Text>
         </Animated.View>
       )}
 
@@ -152,23 +145,11 @@ export default function SmartChatFeatures({
         >
           <View className="flex-row items-center">
             <View className="flex-row items-center mr-2">
-              <View
-                className="w-1 h-1 rounded-full mr-1 animate-pulse"
-                style={{ backgroundColor: colors.brand.red }}
-              />
-              <View
-                className="w-1 h-1 rounded-full mr-1 animate-pulse"
-                style={{ backgroundColor: colors.brand.red }}
-              />
-              <View
-                className="w-1 h-1 rounded-full animate-pulse"
-                style={{ backgroundColor: colors.brand.red }}
-              />
+              <View className="w-1 h-1 rounded-full mr-1 animate-pulse" style={{ backgroundColor: colors.brand.red }} />
+              <View className="w-1 h-1 rounded-full mr-1 animate-pulse" style={{ backgroundColor: colors.brand.red }} />
+              <View className="w-1 h-1 rounded-full animate-pulse" style={{ backgroundColor: colors.brand.red }} />
             </View>
-            <Text
-              className="text-xs italic"
-              style={{ color: colors.text.secondary }}
-            >
+            <Text className="text-xs italic" style={{ color: colors.text.secondary }}>
               {formatTypingUsers()}
             </Text>
           </View>
@@ -220,23 +201,14 @@ export default function SmartChatFeatures({
           </Pressable>
 
           {/* Members button - compact */}
-          <Pressable
-            onPress={openMemberList}
-            className="p-1"
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
+          <Pressable onPress={openMemberList} className="p-1" hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Ionicons name="people" size={18} color={colors.text.primary} />
           </Pressable>
         </View>
       </View>
 
       {/* Member List Modal */}
-      <Modal
-        visible={showMemberList}
-        transparent
-        animationType="fade"
-        onRequestClose={closeMemberList}
-      >
+      <Modal visible={showMemberList} transparent animationType="fade" onRequestClose={closeMemberList}>
         <View className="flex-1 bg-black/50 justify-center items-center p-4">
           <Animated.View
             style={[
@@ -280,9 +252,7 @@ export default function SmartChatFeatures({
                     className="w-10 h-10 rounded-full items-center justify-center mr-3"
                     style={{ backgroundColor: colors.brand.red }}
                   >
-                    <Text className="text-white font-bold">
-                      {member.userName.charAt(0).toUpperCase()}
-                    </Text>
+                    <Text className="text-white font-bold">{member.userName.charAt(0).toUpperCase()}</Text>
                   </View>
 
                   {/* User info */}
@@ -296,9 +266,7 @@ export default function SmartChatFeatures({
                   </View>
 
                   {/* Online indicator */}
-                  {member.isOnline && (
-                    <View className="w-2 h-2 bg-green-500 rounded-full" />
-                  )}
+                  {member.isOnline && <View className="w-2 h-2 bg-green-500 rounded-full" />}
                 </Pressable>
               ))}
             </ScrollView>
@@ -314,10 +282,7 @@ export default function SmartChatFeatures({
         onRequestClose={() => setShowSearchModal(false)}
       >
         <View className="flex-1 bg-black/50 justify-end">
-          <View
-            className="rounded-t-3xl p-6"
-            style={{ backgroundColor: colors.surface[800] }}
-          >
+          <View className="rounded-t-3xl p-6" style={{ backgroundColor: colors.surface[800] }}>
             <Text className="text-lg font-bold mb-4" style={{ color: colors.text.primary }}>
               Search Messages
             </Text>

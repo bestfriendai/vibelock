@@ -3,7 +3,7 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as FileSystem from "expo-file-system";
 import { manipulateAsync, SaveFormat } from "expo-image-manipulator";
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
 import { Review, FilterOptions, GreenFlag, RedFlag, MediaItem, SocialMediaHandles, Sentiment } from "../types";
 import { filterReviewsByDistanceAsync } from "../utils/location";
 import { supabaseReviews, supabaseStorage } from "../services/supabase";
@@ -323,7 +323,7 @@ const useReviewsStore = create<ReviewsStore>()(
           set({ isLoading: true, error: null });
 
           // CSRF validation
-          if (data.csrfToken && (typeof data.csrfToken !== 'string' || data.csrfToken.length < 10)) {
+          if (data.csrfToken && (typeof data.csrfToken !== "string" || data.csrfToken.length < 10)) {
             throw new Error("Invalid security token. Please refresh and try again.");
           }
 

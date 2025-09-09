@@ -35,7 +35,7 @@ export default function SegmentedTabs({ tabs, value, onChange }: SegmentedTabsPr
             <Text
               className={`text-sm ${active ? "font-semibold" : "font-medium"}`}
               style={{
-                color: active ? colors.text.primary : colors.text.secondary
+                color: active ? colors.text.primary : colors.text.secondary,
               }}
             >
               {t.label}
@@ -43,7 +43,7 @@ export default function SegmentedTabs({ tabs, value, onChange }: SegmentedTabsPr
             <View
               className="h-0.5 mt-2 w-full"
               style={{
-                backgroundColor: active ? colors.brand.red : 'transparent'
+                backgroundColor: active ? colors.brand.red : "transparent",
               }}
             />
           </Pressable>

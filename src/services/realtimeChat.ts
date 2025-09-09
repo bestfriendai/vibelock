@@ -146,10 +146,7 @@ class EnhancedRealtimeChatService {
       return channel;
     } catch (error: any) {
       console.error(`Failed to join room ${roomId}:`, error);
-      throw new AppError(
-        `Failed to join chat room: ${error?.message || "Unknown error"}`,
-        ErrorType.NETWORK,
-      );
+      throw new AppError(`Failed to join chat room: ${error?.message || "Unknown error"}`, ErrorType.NETWORK);
     }
   }
 
@@ -208,11 +205,7 @@ class EnhancedRealtimeChatService {
   }
 
   // Load older messages for pagination
-  async loadOlderMessages(
-    roomId: string,
-    beforeTimestamp: string,
-    limit: number = 30,
-  ): Promise<ChatMessage[]> {
+  async loadOlderMessages(roomId: string, beforeTimestamp: string, limit: number = 30): Promise<ChatMessage[]> {
     try {
       const { data: messages, error } = await supabase
         .from("chat_messages_firebase")
@@ -374,12 +367,7 @@ class EnhancedRealtimeChatService {
   }
 
   // Send typing indicator
-  async setTyping(
-    roomId: string,
-    userId: string,
-    userName: string,
-    isTyping: boolean,
-  ): Promise<void> {
+  async setTyping(roomId: string, userId: string, userName: string, isTyping: boolean): Promise<void> {
     try {
       const channel = this.channels.get(roomId);
       if (!channel) return;
@@ -448,19 +436,11 @@ class EnhancedRealtimeChatService {
       console.log("✅ Message sent successfully");
     } catch (error: any) {
       console.error("💥 Failed to send message:", error);
-      throw new AppError(
-        `Failed to send message: ${error?.message || "Unknown error"}`,
-        ErrorType.NETWORK,
-      );
+      throw new AppError(`Failed to send message: ${error?.message || "Unknown error"}`, ErrorType.NETWORK);
     }
   }
 
-  async sendReaction(
-    roomId: string,
-    messageId: string,
-    userId: string,
-    reaction: string,
-  ): Promise<void> {
+  async sendReaction(roomId: string, messageId: string, userId: string, reaction: string): Promise<void> {
     try {
       // First, get the current reactions for the message
       const { data: message, error: fetchError } = await supabase
@@ -495,10 +475,7 @@ class EnhancedRealtimeChatService {
       if (updateError) throw updateError;
     } catch (error: any) {
       console.error("Failed to send reaction:", error);
-      throw new AppError(
-        `Failed to send reaction: ${error?.message || "Unknown error"}`,
-        ErrorType.NETWORK,
-      );
+      throw new AppError(`Failed to send reaction: ${error?.message || "Unknown error"}`, ErrorType.NETWORK);
     }
   }
 

@@ -1,5 +1,5 @@
-import { notificationService, NotificationData } from './notificationService';
-import { supabase } from '../config/supabase';
+import { notificationService, NotificationData } from "./notificationService";
+import { supabase } from "../config/supabase";
 
 /**
  * Helper functions for common notification scenarios
@@ -11,8 +11,8 @@ import { supabase } from '../config/supabase';
 export async function notifyNewReview(reviewId: string, reviewedPersonName: string, reviewerName: string) {
   try {
     const notification: NotificationData = {
-      type: 'new_review',
-      title: 'New Review Posted',
+      type: "new_review",
+      title: "New Review Posted",
       body: `${reviewerName} posted a review about ${reviewedPersonName}`,
       data: {
         reviewId,
@@ -25,7 +25,7 @@ export async function notifyNewReview(reviewId: string, reviewedPersonName: stri
     // This could be enhanced to notify users in the same location or with matching preferences
     await sendNotificationToAllUsers(notification);
   } catch (error) {
-    console.error('Failed to send new review notification:', error);
+    console.error("Failed to send new review notification:", error);
   }
 }
 
@@ -35,8 +35,8 @@ export async function notifyNewReview(reviewId: string, reviewedPersonName: stri
 export async function notifyReviewApproved(authorId: string, reviewId: string, reviewedPersonName: string) {
   try {
     const notification: NotificationData = {
-      type: 'review_approved',
-      title: 'Review Approved',
+      type: "review_approved",
+      title: "Review Approved",
       body: `Your review about ${reviewedPersonName} has been approved and is now live`,
       data: {
         reviewId,
@@ -46,19 +46,24 @@ export async function notifyReviewApproved(authorId: string, reviewId: string, r
 
     await notificationService.createNotification(authorId, notification);
   } catch (error) {
-    console.error('Failed to send review approved notification:', error);
+    console.error("Failed to send review approved notification:", error);
   }
 }
 
 /**
  * Send notification when a review is rejected
  */
-export async function notifyReviewRejected(authorId: string, reviewId: string, reviewedPersonName: string, reason?: string) {
+export async function notifyReviewRejected(
+  authorId: string,
+  reviewId: string,
+  reviewedPersonName: string,
+  reason?: string,
+) {
   try {
     const notification: NotificationData = {
-      type: 'review_rejected',
-      title: 'Review Not Approved',
-      body: `Your review about ${reviewedPersonName} was not approved${reason ? `: ${reason}` : ''}`,
+      type: "review_rejected",
+      title: "Review Not Approved",
+      body: `Your review about ${reviewedPersonName} was not approved${reason ? `: ${reason}` : ""}`,
       data: {
         reviewId,
         reviewedPersonName,
@@ -68,7 +73,7 @@ export async function notifyReviewRejected(authorId: string, reviewId: string, r
 
     await notificationService.createNotification(authorId, notification);
   } catch (error) {
-    console.error('Failed to send review rejected notification:', error);
+    console.error("Failed to send review rejected notification:", error);
   }
 }
 
@@ -79,19 +84,19 @@ export async function notifyNewComment(reviewId: string, commentAuthorName: stri
   try {
     // Get the review author to notify them
     const { data: review, error } = await supabase
-      .from('reviews_firebase')
-      .select('author_id, reviewed_person_name')
-      .eq('id', reviewId)
+      .from("reviews_firebase")
+      .select("author_id, reviewed_person_name")
+      .eq("id", reviewId)
       .single();
 
     if (error || !review) {
-      console.error('Failed to get review for comment notification:', error);
+      console.error("Failed to get review for comment notification:", error);
       return;
     }
 
     const notification: NotificationData = {
-      type: 'new_comment',
-      title: 'New Comment',
+      type: "new_comment",
+      title: "New Comment",
       body: `${commentAuthorName} commented on your review about ${review.reviewed_person_name}`,
       data: {
         reviewId,
@@ -102,17 +107,22 @@ export async function notifyNewComment(reviewId: string, commentAuthorName: stri
 
     await notificationService.createNotification(review.author_id, notification);
   } catch (error) {
-    console.error('Failed to send new comment notification:', error);
+    console.error("Failed to send new comment notification:", error);
   }
 }
 
 /**
  * Send notification for new chat messages
  */
-export async function notifyNewMessage(chatRoomId: string, senderName: string, messageContent: string, recipientIds?: string[]) {
+export async function notifyNewMessage(
+  chatRoomId: string,
+  senderName: string,
+  messageContent: string,
+  recipientIds?: string[],
+) {
   try {
     const notification: NotificationData = {
-      type: 'new_message',
+      type: "new_message",
       title: `New message from ${senderName}`,
       body: messageContent.substring(0, 100), // Truncate for notification
       data: {
@@ -131,7 +141,7 @@ export async function notifyNewMessage(chatRoomId: string, senderName: string, m
       await sendNotificationToChatRoomMembers(chatRoomId, notification);
     }
   } catch (error) {
-    console.error('Failed to send new message notification:', error);
+    console.error("Failed to send new message notification:", error);
   }
 }
 
@@ -141,11 +151,11 @@ export async function notifyNewMessage(chatRoomId: string, senderName: string, m
 export async function notifySafetyAlert(title: string, message: string, targetUserIds?: string[]) {
   try {
     const notification: NotificationData = {
-      type: 'safety_alert',
+      type: "safety_alert",
       title,
       body: message,
       data: {
-        priority: 'high',
+        priority: "high",
         timestamp: new Date().toISOString(),
       },
     };
@@ -160,7 +170,7 @@ export async function notifySafetyAlert(title: string, message: string, targetUs
       await sendNotificationToAllUsers(notification);
     }
   } catch (error) {
-    console.error('Failed to send safety alert notification:', error);
+    console.error("Failed to send safety alert notification:", error);
   }
 }
 
@@ -171,13 +181,10 @@ export async function notifySafetyAlert(title: string, message: string, targetUs
 async function sendNotificationToAllUsers(notification: NotificationData) {
   try {
     // Get all user IDs (you might want to paginate this in a real app)
-    const { data: users, error } = await supabase
-      .from('users')
-      .select('id')
-      .limit(1000); // Limit to prevent overwhelming the system
+    const { data: users, error } = await supabase.from("users").select("id").limit(1000); // Limit to prevent overwhelming the system
 
     if (error) {
-      console.error('Failed to get users for notification:', error);
+      console.error("Failed to get users for notification:", error);
       return;
     }
 
@@ -186,7 +193,7 @@ async function sendNotificationToAllUsers(notification: NotificationData) {
       await notificationService.createNotification(user.id, notification);
     }
   } catch (error) {
-    console.error('Failed to send notification to all users:', error);
+    console.error("Failed to send notification to all users:", error);
   }
 }
 
@@ -198,7 +205,7 @@ async function sendNotificationToChatRoomMembers(chatRoomId: string, notificatio
     // In a real app, you'd have a chat room members table
     // For now, we'll just log this as it would need to be implemented based on your chat architecture
     console.log(`Would send notification to members of chat room ${chatRoomId}:`, notification);
-    
+
     // Example implementation if you had a chat_room_members table:
     /*
     const { data: members, error } = await supabase
@@ -217,38 +224,32 @@ async function sendNotificationToChatRoomMembers(chatRoomId: string, notificatio
     }
     */
   } catch (error) {
-    console.error('Failed to send notification to chat room members:', error);
+    console.error("Failed to send notification to chat room members:", error);
   }
 }
 
 /**
  * Schedule a notification for later delivery
  */
-export async function scheduleNotification(
-  userId: string,
-  notification: NotificationData,
-  scheduledFor: Date
-) {
+export async function scheduleNotification(userId: string, notification: NotificationData, scheduledFor: Date) {
   try {
     // Create notification with scheduled time
-    const { error } = await supabase
-      .from('notifications')
-      .insert({
-        user_id: userId,
-        type: notification.type,
-        title: notification.title,
-        body: notification.body,
-        data: notification.data || {},
-        is_read: false,
-        is_sent: false,
-        created_at: scheduledFor.toISOString(),
-      });
+    const { error } = await supabase.from("notifications").insert({
+      user_id: userId,
+      type: notification.type,
+      title: notification.title,
+      body: notification.body,
+      data: notification.data || {},
+      is_read: false,
+      is_sent: false,
+      created_at: scheduledFor.toISOString(),
+    });
 
     if (error) {
-      console.error('Failed to schedule notification:', error);
+      console.error("Failed to schedule notification:", error);
     }
   } catch (error) {
-    console.error('Error scheduling notification:', error);
+    console.error("Error scheduling notification:", error);
   }
 }
 
@@ -267,7 +268,7 @@ export async function getUserNotificationPreferences(userId: string) {
       reviewApproval: true,
     };
   } catch (error) {
-    console.error('Failed to get notification preferences:', error);
+    console.error("Failed to get notification preferences:", error);
     return null;
   }
 }
@@ -275,15 +276,12 @@ export async function getUserNotificationPreferences(userId: string) {
 /**
  * Update notification preferences for a user
  */
-export async function updateUserNotificationPreferences(
-  userId: string,
-  preferences: Record<string, boolean>
-) {
+export async function updateUserNotificationPreferences(userId: string, preferences: Record<string, boolean>) {
   try {
     // This would update a user_notification_preferences table
     // For now, just log the preferences
     console.log(`Would update notification preferences for user ${userId}:`, preferences);
   } catch (error) {
-    console.error('Failed to update notification preferences:', error);
+    console.error("Failed to update notification preferences:", error);
   }
 }

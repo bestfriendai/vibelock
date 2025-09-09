@@ -90,7 +90,9 @@ export default function LikeDislikeButtons({
           disabled={disabled}
           accessible={true}
           accessibilityRole="button"
-          accessibilityLabel={isDisliked ? `Remove dislike (${dislikeCount} dislikes)` : `Dislike review (${dislikeCount} dislikes)`}
+          accessibilityLabel={
+            isDisliked ? `Remove dislike (${dislikeCount} dislikes)` : `Dislike review (${dislikeCount} dislikes)`
+          }
           accessibilityState={{ selected: isDisliked }}
           accessibilityHint={isDisliked ? "Double tap to remove your dislike" : "Double tap to dislike this review"}
           className={`flex-row items-center justify-center px-4 py-3 rounded-xl border ${

@@ -42,12 +42,7 @@ const openai_api_key = Constants.expoConfig.extra.apikey;
 
 // Deep linking configuration
 const linking = {
-  prefixes: [
-    Linking.createURL("/"),
-    "locker-room-talk://",
-    "https://lockerroom.app",
-    "http://lockerroom.app",
-  ],
+  prefixes: [Linking.createURL("/"), "locker-room-talk://", "https://lockerroom.app", "http://lockerroom.app"],
   config: {
     screens: {
       MainTabs: "main",
@@ -70,7 +65,7 @@ export default function App() {
   useEffect(() => {
     const initializeApp = async () => {
       try {
-        console.log('🚀 App Environment:', {
+        console.log("🚀 App Environment:", {
           isExpoGo: buildEnv.isExpoGo,
           isDevelopmentBuild: buildEnv.isDevelopmentBuild,
           hasNativeModules: buildEnv.hasNativeModules,
@@ -81,23 +76,20 @@ export default function App() {
 
         // Initialize monetization services conditionally
         if (buildEnv.hasNativeModules) {
-          console.log('💰 Initializing native monetization services...');
-          await Promise.all([
-            adMobService.initialize(),
-            initializeRevenueCat(),
-          ]);
+          console.log("💰 Initializing native monetization services...");
+          await Promise.all([adMobService.initialize(), initializeRevenueCat()]);
         } else {
-          console.log('🎭 Using mock monetization services for Expo Go...');
+          console.log("🎭 Using mock monetization services for Expo Go...");
           await Promise.all([
             adMobService.initialize(), // Will use mock implementation
             initializeRevenueCat(), // Will use mock implementation
           ]);
         }
 
-        console.log('✅ App initialization complete');
+        console.log("✅ App initialization complete");
         return unsubscribe;
       } catch (error) {
-        console.error('❌ App initialization error:', error);
+        console.error("❌ App initialization error:", error);
         // Don't crash the app, continue with limited functionality
         return initializeAuthListener();
       }
@@ -111,13 +103,13 @@ export default function App() {
 
     // Handle app state changes for cleanup
     const handleAppStateChange = (nextAppState: string) => {
-      if (nextAppState === 'background' || nextAppState === 'inactive') {
+      if (nextAppState === "background" || nextAppState === "inactive") {
         console.log("🧹 App backgrounded, cleaning up resources");
         // Don't fully cleanup on background, just reduce activity
       }
     };
 
-    const appStateSubscription = AppState.addEventListener('change', handleAppStateChange);
+    const appStateSubscription = AppState.addEventListener("change", handleAppStateChange);
 
     // Cleanup listener on unmount
     return () => {
@@ -136,7 +128,7 @@ export default function App() {
   useEffect(() => {
     const unsubscribe = useAuthStore.subscribe((state) => {
       if (state.user?.id) {
-        console.log('👤 User authenticated, initializing RevenueCat with user ID');
+        console.log("👤 User authenticated, initializing RevenueCat with user ID");
         initializeRevenueCat(state.user.id);
       }
     });

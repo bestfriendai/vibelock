@@ -2,10 +2,16 @@ import React, { useEffect, useMemo, useState } from "react";
 import { View, Text, TextInput, ScrollView, Pressable, KeyboardAvoidingView, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
 import useReviewsStore from "../state/reviewsStore";
 import { MediaItem, SocialMediaHandles, Sentiment, ReviewCategory } from "../types";
-import { validateName, validateReviewText, validateLocation, validateSocialHandle, formSubmissionLimiter } from "../utils/inputValidation";
+import {
+  validateName,
+  validateReviewText,
+  validateLocation,
+  validateSocialHandle,
+  formSubmissionLimiter,
+} from "../utils/inputValidation";
 import FormSection from "../components/FormSection";
 import MediaUploadGrid from "../components/MediaUploadGrid";
 import SocialMediaInput from "../components/SocialMediaInput";
@@ -23,7 +29,7 @@ interface Location {
   city: string;
   state: string;
   fullName: string;
-  type?: 'city' | 'college';
+  type?: "city" | "college";
   institutionType?: string;
   coordinates?: {
     latitude: number;
@@ -146,7 +152,7 @@ export default function CreateReviewScreen() {
         city: locationValidation.sanitizedCity,
         state: locationValidation.sanitizedState,
         reviewText: reviewValidation.sanitized,
-      }
+      },
     };
   }, [firstName, selectedLocation, reviewText, imagesCount, sentiment, maxReviewLength]);
 
@@ -163,7 +169,7 @@ export default function CreateReviewScreen() {
 
     try {
       // Rate limiting check
-      const userId = user?.id || 'anonymous';
+      const userId = user?.id || "anonymous";
       if (!formSubmissionLimiter.isAllowed(userId)) {
         throw new Error("Too many submissions. Please wait a minute before trying again.");
       }
@@ -230,7 +236,9 @@ export default function CreateReviewScreen() {
                 className="w-16 h-16 rounded-full items-center justify-center mb-4"
                 style={{ backgroundColor: `${colors.brand.red}20` }}
               >
-                <Text className="text-2xl" style={{ color: colors.brand.red }}>✍️</Text>
+                <Text className="text-2xl" style={{ color: colors.brand.red }}>
+                  ✍️
+                </Text>
               </View>
               <Text className="text-2xl font-bold mb-2 text-center" style={{ color: colors.text.primary }}>
                 Create Account to Write Reviews
@@ -258,7 +266,9 @@ export default function CreateReviewScreen() {
                   // Navigate to sign in
                 }}
               >
-                <Text className="font-semibold text-lg" style={{ color: colors.text.primary }}>Sign In</Text>
+                <Text className="font-semibold text-lg" style={{ color: colors.text.primary }}>
+                  Sign In
+                </Text>
               </Pressable>
             </View>
           </View>
@@ -271,21 +281,34 @@ export default function CreateReviewScreen() {
     <SafeAreaView className="flex-1" style={{ backgroundColor: colors.background }}>
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
         {/* Header */}
-        <View className="px-6 py-6 border-b" style={{ borderBottomColor: colors.border, backgroundColor: colors.surface[800] }}>
-          <Text className="text-2xl font-bold" style={{ color: colors.text.primary }}>Write Review</Text>
-          <Text className="mt-1" style={{ color: colors.text.secondary }}>Share your dating experience anonymously</Text>
+        <View
+          className="px-6 py-6 border-b"
+          style={{ borderBottomColor: colors.border, backgroundColor: colors.surface[800] }}
+        >
+          <Text className="text-2xl font-bold" style={{ color: colors.text.primary }}>
+            Write Review
+          </Text>
+          <Text className="mt-1" style={{ color: colors.text.secondary }}>
+            Share your dating experience anonymously
+          </Text>
         </View>
 
         <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
           <View className="px-6 py-6">
             {/* Error / Success banners */}
             {error && (
-              <View className="border rounded-xl p-3 mb-4" style={{ backgroundColor: "#EF444415", borderColor: "#EF4444" }}>
+              <View
+                className="border rounded-xl p-3 mb-4"
+                style={{ backgroundColor: "#EF444415", borderColor: "#EF4444" }}
+              >
                 <Text style={{ color: "#EF4444" }}>{error}</Text>
               </View>
             )}
             {success && (
-              <View className="border rounded-xl p-3 mb-4" style={{ backgroundColor: "#10B98115", borderColor: "#10B981" }}>
+              <View
+                className="border rounded-xl p-3 mb-4"
+                style={{ backgroundColor: "#10B98115", borderColor: "#10B981" }}
+              >
                 <Text style={{ color: "#10B981" }}>{success}</Text>
               </View>
             )}
@@ -294,7 +317,9 @@ export default function CreateReviewScreen() {
             <FormSection title="Who are you reviewing?" subtitle="Provide the name and location" required>
               <View className="space-y-4">
                 <View>
-                  <Text className="font-medium mb-2" style={{ color: colors.text.secondary }}>Name</Text>
+                  <Text className="font-medium mb-2" style={{ color: colors.text.secondary }}>
+                    Name
+                  </Text>
                   <TextInput
                     className="border rounded-xl px-4 py-3"
                     style={{
@@ -314,7 +339,9 @@ export default function CreateReviewScreen() {
                 </View>
 
                 <View>
-                  <Text className="font-medium mb-2" style={{ color: colors.text.secondary }}>Location</Text>
+                  <Text className="font-medium mb-2" style={{ color: colors.text.secondary }}>
+                    Location
+                  </Text>
                   <LocationSelector currentLocation={selectedLocation} onLocationChange={setSelectedLocation} />
                 </View>
               </View>
@@ -348,7 +375,10 @@ export default function CreateReviewScreen() {
                   }}
                   onPress={() => setCategory("women")}
                 >
-                  <Text className="font-medium" style={{ color: category === "women" ? "#EC4899" : colors.text.primary }}>
+                  <Text
+                    className="font-medium"
+                    style={{ color: category === "women" ? "#EC4899" : colors.text.primary }}
+                  >
                     Women
                   </Text>
                 </Pressable>
@@ -360,7 +390,10 @@ export default function CreateReviewScreen() {
                   }}
                   onPress={() => setCategory("lgbtq+")}
                 >
-                  <Text className="font-medium" style={{ color: category === "lgbtq+" ? "#8B5CF6" : colors.text.primary }}>
+                  <Text
+                    className="font-medium"
+                    style={{ color: category === "lgbtq+" ? "#8B5CF6" : colors.text.primary }}
+                  >
                     LGBTQ+
                   </Text>
                 </Pressable>
@@ -387,7 +420,9 @@ export default function CreateReviewScreen() {
                   }}
                   onPress={() => setSentiment(sentiment === "green" ? null : "green")}
                 >
-                  <Text className="font-medium" style={{ color: colors.text.primary }}>Green Flag</Text>
+                  <Text className="font-medium" style={{ color: colors.text.primary }}>
+                    Green Flag
+                  </Text>
                 </Pressable>
                 <Pressable
                   className="flex-1 flex-row items-center justify-center rounded-xl border px-3 py-4"
@@ -397,17 +432,15 @@ export default function CreateReviewScreen() {
                   }}
                   onPress={() => setSentiment(sentiment === "red" ? null : "red")}
                 >
-                  <Text className="font-medium" style={{ color: colors.text.primary }}>Red Flag</Text>
+                  <Text className="font-medium" style={{ color: colors.text.primary }}>
+                    Red Flag
+                  </Text>
                 </Pressable>
               </View>
             </FormSection>
 
             {/* Review Text */}
-            <FormSection
-              title="Your Review"
-              subtitle={`Share your experience`}
-              required
-            >
+            <FormSection title="Your Review" subtitle={`Share your experience`} required>
               <View>
                 <TextInput
                   className="border rounded-xl px-4 py-3 h-32"
@@ -427,7 +460,7 @@ export default function CreateReviewScreen() {
                 <View className="flex-row justify-between items-center mt-2">
                   <View className="flex-row items-center">
                     <Text className="text-sm" style={{ color: colors.text.muted }}>
-                      {reviewText.length < 10 ? 'Minimum 10 characters' : 'Looking good!'}
+                      {reviewText.length < 10 ? "Minimum 10 characters" : "Looking good!"}
                     </Text>
                     {isPremium && (
                       <View className="ml-2">
@@ -435,14 +468,20 @@ export default function CreateReviewScreen() {
                       </View>
                     )}
                   </View>
-                  <Text className="text-sm" style={{
-                    color: reviewText.length > maxReviewLength * 0.9 ? '#FBBF24' :
-                           reviewText.length > maxReviewLength * 0.95 ? '#EF4444' :
-                           colors.text.muted
-                  }}>
+                  <Text
+                    className="text-sm"
+                    style={{
+                      color:
+                        reviewText.length > maxReviewLength * 0.9
+                          ? "#FBBF24"
+                          : reviewText.length > maxReviewLength * 0.95
+                            ? "#EF4444"
+                            : colors.text.muted,
+                    }}
+                  >
                     {reviewText.length}/{maxReviewLength}
                     {!isPremium && reviewText.length > 400 && (
-                      <Text style={{ color: '#F59E0B' }}> • Upgrade for 1000 chars</Text>
+                      <Text style={{ color: "#F59E0B" }}> • Upgrade for 1000 chars</Text>
                     )}
                   </Text>
                 </View>

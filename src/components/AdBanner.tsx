@@ -12,19 +12,17 @@ interface Props {
 }
 
 // Mock Banner Component for Expo Go
-const MockBannerAd: React.FC<{ onLoad: () => void; onError: (error: string) => void }> = ({
-  onLoad,
-  onError
-}) => {
+const MockBannerAd: React.FC<{ onLoad: () => void; onError: (error: string) => void }> = ({ onLoad, onError }) => {
   const { colors } = useTheme();
 
   useEffect(() => {
     // Simulate ad loading
     const timer = setTimeout(() => {
-      if (Math.random() > 0.1) { // 90% success rate
+      if (Math.random() > 0.1) {
+        // 90% success rate
         onLoad();
       } else {
-        onError('Mock ad failed to load');
+        onError("Mock ad failed to load");
       }
     }, 1000);
 
@@ -32,21 +30,12 @@ const MockBannerAd: React.FC<{ onLoad: () => void; onError: (error: string) => v
   }, [onLoad, onError]);
 
   return (
-    <View
-      className="p-4 items-center justify-center min-h-[50px]"
-      style={{ backgroundColor: colors.surface[700] }}
-    >
-      <Text
-        className="text-xs"
-        style={{ color: colors.text.secondary }}
-      >
+    <View className="p-4 items-center justify-center min-h-[50px]" style={{ backgroundColor: colors.surface[700] }}>
+      <Text className="text-xs" style={{ color: colors.text.secondary }}>
         Mock Ad Banner
       </Text>
-      <Text
-        className="text-[10px] mt-1"
-        style={{ color: colors.text.muted }}
-      >
-        {buildEnv.isExpoGo ? 'Expo Go Mode' : 'Development Mode'}
+      <Text className="text-[10px] mt-1" style={{ color: colors.text.muted }}>
+        {buildEnv.isExpoGo ? "Expo Go Mode" : "Development Mode"}
       </Text>
     </View>
   );
@@ -56,7 +45,7 @@ const MockBannerAd: React.FC<{ onLoad: () => void; onError: (error: string) => v
 const RealBannerAd: React.FC<{
   unitId: string;
   onLoad: () => void;
-  onError: (error: string) => void
+  onError: (error: string) => void;
 }> = ({ unitId, onLoad, onError }) => {
   const [BannerAd, setBannerAd] = useState<any>(null);
   const [BannerAdSize, setBannerAdSize] = useState<any>(null);
@@ -64,12 +53,12 @@ const RealBannerAd: React.FC<{
   useEffect(() => {
     const loadAdComponents = async () => {
       try {
-        const adModule = await import('react-native-google-mobile-ads');
+        const adModule = await import("react-native-google-mobile-ads");
         setBannerAd(adModule.BannerAd);
         setBannerAdSize(adModule.BannerAdSize);
       } catch (error) {
-        console.error('Failed to load AdMob components:', error);
-        onError('Failed to load ad components');
+        console.error("Failed to load AdMob components:", error);
+        onError("Failed to load ad components");
       }
     };
 
@@ -120,7 +109,7 @@ export default function AdBanner({ placement }: Props) {
   };
 
   const handleAdError = (error: string) => {
-    console.error('Banner ad error:', error);
+    console.error("Banner ad error:", error);
     setAdError(error);
     setAdLoaded(false);
     setAdVisible(false);
@@ -140,7 +129,7 @@ export default function AdBanner({ placement }: Props) {
       className="border-t"
       style={{
         backgroundColor: colors.surface[800],
-        borderTopColor: colors.border
+        borderTopColor: colors.border,
       }}
     >
       <View className="items-center py-2">
@@ -148,21 +137,18 @@ export default function AdBanner({ placement }: Props) {
           className="w-11/12 border rounded-xl overflow-hidden"
           style={{
             backgroundColor: colors.surface[800],
-            borderColor: colors.border
+            borderColor: colors.border,
           }}
         >
           {adError ? (
             <View className="px-4 py-3 items-center">
-              <Text
-                className="text-xs"
-                style={{ color: colors.text.secondary }}
-              >
+              <Text className="text-xs" style={{ color: colors.text.secondary }}>
                 Ad unavailable
               </Text>
             </View>
           ) : canUseAdMob() ? (
             <RealBannerAd
-              unitId={adMobService.getBannerAdUnitId() || ''}
+              unitId={adMobService.getBannerAdUnitId() || ""}
               onLoad={handleAdLoad}
               onError={handleAdError}
             />
@@ -174,12 +160,9 @@ export default function AdBanner({ placement }: Props) {
           {adLoaded && (
             <View
               className="absolute top-1 right-1 px-1 rounded"
-              style={{ backgroundColor: colors.surface[600] + '80' }}
+              style={{ backgroundColor: colors.surface[600] + "80" }}
             >
-              <Text
-                className="text-[8px]"
-                style={{ color: colors.text.primary }}
-              >
+              <Text className="text-[8px]" style={{ color: colors.text.primary }}>
                 Ad
               </Text>
             </View>

@@ -66,10 +66,13 @@ export default function DeleteAccountScreen() {
           disabled={isDeleting}
           className={`mt-6 bg-red-600 rounded-xl py-4 items-center ${isDeleting ? "opacity-60" : ""}`}
         >
-          {isDeleting ? <ActivityIndicator color="#000" /> : <Text className="text-black font-semibold">Delete My Account</Text>}
+          {isDeleting ? (
+            <ActivityIndicator color="#000" />
+          ) : (
+            <Text className="text-black font-semibold">Delete My Account</Text>
+          )}
         </Pressable>
       </View>
     </SafeAreaView>
   );
 }
-

@@ -1,39 +1,35 @@
-import React from 'react';
-import { View, Text } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '../providers/ThemeProvider';
+import React from "react";
+import { View, Text } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { useTheme } from "../providers/ThemeProvider";
 
 interface PremiumBadgeProps {
-  size?: 'small' | 'medium' | 'large';
-  variant?: 'badge' | 'pill' | 'icon';
+  size?: "small" | "medium" | "large";
+  variant?: "badge" | "pill" | "icon";
   showText?: boolean;
 }
 
-export default function PremiumBadge({ 
-  size = 'medium', 
-  variant = 'badge',
-  showText = true 
-}: PremiumBadgeProps) {
+export default function PremiumBadge({ size = "medium", variant = "badge", showText = true }: PremiumBadgeProps) {
   const { colors } = useTheme();
 
   const getSizeStyles = () => {
     switch (size) {
-      case 'small':
+      case "small":
         return {
-          container: 'px-2 py-0.5',
-          text: 'text-xs',
+          container: "px-2 py-0.5",
+          text: "text-xs",
           icon: 12,
         };
-      case 'large':
+      case "large":
         return {
-          container: 'px-4 py-2',
-          text: 'text-base',
+          container: "px-4 py-2",
+          text: "text-base",
           icon: 20,
         };
       default: // medium
         return {
-          container: 'px-3 py-1',
-          text: 'text-sm',
+          container: "px-3 py-1",
+          text: "text-sm",
           icon: 16,
         };
     }
@@ -41,12 +37,12 @@ export default function PremiumBadge({
 
   const styles = getSizeStyles();
 
-  if (variant === 'icon') {
+  if (variant === "icon") {
     return (
-      <View 
+      <View
         className="rounded-full items-center justify-center"
-        style={{ 
-          backgroundColor: 'linear-gradient(45deg, #F59E0B, #F97316)',
+        style={{
+          backgroundColor: "linear-gradient(45deg, #F59E0B, #F97316)",
           width: styles.icon + 8,
           height: styles.icon + 8,
         }}
@@ -56,38 +52,30 @@ export default function PremiumBadge({
     );
   }
 
-  if (variant === 'pill') {
+  if (variant === "pill") {
     return (
-      <View 
+      <View
         className={`rounded-full flex-row items-center ${styles.container}`}
-        style={{ 
-          backgroundColor: '#F59E0B',
+        style={{
+          backgroundColor: "#F59E0B",
         }}
       >
         <Ionicons name="diamond" size={styles.icon} color="white" />
-        {showText && (
-          <Text className={`text-white font-bold ml-1 ${styles.text}`}>
-            Plus
-          </Text>
-        )}
+        {showText && <Text className={`text-white font-bold ml-1 ${styles.text}`}>Plus</Text>}
       </View>
     );
   }
 
   // Default badge variant
   return (
-    <View 
+    <View
       className={`rounded ${styles.container} flex-row items-center`}
-      style={{ 
-        backgroundColor: '#F59E0B',
+      style={{
+        backgroundColor: "#F59E0B",
       }}
     >
       <Ionicons name="diamond" size={styles.icon} color="white" />
-      {showText && (
-        <Text className={`text-white font-bold ml-1 ${styles.text}`}>
-          Plus
-        </Text>
-      )}
+      {showText && <Text className={`text-white font-bold ml-1 ${styles.text}`}>Plus</Text>}
     </View>
   );
 }
@@ -101,10 +89,7 @@ export function PremiumStatusIndicator({ isPremium }: { isPremium: boolean }) {
   return (
     <View className="flex-row items-center">
       <PremiumBadge size="small" variant="pill" />
-      <Text 
-        className="text-xs ml-2"
-        style={{ color: colors.text.muted }}
-      >
+      <Text className="text-xs ml-2" style={{ color: colors.text.muted }}>
         Verified Plus Member
       </Text>
     </View>
@@ -112,43 +97,26 @@ export function PremiumStatusIndicator({ isPremium }: { isPremium: boolean }) {
 }
 
 // Premium feature lock overlay
-export function PremiumFeatureLock({ 
-  featureName, 
-  onUpgrade 
-}: { 
-  featureName: string; 
-  onUpgrade: () => void; 
-}) {
+export function PremiumFeatureLock({ featureName, onUpgrade }: { featureName: string; onUpgrade: () => void }) {
   const { colors } = useTheme();
 
   return (
-    <View 
+    <View
       className="absolute inset-0 rounded-lg items-center justify-center"
-      style={{ 
-        backgroundColor: colors.surface[900] + 'E6', // 90% opacity
+      style={{
+        backgroundColor: colors.surface[900] + "E6", // 90% opacity
       }}
     >
-      <View 
-        className="bg-gradient-to-br from-amber-500 to-orange-500 rounded-full p-4 mb-3"
-      >
+      <View className="bg-gradient-to-br from-amber-500 to-orange-500 rounded-full p-4 mb-3">
         <Ionicons name="diamond" size={24} color="white" />
       </View>
-      <Text 
-        className="font-bold text-lg mb-2"
-        style={{ color: colors.text.primary }}
-      >
+      <Text className="font-bold text-lg mb-2" style={{ color: colors.text.primary }}>
         Plus Feature
       </Text>
-      <Text 
-        className="text-center text-sm mb-4 px-4"
-        style={{ color: colors.text.secondary }}
-      >
+      <Text className="text-center text-sm mb-4 px-4" style={{ color: colors.text.secondary }}>
         {featureName} is available for Plus members
       </Text>
-      <View 
-        className="bg-amber-500 px-6 py-2 rounded-full"
-        onTouchEnd={onUpgrade}
-      >
+      <View className="bg-amber-500 px-6 py-2 rounded-full" onTouchEnd={onUpgrade}>
         <Text className="text-white font-bold">Upgrade to Plus</Text>
       </View>
     </View>

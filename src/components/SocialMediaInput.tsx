@@ -131,7 +131,9 @@ export default function SocialMediaInput({ socialMedia, onSocialMediaChange }: P
             {/* Platform Label */}
             <View className="flex-row items-center mb-2">
               <Ionicons name={platform.icon} size={20} color={platform.color} />
-              <Text className="font-medium ml-2" style={{ color: colors.text.primary }}>{platform.label}</Text>
+              <Text className="font-medium ml-2" style={{ color: colors.text.primary }}>
+                {platform.label}
+              </Text>
             </View>
 
             {/* Input Container */}
@@ -177,7 +179,9 @@ export default function SocialMediaInput({ socialMedia, onSocialMediaChange }: P
             {error && (
               <View className="flex-row items-center mt-2">
                 <Ionicons name="warning" size={14} color="#EF4444" />
-                <Text className="text-sm ml-1" style={{ color: "#EF4444" }}>{error}</Text>
+                <Text className="text-sm ml-1" style={{ color: "#EF4444" }}>
+                  {error}
+                </Text>
               </View>
             )}
 
@@ -196,7 +200,9 @@ export default function SocialMediaInput({ socialMedia, onSocialMediaChange }: P
         <View className="flex-row items-start">
           <Ionicons name="information-circle" size={20} color={colors.text.muted} />
           <View className="ml-3 flex-1">
-            <Text className="font-medium mb-1" style={{ color: colors.text.secondary }}>Privacy Notice</Text>
+            <Text className="font-medium mb-1" style={{ color: colors.text.secondary }}>
+              Privacy Notice
+            </Text>
             <Text className="text-sm leading-5" style={{ color: colors.text.muted }}>
               Social media handles will be displayed publicly in your review to help others verify your experience. Only
               add handles you're comfortable sharing.

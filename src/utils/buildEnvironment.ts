@@ -1,5 +1,5 @@
-import Constants from 'expo-constants';
-import { Platform } from 'react-native';
+import Constants from "expo-constants";
+import { Platform } from "react-native";
 
 export interface BuildEnvironment {
   isExpoGo: boolean;
@@ -9,16 +9,16 @@ export interface BuildEnvironment {
 }
 
 export const getBuildEnvironment = (): BuildEnvironment => {
-  const isExpoGo = Constants.appOwnership === 'expo';
-  const isDevelopmentBuild = Constants.appOwnership === 'standalone' && __DEV__;
-  const isProduction = Constants.appOwnership === 'standalone' && !__DEV__;
+  const isExpoGo = Constants.appOwnership === "expo";
+  const isDevelopmentBuild = Constants.appOwnership === "standalone" && __DEV__;
+  const isProduction = Constants.appOwnership === "standalone" && !__DEV__;
 
   // Check if native modules are available
   let hasNativeModules = false;
   try {
     // Try to check if we're in a development build with native modules
     // Use a safer approach that doesn't cause runtime errors
-    const purchases = require.resolve('react-native-purchases');
+    const purchases = require.resolve("react-native-purchases");
     hasNativeModules = !!purchases && !isExpoGo;
   } catch (error) {
     // Package not found or not available, which is fine for Expo Go
@@ -42,7 +42,7 @@ export const shouldShowMonetization = () => !buildEnv.isExpoGo;
 
 // Debug logging
 if (__DEV__) {
-  console.log('Build Environment:', {
+  console.log("Build Environment:", {
     isExpoGo: buildEnv.isExpoGo,
     isDevelopmentBuild: buildEnv.isDevelopmentBuild,
     isProduction: buildEnv.isProduction,

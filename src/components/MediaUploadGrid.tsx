@@ -155,7 +155,7 @@ export default function MediaUploadGrid({ media, onMediaChange, maxItems = 6, re
             try {
               const compressionResult = await imageCompressionService.compressImage(
                 asset.uri,
-                imageCompressionService.getRecommendedOptions('review')
+                imageCompressionService.getRecommendedOptions("review"),
               );
 
               if (compressionResult.success && compressionResult.uri) {
@@ -170,10 +170,10 @@ export default function MediaUploadGrid({ media, onMediaChange, maxItems = 6, re
                   console.log(`📸 Image compressed: ${originalSizeKB}KB → ${compressedSizeKB}KB (${savings}% smaller)`);
                 }
               } else {
-                console.warn('Image compression failed, using original:', compressionResult.error);
+                console.warn("Image compression failed, using original:", compressionResult.error);
               }
             } catch (error) {
-              console.warn('Image compression error, using original:', error);
+              console.warn("Image compression error, using original:", error);
             }
           }
 
@@ -274,9 +274,7 @@ export default function MediaUploadGrid({ media, onMediaChange, maxItems = 6, re
                   </View>
                   {item.duration && (
                     <View className="absolute bottom-2 right-2 bg-black/70 px-2 py-1 rounded">
-                      <Text className="text-white text-xs font-medium">
-                        {formatVideoDurationFromMs(item.duration)}
-                      </Text>
+                      <Text className="text-white text-xs font-medium">{formatVideoDurationFromMs(item.duration)}</Text>
                     </View>
                   )}
                 </View>

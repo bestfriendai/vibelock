@@ -6,7 +6,11 @@ const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error("Missing Supabase configuration");
+  const errorMessage = "Supabase configuration is missing. Please check your .env file and rebuild the app.";
+  console.error(`🚨 CRITICAL ERROR: ${errorMessage}`);
+  console.error(`URL: ${supabaseUrl ? "Present" : "Missing"}`);
+  console.error(`Anon Key: ${supabaseAnonKey ? "Present" : "Missing"}`);
+  throw new Error(errorMessage);
 }
 
 if (__DEV__) {

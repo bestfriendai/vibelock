@@ -162,9 +162,7 @@ const useChatStore = create<ChatStore>()(
           const category = get().roomCategoryFilter || "all";
           const filteredRooms =
             category && category !== "all"
-              ? formattedRooms.filter(
-                  (r: ChatRoom) => (r.category || "all").toLowerCase() === category.toLowerCase(),
-                )
+              ? formattedRooms.filter((r: ChatRoom) => (r.category || "all").toLowerCase() === category.toLowerCase())
               : formattedRooms;
 
           console.log(`✅ Loaded ${filteredRooms.length} chat rooms (filtered by: ${category})`);
@@ -205,20 +203,14 @@ const useChatStore = create<ChatStore>()(
           // Use unified authentication check
           const { user, supabaseUser } = await requireAuthentication("join chat room");
           // Join room with enhanced real-time service
-          await enhancedRealtimeChatService.joinRoom(
-            roomId,
-            supabaseUser.id,
-            getUserDisplayName(user),
-          );
+          await enhancedRealtimeChatService.joinRoom(roomId, supabaseUser.id, getUserDisplayName(user));
 
           // Subscribe to messages for this room - CRITICAL: Messages are sorted newest-first for FlashList inverted display
           enhancedRealtimeChatService.subscribeToMessages(
             roomId,
             (newMessages: ChatMessage[], isInitialLoad = false) => {
               console.log(
-                `🔍 Received ${newMessages.length} ${
-                  isInitialLoad ? "initial" : "new"
-                } messages for room ${roomId}`,
+                `🔍 Received ${newMessages.length} ${isInitialLoad ? "initial" : "new"} messages for room ${roomId}`,
               );
 
               set((state) => {
@@ -234,9 +226,7 @@ const useChatStore = create<ChatStore>()(
 
                   newMessages.forEach((newMsg) => {
                     // Enhanced duplicate detection: check by ID first, then by content/sender/time similarity
-                    const isDuplicateById = allMessages.some(
-                      (existing) => existing.id === newMsg.id,
-                    );
+                    const isDuplicateById = allMessages.some((existing) => existing.id === newMsg.id);
 
                     if (!isDuplicateById) {
                       // Check for potential optimistic message duplicates (same content, sender, within 5 seconds)
@@ -244,28 +234,22 @@ const useChatStore = create<ChatStore>()(
                         (existing) =>
                           existing.senderId === newMsg.senderId &&
                           existing.content === newMsg.content &&
-                          Math.abs(
-                            new Date(existing.timestamp).getTime() -
-                              new Date(newMsg.timestamp).getTime(),
-                          ) < 5000,
+                          Math.abs(new Date(existing.timestamp).getTime() - new Date(newMsg.timestamp).getTime()) <
+                            5000,
                       );
 
                       if (!isDuplicateByContent) {
                         allMessages.push(newMsg);
                       } else {
-                        console.log(
-                          `🔄 Duplicate message detected by content/time similarity, skipping`,
-                        );
+                        console.log(`🔄 Duplicate message detected by content/time similarity, skipping`);
 
                         // Remove the optimistic message and replace with the real one
                         const optimisticIndex = allMessages.findIndex(
                           (existing) =>
                             existing.senderId === newMsg.senderId &&
                             existing.content === newMsg.content &&
-                            Math.abs(
-                              new Date(existing.timestamp).getTime() -
-                                new Date(newMsg.timestamp).getTime(),
-                            ) < 5000,
+                            Math.abs(new Date(existing.timestamp).getTime() - new Date(newMsg.timestamp).getTime()) <
+                              5000,
                         );
 
                         if (optimisticIndex !== -1) {
@@ -279,8 +263,7 @@ const useChatStore = create<ChatStore>()(
 
                 // Sort messages newest-first for proper FlashList inverted display
                 const sortedMessages = allMessages.sort(
-                  (a, b) =>
-                    new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+                  (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
                 );
 
                 return {
@@ -409,9 +392,7 @@ const useChatStore = create<ChatStore>()(
             set((state) => ({
               messages: {
                 ...state.messages,
-                [roomId]: (state.messages[roomId] || []).filter(
-                  (msg) => msg.id !== optimisticMessageId,
-                ),
+                [roomId]: (state.messages[roomId] || []).filter((msg) => msg.id !== optimisticMessageId),
               },
             }));
           }
@@ -451,11 +432,11 @@ const useChatStore = create<ChatStore>()(
           const uploadResult = await storageService.uploadFile(audioUri, {
             bucket: storageService.getBuckets().CHAT_MEDIA,
             folder: `${user.id}/${roomId}/audio`,
-            contentType: 'audio/mp3',
+            contentType: "audio/mp3",
           });
 
           if (!uploadResult.success || !uploadResult.url) {
-            throw new Error('Failed to upload voice message');
+            throw new Error("Failed to upload voice message");
           }
 
           const message: Partial<ChatMessage> = {
@@ -502,7 +483,7 @@ const useChatStore = create<ChatStore>()(
           const uploadResult = await storageService.uploadChatMedia(finalUri, user.id, roomId);
 
           if (!uploadResult.success || !uploadResult.url) {
-            throw new Error('Failed to upload media');
+            throw new Error("Failed to upload media");
           }
 
           const message: Partial<ChatMessage> = {
@@ -573,12 +554,7 @@ const useChatStore = create<ChatStore>()(
       setTyping: (roomId: string, isTyping: boolean) => {
         const { user } = useAuthStore.getState();
         if (user) {
-          enhancedRealtimeChatService.setTyping(
-            roomId,
-            user.id,
-            user.email || "Anonymous",
-            isTyping,
-          );
+          enhancedRealtimeChatService.setTyping(roomId, user.id, user.email || "Anonymous", isTyping);
         }
       },
 
@@ -598,21 +574,14 @@ const useChatStore = create<ChatStore>()(
           const cursor = oldestMessage.timestamp.toISOString();
 
           // Load older messages using enhanced service with cursor
-          const olderMessages = await enhancedRealtimeChatService.loadOlderMessages(
-            roomId,
-            cursor,
-            20,
-          );
+          const olderMessages = await enhancedRealtimeChatService.loadOlderMessages(roomId, cursor, 20);
 
           if (olderMessages.length > 0) {
             // Merge messages and deduplicate by ID
             const allMessages = [...olderMessages, ...currentMessages];
-            const uniqueMessages = Array.from(
-              new Map(allMessages.map((msg) => [msg.id, msg])).values(),
-            ).sort(
+            const uniqueMessages = Array.from(new Map(allMessages.map((msg) => [msg.id, msg])).values()).sort(
               // FIXED: Sort descending for FlashList inverted display
-              (a, b) =>
-                new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+              (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
             );
 
             set((state) => ({
@@ -652,9 +621,7 @@ const useChatStore = create<ChatStore>()(
 
       removeTypingUser: (userId: string, roomId: string) => {
         set((state) => ({
-          typingUsers: state.typingUsers.filter(
-            (u) => u.userId !== userId || u.chatRoomId !== roomId,
-          ),
+          typingUsers: state.typingUsers.filter((u) => u.userId !== userId || u.chatRoomId !== roomId),
         }));
       },
 

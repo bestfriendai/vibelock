@@ -236,11 +236,14 @@ export const supabaseUsers = {
         location: {
           city: data.city || "Unknown",
           state: data.state || "Unknown",
-          coordinates: data.latitude && data.longitude ? {
-            latitude: parseFloat(data.latitude),
-            longitude: parseFloat(data.longitude),
-          } : undefined,
-          type: data.location_type as 'city' | 'college' | undefined,
+          coordinates:
+            data.latitude && data.longitude
+              ? {
+                  latitude: parseFloat(data.latitude),
+                  longitude: parseFloat(data.longitude),
+                }
+              : undefined,
+          type: data.location_type as "city" | "college" | undefined,
           fullName: data.location_full_name,
           institutionType: data.institution_type,
         },
@@ -375,15 +378,15 @@ export const supabaseReviews = {
       }
 
       // Apply location filters - use proper escaping for JSON field queries
-      if (filters?.state && typeof filters.state === 'string') {
+      if (filters?.state && typeof filters.state === "string") {
         // Sanitize state input to prevent injection
-        const sanitizedState = filters.state.replace(/['"\\]/g, '');
+        const sanitizedState = filters.state.replace(/['"\\]/g, "");
         query = query.eq("reviewed_person_location->>state", sanitizedState);
       }
 
-      if (filters?.city && typeof filters.city === 'string') {
+      if (filters?.city && typeof filters.city === "string") {
         // Sanitize city input to prevent injection
-        const sanitizedCity = filters.city.replace(/['"\\]/g, '');
+        const sanitizedCity = filters.city.replace(/['"\\]/g, "");
         query = query.eq("reviewed_person_location->>city", sanitizedCity);
       }
 
@@ -616,11 +619,7 @@ export const supabaseChat = {
   },
 
   // Get messages with pagination
-  getMessages: async (
-    chatRoomId: string,
-    limit: number = 20,
-    beforeTimestamp?: Date
-  ): Promise<ChatMessage[]> => {
+  getMessages: async (chatRoomId: string, limit: number = 20, beforeTimestamp?: Date): Promise<ChatMessage[]> => {
     try {
       let query = supabase
         .from("chat_messages_firebase")
@@ -827,12 +826,15 @@ export const supabaseSearch = {
     },
   ): Promise<Profile[]> => {
     try {
-      if (!query || typeof query !== 'string' || query.trim().length < 2) {
+      if (!query || typeof query !== "string" || query.trim().length < 2) {
         return [];
       }
 
       // Sanitize search query to prevent SQL injection
-      const sanitizedQuery = query.trim().replace(/[%_'"\\]/g, "\\$&").slice(0, 100);
+      const sanitizedQuery = query
+        .trim()
+        .replace(/[%_'"\\]/g, "\\$&")
+        .slice(0, 100);
 
       // Aggregate results by person name and location
       const profileMap = new Map<
@@ -901,7 +903,7 @@ export const supabaseSearch = {
         if (totalFlags > 0) {
           // Rating from 1-5 based on green flag percentage
           const greenRatio = greenFlags / totalFlags;
-          profile.totalRating += Math.max(1, Math.min(5, Math.round(1 + (greenRatio * 4))));
+          profile.totalRating += Math.max(1, Math.min(5, Math.round(1 + greenRatio * 4)));
         } else {
           profile.totalRating += 3; // neutral if no flags
         }
@@ -915,7 +917,7 @@ export const supabaseSearch = {
 
       // Convert to Profile array
       const profiles: Profile[] = Array.from(profileMap.values()).map((profile, index) => ({
-        id: `${profile.firstName.toLowerCase().replace(/\s+/g, '-')}-${profile.location.city.toLowerCase().replace(/\s+/g, '-')}-${profile.location.state.toLowerCase()}`,
+        id: `${profile.firstName.toLowerCase().replace(/\s+/g, "-")}-${profile.location.city.toLowerCase().replace(/\s+/g, "-")}-${profile.location.state.toLowerCase()}`,
         firstName: profile.firstName,
         location: profile.location,
         totalReviews: profile.reviews.length,
@@ -977,7 +979,9 @@ export const supabaseSearch = {
         .from("reviews_firebase")
         .select("*")
         .eq("status", "approved")
-        .or(`review_text.ilike.%${query}%,reviewed_person_name.ilike.%${query}%,reviewed_person_location->>city.ilike.%${query}%,reviewed_person_location->>state.ilike.%${query}%`)
+        .or(
+          `review_text.ilike.%${query}%,reviewed_person_name.ilike.%${query}%,reviewed_person_location->>city.ilike.%${query}%,reviewed_person_location->>state.ilike.%${query}%`,
+        )
         .order("created_at", { ascending: false })
         .limit(20);
 
@@ -1081,8 +1085,8 @@ export const supabaseReports = {
     try {
       // Validate and sanitize input data to prevent SQL injection
       const sanitizedData = {
-        reporter_id: typeof reportData.reporterId === 'string' ? reportData.reporterId.slice(0, 36) : '',
-        reported_item_id: typeof reportData.reportedItemId === 'string' ? reportData.reportedItemId.slice(0, 36) : '',
+        reporter_id: typeof reportData.reporterId === "string" ? reportData.reporterId.slice(0, 36) : "",
+        reported_item_id: typeof reportData.reportedItemId === "string" ? reportData.reportedItemId.slice(0, 36) : "",
         reported_item_type: reportData.reportedItemType,
         reason: reportData.reason,
         description: reportData.description ? reportData.description.slice(0, 1000) : undefined,
@@ -1090,11 +1094,7 @@ export const supabaseReports = {
         created_at: new Date().toISOString(),
       };
 
-      const { data, error } = await supabase
-        .from("reports")
-        .insert(sanitizedData)
-        .select("id")
-        .single();
+      const { data, error } = await supabase.from("reports").insert(sanitizedData).select("id").single();
 
       if (error) throw error;
       return data.id;
@@ -1120,13 +1120,16 @@ export const supabaseReports = {
   },
 
   // Update report status (for admin use)
-  updateReportStatus: async (reportId: string, status: "pending" | "reviewed" | "resolved" | "dismissed"): Promise<void> => {
+  updateReportStatus: async (
+    reportId: string,
+    status: "pending" | "reviewed" | "resolved" | "dismissed",
+  ): Promise<void> => {
     try {
       const { error } = await supabase
         .from("reports")
         .update({
           status,
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
         .eq("id", reportId);
 

@@ -11,22 +11,11 @@ interface Props {
   onDelete: () => void;
 }
 
-export default function MessageActionsModal({
-  visible,
-  onClose,
-  onReply,
-  onCopy,
-  onDelete,
-}: Props) {
+export default function MessageActionsModal({ visible, onClose, onReply, onCopy, onDelete }: Props) {
   const { colors } = useTheme();
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable
         style={{
           flex: 1,
@@ -91,11 +80,7 @@ export default function MessageActionsModal({
             onPress={onDelete}
           >
             <Ionicons name="trash" size={24} color={colors.brand.red} />
-            <Text
-              style={{ color: colors.brand.red, fontSize: 16, marginLeft: 16 }}
-            >
-              Delete
-            </Text>
+            <Text style={{ color: colors.brand.red, fontSize: 16, marginLeft: 16 }}>Delete</Text>
           </Pressable>
         </View>
       </Pressable>

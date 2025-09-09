@@ -19,7 +19,6 @@ import AnimatedInput from "../components/AnimatedInput";
 
 import useAuthStore from "../state/authStore";
 
-
 export default function SignInScreen() {
   const navigation = useNavigation<any>();
   const [email, setEmail] = useState("");
@@ -101,8 +100,6 @@ export default function SignInScreen() {
   const handleSignUpPress = () => {
     navigation.navigate("SignUp");
   };
-
-
 
   const dismissKeyboard = () => {
     Keyboard.dismiss();
@@ -190,8 +187,6 @@ export default function SignInScreen() {
                   onRightIconPress={() => setShowPassword(!showPassword)}
                 />
 
-
-
                 {/* Submit Button */}
                 <AnimatedButton
                   title="Sign In"
@@ -215,8 +210,6 @@ export default function SignInScreen() {
                 </View>
               </Animated.View>
             </View>
-
-
 
             {/* Footer */}
             <Animated.View style={footerAnimatedStyle} className="px-6 pb-8">

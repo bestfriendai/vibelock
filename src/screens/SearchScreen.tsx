@@ -37,10 +37,10 @@ export default function SearchScreen() {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [filters, setFilters] = useState({
-    dateRange: 'all', // 'week', 'month', 'year', 'all'
-    sentiment: 'all', // 'positive', 'negative', 'neutral', 'all'
+    dateRange: "all", // 'week', 'month', 'year', 'all'
+    sentiment: "all", // 'positive', 'negative', 'neutral', 'all'
     hasMedia: false,
-    location: '',
+    location: "",
   });
 
   // Load search history on mount
@@ -50,12 +50,12 @@ export default function SearchScreen() {
 
   const loadSearchHistory = async () => {
     try {
-      const history = await AsyncStorage.getItem('search_history');
+      const history = await AsyncStorage.getItem("search_history");
       if (history) {
         setSearchHistory(JSON.parse(history));
       }
     } catch (error) {
-      console.error('Failed to load search history:', error);
+      console.error("Failed to load search history:", error);
     }
   };
 
@@ -64,24 +64,21 @@ export default function SearchScreen() {
       const trimmedQuery = query.trim();
       if (trimmedQuery.length < 2) return;
 
-      const updatedHistory = [
-        trimmedQuery,
-        ...searchHistory.filter(item => item !== trimmedQuery)
-      ].slice(0, 10); // Keep only last 10 searches
+      const updatedHistory = [trimmedQuery, ...searchHistory.filter((item) => item !== trimmedQuery)].slice(0, 10); // Keep only last 10 searches
 
       setSearchHistory(updatedHistory);
-      await AsyncStorage.setItem('search_history', JSON.stringify(updatedHistory));
+      await AsyncStorage.setItem("search_history", JSON.stringify(updatedHistory));
     } catch (error) {
-      console.error('Failed to save search history:', error);
+      console.error("Failed to save search history:", error);
     }
   };
 
   const clearSearchHistory = async () => {
     try {
       setSearchHistory([]);
-      await AsyncStorage.removeItem('search_history');
+      await AsyncStorage.removeItem("search_history");
     } catch (error) {
-      console.error('Failed to clear search history:', error);
+      console.error("Failed to clear search history:", error);
     }
   };
 
@@ -95,23 +92,34 @@ export default function SearchScreen() {
 
       // Generate suggestions from search history
       const historySuggestions = searchHistory
-        .filter(item => item.toLowerCase().includes(query.toLowerCase()))
+        .filter((item) => item.toLowerCase().includes(query.toLowerCase()))
         .slice(0, 5);
 
       // Add common search terms
       const commonTerms = [
-        'dating experience', 'relationship', 'hookup', 'date night',
-        'personality', 'appearance', 'communication', 'chemistry',
-        'red flags', 'green flags', 'toxic', 'sweet', 'funny', 'boring'
+        "dating experience",
+        "relationship",
+        "hookup",
+        "date night",
+        "personality",
+        "appearance",
+        "communication",
+        "chemistry",
+        "red flags",
+        "green flags",
+        "toxic",
+        "sweet",
+        "funny",
+        "boring",
       ];
 
       const commonSuggestions = commonTerms
-        .filter(term => term.toLowerCase().includes(query.toLowerCase()))
+        .filter((term) => term.toLowerCase().includes(query.toLowerCase()))
         .slice(0, 3);
 
       setSuggestions([...historySuggestions, ...commonSuggestions]);
     }, 300),
-    [searchHistory]
+    [searchHistory],
   );
 
   const handleSearch = async (queryOverride?: string) => {
@@ -125,7 +133,7 @@ export default function SearchScreen() {
     }
 
     // Rate limiting check
-    if (!searchLimiter.isAllowed('search')) {
+    if (!searchLimiter.isAllowed("search")) {
       setSearchError("Too many searches. Please wait a moment before searching again.");
       return;
     }
@@ -144,10 +152,12 @@ export default function SearchScreen() {
       // Show feedback if no results found
       const totalResults = results.reviews.length + results.comments.length + results.messages.length;
       if (totalResults === 0) {
-        setSearchError(`No results found for "${queryValidation.sanitized}". Try different keywords or check your spelling.`);
+        setSearchError(
+          `No results found for "${queryValidation.sanitized}". Try different keywords or check your spelling.`,
+        );
       }
     } catch (e) {
-      console.error('Search failed:', e);
+      console.error("Search failed:", e);
       setSearchError("Search failed. Please check your connection and try again.");
       setContentResults({ reviews: [], comments: [], messages: [] });
     } finally {
@@ -193,7 +203,9 @@ export default function SearchScreen() {
         <View className="px-4 py-2">
           {/* Search Input */}
           <View className="mb-6">
-            <Text className="font-medium mb-2" style={{ color: colors.text.primary }}>Search</Text>
+            <Text className="font-medium mb-2" style={{ color: colors.text.primary }}>
+              Search
+            </Text>
             <View className="relative">
               <TextInput
                 className="rounded-lg px-4 py-3 pr-12"
@@ -230,7 +242,7 @@ export default function SearchScreen() {
                 className="mt-2 rounded-lg border"
                 style={{
                   backgroundColor: colors.surface[800],
-                  borderColor: colors.border
+                  borderColor: colors.border,
                 }}
               >
                 {/* Recent Searches */}
@@ -315,7 +327,7 @@ export default function SearchScreen() {
                   <Text
                     className={activeTab === tab ? "font-medium" : ""}
                     style={{
-                      color: activeTab === tab ? '#FFFFFF' : colors.text.secondary,
+                      color: activeTab === tab ? "#FFFFFF" : colors.text.secondary,
                     }}
                   >
                     {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -360,10 +372,16 @@ export default function SearchScreen() {
                         <View className="bg-blue-500 rounded px-2 py-1">
                           <Text className="text-white text-xs font-medium">Review</Text>
                         </View>
-                        <Text className="text-xs ml-2" style={{ color: colors.text.muted }}>{new Date(review.created_at).toLocaleDateString()}</Text>
+                        <Text className="text-xs ml-2" style={{ color: colors.text.muted }}>
+                          {new Date(review.created_at).toLocaleDateString()}
+                        </Text>
                       </View>
-                      <Text className="font-medium mb-1" style={{ color: colors.text.primary }}>{review.reviewed_person_name}</Text>
-                      <Text className="text-sm" style={{ color: colors.text.secondary }} numberOfLines={2}>{review.review_text}</Text>
+                      <Text className="font-medium mb-1" style={{ color: colors.text.primary }}>
+                        {review.reviewed_person_name}
+                      </Text>
+                      <Text className="text-sm" style={{ color: colors.text.secondary }} numberOfLines={2}>
+                        {review.review_text}
+                      </Text>
                     </Pressable>
                   );
                 })}
@@ -380,9 +398,13 @@ export default function SearchScreen() {
                       <View className="bg-green-500 rounded px-2 py-1">
                         <Text className="text-white text-xs font-medium">Comment</Text>
                       </View>
-                      <Text className="text-xs ml-2" style={{ color: colors.text.muted }}>{new Date(comment.created_at).toLocaleDateString()}</Text>
+                      <Text className="text-xs ml-2" style={{ color: colors.text.muted }}>
+                        {new Date(comment.created_at).toLocaleDateString()}
+                      </Text>
                     </View>
-                    <Text className="text-sm" style={{ color: colors.text.secondary }} numberOfLines={2}>{comment.content}</Text>
+                    <Text className="text-sm" style={{ color: colors.text.secondary }} numberOfLines={2}>
+                      {comment.content}
+                    </Text>
                   </Pressable>
                 ))}
 
@@ -398,9 +420,13 @@ export default function SearchScreen() {
                       <View className="bg-purple-500 rounded px-2 py-1">
                         <Text className="text-white text-xs font-medium">Message</Text>
                       </View>
-                      <Text className="text-xs ml-2" style={{ color: colors.text.muted }}>{message.chat_rooms_firebase?.name || "Chat"}</Text>
+                      <Text className="text-xs ml-2" style={{ color: colors.text.muted }}>
+                        {message.chat_rooms_firebase?.name || "Chat"}
+                      </Text>
                     </View>
-                    <Text className="text-sm" style={{ color: colors.text.secondary }} numberOfLines={2}>{message.content}</Text>
+                    <Text className="text-sm" style={{ color: colors.text.secondary }} numberOfLines={2}>
+                      {message.content}
+                    </Text>
                   </Pressable>
                 ))}
 
@@ -410,17 +436,25 @@ export default function SearchScreen() {
                 contentResults.messages.length === 0 && (
                   <View className="items-center justify-center py-12">
                     <Ionicons name="search-outline" size={48} color="#6B7280" />
-                    <Text className="text-lg font-medium mt-4" style={{ color: colors.text.secondary }}>No content found</Text>
-                    <Text className="text-center mt-2" style={{ color: colors.text.muted }}>Try different search terms</Text>
+                    <Text className="text-lg font-medium mt-4" style={{ color: colors.text.secondary }}>
+                      No content found
+                    </Text>
+                    <Text className="text-center mt-2" style={{ color: colors.text.muted }}>
+                      Try different search terms
+                    </Text>
                   </View>
-              )}
+                )}
             </View>
           </ScrollView>
         ) : (
           <View className="flex-1 items-center justify-center px-6">
             <Ionicons name="search-outline" size={48} color="#6B7280" />
-            <Text className="text-lg font-medium mt-4" style={{ color: colors.text.secondary }}>Search content</Text>
-            <Text className="text-center mt-2" style={{ color: colors.text.muted }}>Enter at least 2 characters and tap the search icon</Text>
+            <Text className="text-lg font-medium mt-4" style={{ color: colors.text.secondary }}>
+              Search content
+            </Text>
+            <Text className="text-center mt-2" style={{ color: colors.text.muted }}>
+              Enter at least 2 characters and tap the search icon
+            </Text>
           </View>
         )}
       </View>

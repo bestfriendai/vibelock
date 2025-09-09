@@ -2,7 +2,7 @@
 
 /**
  * App Store Connect Preparation Script
- * 
+ *
  * This script prepares everything needed for App Store Connect:
  * - Creates app metadata templates
  * - Generates screenshot requirements
@@ -10,14 +10,14 @@
  * - Validates app configuration
  */
 
-const fs = require('fs');
+const fs = require("fs");
 
-console.log('🏪 Preparing App Store Connect Configuration...\n');
+console.log("🏪 Preparing App Store Connect Configuration...\n");
 
 // App Store Connect metadata template
 function createAppMetadata() {
-  console.log('📝 Creating App Store Connect metadata template...');
-  
+  console.log("📝 Creating App Store Connect metadata template...");
+
   const metadata = {
     appInformation: {
       name: "LockerRoom",
@@ -27,11 +27,11 @@ function createAppMetadata() {
       primaryLanguage: "English (U.S.)",
       categories: {
         primary: "Sports",
-        secondary: "Social Networking"
+        secondary: "Social Networking",
       },
-      contentRights: "Does Not Use Third-Party Content"
+      contentRights: "Does Not Use Third-Party Content",
     },
-    
+
     versionInformation: {
       version: "1.0.0",
       copyright: "2025 LockerRoom",
@@ -46,9 +46,9 @@ function createAppMetadata() {
 • Premium features with ad-free experience
 • Real-time notifications
 
-🏆 Join the conversation and share your sports passion!`
+🏆 Join the conversation and share your sports passion!`,
     },
-    
+
     appDescription: {
       description: `LockerRoom is the premier destination for sports enthusiasts to share reviews, connect with fellow fans, and discover the best sports experiences in their area.
 
@@ -78,33 +78,30 @@ Upgrade to Premium for:
 🌟 Whether you're looking for the best sports bar to watch the game, want to review your latest stadium experience, or connect with fellow fans, LockerRoom is your go-to platform.
 
 Download now and join the sports conversation!`,
-      
+
       keywords: "sports, reviews, social, community, location, venues, games, fans, premium, talk",
-      
+
       supportURL: "https://lockerroom.support",
       marketingURL: "https://lockerroom.app",
-      privacyPolicyURL: "https://lockerroom.app/privacy"
+      privacyPolicyURL: "https://lockerroom.app/privacy",
     },
-    
+
     ageRating: {
       rating: "12+",
-      reasons: [
-        "Infrequent/Mild Profanity or Crude Humor",
-        "User Generated Content"
-      ]
+      reasons: ["Infrequent/Mild Profanity or Crude Humor", "User Generated Content"],
     },
-    
+
     reviewInformation: {
       contact: {
         firstName: "Patrick",
         lastName: "Support",
         phone: "+1-555-0123",
-        email: "support@lockerroom.app"
+        email: "support@lockerroom.app",
       },
       demoAccount: {
         username: "demo@lockerroom.app",
         password: "DemoPass123!",
-        notes: "Demo account with sample reviews and content for testing purposes."
+        notes: "Demo account with sample reviews and content for testing purposes.",
       },
       notes: `LockerRoom is a sports-focused social platform where users can:
 
@@ -119,18 +116,18 @@ The app includes:
 - Location services for content discovery
 - Push notifications for community updates
 
-All content is moderated and follows community guidelines. The app promotes positive sports discussion and venue discovery.`
-    }
+All content is moderated and follows community guidelines. The app promotes positive sports discussion and venue discovery.`,
+    },
   };
-  
-  fs.writeFileSync('app-store-metadata.json', JSON.stringify(metadata, null, 2));
-  console.log('✅ Created app-store-metadata.json');
+
+  fs.writeFileSync("app-store-metadata.json", JSON.stringify(metadata, null, 2));
+  console.log("✅ Created app-store-metadata.json");
 }
 
 // In-App Purchase products configuration
 function createInAppPurchases() {
-  console.log('💰 Creating In-App Purchase configuration...');
-  
+  console.log("💰 Creating In-App Purchase configuration...");
+
   const iapConfig = {
     subscriptions: [
       {
@@ -141,40 +138,44 @@ function createInAppPurchases() {
         subscriptionDuration: "1 Month",
         price: "$9.99",
         displayName: {
-          "en-US": "Premium Monthly"
+          "en-US": "Premium Monthly",
         },
         description: {
-          "en-US": "Get unlimited access to all premium features including ad-free experience, advanced search, review analytics, custom themes, and priority support."
+          "en-US":
+            "Get unlimited access to all premium features including ad-free experience, advanced search, review analytics, custom themes, and priority support.",
         },
-        reviewNotes: "Monthly subscription for premium features. Users can cancel anytime through their Apple ID settings."
+        reviewNotes:
+          "Monthly subscription for premium features. Users can cancel anytime through their Apple ID settings.",
       },
       {
         productId: "com.lockerroomtalk.app.premium.annual",
         referenceName: "LockerRoom Premium Annual",
         type: "Auto-Renewable Subscription",
-        subscriptionGroup: "Premium Subscriptions", 
+        subscriptionGroup: "Premium Subscriptions",
         subscriptionDuration: "1 Year",
         price: "$99.99",
         displayName: {
-          "en-US": "Premium Annual"
+          "en-US": "Premium Annual",
         },
         description: {
-          "en-US": "Get unlimited access to all premium features for a full year. Save 17% compared to monthly billing. Includes ad-free experience, advanced search, review analytics, custom themes, and priority support."
+          "en-US":
+            "Get unlimited access to all premium features for a full year. Save 17% compared to monthly billing. Includes ad-free experience, advanced search, review analytics, custom themes, and priority support.",
         },
-        reviewNotes: "Annual subscription for premium features with significant savings. Users can cancel anytime through their Apple ID settings."
-      }
+        reviewNotes:
+          "Annual subscription for premium features with significant savings. Users can cancel anytime through their Apple ID settings.",
+      },
     ],
-    
+
     subscriptionGroupInformation: {
       name: "Premium Subscriptions",
       localizations: {
         "en-US": {
           name: "Premium Subscriptions",
-          customAppName: "LockerRoom"
-        }
-      }
+          customAppName: "LockerRoom",
+        },
+      },
     },
-    
+
     appStorePromotions: {
       promotionalOffers: [
         {
@@ -182,20 +183,20 @@ function createInAppPurchases() {
           offerName: "New User Special",
           offerType: "Introductory Offer",
           duration: "1 Week Free Trial",
-          eligibility: "New Subscribers Only"
-        }
-      ]
-    }
+          eligibility: "New Subscribers Only",
+        },
+      ],
+    },
   };
-  
-  fs.writeFileSync('in-app-purchases.json', JSON.stringify(iapConfig, null, 2));
-  console.log('✅ Created in-app-purchases.json');
+
+  fs.writeFileSync("in-app-purchases.json", JSON.stringify(iapConfig, null, 2));
+  console.log("✅ Created in-app-purchases.json");
 }
 
 // Screenshot requirements and guidelines
 function createScreenshotGuide() {
-  console.log('📱 Creating screenshot requirements guide...');
-  
+  console.log("📱 Creating screenshot requirements guide...");
+
   const screenshotGuide = `# App Store Screenshot Requirements - LockerRoom
 
 ## Required Screenshot Sizes
@@ -306,14 +307,14 @@ function createScreenshotGuide() {
 - Update screenshots with major feature releases
 `;
 
-  fs.writeFileSync('SCREENSHOT_REQUIREMENTS.md', screenshotGuide);
-  console.log('✅ Created SCREENSHOT_REQUIREMENTS.md');
+  fs.writeFileSync("SCREENSHOT_REQUIREMENTS.md", screenshotGuide);
+  console.log("✅ Created SCREENSHOT_REQUIREMENTS.md");
 }
 
 // App Store Connect checklist
 function createSubmissionChecklist() {
-  console.log('✅ Creating App Store submission checklist...');
-  
+  console.log("✅ Creating App Store submission checklist...");
+
   const checklist = `# App Store Connect Submission Checklist - LockerRoom
 
 ## Pre-Submission Requirements
@@ -481,8 +482,8 @@ function createSubmissionChecklist() {
 **Remember**: The App Store review process typically takes 24-48 hours, but can take up to 7 days during busy periods. Plan your launch accordingly!
 `;
 
-  fs.writeFileSync('APP_STORE_SUBMISSION_CHECKLIST.md', checklist);
-  console.log('✅ Created APP_STORE_SUBMISSION_CHECKLIST.md');
+  fs.writeFileSync("APP_STORE_SUBMISSION_CHECKLIST.md", checklist);
+  console.log("✅ Created APP_STORE_SUBMISSION_CHECKLIST.md");
 }
 
 // Main preparation function
@@ -492,25 +493,25 @@ function prepareAppStoreConnect() {
     createInAppPurchases();
     createScreenshotGuide();
     createSubmissionChecklist();
-    
-    console.log('\n🎉 App Store Connect Preparation Complete!\n');
-    console.log('📋 Files Created:');
-    console.log('✅ app-store-metadata.json - Complete app metadata template');
-    console.log('✅ in-app-purchases.json - In-App Purchase configuration');
-    console.log('✅ SCREENSHOT_REQUIREMENTS.md - Screenshot guidelines');
-    console.log('✅ APP_STORE_SUBMISSION_CHECKLIST.md - Complete submission checklist');
-    
-    console.log('\n🚀 Next Steps:');
-    console.log('1. Create App Store Connect app record');
-    console.log('2. Configure In-App Purchases in App Store Connect');
-    console.log('3. Create and upload screenshots');
-    console.log('4. Complete app metadata in App Store Connect');
-    console.log('5. Build production version: npx eas build --platform ios --profile production');
-    console.log('6. Submit for App Store review');
-    
+
+    console.log("\n🎉 App Store Connect Preparation Complete!\n");
+    console.log("📋 Files Created:");
+    console.log("✅ app-store-metadata.json - Complete app metadata template");
+    console.log("✅ in-app-purchases.json - In-App Purchase configuration");
+    console.log("✅ SCREENSHOT_REQUIREMENTS.md - Screenshot guidelines");
+    console.log("✅ APP_STORE_SUBMISSION_CHECKLIST.md - Complete submission checklist");
+
+    console.log("\n🚀 Next Steps:");
+    console.log("1. Create App Store Connect app record");
+    console.log("2. Configure In-App Purchases in App Store Connect");
+    console.log("3. Create and upload screenshots");
+    console.log("4. Complete app metadata in App Store Connect");
+    console.log("5. Build production version: npx eas build --platform ios --profile production");
+    console.log("6. Submit for App Store review");
+
     return true;
   } catch (error) {
-    console.error('❌ Preparation failed:', error.message);
+    console.error("❌ Preparation failed:", error.message);
     return false;
   }
 }

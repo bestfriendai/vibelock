@@ -119,34 +119,34 @@ export default function ReviewDetailScreen() {
     loadReviewData();
   }, [hasDirectReview, reviewId, navigation]);
 
-
-
   // Get comments for this review (only access when review is available)
-  const comments = review ? (commentsFromStore[review.id] || []) : [];
+  const comments = review ? commentsFromStore[review.id] || [] : [];
 
   // Add mock media if review doesn't have any for demo purposes
-  const reviewWithMedia = review ? {
-    ...review,
-    media:
-      review.media && review.media.length > 0
-        ? review.media
-        : [
-            {
-              id: "demo_media_1",
-              uri: review.profilePhoto || "https://picsum.photos/400/600?random=1",
-              type: "image" as const,
-              width: 400,
-              height: 600,
-            },
-            {
-              id: "demo_media_2",
-              uri: "https://picsum.photos/400/500?random=2",
-              type: "image" as const,
-              width: 400,
-              height: 500,
-            },
-          ],
-  } : null;
+  const reviewWithMedia = review
+    ? {
+        ...review,
+        media:
+          review.media && review.media.length > 0
+            ? review.media
+            : [
+                {
+                  id: "demo_media_1",
+                  uri: review.profilePhoto || "https://picsum.photos/400/600?random=1",
+                  type: "image" as const,
+                  width: 400,
+                  height: 600,
+                },
+                {
+                  id: "demo_media_2",
+                  uri: "https://picsum.photos/400/500?random=2",
+                  type: "image" as const,
+                  width: 400,
+                  height: 500,
+                },
+              ],
+      }
+    : null;
 
   // Initialize loading state and load comments
   useEffect(() => {

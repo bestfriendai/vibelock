@@ -24,14 +24,15 @@ export default function MediaThumbnail({ media, size = 80, onPress, showPlayIcon
   useEffect(() => {
     if (isVideo && !videoThumbnail && !thumbnailLoading) {
       setThumbnailLoading(true);
-      videoThumbnailService.generateThumbnail(media.uri)
+      videoThumbnailService
+        .generateThumbnail(media.uri)
         .then((result) => {
           if (result.success && result.uri) {
             setVideoThumbnail(result.uri);
           }
         })
         .catch((error) => {
-          console.warn('Failed to generate video thumbnail:', error);
+          console.warn("Failed to generate video thumbnail:", error);
         })
         .finally(() => {
           setThumbnailLoading(false);

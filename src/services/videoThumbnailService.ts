@@ -1,7 +1,7 @@
-import * as FileSystem from 'expo-file-system';
-import { Platform } from 'react-native';
-import * as ImageManipulator from 'expo-image-manipulator';
-import Constants from 'expo-constants';
+import * as FileSystem from "expo-file-system";
+import { Platform } from "react-native";
+import * as ImageManipulator from "expo-image-manipulator";
+import Constants from "expo-constants";
 
 export interface ThumbnailResult {
   success: boolean;
@@ -11,7 +11,7 @@ export interface ThumbnailResult {
 
 class VideoThumbnailService {
   private thumbnailCache = new Map<string, string>();
-  private isExpoGo = Constants.executionEnvironment === 'storeClient';
+  private isExpoGo = Constants.executionEnvironment === "storeClient";
 
   /**
    * Generate thumbnail for video with Expo Go fallback support
@@ -28,10 +28,10 @@ class VideoThumbnailService {
       }
 
       // Validate video file exists
-      if (videoUri.startsWith('file://') || videoUri.startsWith('content://')) {
+      if (videoUri.startsWith("file://") || videoUri.startsWith("content://")) {
         const fileInfo = await FileSystem.getInfoAsync(videoUri);
         if (!fileInfo.exists) {
-          return { success: false, error: 'Video file does not exist' };
+          return { success: false, error: "Video file does not exist" };
         }
       }
 
@@ -42,7 +42,7 @@ class VideoThumbnailService {
         return await this.generateThumbnailNative(videoUri, timeStamp);
       }
     } catch (error) {
-      console.error('Video thumbnail generation failed:', error);
+      console.error("Video thumbnail generation failed:", error);
       return await this.generateThumbnailFallback(videoUri, timeStamp);
     }
   }
@@ -53,7 +53,7 @@ class VideoThumbnailService {
   private async generateThumbnailNative(videoUri: string, timeStamp?: number): Promise<ThumbnailResult> {
     try {
       // Dynamic import to avoid issues in Expo Go
-      const VideoThumbnails = await import('expo-video-thumbnails');
+      const VideoThumbnails = await import("expo-video-thumbnails");
 
       const { uri } = await VideoThumbnails.getThumbnailAsync(videoUri, {
         time: timeStamp || 1000,
@@ -68,7 +68,7 @@ class VideoThumbnailService {
         uri,
       };
     } catch (error) {
-      console.warn('Native thumbnail generation failed, falling back:', error);
+      console.warn("Native thumbnail generation failed, falling back:", error);
       return await this.generateThumbnailFallback(videoUri, timeStamp);
     }
   }
@@ -91,7 +91,7 @@ class VideoThumbnailService {
     } catch (error) {
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to generate fallback thumbnail',
+        error: error instanceof Error ? error.message : "Failed to generate fallback thumbnail",
       };
     }
   }
@@ -103,31 +103,25 @@ class VideoThumbnailService {
     try {
       // Create a simple colored rectangle as a placeholder
       const result = await ImageManipulator.manipulateAsync(
-        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
-        [
-          { resize: { width: 200, height: 200 } }
-        ],
+        "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+        [{ resize: { width: 200, height: 200 } }],
         {
           compress: 0.8,
           format: ImageManipulator.SaveFormat.JPEG,
-        }
+        },
       );
 
       return result.uri;
     } catch (error) {
       // Return a data URI as ultimate fallback
-      return 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
+      return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
     }
   }
 
   /**
    * Generate multiple thumbnails for video preview
    */
-  async generateMultipleThumbnails(
-    videoUri: string,
-    count: number = 3,
-    duration?: number
-  ): Promise<ThumbnailResult[]> {
+  async generateMultipleThumbnails(videoUri: string, count: number = 3, duration?: number): Promise<ThumbnailResult[]> {
     const results: ThumbnailResult[] = [];
     const videoDuration = duration || 10000; // Default 10 seconds if not provided
     const interval = videoDuration / (count + 1);
@@ -161,14 +155,14 @@ class VideoThumbnailService {
    */
   isSupported(): boolean {
     // Native thumbnails only work in dev builds, fallback always available
-    return Platform.OS === 'ios' || Platform.OS === 'android';
+    return Platform.OS === "ios" || Platform.OS === "android";
   }
 
   /**
    * Check if native thumbnail generation is available
    */
   isNativeSupported(): boolean {
-    return !this.isExpoGo && (Platform.OS === 'ios' || Platform.OS === 'android');
+    return !this.isExpoGo && (Platform.OS === "ios" || Platform.OS === "android");
   }
 
   /**
@@ -178,7 +172,7 @@ class VideoThumbnailService {
     try {
       await this.generateThumbnail(videoUri);
     } catch (error) {
-      console.warn('Failed to preload video thumbnail:', error);
+      console.warn("Failed to preload video thumbnail:", error);
     }
   }
 }

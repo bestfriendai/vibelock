@@ -10,7 +10,7 @@ interface Location {
   city: string;
   state: string;
   fullName: string;
-  type?: 'city' | 'college';
+  type?: "city" | "college";
   institutionType?: string;
   coordinates?: {
     latitude: number;
@@ -144,7 +144,7 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
         );
 
         // Add city results
-        results.push(...localFiltered.map(loc => ({ ...loc, type: 'city' as const })));
+        results.push(...localFiltered.map((loc) => ({ ...loc, type: "city" as const })));
 
         // Search for colleges
         try {
@@ -153,13 +153,13 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
             city: college.city,
             state: college.state,
             fullName: college.fullName,
-            type: 'college' as const,
+            type: "college" as const,
             institutionType: college.institutionType,
             coordinates: college.coordinates,
           }));
           results.push(...formattedCollegeResults);
         } catch (error) {
-          console.warn('College search failed:', error);
+          console.warn("College search failed:", error);
         }
 
         // If no local results, try geocoding search for broader city results
@@ -170,12 +170,12 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
               city: result.city,
               state: result.state,
               fullName: `${result.city}, ${result.state}`,
-              type: 'city' as const,
+              type: "city" as const,
               coordinates: result.coordinates,
             }));
             results.push(...formattedResults);
           } catch (error) {
-            console.warn('Geocoding search failed:', error);
+            console.warn("Geocoding search failed:", error);
           }
         }
 
@@ -188,16 +188,16 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
   }, [searchText]);
 
   const handleLocationSelect = async (location: Location) => {
-    console.log('📍 Location selected:', location);
+    console.log("📍 Location selected:", location);
 
     // Use provided coordinates when available, otherwise geocode with device for worldwide support
     try {
       let coordinates = location.coordinates;
       if (!coordinates) {
-        coordinates = await geocodeCityStateCached(location.city, location.state) || undefined;
+        coordinates = (await geocodeCityStateCached(location.city, location.state)) || undefined;
       }
 
-      console.log('✅ Found coordinates:', coordinates);
+      console.log("✅ Found coordinates:", coordinates);
 
       // For college selections, ensure we have both college info and city/state data
       const locationData: Location = {
@@ -207,14 +207,14 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
         city: location.city,
         state: location.state,
         // For colleges, preserve the full name and type information
-        ...(location.type === 'college' && {
-          type: 'college',
+        ...(location.type === "college" && {
+          type: "college",
           institutionType: location.institutionType,
           fullName: location.fullName,
         }),
       };
 
-      console.log('📍 Final location data:', locationData);
+      console.log("📍 Final location data:", locationData);
 
       // Pass location with coordinates to parent
       onLocationChange(locationData);
@@ -269,25 +269,25 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
   const renderLocationItem = ({ item }: { item: Location }) => (
     <Pressable
       onPress={() => {
-        console.log('🏙️ Location item pressed:', item.fullName);
+        console.log("🏙️ Location item pressed:", item.fullName);
         handleLocationSelect(item);
       }}
       className="px-4 py-3 border-b border-surface-700"
     >
       <View className="flex-row items-center">
         <Ionicons
-          name={item.type === 'college' ? 'school-outline' : 'location-outline'}
+          name={item.type === "college" ? "school-outline" : "location-outline"}
           size={18}
           color={colors.text.secondary}
           style={{ marginRight: 12 }}
         />
         <View className="flex-1">
           <Text className="font-medium" style={{ color: colors.text.primary }}>
-            {item.type === 'college' ? item.fullName.split(' - ')[0] : item.fullName}
+            {item.type === "college" ? item.fullName.split(" - ")[0] : item.fullName}
           </Text>
-          {item.type === 'college' && (
+          {item.type === "college" && (
             <Text className="text-sm mt-1" style={{ color: colors.text.secondary }}>
-              {item.city}, {item.state} • {item.institutionType?.replace('_', ' ')}
+              {item.city}, {item.state} • {item.institutionType?.replace("_", " ")}
             </Text>
           )}
         </View>
@@ -301,20 +301,19 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
         className="flex-row items-center px-3 py-2 rounded-full"
         style={{ backgroundColor: "#000000" }}
         onPress={() => {
-          console.log('🔘 Location selector pressed');
+          console.log("🔘 Location selector pressed");
           setModalVisible(true);
         }}
       >
         <Ionicons
-          name={currentLocation.type === 'college' ? 'school-outline' : 'location-outline'}
+          name={currentLocation.type === "college" ? "school-outline" : "location-outline"}
           size={16}
           color="#FFFFFF"
         />
         <Text className="text-sm ml-1 font-medium" style={{ color: "#FFFFFF" }}>
-          {currentLocation.type === 'college'
-            ? currentLocation.fullName?.split(' - ')[0] || `${currentLocation.city}, ${currentLocation.state}`
-            : `${currentLocation.city}, ${currentLocation.state}`
-          }
+          {currentLocation.type === "college"
+            ? currentLocation.fullName?.split(" - ")[0] || `${currentLocation.city}, ${currentLocation.state}`
+            : `${currentLocation.city}, ${currentLocation.state}`}
         </Text>
         <Ionicons name="chevron-down" size={16} color="#FFFFFF" style={{ marginLeft: 4 }} />
       </Pressable>
@@ -327,8 +326,13 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
       >
         <View className="flex-1" style={{ backgroundColor: colors.background }}>
           {/* Header */}
-          <View className="flex-row items-center justify-between px-6 py-6 border-b" style={{ borderBottomColor: colors.surface[700] }}>
-            <Text className="text-lg font-semibold" style={{ color: colors.text.primary }}>Select Location</Text>
+          <View
+            className="flex-row items-center justify-between px-6 py-6 border-b"
+            style={{ borderBottomColor: colors.surface[700] }}
+          >
+            <Text className="text-lg font-semibold" style={{ color: colors.text.primary }}>
+              Select Location
+            </Text>
             <Pressable onPress={() => setModalVisible(false)} className="w-8 h-8 items-center justify-center">
               <Ionicons name="close" size={24} color={colors.text.primary} />
             </Pressable>
@@ -336,7 +340,10 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
 
           {/* Search Input */}
           <View className="px-4 py-3 border-b border-surface-700">
-            <View className="flex-row items-center rounded-lg px-3 py-2" style={{ backgroundColor: colors.surface[800] }}>
+            <View
+              className="flex-row items-center rounded-lg px-3 py-2"
+              style={{ backgroundColor: colors.surface[800] }}
+            >
               <Ionicons name="search" size={20} color={colors.text.muted} />
               <TextInput
                 value={searchText}
@@ -374,7 +381,11 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
                 {isLoadingCurrentLocation ? "Getting your location..." : "Use Current Location"}
               </Text>
             </Pressable>
-            {locationError && <Text className="text-sm mt-2 px-1" style={{ color: "#EF4444" }}>{locationError}</Text>}
+            {locationError && (
+              <Text className="text-sm mt-2 px-1" style={{ color: "#EF4444" }}>
+                {locationError}
+              </Text>
+            )}
           </View>
 
           {/* Location List */}
@@ -390,8 +401,12 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
           {filteredLocations.length === 0 && (
             <View className="flex-1 items-center justify-center">
               <Ionicons name="location-outline" size={48} color={colors.text.muted} />
-              <Text className="text-lg font-medium mt-4" style={{ color: colors.text.secondary }}>No locations found</Text>
-              <Text className="text-center mt-2 px-8" style={{ color: colors.text.muted }}>Try searching for a different city or state</Text>
+              <Text className="text-lg font-medium mt-4" style={{ color: colors.text.secondary }}>
+                No locations found
+              </Text>
+              <Text className="text-center mt-2 px-8" style={{ color: colors.text.muted }}>
+                Try searching for a different city or state
+              </Text>
             </View>
           )}
         </View>

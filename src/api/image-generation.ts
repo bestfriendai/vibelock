@@ -49,9 +49,9 @@ export async function generateImage(
       try {
         errorData = await response.json();
       } catch {
-        errorData = { message: 'Unknown error' };
+        errorData = { message: "Unknown error" };
       }
-      const safeError = errorData || { message: 'Unknown error' };
+      const safeError = errorData || { message: "Unknown error" };
       console.error("[AssetGenerationService] Error response:", safeError);
       throw new Error(`Image generation API error: ${response.status} ${JSON.stringify(safeError)}`);
     }

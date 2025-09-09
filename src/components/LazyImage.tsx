@@ -1,12 +1,12 @@
 import React, { useState, useRef, useEffect } from "react";
 import { View, Dimensions } from "react-native";
 import { Image, ImageContentFit } from "expo-image";
-import Animated, { 
-  useSharedValue, 
-  useAnimatedStyle, 
-  withTiming, 
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
   interpolate,
-  Extrapolate 
+  Extrapolate,
 } from "react-native-reanimated";
 
 interface LazyImageProps {
@@ -23,7 +23,7 @@ interface LazyImageProps {
   className?: string;
 }
 
-const SCREEN_WIDTH = Dimensions.get('window').width;
+const SCREEN_WIDTH = Dimensions.get("window").width;
 
 // Placeholder blurhash for loading state
 const DEFAULT_BLURHASH = "L6PZfSi_.AyE_3t7t7R**0o#DgR4";
@@ -45,7 +45,7 @@ export default function LazyImage({
   const [hasError, setHasError] = useState(false);
   const [isInView, setIsInView] = useState(priority === "high");
   const viewRef = useRef<View>(null);
-  
+
   const opacity = useSharedValue(0);
   const scale = useSharedValue(0.95);
 
@@ -56,9 +56,9 @@ export default function LazyImage({
     const checkVisibility = () => {
       if (viewRef.current) {
         viewRef.current.measure((x, y, width, height, pageX, pageY) => {
-          const screenHeight = Dimensions.get('window').height;
+          const screenHeight = Dimensions.get("window").height;
           const isVisible = pageY < screenHeight + 200 && pageY + height > -200;
-          
+
           if (isVisible && !isInView) {
             setIsInView(true);
           }
@@ -90,12 +90,7 @@ export default function LazyImage({
       opacity: opacity.value,
       transform: [
         {
-          scale: interpolate(
-            scale.value,
-            [0.95, 1],
-            [0.95, 1],
-            Extrapolate.CLAMP
-          ),
+          scale: interpolate(scale.value, [0.95, 1], [0.95, 1], Extrapolate.CLAMP),
         },
       ],
     };
@@ -103,31 +98,22 @@ export default function LazyImage({
 
   const placeholderStyle = useAnimatedStyle(() => {
     return {
-      opacity: interpolate(
-        opacity.value,
-        [0, 1],
-        [1, 0],
-        Extrapolate.CLAMP
-      ),
+      opacity: interpolate(opacity.value, [0, 1], [1, 0], Extrapolate.CLAMP),
     };
   });
 
   return (
-    <View 
-      ref={viewRef}
-      style={[{ width, height }, style]} 
-      className={className}
-    >
+    <View ref={viewRef} style={[{ width, height }, style]} className={className}>
       {/* Placeholder/Blurhash background */}
-      <Animated.View 
+      <Animated.View
         style={[
           {
-            position: 'absolute',
+            position: "absolute",
             top: 0,
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: '#1a1a1a',
+            backgroundColor: "#1a1a1a",
           },
           placeholderStyle,
         ]}
@@ -145,12 +131,12 @@ export default function LazyImage({
       {(isInView || priority === "high") && !hasError && (
         <Animated.View style={animatedStyle}>
           <Image
-            source={{ 
+            source={{
               uri,
               // Add cache control headers
               headers: {
-                'Cache-Control': 'max-age=3600',
-              }
+                "Cache-Control": "max-age=3600",
+              },
             }}
             style={{ width, height }}
             contentFit={contentFit}
@@ -168,20 +154,20 @@ export default function LazyImage({
 
       {/* Error state */}
       {hasError && (
-        <View 
+        <View
           style={{
             width,
             height,
-            backgroundColor: '#2a2a2a',
-            justifyContent: 'center',
-            alignItems: 'center',
+            backgroundColor: "#2a2a2a",
+            justifyContent: "center",
+            alignItems: "center",
           }}
         >
-          <View 
+          <View
             style={{
               width: 24,
               height: 24,
-              backgroundColor: '#666',
+              backgroundColor: "#666",
               borderRadius: 12,
             }}
           />
@@ -192,9 +178,7 @@ export default function LazyImage({
 }
 
 // Higher-order component for easy integration
-export function withLazyLoading<T extends { uri: string }>(
-  Component: React.ComponentType<T>
-) {
+export function withLazyLoading<T extends { uri: string }>(Component: React.ComponentType<T>) {
   return function LazyLoadedComponent(props: T) {
     const [shouldLoad, setShouldLoad] = useState(false);
     const viewRef = useRef<View>(null);
@@ -203,9 +187,9 @@ export function withLazyLoading<T extends { uri: string }>(
       const checkVisibility = () => {
         if (viewRef.current) {
           viewRef.current.measure((x, y, width, height, pageX, pageY) => {
-            const screenHeight = Dimensions.get('window').height;
+            const screenHeight = Dimensions.get("window").height;
             const isVisible = pageY < screenHeight + 100 && pageY + height > -100;
-            
+
             if (isVisible) {
               setShouldLoad(true);
             }
@@ -221,10 +205,10 @@ export function withLazyLoading<T extends { uri: string }>(
 
     if (!shouldLoad) {
       return (
-        <View 
+        <View
           ref={viewRef}
-          style={{ 
-            backgroundColor: '#1a1a1a',
+          style={{
+            backgroundColor: "#1a1a1a",
             minHeight: 100,
           }}
         />
@@ -240,7 +224,7 @@ export class ImagePreloader {
   private static cache = new Map<string, Promise<boolean>>();
 
   static preload(uris: string[]): Promise<boolean[]> {
-    const promises = uris.map(uri => {
+    const promises = uris.map((uri) => {
       if (this.cache.has(uri)) {
         return this.cache.get(uri)!;
       }
@@ -248,7 +232,7 @@ export class ImagePreloader {
       const promise = Image.prefetch(uri)
         .then(() => true)
         .catch(() => false);
-      
+
       this.cache.set(uri, promise);
       return promise;
     });

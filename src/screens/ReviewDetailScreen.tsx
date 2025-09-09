@@ -9,6 +9,8 @@ import {
   Platform,
   Keyboard,
   TouchableWithoutFeedback,
+  Alert,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { RouteProp, useRoute, useNavigation } from "@react-navigation/native";
@@ -78,49 +80,44 @@ export default function ReviewDetailScreen() {
 
   // Load review data
   useEffect(() => {
-    const loadReviewData = async () => {
+    const loadReview = async () => {
       try {
         setReviewLoading(true);
+        const params = route.params as any;
+        let finalReview = null;
 
-        if (routeParams.review) {
-          // Direct review object passed
-          const rawReview = routeParams.review;
-          const processedReview = {
-            ...rawReview,
-            createdAt: typeof rawReview.createdAt === "string" ? new Date(rawReview.createdAt) : rawReview.createdAt,
-            updatedAt: typeof rawReview.updatedAt === "string" ? new Date(rawReview.updatedAt) : rawReview.updatedAt,
+        if (params?.review) {
+          const raw = params.review;
+          finalReview = {
+            ...raw,
+            createdAt: new Date(raw.createdAt),
+            updatedAt: new Date(raw.updatedAt),
           };
-          setReview(processedReview);
-          setLikeCount(processedReview.likeCount || 0);
-        } else if (routeParams.reviewId) {
-          // Only reviewId passed
-          const fetchedReview = await supabaseReviews.getReview(routeParams.reviewId);
-          if (fetchedReview) {
-            setReview(fetchedReview);
-            setLikeCount(fetchedReview.likeCount || 0);
-          } else {
-            navigation.goBack();
-            return;
-          }
+        } else if (params?.reviewId) {
+          finalReview = await supabaseReviews.getReview(params.reviewId);
+        }
+
+        if (finalReview) {
+          setReview(finalReview);
+          setLikeCount(finalReview.likeCount || 0);
         } else {
-          navigation.goBack();
-          return;
+          Alert.alert("Review not found", "This review may have been deleted.", [
+            { text: "OK", onPress: () => navigation.goBack() },
+          ]);
         }
       } catch (error) {
         console.error("Error loading review:", error);
-        navigation.goBack();
+        Alert.alert("Error", "Failed to load review.", [{ text: "OK", onPress: () => navigation.goBack() }]);
       } finally {
         setReviewLoading(false);
       }
     };
 
-    loadReviewData();
-  }, [routeParams, navigation]);
-
-
+    loadReview();
+  }, [route.params, navigation]);
 
   // Get comments for this review (only access when review is available)
-  const comments = review ? (commentsFromStore[review.id] || []) : [];
+  const comments = review ? commentsFromStore[review.id] || [] : [];
 
   // Add mock media if review doesn't have any for demo purposes - with extra safety checks
   const reviewWithMedia = React.useMemo(() => {
@@ -335,14 +332,21 @@ export default function ReviewDetailScreen() {
         contentContainerStyle={{ paddingBottom: 120, flexGrow: 1 }}
       >
         {/* Loading State */}
-        {(isLoading || reviewLoading || !review) && (
-          <View className="items-center justify-center py-8 flex-1">
-            <View className="w-8 h-8 border-2 border-brand-red/30 border-t-brand-red rounded-full animate-spin" />
-            <Text className="text-text-primary mt-4">Loading...</Text>
+        {reviewLoading && (
+          <View className="flex-1 bg-surface-900 items-center justify-center">
+            <ActivityIndicator size="large" color="#EF4444" />
+            <Text className="text-text-primary mt-4">Loading Review...</Text>
           </View>
         )}
 
-        {!isLoading && !reviewLoading && review && (
+        {/* Review not available state */}
+        {!reviewLoading && !review && (
+          <View className="flex-1 bg-surface-900 items-center justify-center">
+            <Text className="text-text-secondary">Review not available.</Text>
+          </View>
+        )}
+
+        {!reviewLoading && review && (
           <>
             {/* Hero Section */}
             <View className="px-6 mb-8">

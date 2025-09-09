@@ -156,7 +156,10 @@ export default function SignUpScreen() {
 
     // Ensure legal acceptance
     if (!legalAccepted) {
-      Alert.alert("Legal Agreement Required", "Please accept the Terms of Service and Privacy Policy to create your account.");
+      Alert.alert(
+        "Legal Agreement Required",
+        "Please accept the Terms of Service and Privacy Policy to create your account.",
+      );
       return;
     }
 
@@ -175,7 +178,10 @@ export default function SignUpScreen() {
 
     // Ensure legal acceptance
     if (!legalAccepted) {
-      Alert.alert("Legal Agreement Required", "Please accept the Terms of Service and Privacy Policy to create your account.");
+      Alert.alert(
+        "Legal Agreement Required",
+        "Please accept the Terms of Service and Privacy Policy to create your account.",
+      );
       return;
     }
 
@@ -320,11 +326,7 @@ export default function SignUpScreen() {
                       <Text className="text-text-muted text-center mb-6">Step 2 of 3: Legal Agreement</Text>
                     </View>
 
-                    <LegalAcceptance
-                      onAccept={handleLegalAcceptance}
-                      required={true}
-                      showTitle={false}
-                    />
+                    <LegalAcceptance onAccept={handleLegalAcceptance} required={true} showTitle={false} />
 
                     <View className="mt-6">
                       <AnimatedButton
@@ -393,8 +395,6 @@ export default function SignUpScreen() {
                         onChange={(val) => setGender(val as any)}
                       />
                     </View>
-
-
 
                     <View className="space-y-3 mt-8">
                       <AnimatedButton
