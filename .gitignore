@@ -33,6 +33,9 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
+# VSCode settings with sensitive data
+.vscode/settings.json
+
 # iOS & Android
 ios/
 android/

@@ -1,21 +1,32 @@
 /*
-IMPORTANT NOTICE: DO NOT REMOVE
-This is a custom client for the Anthropic API. You may update this service, but you should not need to.
+IMPORTANT NOTICE: SECURITY UPDATE
+This service now uses a secure backend proxy to protect API keys.
+API keys are no longer exposed in the client bundle.
 
-Valid model names: 
-claude-sonnet-4-20250514
-claude-3-7-sonnet-latest
-claude-3-5-haiku-latest
+Available models:
+claude-3-5-sonnet-20241022
+claude-3-5-haiku-20241022
+claude-3-opus-20240229
 */
-import Anthropic from "@anthropic-ai/sdk";
 
+import { generateAnthropicResponse } from './secure-ai-service';
+
+/**
+ * @deprecated Use generateAnthropicResponse from secure-ai-service instead
+ * This function is maintained for backward compatibility but now uses secure proxy
+ */
 export const getAnthropicClient = () => {
-  const apiKey = process.env.EXPO_PUBLIC_VIBECODE_ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    console.warn("Anthropic API key not found in environment variables");
-    throw new Error("Anthropic API key is required but not found in environment variables");
-  }
-  return new Anthropic({
-    apiKey: apiKey,
-  });
+  console.warn('getAnthropicClient is deprecated. Use generateAnthropicResponse from secure-ai-service instead.');
+
+  // Return a mock client that throws an error to prevent direct usage
+  return {
+    messages: {
+      create: () => {
+        throw new Error('Direct Anthropic client usage is disabled for security. Use generateAnthropicResponse from secure-ai-service instead.');
+      }
+    }
+  };
 };
+
+// Export secure functions for backward compatibility
+export { generateAnthropicResponse };

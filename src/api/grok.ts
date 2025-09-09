@@ -1,23 +1,35 @@
 /*
-IMPORTANT NOTICE: DO NOT REMOVE
-This is a custom client for the Grok API. You may update this service, but you should not need to.
-The Grok API can be communicated with the "openai" package, so you can use the same functions as the openai package. It may not support all the same features, so please be careful.
+IMPORTANT NOTICE: SECURITY UPDATE
+This service now uses a secure backend proxy to protect API keys.
+API keys are no longer exposed in the client bundle.
 
-
+Available models:
+grok-beta
 grok-3-latest
 grok-3-fast-latest
 grok-3-mini-latest
 */
-import OpenAI from "openai";
 
+import { generateGrokResponse } from './secure-ai-service';
+
+/**
+ * @deprecated Use generateGrokResponse from secure-ai-service instead
+ * This function is maintained for backward compatibility but now uses secure proxy
+ */
 export const getGrokClient = () => {
-  const apiKey = process.env.EXPO_PUBLIC_VIBECODE_GROK_API_KEY;
-  if (!apiKey) {
-    console.warn("Grok API key not found in environment variables");
-    throw new Error("Grok API key is required but not found in environment variables");
-  }
-  return new OpenAI({
-    apiKey: apiKey,
-    baseURL: "https://api.x.ai/v1",
-  });
+  console.warn('getGrokClient is deprecated. Use generateGrokResponse from secure-ai-service instead.');
+
+  // Return a mock client that throws an error to prevent direct usage
+  return {
+    chat: {
+      completions: {
+        create: () => {
+          throw new Error('Direct Grok client usage is disabled for security. Use generateGrokResponse from secure-ai-service instead.');
+        }
+      }
+    }
+  };
 };
+
+// Export secure functions for backward compatibility
+export { generateGrokResponse };

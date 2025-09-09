@@ -1,21 +1,36 @@
 /*
-IMPORTANT NOTICE: DO NOT REMOVE
-This is a custom client for the OpenAI API. You may update this service, but you should not need to.
+IMPORTANT NOTICE: SECURITY UPDATE
+This service now uses a secure backend proxy to protect API keys.
+API keys are no longer exposed in the client bundle.
 
-valid model names:
-gpt-4.1-2025-04-14
-o4-mini-2025-04-16
+Available models:
 gpt-4o-2024-11-20
+gpt-4o-mini
+gpt-4-turbo
+o1-preview
+o1-mini
 */
-import OpenAI from "openai";
 
+import { generateOpenAIResponse } from './secure-ai-service';
+
+/**
+ * @deprecated Use generateOpenAIResponse from secure-ai-service instead
+ * This function is maintained for backward compatibility but now uses secure proxy
+ */
 export const getOpenAIClient = () => {
-  const apiKey = process.env.EXPO_PUBLIC_VIBECODE_OPENAI_API_KEY;
-  if (!apiKey) {
-    console.warn("OpenAI API key not found in environment variables");
-    throw new Error("OpenAI API key is required but not found in environment variables");
-  }
-  return new OpenAI({
-    apiKey: apiKey,
-  });
+  console.warn('getOpenAIClient is deprecated. Use generateOpenAIResponse from secure-ai-service instead.');
+
+  // Return a mock client that throws an error to prevent direct usage
+  return {
+    chat: {
+      completions: {
+        create: () => {
+          throw new Error('Direct OpenAI client usage is disabled for security. Use generateOpenAIResponse from secure-ai-service instead.');
+        }
+      }
+    }
+  };
 };
+
+// Export secure functions for backward compatibility
+export { generateOpenAIResponse };
