@@ -6,16 +6,19 @@ import useChatStore from "../state/chatStore";
 import { useAuthState } from "../utils/authUtils";
 import { useTheme } from "../providers/ThemeProvider";
 import SegmentedTabs from "../components/SegmentedTabs";
-import ChatRoomCard from "../components/ChatRoomCard";
+import EnhancedChatRoomCard from "../components/EnhancedChatRoomCard";
 import { ChatRoom } from "../types";
 import { useNavigation } from "@react-navigation/native";
 
 export default function ChatroomsScreen() {
   const navigation = useNavigation<any>();
   const { colors } = useTheme();
-  const { chatRooms, loadChatRooms, isLoading, onlineUsers, setRoomCategoryFilter } = useChatStore();
+  const { chatRooms, loadChatRooms, isLoading, onlineUsers, setRoomCategoryFilter, typingUsers } =
+    useChatStore();
   const { user, canAccessChat, needsSignIn } = useAuthState();
-  const [category, setCategory] = useState<"all" | "men" | "women" | "lgbtq+">(user?.genderPreference || "all");
+  const [category, setCategory] = useState<"all" | "men" | "women" | "lgbtq+">(
+    user?.genderPreference || "all",
+  );
   const [query, setQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
 
@@ -62,9 +65,16 @@ export default function ChatroomsScreen() {
                 className="w-16 h-16 rounded-full items-center justify-center mb-4"
                 style={{ backgroundColor: `${colors.brand.red}20` }}
               >
-                <Text className="text-2xl" style={{ color: colors.brand.red }}>💬</Text>
+                <Text className="text-2xl" style={{ color: colors.brand.red }}>
+                  💬
+                </Text>
               </View>
-              <Text className="text-2xl font-bold mb-2 text-center" style={{ color: colors.text.primary }}>Join Chat Rooms</Text>
+              <Text
+                className="text-2xl font-bold mb-2 text-center"
+                style={{ color: colors.text.primary }}
+              >
+                Join Chat Rooms
+              </Text>
               <Text className="text-center" style={{ color: colors.text.secondary }}>
                 Create an account to join community discussions and connect with others in your area.
               </Text>
@@ -88,7 +98,9 @@ export default function ChatroomsScreen() {
                   // Navigate to sign in
                 }}
               >
-                <Text className="font-semibold text-lg" style={{ color: colors.text.primary }}>Sign In</Text>
+                <Text className="font-semibold text-lg" style={{ color: colors.text.primary }}>
+                  Sign In
+                </Text>
               </Pressable>
             </View>
           </View>
@@ -109,7 +121,9 @@ export default function ChatroomsScreen() {
         }}
       >
         <View className="flex-row items-center justify-between">
-          <Text className="text-2xl font-bold" style={{ color: colors.text.primary }}>Chat Rooms</Text>
+          <Text className="text-2xl font-bold" style={{ color: colors.text.primary }}>
+            Chat Rooms
+          </Text>
         </View>
         <View
           className="mt-6 rounded-xl px-4 py-3 flex-row items-center"
@@ -145,13 +159,24 @@ export default function ChatroomsScreen() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ padding: 24 }}
         ItemSeparatorComponent={() => <View className="h-4" />}
-        renderItem={({ item }) => <ChatRoomCard room={item} onPress={openRoom} />}
+        renderItem={({ item }) => (
+          <EnhancedChatRoomCard
+            room={item}
+            onPress={openRoom}
+            onlineCount={(onlineUsers as any)[item.id]?.length || 0}
+            unreadCount={item.unreadCount || 0}
+            isTyping={typingUsers.some((t) => t.chatRoomId === item.id)}
+            typingUsers={typingUsers.filter((t) => t.chatRoomId === item.id).map((t) => t.userName)}
+          />
+        )}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         ListEmptyComponent={
           !isLoading ? (
             <View className="items-center justify-center py-20">
               <Ionicons name="chatbubbles-outline" size={48} color="#9CA3AF" />
-              <Text className="text-text-secondary text-lg font-medium mt-4">No chat rooms found</Text>
+              <Text className="text-text-secondary text-lg font-medium mt-4">
+                No chat rooms found
+              </Text>
               <Text className="text-text-muted text-center mt-2">Try adjusting your search</Text>
             </View>
           ) : null

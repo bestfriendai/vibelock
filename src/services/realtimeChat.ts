@@ -1,135 +1,86 @@
-// Modern Supabase Real-time Chat Service (2025)
+// Enhanced Supabase Real-time Chat Service (2025) - Complete Rewrite
 import { supabase } from "../config/supabase";
-import { ChatRoom, ChatMessage, ChatMember } from "../types";
-import { RealtimeChannel } from "@supabase/supabase-js";
-import { AppError, ErrorType, parseSupabaseError } from "../utils/errorHandling";
+import { ChatMessage, ChatMember } from "../types";
+import { RealtimeChannel, RealtimePresenceState } from "@supabase/supabase-js";
+import { AppError, ErrorType } from "../utils/errorHandling";
 
-class RealtimeChatService {
+interface TypingUser {
+  userId: string;
+  userName: string;
+  timestamp: number;
+}
+
+interface MessageCallback {
+  (messages: ChatMessage[], isInitialLoad?: boolean): void;
+}
+
+interface PresenceCallback {
+  (members: ChatMember[]): void;
+}
+
+interface TypingCallback {
+  (typingUsers: TypingUser[]): void;
+}
+
+class EnhancedRealtimeChatService {
   private channels: Map<string, RealtimeChannel> = new Map();
-  private messageCallbacks: Map<string, (messages: ChatMessage[]) => void> = new Map();
+  private messageCallbacks: Map<string, MessageCallback> = new Map();
+  private presenceCallbacks: Map<string, PresenceCallback> = new Map();
+  private typingCallbacks: Map<string, TypingCallback> = new Map();
+
+  // Connection management
+  private connectionStatus: "connected" | "connecting" | "disconnected" = "disconnected";
   private retryAttempts: Map<string, number> = new Map();
-  private roomCallbacks: Map<string, (rooms: ChatRoom[]) => void> = new Map();
-  private presenceCallbacks: Map<string, (members: ChatMember[]) => void> = new Map();
-  private typingCallbacks: Map<string, (typingUsers: any[]) => void> = new Map();
+  private maxRetries = 5;
+  private reconnectTimeouts: Map<string, NodeJS.Timeout> = new Map();
+
+  // Message deduplication
+  private messageCache: Map<string, Set<string>> = new Map();
   private typingTimeouts: Map<string, NodeJS.Timeout> = new Map();
-  private abortControllers: Map<string, AbortController> = new Map();
-  private pendingJoins: Set<string> = new Set();
 
-  // Initialize real-time chat system
+  // Performance optimization
+  private batchedUpdates: Map<string, ChatMessage[]> = new Map();
+  private updateTimeouts: Map<string, NodeJS.Timeout> = new Map();
+
   async initialize() {
-    console.log("🚀 Initializing Supabase Real-time Chat Service");
-    
-    // Set up global room updates channel
-    const roomsChannel = supabase
-      .channel("chat_rooms_updates")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "chat_rooms_firebase",
-        },
-        (payload) => {
-          console.log("📢 Room update:", payload);
-          this.handleRoomUpdate(payload);
-        }
-      )
-      .subscribe();
-
-    this.channels.set("rooms", roomsChannel);
-  }
-
-  // Get chat rooms with proper error handling
-  async getChatRooms(): Promise<ChatRoom[]> {
-    try {
-      const { data, error } = await supabase
-        .from("chat_rooms_firebase")
-        .select(`
-          id,
-          name,
-          description,
-          type,
-          category,
-          member_count,
-          online_count,
-          last_activity,
-          is_active,
-          location,
-          created_at,
-          updated_at
-        `)
-        .eq("is_active", true)
-        .order("created_at", { ascending: false });
-
-      if (error) {
-        console.error("❌ Error fetching chat rooms:", error);
-        throw error;
-      }
-
-      console.log("✅ Fetched chat rooms:", data?.length || 0);
-
-      return (data || []).map((room) => ({
-        id: room.id,
-        name: room.name,
-        description: room.description || "",
-        type: room.type as any,
-        category: room.category as any,
-        memberCount: room.member_count || 0,
-        onlineCount: room.online_count || 0,
-        lastActivity: new Date(room.last_activity || room.created_at),
-        isActive: room.is_active,
-        location: room.location ? room.location : undefined,
-        createdAt: new Date(room.created_at),
-        updatedAt: new Date(room.updated_at || room.created_at),
-      }));
-    } catch (error: any) {
-      console.error("💥 Failed to get chat rooms:", error);
-      throw new Error(`Failed to load chat rooms: ${error.message}`);
-    }
-  }
-
-  // Subscribe to room updates
-  subscribeToRooms(callback: (rooms: ChatRoom[]) => void) {
-    this.roomCallbacks.set("global", callback);
-  }
-
-  // Join a chat room with presence and message subscription
-  async joinRoom(roomId: string, userId: string, userName: string) {
-    console.log(`🚪 Joining room ${roomId} as ${userName}`);
-
-    // Prevent race conditions - check if join is already in progress
-    if (this.pendingJoins.has(roomId)) {
-      console.log(`⚠️ Join already in progress for room ${roomId}`);
-      // Wait for the pending join to complete
-      while (this.pendingJoins.has(roomId)) {
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
-      return this.channels.get(roomId)!;
-    }
-
-    // Check if already connected to this room
-    if (this.channels.has(roomId)) {
-      console.log(`⚠️ Already connected to room ${roomId}`);
-      return this.channels.get(roomId)!;
-    }
-
-    // Mark join as in progress
-    this.pendingJoins.add(roomId);
-
-    // Create abort controller for this operation
-    const abortController = new AbortController();
-    this.abortControllers.set(roomId, abortController);
+    console.log("🚀 Initializing Enhanced Supabase Real-time Chat Service");
+    this.connectionStatus = "connecting";
 
     try {
-      // Create room-specific channel with better error handling
+      // Connection status will be managed per channel
+      this.connectionStatus = "connected";
+      console.log("✅ Enhanced Realtime Chat Service initialized");
+    } catch (error) {
+      console.error("Failed to initialize real-time service:", error);
+      throw new AppError("Failed to initialize chat service", ErrorType.NETWORK);
+    }
+  }
+
+  async joinRoom(roomId: string, userId: string, userName: string): Promise<RealtimeChannel> {
+    try {
+      console.log(`🚪 Joining chat room: ${roomId} as ${userName}`);
+
+      // Clean up existing channel if any
+      await this.leaveRoom(roomId);
+
+      // Initialize message cache for this room
+      if (!this.messageCache.has(roomId)) {
+        this.messageCache.set(roomId, new Set());
+      }
+
+      // Create enhanced channel with all features
       const channel = supabase
-        .channel(`room_${roomId}`, {
+        .channel(`enhanced_room_${roomId}`, {
           config: {
             presence: {
-              key: userId,
+              key: `user_${userId}`,
+            },
+            broadcast: {
+              self: false, // Don't receive own broadcasts
             },
           },
         })
+        // Listen to new messages
         .on(
           "postgres_changes",
           {
@@ -138,190 +89,77 @@ class RealtimeChatService {
             table: "chat_messages_firebase",
             filter: `chat_room_id=eq.${roomId}`,
           },
-          (payload) => {
-            try {
-              console.log("💬 New message:", payload);
-              this.handleNewMessage(roomId, payload);
-            } catch (error) {
-              console.error("Error handling new message:", error);
-              const appError = error instanceof AppError ? error : parseSupabaseError(error);
-              // Don't throw here as it would break the subscription, just log
-            }
-          }
+          (payload) => this.handleNewMessage(roomId, payload),
         )
+        // Listen to message updates (edits, deletions)
+        .on(
+          "postgres_changes",
+          {
+            event: "UPDATE",
+            schema: "public",
+            table: "chat_messages_firebase",
+            filter: `chat_room_id=eq.${roomId}`,
+          },
+          (payload) => this.handleMessageUpdate(roomId, payload),
+        )
+        // Listen to presence changes (online/offline)
         .on("presence", { event: "sync" }, () => {
-          try {
-            console.log("👥 Presence sync for room", roomId);
-            this.handlePresenceSync(roomId);
-          } catch (error) {
-            console.error("Error handling presence sync:", error);
-            const appError = error instanceof AppError ? error : parseSupabaseError(error);
-            // Don't throw here as it would break the subscription, just log
-          }
+          this.handlePresenceSync(roomId, channel);
         })
         .on("presence", { event: "join" }, ({ key, newPresences }) => {
-          try {
-            console.log("👋 User joined:", key, newPresences);
-            this.handlePresenceJoin(roomId, key, newPresences);
-          } catch (error) {
-            console.error("Error handling presence join:", error);
-          }
+          console.log(`👋 User joined: ${key}`, newPresences);
         })
         .on("presence", { event: "leave" }, ({ key, leftPresences }) => {
-          try {
-            console.log("👋 User left:", key, leftPresences);
-            this.handlePresenceLeave(roomId, key, leftPresences);
-          } catch (error) {
-            console.error("Error handling presence leave:", error);
-          }
+          console.log(`👋 User left: ${key}`, leftPresences);
         })
-        .on("broadcast", { event: "typing" }, ({ payload }) => {
-          try {
-            console.log("⌨️ Typing event:", payload);
-            this.handleTypingEvent(roomId, payload);
-          } catch (error) {
-            console.error("Error handling typing event:", error);
-          }
+        // Listen to typing indicators
+        .on("broadcast", { event: "typing" }, (payload) => {
+          this.handleTypingBroadcast(roomId, payload);
         })
-        .subscribe(async (status, err) => {
-          console.log(`📡 Room ${roomId} subscription status:`, status);
-
-          if (err) {
-            console.error(`❌ Subscription error for room ${roomId}:`, err);
-            return;
-          }
-
+        // Handle subscription status
+        .subscribe(async (status, error) => {
           if (status === "SUBSCRIBED") {
-            console.log("✅ Subscribed to room", roomId);
+            console.log(`✅ Successfully subscribed to room ${roomId}`);
 
-            try {
-              // Track presence with retry
-              let retries = 3;
-              while (retries > 0) {
-                try {
-                  await channel.track({
-                    user_id: userId,
-                    user_name: userName,
-                    online_at: new Date().toISOString(),
-                  });
-                  break;
-                } catch (error) {
-                  if (!this.abortControllers.get(roomId)?.signal.aborted) {
-                    console.warn(`Presence tracking attempt ${4 - retries} failed:`, error);
-                  }
-                  retries--;
-                  if (retries > 0 && !this.abortControllers.get(roomId)?.signal.aborted) {
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                  }
-                }
-              }
+            // Track user presence
+            await channel.track({
+              user_id: userId,
+              user_name: userName,
+              online_at: new Date().toISOString(),
+              status: "online",
+            });
 
-              // Load initial messages with retry
-              retries = 3;
-              while (retries > 0) {
-                try {
-                  await this.loadRoomMessages(roomId);
-                  break;
-                } catch (error) {
-                  if (!this.abortControllers.get(roomId)?.signal.aborted) {
-                    console.warn(`Message loading attempt ${4 - retries} failed:`, error);
-                  }
-                  retries--;
-                  if (retries > 0 && !this.abortControllers.get(roomId)?.signal.aborted) {
-                    await new Promise((resolve) => setTimeout(resolve, 1000));
-                  }
-                }
-              }
-            } catch (error) {
-              console.error("Error in subscription setup:", error);
-            }
+            // Load initial messages
+            await this.loadInitialMessages(roomId);
+
+            this.retryAttempts.delete(roomId);
           } else if (status === "CHANNEL_ERROR") {
-            console.error(`❌ Channel error for room ${roomId}`);
-            // Try to reconnect after a delay
-            setTimeout(() => {
-              console.log(`🔄 Attempting to reconnect to room ${roomId}`);
-              this.joinRoom(roomId, userId, userName);
-            }, 5000);
+            console.error(`❌ Channel error for room ${roomId}:`, error);
+            this.handleChannelError(roomId, error);
           } else if (status === "TIMED_OUT") {
-            console.error(`⏰ Subscription timed out for room ${roomId}`);
-            // Implement exponential backoff for reconnection
-            const retryCount = this.retryAttempts.get(roomId) || 0;
-            const delay = Math.min(3000 * Math.pow(2, retryCount), 30000);
-            this.retryAttempts.set(roomId, retryCount + 1);
-
-            setTimeout(() => {
-              console.log(`🔄 Attempting to reconnect to room ${roomId} (attempt ${retryCount + 1})`);
-              this.joinRoom(roomId, userId, userName);
-            }, delay);
+            console.error(`⏰ Channel timeout for room ${roomId}`);
+            this.handleChannelTimeout(roomId);
           }
         });
 
       this.channels.set(roomId, channel);
-
-      // Clear pending join and reset retry count on success
-      this.pendingJoins.delete(roomId);
-      this.retryAttempts.delete(roomId);
-
       return channel;
-    } catch (error) {
-      console.error("💥 Failed to join room:", error);
-
-      // Clean up on failure
-      this.pendingJoins.delete(roomId);
-      this.abortControllers.delete(roomId);
-
-      const appError = error instanceof AppError ? error : parseSupabaseError(error);
+    } catch (error: any) {
+      console.error(`Failed to join room ${roomId}:`, error);
       throw new AppError(
-        `Failed to join room ${roomId}`,
-        ErrorType.SERVER,
-        "ROOM_JOIN_FAILED",
-        undefined,
-        true
+        `Failed to join chat room: ${error?.message || "Unknown error"}`,
+        ErrorType.NETWORK,
       );
     }
   }
 
-  // Leave a chat room
-  async leaveRoom(roomId: string) {
-    console.log(`🚪 Leaving room ${roomId}`);
-
-    // Cancel any pending operations
-    const abortController = this.abortControllers.get(roomId);
-    if (abortController) {
-      abortController.abort();
-      this.abortControllers.delete(roomId);
-    }
-
-    // Remove from pending joins if still pending
-    this.pendingJoins.delete(roomId);
-
-    const channel = this.channels.get(roomId);
-    if (channel) {
-      await channel.untrack();
-      await channel.unsubscribe();
-      this.channels.delete(roomId);
-    }
-
-    // Clean up all callbacks and state for this room
-    this.messageCallbacks.delete(roomId);
-    this.presenceCallbacks.delete(roomId);
-    this.typingCallbacks.delete(roomId);
-    this.retryAttempts.delete(roomId);
-
-    // Clear any typing timeouts for this room
-    const typingTimeout = this.typingTimeouts.get(roomId);
-    if (typingTimeout) {
-      clearTimeout(typingTimeout);
-      this.typingTimeouts.delete(roomId);
-    }
-  }
-
-  // Load messages for a room
-  async loadRoomMessages(roomId: string, cursor?: string, limit: number = 50): Promise<ChatMessage[]> {
+  // Enhanced message loading with pagination
+  async loadInitialMessages(roomId: string, limit: number = 50): Promise<void> {
     try {
-      let query = supabase
+      const { data: messages, error } = await supabase
         .from("chat_messages_firebase")
-        .select(`
+        .select(
+          `
           id,
           chat_room_id,
           sender_id,
@@ -331,177 +169,221 @@ class RealtimeChatService {
           message_type,
           timestamp,
           is_read,
-          reply_to
-        `)
-        .eq("chat_room_id", roomId);
-
-      // Add cursor-based pagination for older messages
-      if (cursor) {
-        query = query.lt("timestamp", cursor);
-      }
-
-      query = query
-        .order("timestamp", { ascending: false }) // Get newest first for pagination
+          is_deleted,
+          reply_to,
+          reactions
+        `,
+        )
+        .eq("chat_room_id", roomId)
+        .eq("is_deleted", false)
+        .order("timestamp", { ascending: false }) // Latest first for pagination
         .limit(limit);
 
-      const { data, error } = await query;
-
       if (error) {
-        console.error("❌ Error loading messages:", error);
+        console.error(`❌ Error loading messages for room ${roomId}:`, error);
         throw error;
       }
 
-      const messages = (data || [])
-        .map((msg) => ({
-          id: msg.id,
-          chatRoomId: msg.chat_room_id,
-          senderId: msg.sender_id || "unknown",
-          senderName: msg.sender_name || "User",
-          senderAvatar: msg.sender_avatar,
-          content: msg.content,
-          messageType: (msg.message_type || "text") as any,
-          timestamp: new Date(msg.timestamp),
-          isRead: msg.is_read || false,
-          replyTo: msg.reply_to,
-        })) as ChatMessage[];
+      if (messages && messages.length > 0) {
+        const formattedMessages = messages
+          .reverse() // Reverse for chronological order in UI
+          .map(this.formatMessage);
 
-      // Reverse to get chronological order (oldest first)
-      const sortedMessages = cursor ? messages.reverse() : messages.reverse();
+        // Update cache
+        const cache = this.messageCache.get(roomId) || new Set();
+        formattedMessages.forEach((msg) => cache.add(msg.id));
+        this.messageCache.set(roomId, cache);
 
-      console.log(`📨 Loaded ${sortedMessages.length} messages for room ${roomId}`);
+        // Notify callback with initial messages (this replaces all messages)
+        const callback = this.messageCallbacks.get(roomId);
+        if (callback) {
+          // For initial load, we need to replace all messages
+          callback(formattedMessages, true); // true indicates this is initial load
+        }
+      }
+    } catch (error) {
+      console.error(`Failed to load messages for room ${roomId}:`, error);
+      throw new AppError("Failed to load chat messages", ErrorType.SERVER);
+    }
+  }
 
-      // Notify callback if exists
+  // Load older messages for pagination
+  async loadOlderMessages(
+    roomId: string,
+    beforeTimestamp: string,
+    limit: number = 30,
+  ): Promise<ChatMessage[]> {
+    try {
+      const { data: messages, error } = await supabase
+        .from("chat_messages_firebase")
+        .select("*")
+        .eq("chat_room_id", roomId)
+        .eq("is_deleted", false)
+        .lt("timestamp", beforeTimestamp)
+        .order("timestamp", { ascending: false })
+        .limit(limit);
+
+      if (error) throw error;
+
+      return messages ? messages.reverse().map(this.formatMessage) : [];
+    } catch (error) {
+      console.error(`Failed to load older messages for room ${roomId}:`, error);
+      return [];
+    }
+  }
+
+  // Enhanced message handling with deduplication
+  private handleNewMessage(roomId: string, payload: any): void {
+    try {
+      if (!payload.new) return;
+
+      const messageId = payload.new.id;
+      const cache = this.messageCache.get(roomId) || new Set();
+
+      // Prevent duplicate messages
+      if (cache.has(messageId)) {
+        console.log(`🔄 Duplicate message ignored: ${messageId}`);
+        return;
+      }
+
+      cache.add(messageId);
+      this.messageCache.set(roomId, cache);
+
+      const newMessage = this.formatMessage(payload.new);
+
+      // Batch updates for better performance
+      this.batchMessageUpdate(roomId, newMessage);
+    } catch (error) {
+      console.error("Error handling new message:", error);
+    }
+  }
+
+  // Batch message updates to prevent UI thrashing
+  private batchMessageUpdate(roomId: string, message: ChatMessage): void {
+    if (!this.batchedUpdates.has(roomId)) {
+      this.batchedUpdates.set(roomId, []);
+    }
+
+    this.batchedUpdates.get(roomId)!.push(message);
+
+    // Clear existing timeout
+    const existingTimeout = this.updateTimeouts.get(roomId);
+    if (existingTimeout) {
+      clearTimeout(existingTimeout);
+    }
+
+    // Set new timeout for batch processing
+    const timeout = setTimeout(() => {
+      const messages = this.batchedUpdates.get(roomId) || [];
+      if (messages.length > 0) {
+        const callback = this.messageCallbacks.get(roomId);
+        if (callback) {
+          callback(messages, false); // false indicates these are new messages, not initial load
+        }
+        this.batchedUpdates.set(roomId, []);
+      }
+      this.updateTimeouts.delete(roomId);
+    }, 100); // 100ms batch window
+
+    this.updateTimeouts.set(roomId, timeout);
+  }
+
+  // Handle message updates (edits, reactions)
+  private handleMessageUpdate(roomId: string, payload: any): void {
+    try {
+      if (!payload.new) return;
+
+      const updatedMessage = this.formatMessage(payload.new);
+
+      // Notify about message update
       const callback = this.messageCallbacks.get(roomId);
       if (callback) {
-        callback(sortedMessages);
+        callback([updatedMessage], false); // false indicates this is an update, not initial load
       }
-
-      return sortedMessages;
-    } catch (error: any) {
-      console.error("💥 Failed to load messages:", error);
-      throw new Error(`Failed to load messages: ${error.message}`);
+    } catch (error) {
+      console.error("Error handling message update:", error);
     }
   }
 
-  // Load members for a specific room
-  async getRoomMembers(roomId: string): Promise<ChatMember[]> {
+  // Enhanced presence handling
+  private handlePresenceSync(roomId: string, channel: RealtimeChannel): void {
     try {
-      console.log(`👥 Loading members for room ${roomId}...`);
+      const presenceState: RealtimePresenceState = channel.presenceState();
+      const members: ChatMember[] = [];
 
-      const { data, error } = await supabase
-        .from("chat_room_members_firebase")
-        .select(`
-          id,
-          chat_room_id,
-          user_id,
-          user_name,
-          joined_at,
-          role,
-          is_online,
-          last_seen
-        `)
-        .eq("chat_room_id", roomId)
-        .order("joined_at", { ascending: false });
-
-      if (error) {
-        console.error("❌ Error loading members:", error);
-        throw error;
-      }
-
-      const members = (data || []).map((member) => ({
-        id: member.id,
-        chatRoomId: member.chat_room_id,
-        userId: member.user_id,
-        userName: member.user_name || "User",
-        joinedAt: new Date(member.joined_at),
-        role: member.role || "member",
-        isOnline: member.is_online || false,
-        lastSeen: member.last_seen ? new Date(member.last_seen) : new Date(),
-      })) as ChatMember[];
-
-      console.log(`👥 Loaded ${members.length} members for room ${roomId}`);
-      return members;
-    } catch (error: any) {
-      console.error("💥 Failed to load members:", error);
-      const appError = error instanceof AppError ? error : parseSupabaseError(error);
-      throw appError;
-    }
-  }
-
-  // Send a message
-  async sendMessage(roomId: string, content: string, senderId: string, senderName: string): Promise<void> {
-    try {
-      console.log(`📤 Sending message to room ${roomId}:`, content);
-
-      const { error } = await supabase
-        .from("chat_messages_firebase")
-        .insert({
-          chat_room_id: roomId,
-          sender_id: senderId,
-          sender_name: senderName,
-          content: content,
-          message_type: "text",
-          timestamp: new Date().toISOString(),
-          is_read: false,
-        });
-
-      if (error) {
-        console.error("❌ Error sending message:", error);
-        throw error;
-      }
-
-      console.log("✅ Message sent successfully");
-    } catch (error: any) {
-      console.error("💥 Failed to send message:", error);
-      throw new Error(`Failed to send message: ${error.message}`);
-    }
-  }
-
-  // Subscribe to messages for a room
-  subscribeToMessages(roomId: string, callback: (messages: ChatMessage[]) => void) {
-    this.messageCallbacks.set(roomId, callback);
-
-    // Load initial messages
-    this.loadRoomMessages(roomId).then(callback).catch(console.error);
-  }
-
-  // Subscribe to new messages only (for immediate updates)
-  subscribeToNewMessages(roomId: string, callback: (message: ChatMessage) => void) {
-    const channel = this.channels.get(roomId);
-    if (channel) {
-      // Add a callback for individual new messages
-      const existingCallback = this.messageCallbacks.get(roomId);
-      this.messageCallbacks.set(roomId, (messages) => {
-        if (existingCallback) existingCallback(messages);
-
-        // Call the new message callback with the latest message
-        if (messages.length > 0) {
-          const latestMessage = messages[messages.length - 1];
-          callback(latestMessage);
+      Object.entries(presenceState).forEach(([, presences]) => {
+        const presence = presences[0] as any; // Get latest presence
+        if (presence) {
+          members.push({
+            id: presence.user_id || "unknown",
+            chatRoomId: roomId,
+            userId: presence.user_id || "unknown",
+            userName: presence.user_name || "Anonymous",
+            isOnline: true,
+            lastSeen: new Date(presence.online_at || new Date()),
+            joinedAt: new Date(presence.online_at || new Date()),
+            role: "member",
+          });
         }
       });
+
+      const callback = this.presenceCallbacks.get(roomId);
+      if (callback) {
+        callback(members);
+      }
+    } catch (error) {
+      console.error("Error handling presence sync:", error);
     }
   }
 
-  // Subscribe to presence for a room
-  subscribeToPresence(roomId: string, callback: (members: ChatMember[]) => void) {
-    this.presenceCallbacks.set(roomId, callback);
-  }
+  // Typing indicator handling
+  private handleTypingBroadcast(roomId: string, payload: any): void {
+    try {
+      const { userId, userName, isTyping, timestamp } = payload.payload;
 
-  // Subscribe to typing indicators for a room
-  subscribeToTyping(roomId: string, callback: (typingUsers: any[]) => void) {
-    this.typingCallbacks.set(roomId, callback);
+      if (!userId || !userName) return;
+
+      const callback = this.typingCallbacks.get(roomId);
+      if (!callback) return;
+
+      if (isTyping) {
+        // Add to typing users
+        const typingUser: TypingUser = { userId, userName, timestamp };
+        callback([typingUser]);
+
+        // Auto-remove after 3 seconds
+        const timeoutKey = `${roomId}_${userId}`;
+        const existingTimeout = this.typingTimeouts.get(timeoutKey);
+        if (existingTimeout) {
+          clearTimeout(existingTimeout);
+        }
+
+        const timeout = setTimeout(() => {
+          callback([{ userId, userName, timestamp: 0 }]); // timestamp: 0 means stop typing
+          this.typingTimeouts.delete(timeoutKey);
+        }, 3000);
+
+        this.typingTimeouts.set(timeoutKey, timeout);
+      } else {
+        // Remove from typing users
+        callback([{ userId, userName, timestamp: 0 }]);
+      }
+    } catch (error) {
+      console.error("Error handling typing broadcast:", error);
+    }
   }
 
   // Send typing indicator
-  async setTyping(roomId: string, userId: string, userName: string, isTyping: boolean) {
-    const channel = this.channels.get(roomId);
-    if (!channel) {
-      console.warn(`No channel found for room ${roomId}`);
-      return;
-    }
-
+  async setTyping(
+    roomId: string,
+    userId: string,
+    userName: string,
+    isTyping: boolean,
+  ): Promise<void> {
     try {
+      const channel = this.channels.get(roomId);
+      if (!channel) return;
+
       await channel.send({
         type: "broadcast",
         event: "typing",
@@ -509,204 +391,288 @@ class RealtimeChatService {
           userId,
           userName,
           isTyping,
-          timestamp: new Date().toISOString(),
+          timestamp: Date.now(),
         },
       });
-
-      // Clear existing timeout for this user
-      const timeoutKey = `${roomId}_${userId}`;
-      const existingTimeout = this.typingTimeouts.get(timeoutKey);
-      if (existingTimeout) {
-        clearTimeout(existingTimeout);
-      }
-
-      // If user is typing, set a timeout to automatically stop typing after 3 seconds
-      if (isTyping) {
-        const timeout = setTimeout(() => {
-          this.setTyping(roomId, userId, userName, false);
-        }, 3000);
-        this.typingTimeouts.set(timeoutKey, timeout);
-      } else {
-        this.typingTimeouts.delete(timeoutKey);
-      }
     } catch (error) {
       console.error("Failed to send typing indicator:", error);
     }
   }
 
-  // Handle new message from real-time subscription
-  private handleNewMessage(roomId: string, payload: any) {
-    const callback = this.messageCallbacks.get(roomId);
-    if (callback && payload.new) {
-      // Transform the new message to match our ChatMessage interface
-      const newMessage = {
-        id: payload.new.id,
-        chatRoomId: payload.new.chat_room_id,
-        senderId: payload.new.sender_id,
-        senderName: payload.new.sender_name,
-        senderAvatar: payload.new.sender_avatar,
-        content: payload.new.content,
-        messageType: payload.new.message_type,
-        timestamp: new Date(payload.new.timestamp),
-        isRead: payload.new.is_read,
-        replyTo: payload.new.reply_to,
+  // Send message with enhanced error handling
+  async sendMessage(
+    roomId: string,
+    content: string,
+    senderId: string,
+    senderName: string,
+    messageType: string = "text",
+    replyTo?: string,
+    audioUri?: string,
+    audioDuration?: number,
+  ): Promise<void> {
+    try {
+      console.log(`📤 Sending message to room ${roomId}`);
+
+      const messageData: any = {
+        chat_room_id: roomId,
+        sender_id: senderId,
+        sender_name: senderName,
+        content: content.trim(),
+        message_type: messageType,
+        timestamp: new Date().toISOString(),
+        is_read: false,
+        is_deleted: false,
+        reply_to: replyTo || null,
       };
 
-      // Immediately reload messages to get the latest state
-      this.loadRoomMessages(roomId).then((messages) => {
-        callback(messages);
-      }).catch(console.error);
+      if (messageType === "voice") {
+        messageData.audio_uri = audioUri;
+        messageData.audio_duration = audioDuration;
+      }
+
+      const { error } = await supabase.from("chat_messages_firebase").insert(messageData);
+
+      if (error) {
+        console.error("❌ Error sending message:", error);
+        throw error;
+      }
+
+      // Update room's last activity
+      await supabase
+        .from("chat_rooms_firebase")
+        .update({
+          last_activity: new Date().toISOString(),
+        })
+        .eq("id", roomId);
+
+      console.log("✅ Message sent successfully");
+    } catch (error: any) {
+      console.error("💥 Failed to send message:", error);
+      throw new AppError(
+        `Failed to send message: ${error?.message || "Unknown error"}`,
+        ErrorType.NETWORK,
+      );
     }
   }
 
-  // Handle room updates
-  private handleRoomUpdate(payload: any) {
-    const callback = this.roomCallbacks.get("global");
-    if (callback) {
-      // Reload rooms to get the latest state
-      this.getChatRooms().then(callback).catch(console.error);
+  async sendReaction(
+    roomId: string,
+    messageId: string,
+    userId: string,
+    reaction: string,
+  ): Promise<void> {
+    try {
+      // First, get the current reactions for the message
+      const { data: message, error: fetchError } = await supabase
+        .from("chat_messages_firebase")
+        .select("reactions")
+        .eq("id", messageId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      const currentReactions = message?.reactions || [];
+
+      // Check if user has already reacted with this emoji
+      const existingReactionIndex = currentReactions.findIndex(
+        (r: any) => r.user_id === userId && r.emoji === reaction,
+      );
+
+      if (existingReactionIndex > -1) {
+        // User is removing their reaction
+        currentReactions.splice(existingReactionIndex, 1);
+      } else {
+        // Add new reaction
+        currentReactions.push({ user_id: userId, emoji: reaction });
+      }
+
+      // Update the message with the new reactions
+      const { error: updateError } = await supabase
+        .from("chat_messages_firebase")
+        .update({ reactions: currentReactions })
+        .eq("id", messageId);
+
+      if (updateError) throw updateError;
+    } catch (error: any) {
+      console.error("Failed to send reaction:", error);
+      throw new AppError(
+        `Failed to send reaction: ${error?.message || "Unknown error"}`,
+        ErrorType.NETWORK,
+      );
     }
   }
 
-  // Handle presence sync
-  private handlePresenceSync(roomId: string) {
+  // Subscribe to callbacks
+  subscribeToMessages(roomId: string, callback: MessageCallback): void {
+    this.messageCallbacks.set(roomId, callback);
+  }
+
+  subscribeToPresence(roomId: string, callback: PresenceCallback): void {
+    this.presenceCallbacks.set(roomId, callback);
+  }
+
+  subscribeToTyping(roomId: string, callback: TypingCallback): void {
+    this.typingCallbacks.set(roomId, callback);
+  }
+
+  // Enhanced error handling
+  private handleChannelError(roomId: string, error: any): void {
+    const attempts = this.retryAttempts.get(roomId) || 0;
+    if (attempts < this.maxRetries) {
+      this.retryAttempts.set(roomId, attempts + 1);
+      const delay = Math.pow(2, attempts) * 1000; // Exponential backoff
+
+      console.log(`🔄 Retrying connection to room ${roomId} in ${delay}ms (attempt ${attempts + 1})`);
+
+      const timeout = setTimeout(() => {
+        this.reconnectToRoom(roomId);
+      }, delay);
+
+      this.reconnectTimeouts.set(roomId, timeout);
+    } else {
+      console.error(`❌ Max retries exceeded for room ${roomId}`);
+      throw new AppError("Failed to connect to chat room", ErrorType.NETWORK);
+    }
+  }
+
+  private handleChannelTimeout(roomId: string): void {
+    console.log(`⏰ Channel timeout for room ${roomId}, attempting reconnection`);
+    this.handleChannelError(roomId, new Error("Channel timeout"));
+  }
+
+  private async reconnectToRoom(roomId: string): Promise<void> {
     try {
       const channel = this.channels.get(roomId);
-      const callback = this.presenceCallbacks.get(roomId);
-
-      if (channel && callback) {
-        const presenceState = channel.presenceState();
-        const members: ChatMember[] = Object.entries(presenceState).map(([key, presence]: [string, any]) => {
-          const user = presence[0];
-          return {
-            id: key,
-            chatRoomId: roomId,
-            userId: user.user_id,
-            userName: user.user_name,
-            joinedAt: new Date(user.online_at),
-            role: "member" as const,
-            isOnline: true,
-            lastSeen: new Date(),
-          };
-        });
-
-        callback(members);
-      }
-    } catch (error) {
-      console.error("Error in presence sync:", error);
-    }
-  }
-
-  // Handle presence join
-  private handlePresenceJoin(roomId: string, key: string, newPresences: any[]) {
-    try {
-      console.log(`👋 User ${key} joined room ${roomId}:`, newPresences);
-      // Trigger presence sync to update the member list
-      this.handlePresenceSync(roomId);
-    } catch (error) {
-      console.error("Error handling presence join:", error);
-    }
-  }
-
-  // Handle presence leave
-  private handlePresenceLeave(roomId: string, key: string, leftPresences: any[]) {
-    try {
-      console.log(`👋 User ${key} left room ${roomId}:`, leftPresences);
-      // Trigger presence sync to update the member list
-      this.handlePresenceSync(roomId);
-    } catch (error) {
-      console.error("Error handling presence leave:", error);
-    }
-  }
-
-  // Handle typing events
-  private handleTypingEvent(roomId: string, payload: any) {
-    const callback = this.typingCallbacks.get(roomId);
-    if (callback) {
-      // Transform the payload to match the expected format
-      const typingUser = {
-        userId: payload.userId,
-        userName: payload.userName,
-        chatRoomId: roomId,
-        isTyping: payload.isTyping,
-        timestamp: new Date(payload.timestamp),
-      };
-
-      // Emit per-user delta instead of overriding all users
-      // The callback should handle adding/removing individual users from the typing list
-      if (payload.isTyping) {
-        // User started typing - add to list
-        callback([typingUser]);
-      } else {
-        // User stopped typing - emit empty array with user info to signal removal
-        callback([{ ...typingUser, isTyping: false }]);
-      }
-    }
-  }
-
-  // Cleanup subscriptions for a specific room
-  async cleanupRoom(roomId: string) {
-    console.log(`🧹 Cleaning up subscriptions for room ${roomId}`);
-
-    // Clear typing timeout for this room
-    const typingKey = `${roomId}_typing`;
-    if (this.typingTimeouts.has(typingKey)) {
-      clearTimeout(this.typingTimeouts.get(typingKey));
-      this.typingTimeouts.delete(typingKey);
-    }
-
-    // Remove callbacks for this room
-    this.messageCallbacks.delete(roomId);
-    this.presenceCallbacks.delete(roomId);
-    this.typingCallbacks.delete(roomId);
-
-    // Unsubscribe from room-specific channels
-    const messagesChannelKey = `messages_${roomId}`;
-    const presenceChannelKey = `presence_${roomId}`;
-    const typingChannelKey = `typing_${roomId}`;
-
-    for (const key of [messagesChannelKey, presenceChannelKey, typingChannelKey]) {
-      const channel = this.channels.get(key);
       if (channel) {
         await channel.unsubscribe();
-        this.channels.delete(key);
+        this.channels.delete(roomId);
       }
+
+      console.log(`🔄 Reconnecting to room ${roomId}`);
+    } catch (error) {
+      console.error(`Failed to reconnect to room ${roomId}:`, error);
     }
   }
 
-  // Cleanup all subscriptions
-  async cleanup() {
-    console.log("🧹 Cleaning up real-time chat service");
-
-    // Abort all pending operations
-    this.abortControllers.forEach((controller) => {
-      controller.abort();
+  private retryFailedConnections(): void {
+    // Retry any failed connections when the main connection is restored
+    this.retryAttempts.forEach((attempts, roomId) => {
+      if (attempts > 0) {
+        console.log(`🔄 Retrying failed connection to room ${roomId}`);
+        this.reconnectToRoom(roomId);
+      }
     });
-    this.abortControllers.clear();
+  }
 
-    // Clear pending joins
-    this.pendingJoins.clear();
+  private scheduleReconnection(): void {
+    // Schedule a global reconnection attempt
+    setTimeout(() => {
+      if (this.connectionStatus === "disconnected") {
+        console.log("🔄 Attempting to reconnect to Supabase Realtime");
+        this.initialize();
+      }
+    }, 5000);
+  }
 
-    // Clear all typing timeouts
-    this.typingTimeouts.forEach((timeout) => {
-      clearTimeout(timeout);
-    });
-    this.typingTimeouts.clear();
+  // Leave room and cleanup
+  async leaveRoom(roomId: string): Promise<void> {
+    try {
+      const channel = this.channels.get(roomId);
+      if (channel) {
+        await channel.unsubscribe();
+        this.channels.delete(roomId);
+      }
 
-    // Unsubscribe from all channels
-    for (const [, channel] of this.channels) {
-      await channel.unsubscribe();
+      // Cleanup callbacks and caches
+      this.messageCallbacks.delete(roomId);
+      this.presenceCallbacks.delete(roomId);
+      this.typingCallbacks.delete(roomId);
+      this.messageCache.delete(roomId);
+      this.batchedUpdates.delete(roomId);
+
+      // Clear timeouts
+      const updateTimeout = this.updateTimeouts.get(roomId);
+      if (updateTimeout) {
+        clearTimeout(updateTimeout);
+        this.updateTimeouts.delete(roomId);
+      }
+
+      const reconnectTimeout = this.reconnectTimeouts.get(roomId);
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
+        this.reconnectTimeouts.delete(roomId);
+      }
+
+      console.log(`👋 Left room ${roomId}`);
+    } catch (error) {
+      console.error(`Failed to leave room ${roomId}:`, error);
     }
+  }
 
-    // Clear all maps
-    this.channels.clear();
-    this.messageCallbacks.clear();
-    this.roomCallbacks.clear();
-    this.presenceCallbacks.clear();
-    this.typingCallbacks.clear();
-    this.retryAttempts.clear();
+  // Cleanup all connections
+  async cleanup(): Promise<void> {
+    try {
+      // Unsubscribe from all channels
+      for (const [, channel] of this.channels) {
+        await channel.unsubscribe();
+      }
+
+      // Clear all data structures
+      this.channels.clear();
+      this.messageCallbacks.clear();
+      this.presenceCallbacks.clear();
+      this.typingCallbacks.clear();
+      this.messageCache.clear();
+      this.batchedUpdates.clear();
+      this.retryAttempts.clear();
+
+      // Clear all timeouts
+      this.updateTimeouts.forEach((timeout) => clearTimeout(timeout));
+      this.updateTimeouts.clear();
+
+      this.reconnectTimeouts.forEach((timeout) => clearTimeout(timeout));
+      this.reconnectTimeouts.clear();
+
+      this.typingTimeouts.forEach((timeout) => clearTimeout(timeout));
+      this.typingTimeouts.clear();
+
+      this.connectionStatus = "disconnected";
+      console.log("🧹 Real-time chat service cleaned up");
+    } catch (error) {
+      console.error("Failed to cleanup real-time service:", error);
+    }
+  }
+
+  // Utility method to format messages
+  private formatMessage(rawMessage: any): ChatMessage {
+    return {
+      id: rawMessage.id,
+      chatRoomId: rawMessage.chat_room_id,
+      senderId: rawMessage.sender_id,
+      senderName: rawMessage.sender_name || "Anonymous",
+      senderAvatar: rawMessage.sender_avatar,
+      content: rawMessage.content,
+      messageType: rawMessage.message_type || "text",
+      timestamp: new Date(rawMessage.timestamp),
+      isRead: rawMessage.is_read || false,
+      replyTo: rawMessage.reply_to,
+      reactions: rawMessage.reactions || [],
+      audioUri: rawMessage.audio_uri,
+      audioDuration: rawMessage.audio_duration,
+    };
+  }
+
+  // Get connection status
+  getConnectionStatus(): string {
+    return this.connectionStatus;
+  }
+
+  // Get active channels count
+  getActiveChannelsCount(): number {
+    return this.channels.size;
   }
 }
 
 // Export singleton instance
-export const realtimeChatService = new RealtimeChatService();
+export const enhancedRealtimeChatService = new EnhancedRealtimeChatService();
+export default enhancedRealtimeChatService;

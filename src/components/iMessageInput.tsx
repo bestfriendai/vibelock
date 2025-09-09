@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   View, 
   TextInput, 
@@ -12,6 +12,7 @@ import { useTheme } from '../providers/ThemeProvider';
 
 interface Props {
   onSend: (text: string) => void;
+  onTyping?: (isTyping: boolean) => void;
   placeholder?: string;
   maxLength?: number;
   replyingTo?: {
@@ -23,22 +24,83 @@ interface Props {
 }
 
 export default function IMessageInput({
-  onSend, 
-  placeholder = "Message", 
+  onSend,
+  onTyping,
+  placeholder = "Message",
   maxLength = 500,
   replyingTo,
-  onCancelReply 
+  onCancelReply
 }: Props) {
   const { theme, colors, isDarkMode } = useTheme();
   const [text, setText] = useState('');
   const [inputHeight, setInputHeight] = useState(36);
+  const [isTyping, setIsTyping] = useState(false);
   const textInputRef = useRef<TextInput>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Cleanup typing timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+      // Stop typing indicator on unmount
+      if (isTyping && onTyping) {
+        onTyping(false);
+      }
+    };
+  }, [isTyping, onTyping]);
 
   const handleSend = () => {
     if (text.trim()) {
+      // Stop typing indicator
+      if (isTyping && onTyping) {
+        onTyping(false);
+        setIsTyping(false);
+      }
+
+      // Clear typing timeout
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = null;
+      }
+
       onSend(text.trim());
       setText('');
       setInputHeight(36);
+    }
+  };
+
+  const handleTextChange = (newText: string) => {
+    setText(newText);
+
+    // Handle typing indicator
+    if (onTyping) {
+      if (newText.trim() && !isTyping) {
+        // Start typing
+        onTyping(true);
+        setIsTyping(true);
+      }
+
+      // Clear existing timeout
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+
+      // Set timeout to stop typing indicator after 2 seconds of inactivity
+      if (newText.trim()) {
+        typingTimeoutRef.current = setTimeout(() => {
+          if (isTyping) {
+            onTyping(false);
+            setIsTyping(false);
+          }
+          typingTimeoutRef.current = null;
+        }, 2000);
+      } else if (isTyping) {
+        // Stop typing immediately if text is empty
+        onTyping(false);
+        setIsTyping(false);
+      }
     }
   };
 
@@ -112,7 +174,7 @@ export default function IMessageInput({
             <TextInput
               ref={textInputRef}
               value={text}
-              onChangeText={setText}
+              onChangeText={handleTextChange}
               placeholder={placeholder}
               placeholderTextColor={colors.text.muted}
               multiline

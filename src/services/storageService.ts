@@ -118,11 +118,28 @@ class StorageService {
    * Upload chat media
    */
   async uploadChatMedia(fileUri: string, userId: string, chatRoomId: string): Promise<UploadResult> {
+    const contentType = this.getContentType(fileUri);
+    const extension = fileUri.split('.').pop()?.toLowerCase() || 'jpg';
+    
     return this.uploadFile(fileUri, {
       bucket: this.buckets.CHAT_MEDIA,
       folder: `${userId}/${chatRoomId}`,
-      fileName: `chat-media-${Date.now()}.jpg`,
-      contentType: 'image/jpeg',
+      fileName: `chat-media-${Date.now()}.${extension}`,
+      contentType,
+    });
+  }
+
+  /**
+   * Upload chat audio
+   */
+  async uploadChatAudio(fileUri: string, userId: string, chatRoomId: string): Promise<UploadResult> {
+    const extension = fileUri.split('.').pop()?.toLowerCase() || 'm4a';
+    
+    return this.uploadFile(fileUri, {
+      bucket: this.buckets.CHAT_MEDIA,
+      folder: `${userId}/${chatRoomId}/audio`,
+      fileName: `voice-${Date.now()}.${extension}`,
+      contentType: this.getContentType(fileUri),
     });
   }
 
@@ -268,6 +285,7 @@ class StorageService {
     const extension = fileUri.split('.').pop()?.toLowerCase();
     
     switch (extension) {
+      // Images
       case 'jpg':
       case 'jpeg':
         return 'image/jpeg';
@@ -277,12 +295,33 @@ class StorageService {
         return 'image/gif';
       case 'webp':
         return 'image/webp';
+      
+      // Videos
+      case 'mp4':
+        return 'video/mp4';
+      case 'mov':
+        return 'video/quicktime';
+      case 'avi':
+        return 'video/x-msvideo';
+      
+      // Audio
+      case 'mp3':
+        return 'audio/mpeg';
+      case 'm4a':
+        return 'audio/mp4';
+      case 'wav':
+        return 'audio/wav';
+      case 'aac':
+        return 'audio/aac';
+      
+      // Documents
       case 'pdf':
         return 'application/pdf';
       case 'doc':
         return 'application/msword';
       case 'docx':
         return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+        
       default:
         return 'application/octet-stream';
     }

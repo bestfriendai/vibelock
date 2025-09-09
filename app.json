@@ -264,8 +264,9 @@
         ],
         "NSUserTrackingUsageDescription": "This identifier will be used to deliver personalized ads to you and improve your app experience.",
         "NSLocationWhenInUseUsageDescription": "This app uses location to show nearby reviews and content.",
-        "NSCameraUsageDescription": "This app uses the camera to take photos for reviews.",
-        "NSPhotoLibraryUsageDescription": "This app accesses your photo library to select images for reviews.",
+        "NSCameraUsageDescription": "This app uses the camera to take photos for reviews and share images in chat.",
+        "NSPhotoLibraryUsageDescription": "This app accesses your photo library to select images for reviews and chat messages.",
+        "NSMicrophoneUsageDescription": "This app uses the microphone to record voice messages in chat.",
         "CFBundleURLTypes": [
           {
             "CFBundleURLName": "com.lockerroomtalk.app",
@@ -328,15 +329,23 @@
         "WAKE_LOCK",
         "ACCESS_NETWORK_STATE",
         "INTERNET",
-        "com.android.vending.BILLING"
+        "com.android.vending.BILLING",
+        "CAMERA",
+        "RECORD_AUDIO",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
       ],
       "googleServicesFile": "./google-services.json"
     },
     "plugins": [
       "expo-asset",
+      "expo-av",
       "expo-build-properties",
+      "expo-document-picker",
       "expo-font",
+      "expo-image-picker",
       "expo-mail-composer",
+      "expo-media-library",
       "expo-notifications",
       "expo-secure-store",
       "expo-sqlite",

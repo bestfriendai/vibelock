@@ -1,29 +1,29 @@
-import * as Notifications from 'expo-notifications';
-import * as Device from 'expo-device';
-import { Platform, Alert } from 'react-native';
-import Constants from 'expo-constants';
-import { supabase } from '../config/supabase';
-import { AppError, ErrorType, parseSupabaseError } from '../utils/errorHandling';
+import * as Notifications from "expo-notifications";
+import * as Device from "expo-device";
+import { Platform, Alert } from "react-native";
+import Constants from "expo-constants";
+import { supabase } from "../config/supabase";
+import { AppError, ErrorType, parseSupabaseError } from "../utils/errorHandling";
 
 // Configure notification behavior with platform-specific settings
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
     shouldPlaySound: true,
-    shouldSetBadge: Platform.OS === 'ios', // Only iOS supports badges
+    shouldSetBadge: Platform.OS === "ios", // Only iOS supports badges
     shouldShowBanner: true,
     shouldShowList: true,
   }),
 });
 
 // Android-specific notification channel configuration
-if (Platform.OS === 'android') {
-  Notifications.setNotificationChannelAsync('default', {
-    name: 'Default',
+if (Platform.OS === "android") {
+  Notifications.setNotificationChannelAsync("default", {
+    name: "Default",
     importance: Notifications.AndroidImportance.HIGH,
     vibrationPattern: [0, 250, 250, 250],
-    lightColor: '#EF4444',
-    sound: 'default',
+    lightColor: "#EF4444",
+    sound: "default",
     enableVibrate: true,
     enableLights: true,
     showBadge: true,
@@ -31,7 +31,14 @@ if (Platform.OS === 'android') {
 }
 
 export interface NotificationData {
-  type: 'new_review' | 'new_comment' | 'new_message' | 'new_like' | 'review_approved' | 'review_rejected' | 'safety_alert';
+  type:
+    | "new_review"
+    | "new_comment"
+    | "new_message"
+    | "new_like"
+    | "review_approved"
+    | "review_rejected"
+    | "safety_alert";
   title: string;
   body: string;
   data?: Record<string, any>;
@@ -59,7 +66,7 @@ class NotificationService {
 
     try {
       // Android-specific initialization
-      if (Platform.OS === 'android') {
+      if (Platform.OS === "android") {
         await this.initializeAndroidNotifications();
       }
 
@@ -67,7 +74,7 @@ class NotificationService {
       const { status: existingStatus } = await Notifications.getPermissionsAsync();
       let finalStatus = existingStatus;
 
-      if (existingStatus !== 'granted') {
+      if (existingStatus !== "granted") {
         const { status } = await Notifications.requestPermissionsAsync({
           ios: {
             allowAlert: true,
@@ -87,8 +94,8 @@ class NotificationService {
         finalStatus = status;
       }
 
-      if (finalStatus !== 'granted') {
-        console.warn('Push notification permissions not granted');
+      if (finalStatus !== "granted") {
+        console.warn("Push notification permissions not granted");
         // Don't throw error, just log and continue
         return;
       }
@@ -101,26 +108,26 @@ class NotificationService {
           this.setupNotificationListeners();
         }
       } else {
-        console.warn('Push notifications only work on physical devices');
+        console.warn("Push notifications only work on physical devices");
         if (__DEV__) {
-          Alert.alert('Info', 'Push notifications require a physical device.');
+          Alert.alert("Info", "Push notifications require a physical device.");
         }
       }
 
       this.isInitialized = true;
-      console.log('Notification service initialized successfully');
+      console.log("Notification service initialized successfully");
     } catch (error) {
-      console.error('Failed to initialize notification service:', error);
+      console.error("Failed to initialize notification service:", error);
 
       // Don't throw error in production to prevent app crashes
       if (__DEV__) {
         const appError = error instanceof AppError ? error : parseSupabaseError(error);
         throw new AppError(
-          'Failed to initialize notifications',
+          "Failed to initialize notifications",
           ErrorType.SERVER,
-          'NOTIFICATION_INIT_FAILED',
+          "NOTIFICATION_INIT_FAILED",
           undefined,
-          true
+          true,
         );
       }
     }
@@ -130,46 +137,46 @@ class NotificationService {
    * Initialize Android-specific notification settings
    */
   private async initializeAndroidNotifications(): Promise<void> {
-    if (Platform.OS !== 'android') return;
+    if (Platform.OS !== "android") return;
 
     try {
       // Create notification channels for different types
       await Promise.all([
-        Notifications.setNotificationChannelAsync('default', {
-          name: 'Default Notifications',
+        Notifications.setNotificationChannelAsync("default", {
+          name: "Default Notifications",
           importance: Notifications.AndroidImportance.HIGH,
           vibrationPattern: [0, 250, 250, 250],
-          lightColor: '#EF4444',
-          sound: 'default',
+          lightColor: "#EF4444",
+          sound: "default",
           enableVibrate: true,
           enableLights: true,
           showBadge: true,
         }),
-        Notifications.setNotificationChannelAsync('reviews', {
-          name: 'Review Notifications',
+        Notifications.setNotificationChannelAsync("reviews", {
+          name: "Review Notifications",
           importance: Notifications.AndroidImportance.HIGH,
           vibrationPattern: [0, 250, 250, 250],
-          lightColor: '#EF4444',
-          sound: 'default',
+          lightColor: "#EF4444",
+          sound: "default",
           enableVibrate: true,
           enableLights: true,
           showBadge: true,
         }),
-        Notifications.setNotificationChannelAsync('messages', {
-          name: 'Message Notifications',
+        Notifications.setNotificationChannelAsync("messages", {
+          name: "Message Notifications",
           importance: Notifications.AndroidImportance.HIGH,
           vibrationPattern: [0, 250, 250, 250],
-          lightColor: '#EF4444',
-          sound: 'default',
+          lightColor: "#EF4444",
+          sound: "default",
           enableVibrate: true,
           enableLights: true,
           showBadge: true,
         }),
       ]);
 
-      console.log('Android notification channels created successfully');
+      console.log("Android notification channels created successfully");
     } catch (error) {
-      console.error('Failed to create Android notification channels:', error);
+      console.error("Failed to create Android notification channels:", error);
     }
   }
 
@@ -184,13 +191,13 @@ class NotificationService {
     }
 
     // Listen for notifications received while app is foregrounded
-    const receivedListener = Notifications.addNotificationReceivedListener(notification => {
-      console.log('Notification received:', notification);
+    const receivedListener = Notifications.addNotificationReceivedListener((notification) => {
+      console.log("Notification received:", notification);
     });
 
     // Listen for user interactions with notifications
-    const responseListener = Notifications.addNotificationResponseReceivedListener(response => {
-      console.log('Notification response:', response);
+    const responseListener = Notifications.addNotificationResponseReceivedListener((response) => {
+      console.log("Notification response:", response);
       // Handle notification tap here
     });
 
@@ -204,7 +211,7 @@ class NotificationService {
   private async getPushToken(): Promise<string | null> {
     try {
       if (!Device.isDevice) {
-        console.warn('Must use physical device for push notifications');
+        console.warn("Must use physical device for push notifications");
         return null;
       }
 
@@ -212,11 +219,11 @@ class NotificationService {
       const projectId = process.env.EXPO_PUBLIC_PROJECT_ID;
       if (!projectId) {
         throw new AppError(
-          'Missing EXPO_PUBLIC_PROJECT_ID environment variable',
+          "Missing EXPO_PUBLIC_PROJECT_ID environment variable",
           ErrorType.SERVER,
-          'MISSING_PROJECT_ID',
+          "MISSING_PROJECT_ID",
           undefined,
-          true
+          true,
         );
       }
 
@@ -224,44 +231,49 @@ class NotificationService {
       const tokenConfig: any = { projectId };
 
       // Android-specific configuration
-      if (Platform.OS === 'android') {
-        tokenConfig.applicationId = Constants.expoConfig?.android?.package || 'com.lockerroom.app';
+      if (Platform.OS === "android") {
+        tokenConfig.applicationId = Constants.expoConfig?.android?.package || "com.lockerroom.app";
       }
 
       const token = await Notifications.getExpoPushTokenAsync(tokenConfig);
 
       if (!token?.data) {
         throw new AppError(
-          'Failed to retrieve push token from Expo',
+          "Failed to retrieve push token from Expo",
           ErrorType.SERVER,
-          'EMPTY_PUSH_TOKEN',
+          "EMPTY_PUSH_TOKEN",
           undefined,
-          true
+          true,
         );
       }
 
       this.pushToken = token.data;
-      console.log('Push token retrieved successfully:', token.data.substring(0, 20) + '...');
+      console.log("Push token retrieved successfully:", token.data.substring(0, 20) + "...");
       return token.data;
     } catch (error) {
-      console.error('Failed to get push token:', error);
+      console.error("Failed to get push token:", error);
 
       // Retry mechanism for transient failures
-      if (this.retryAttempts < this.maxRetries && !(error instanceof AppError && error.type === ErrorType.SERVER)) {
+      if (
+        this.retryAttempts < this.maxRetries &&
+        !(error instanceof AppError && error.type === ErrorType.SERVER)
+      ) {
         this.retryAttempts++;
-        console.log(`Retrying push token retrieval (attempt ${this.retryAttempts}/${this.maxRetries})`);
+        console.log(
+          `Retrying push token retrieval (attempt ${this.retryAttempts}/${this.maxRetries})`,
+        );
 
-        await new Promise(resolve => setTimeout(resolve, this.retryDelay * this.retryAttempts));
+        await new Promise((resolve) => setTimeout(resolve, this.retryDelay * this.retryAttempts));
         return this.getPushToken();
       }
 
       const appError = error instanceof AppError ? error : parseSupabaseError(error);
       throw new AppError(
-        'Failed to get push token after retries',
+        "Failed to get push token after retries",
         ErrorType.SERVER,
-        'PUSH_TOKEN_FAILED',
+        "PUSH_TOKEN_FAILED",
         undefined,
-        true
+        true,
       );
     }
   }
@@ -271,9 +283,11 @@ class NotificationService {
    */
   private async registerPushToken(token: string): Promise<void> {
     try {
-      const { supabaseUser } = await import('../utils/authUtils').then(m => m.getAuthenticatedUser());
+      const { supabaseUser } = await import("../utils/authUtils").then(
+        (m) => m.getAuthenticatedUser(),
+      );
       if (!supabaseUser) {
-        console.warn('User not authenticated, cannot register push token');
+        console.warn("User not authenticated, cannot register push token");
         return;
       }
 
@@ -281,33 +295,34 @@ class NotificationService {
       const platform = Platform.OS;
 
       // Insert or update push token
-      const { error } = await supabase
-        .from('push_tokens')
-        .upsert({
+      const { error } = await supabase.from("push_tokens").upsert(
+        {
           user_id: supabaseUser.id,
           token,
           device_id: deviceId,
           platform,
           is_active: true,
           updated_at: new Date().toISOString(),
-        }, {
-          onConflict: 'user_id,device_id'
-        });
+        },
+        {
+          onConflict: "user_id,device_id",
+        },
+      );
 
       if (error) {
-        console.error('Failed to register push token:', error);
+        console.error("Failed to register push token:", error);
         throw new AppError(
-          'Failed to register push token',
+          "Failed to register push token",
           ErrorType.SERVER,
-          'PUSH_TOKEN_REGISTER_FAILED',
+          "PUSH_TOKEN_REGISTER_FAILED",
           undefined,
-          true
+          true,
         );
       } else {
-        console.log('Push token registered successfully');
+        console.log("Push token registered successfully");
       }
     } catch (error) {
-      console.error('Error registering push token:', error);
+      console.error("Error registering push token:", error);
       const appError = error instanceof AppError ? error : parseSupabaseError(error);
       throw appError;
     }
@@ -319,15 +334,15 @@ class NotificationService {
   private async getDeviceId(): Promise<string> {
     try {
       // Use a combination of device info to create a unique ID
-      const deviceName = Device.deviceName || 'unknown';
-      const osVersion = Device.osVersion || 'unknown';
+      const deviceName = Device.deviceName || "unknown";
+      const osVersion = Device.osVersion || "unknown";
       const platform = Platform.OS;
-      const modelName = Device.modelName || 'unknown';
-      const brand = Device.brand || 'unknown';
+      const modelName = Device.modelName || "unknown";
+      const brand = Device.brand || "unknown";
 
       // For Android, include more device-specific info for better uniqueness
       let deviceString: string;
-      if (Platform.OS === 'android') {
+      if (Platform.OS === "android") {
         deviceString = `${platform}-${brand}-${modelName}-${deviceName}-${osVersion}`;
       } else {
         deviceString = `${platform}-${deviceName}-${osVersion}`;
@@ -335,9 +350,9 @@ class NotificationService {
 
       // Clean and normalize the device string
       const cleanDeviceId = deviceString
-        .replace(/[^a-zA-Z0-9]/g, '-')
-        .replace(/-+/g, '-') // Replace multiple dashes with single dash
-        .replace(/^-|-$/g, '') // Remove leading/trailing dashes
+        .replace(/[^a-zA-Z0-9]/g, "-")
+        .replace(/-+/g, "-") // Replace multiple dashes with single dash
+        .replace(/^-|-$/g, "") // Remove leading/trailing dashes
         .toLowerCase();
 
       // Ensure minimum length and add timestamp if too short
@@ -347,7 +362,7 @@ class NotificationService {
 
       return cleanDeviceId;
     } catch (error) {
-      console.error('Failed to get device ID:', error);
+      console.error("Failed to get device ID:", error);
       // Fallback with timestamp for uniqueness
       return `${Platform.OS}-fallback-${Date.now().toString(36)}`;
     }
@@ -368,7 +383,7 @@ class NotificationService {
         trigger: null, // Send immediately
       });
     } catch (error) {
-      console.error('Failed to send local notification:', error);
+      console.error("Failed to send local notification:", error);
     }
   }
 
@@ -378,7 +393,7 @@ class NotificationService {
   async createNotification(userId: string, notification: NotificationData): Promise<void> {
     try {
       // Prefer RPC to bypass RLS safely (SECURITY DEFINER on server)
-      const { error } = await supabase.rpc('create_notification', {
+      const { error } = await supabase.rpc("create_notification", {
         target_user_id: userId,
         n_type: notification.type,
         n_title: notification.title,
@@ -387,33 +402,31 @@ class NotificationService {
       });
 
       if (error) {
-        console.error('Failed to create notification via RPC, falling back to direct insert:', error);
+        console.error("Failed to create notification via RPC, falling back to direct insert:", error);
         // Safe fallback for dev environments where a permissive policy may exist
-        const { error: insertError } = await supabase
-          .from('notifications')
-          .insert({
-            user_id: userId,
-            type: notification.type,
-            title: notification.title,
-            body: notification.body,
-            data: notification.data || {},
-            is_read: false,
-            is_sent: false,
-          });
+        const { error: insertError } = await supabase.from("notifications").insert({
+          user_id: userId,
+          type: notification.type,
+          title: notification.title,
+          body: notification.body,
+          data: notification.data || {},
+          is_read: false,
+          is_sent: false,
+        });
 
         if (insertError) {
-          console.error('Failed to create notification:', insertError);
+          console.error("Failed to create notification:", insertError);
           throw new AppError(
-            'Failed to create notification',
+            "Failed to create notification",
             ErrorType.SERVER,
-            'NOTIFICATION_CREATE_FAILED',
+            "NOTIFICATION_CREATE_FAILED",
             undefined,
-            true
+            true,
           );
         }
       }
     } catch (error) {
-      console.error('Error creating notification:', error);
+      console.error("Error creating notification:", error);
       const appError = error instanceof AppError ? error : parseSupabaseError(error);
       throw appError;
     }
@@ -425,20 +438,20 @@ class NotificationService {
   async getUserNotifications(userId: string, limit: number = 20): Promise<any[]> {
     try {
       const { data, error } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
+        .from("notifications")
+        .select("*")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
         .limit(limit);
 
       if (error) {
-        console.error('Failed to get notifications:', error);
+        console.error("Failed to get notifications:", error);
         return [];
       }
 
       return data || [];
     } catch (error) {
-      console.error('Error getting notifications:', error);
+      console.error("Error getting notifications:", error);
       return [];
     }
   }
@@ -449,22 +462,22 @@ class NotificationService {
   async markAsRead(notificationId: string): Promise<void> {
     try {
       const { error } = await supabase
-        .from('notifications')
+        .from("notifications")
         .update({ is_read: true })
-        .eq('id', notificationId);
+        .eq("id", notificationId);
 
       if (error) {
-        console.error('Failed to mark notification as read:', error);
+        console.error("Failed to mark notification as read:", error);
         throw new AppError(
-          'Failed to mark notification as read',
+          "Failed to mark notification as read",
           ErrorType.SERVER,
-          'NOTIFICATION_MARK_READ_FAILED',
+          "NOTIFICATION_MARK_READ_FAILED",
           undefined,
-          true
+          true,
         );
       }
     } catch (error) {
-      console.error('Error marking notification as read:', error);
+      console.error("Error marking notification as read:", error);
       const appError = error instanceof AppError ? error : parseSupabaseError(error);
       throw appError;
     }
@@ -476,23 +489,23 @@ class NotificationService {
   async markAllAsRead(userId: string): Promise<void> {
     try {
       const { error } = await supabase
-        .from('notifications')
+        .from("notifications")
         .update({ is_read: true })
-        .eq('user_id', userId)
-        .eq('is_read', false);
+        .eq("user_id", userId)
+        .eq("is_read", false);
 
       if (error) {
-        console.error('Failed to mark all notifications as read:', error);
+        console.error("Failed to mark all notifications as read:", error);
         throw new AppError(
-          'Failed to mark all notifications as read',
+          "Failed to mark all notifications as read",
           ErrorType.SERVER,
-          'NOTIFICATION_MARK_ALL_READ_FAILED',
+          "NOTIFICATION_MARK_ALL_READ_FAILED",
           undefined,
-          true
+          true,
         );
       }
     } catch (error) {
-      console.error('Error marking all notifications as read:', error);
+      console.error("Error marking all notifications as read:", error);
       const appError = error instanceof AppError ? error : parseSupabaseError(error);
       throw appError;
     }
@@ -504,19 +517,19 @@ class NotificationService {
   async getUnreadCount(userId: string): Promise<number> {
     try {
       const { count, error } = await supabase
-        .from('notifications')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', userId)
-        .eq('is_read', false);
+        .from("notifications")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .eq("is_read", false);
 
       if (error) {
-        console.error('Failed to get unread count:', error);
+        console.error("Failed to get unread count:", error);
         return 0;
       }
 
       return count || 0;
     } catch (error) {
-      console.error('Error getting unread count:', error);
+      console.error("Error getting unread count:", error);
       return 0;
     }
   }
@@ -526,22 +539,24 @@ class NotificationService {
    */
   async removePushToken(): Promise<void> {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) return;
 
       const deviceId = await this.getDeviceId();
 
       const { error } = await supabase
-        .from('push_tokens')
+        .from("push_tokens")
         .update({ is_active: false })
-        .eq('user_id', user.id)
-        .eq('device_id', deviceId);
+        .eq("user_id", user.id)
+        .eq("device_id", deviceId);
 
       if (error) {
-        console.error('Failed to remove push token:', error);
+        console.error("Failed to remove push token:", error);
       }
     } catch (error) {
-      console.error('Error removing push token:', error);
+      console.error("Error removing push token:", error);
     }
   }
 
@@ -550,36 +565,41 @@ class NotificationService {
    */
   async setChatRoomSubscription(roomId: string, isSubscribed: boolean): Promise<void> {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { error } = await supabase
-        .from('chat_room_subscriptions')
-        .upsert({
+      const { error } = await supabase.from("chat_room_subscriptions").upsert(
+        {
           user_id: user.id,
           room_id: roomId,
           is_subscribed: isSubscribed,
           updated_at: new Date().toISOString(),
-        }, { onConflict: 'user_id,room_id' });
+        },
+        { onConflict: "user_id,room_id" },
+      );
 
       if (error) {
-        console.error('Failed to update chat room subscription:', error);
+        console.error("Failed to update chat room subscription:", error);
       }
     } catch (error) {
-      console.error('Error updating chat room subscription:', error);
+      console.error("Error updating chat room subscription:", error);
     }
   }
 
   async getChatRoomSubscription(roomId: string): Promise<boolean> {
     try {
-      const { supabaseUser } = await import('../utils/authUtils').then(m => m.getAuthenticatedUser());
+      const { supabaseUser } = await import("../utils/authUtils").then(
+        (m) => m.getAuthenticatedUser(),
+      );
       if (!supabaseUser) return false;
 
       const { data, error } = await supabase
-        .from('chat_room_subscriptions')
-        .select('is_subscribed')
-        .eq('user_id', supabaseUser.id)
-        .eq('room_id', roomId)
+        .from("chat_room_subscriptions")
+        .select("is_subscribed")
+        .eq("user_id", supabaseUser.id)
+        .eq("room_id", roomId)
         .single();
 
       if (error) {
@@ -589,15 +609,31 @@ class NotificationService {
 
       return !!data?.is_subscribed;
     } catch (error) {
-      console.error('Error fetching chat room subscription:', error);
+      console.error("Error fetching chat room subscription:", error);
       return false;
+    }
+  }
+
+  async toggleChatRoomSubscription(roomId: string): Promise<void> {
+    try {
+      const { supabaseUser } = await import("../utils/authUtils").then(
+        (m) => m.getAuthenticatedUser(),
+      );
+      if (!supabaseUser) return;
+
+      const currentSubscription = await this.getChatRoomSubscription(roomId);
+      await this.setChatRoomSubscription(roomId, !currentSubscription);
+    } catch (error) {
+      console.error("Error toggling chat room subscription:", error);
     }
   }
 
   /**
    * Listen for notification responses
    */
-  addNotificationResponseListener(listener: (response: Notifications.NotificationResponse) => void) {
+  addNotificationResponseListener(
+    listener: (response: Notifications.NotificationResponse) => void,
+  ) {
     const subscription = Notifications.addNotificationResponseReceivedListener(listener);
     this.notificationListeners.push(subscription);
     return subscription;
@@ -629,7 +665,7 @@ class NotificationService {
    */
   cleanup() {
     console.log("🧹 Cleaning up notification service");
-    this.notificationListeners.forEach(subscription => {
+    this.notificationListeners.forEach((subscription) => {
       try {
         subscription.remove();
       } catch (error) {

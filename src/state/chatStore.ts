@@ -1,14 +1,15 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from "uuid";
 import { ChatRoom, ChatMessage, ChatMember, TypingUser, ConnectionStatus, ChatState } from "../types";
-import { webSocketService } from "../services/websocketService";
-import { supabaseChat } from "../services/supabase";
-import { realtimeChatService } from "../services/realtimeChat";
+import { enhancedRealtimeChatService } from "../services/realtimeChat";
 import useAuthStore from "./authStore";
 import { requireAuthentication, getUserDisplayName } from "../utils/authUtils";
 import { AppError, parseSupabaseError } from "../utils/errorHandling";
+import { supabase } from "../config/supabase";
+import { notificationService } from "../services/notificationService";
+import { storageService } from "../services/storageService";
 
 interface ChatActions {
   // Connection management
@@ -27,8 +28,11 @@ interface ChatActions {
   loadMessages: (roomId: string) => Promise<void>;
   sendMessage: (roomId: string, content: string) => void;
   addMessage: (message: ChatMessage) => void;
+  sendVoiceMessage: (roomId: string, audioUri: string, duration: number) => Promise<void>;
+  sendMediaMessage: (roomId: string, mediaUri: string, mediaType: "image" | "video") => Promise<void>;
   markMessagesAsRead: (roomId: string) => void;
-  startListeningToMessages: (roomId: string) => () => void;
+  reactToMessage: (roomId: string, messageId: string, reaction: string) => Promise<void>;
+  toggleNotifications: (roomId: string) => Promise<void>;
 
   // Typing indicators
   setTyping: (roomId: string, isTyping: boolean) => void;
@@ -77,39 +81,29 @@ const useChatStore = create<ChatStore>()(
       error: null,
 
       // Connection management
-      connect: (userId: string) => {
-        const callbacks = {
-          onMessage: (message: ChatMessage) => {
-            get().addMessage(message);
-          },
-          onTyping: (typingUser: TypingUser) => {
-            get().addTypingUser(typingUser);
-          },
-          onUserJoin: (_userId: string, userName: string, chatRoomId: string) => {
-            // Handle user join
-            console.log(`${userName} joined ${chatRoomId}`);
-          },
-          onUserLeave: (userId: string, chatRoomId: string) => {
-            // Handle user leave
-            console.log(`User ${userId} left ${chatRoomId}`);
-          },
-          onOnlineStatusChange: (onlineUsers: string[]) => {
-            get().setOnlineUsers(onlineUsers);
-          },
-          onConnectionStatusChange: (status: ConnectionStatus) => {
-            get().setConnectionStatus(status);
-          },
-          onError: (error: string) => {
-            get().setError(error);
-          },
-        };
-
-        webSocketService.connect(userId, callbacks);
+      connect: async (userId: string) => {
+        try {
+          console.log("🚀 Connecting to enhanced real-time chat service...");
+          await enhancedRealtimeChatService.initialize();
+          set({ connectionStatus: "connected" });
+          console.log("✅ Connected to enhanced real-time chat service");
+        } catch (error) {
+          console.error("❌ Failed to connect to chat service:", error);
+          set({
+            connectionStatus: "disconnected",
+            error: "Failed to connect to chat service",
+          });
+        }
       },
 
-      disconnect: () => {
-        webSocketService.disconnect();
-        set({ connectionStatus: "disconnected" });
+      disconnect: async () => {
+        try {
+          await enhancedRealtimeChatService.cleanup();
+          set({ connectionStatus: "disconnected" });
+          console.log("👋 Disconnected from chat service");
+        } catch (error) {
+          console.error("❌ Error during disconnect:", error);
+        }
       },
 
       setConnectionStatus: (status: ConnectionStatus) => {
@@ -123,37 +117,61 @@ const useChatStore = create<ChatStore>()(
 
           console.log("🔄 Loading chat rooms...");
 
-          // Initialize real-time service if not already done
-          await realtimeChatService.initialize();
+          // Load chat rooms directly from Supabase
+          const { data: chatRooms, error } = await supabase
+            .from("chat_rooms_firebase")
+            .select(
+              `
+              id,
+              name,
+              description,
+              type,
+              category,
+              member_count,
+              online_count,
+              unread_count,
+              last_activity,
+              is_active,
+              location,
+              created_at,
+              updated_at
+            `,
+            )
+            .eq("is_active", true)
+            .order("last_activity", { ascending: false });
 
-          // Load chat rooms from Supabase with real-time
-          const chatRooms = await realtimeChatService.getChatRooms();
+          if (error) throw error;
+
+          const formattedRooms: ChatRoom[] = (chatRooms || []).map((room: any) => ({
+            id: room.id,
+            name: room.name,
+            description: room.description,
+            type: room.type,
+            category: room.category,
+            memberCount: room.member_count || 0,
+            onlineCount: room.online_count || 0,
+            unreadCount: room.unread_count || 0,
+            lastActivity: new Date(room.last_activity),
+            isActive: room.is_active,
+            location: room.location,
+            createdAt: new Date(room.created_at),
+            updatedAt: new Date(room.updated_at),
+          }));
 
           // Apply category filter if set
           const category = get().roomCategoryFilter || "all";
           const filteredRooms =
             category && category !== "all"
-              ? chatRooms.filter((r: ChatRoom) => (r.category || "all").toLowerCase() === category.toLowerCase())
-              : chatRooms;
+              ? formattedRooms.filter(
+                  (r: ChatRoom) => (r.category || "all").toLowerCase() === category.toLowerCase(),
+                )
+              : formattedRooms;
 
           console.log(`✅ Loaded ${filteredRooms.length} chat rooms (filtered by: ${category})`);
 
           set({
             chatRooms: filteredRooms,
             isLoading: false,
-          });
-
-          // Subscribe to real-time room updates
-          realtimeChatService.subscribeToRooms((updatedRooms) => {
-            const currentCategory = get().roomCategoryFilter || "all";
-            const filtered =
-              currentCategory && currentCategory !== "all"
-                ? updatedRooms.filter(
-                    (r: ChatRoom) => (r.category || "all").toLowerCase() === currentCategory.toLowerCase(),
-                  )
-                : updatedRooms;
-
-            set({ chatRooms: filtered });
           });
         } catch (error) {
           console.error("💥 Failed to load chat rooms:", error);
@@ -165,7 +183,6 @@ const useChatStore = create<ChatStore>()(
             isLoading: false,
           });
 
-          // Don't fallback to mock data - show proper error state
           throw appError;
         }
       },
@@ -187,22 +204,97 @@ const useChatStore = create<ChatStore>()(
 
           // Use unified authentication check
           const { user, supabaseUser } = await requireAuthentication("join chat room");
+          // Join room with enhanced real-time service
+          await enhancedRealtimeChatService.joinRoom(
+            roomId,
+            supabaseUser.id,
+            getUserDisplayName(user),
+          );
 
-          // Join room with real-time service
-          await realtimeChatService.joinRoom(roomId, supabaseUser.id, getUserDisplayName(user));
+          // Subscribe to messages for this room - CRITICAL: Messages are sorted newest-first for FlashList inverted display
+          enhancedRealtimeChatService.subscribeToMessages(
+            roomId,
+            (newMessages: ChatMessage[], isInitialLoad = false) => {
+              console.log(
+                `🔍 Received ${newMessages.length} ${
+                  isInitialLoad ? "initial" : "new"
+                } messages for room ${roomId}`,
+              );
 
-          // Subscribe to messages for this room
-          realtimeChatService.subscribeToMessages(roomId, (messages) => {
-            set((state) => ({
-              messages: {
-                ...state.messages,
-                [roomId]: messages,
-              },
-            }));
-          });
+              set((state) => {
+                let allMessages: ChatMessage[];
+
+                if (isInitialLoad) {
+                  // For initial load, replace all messages
+                  allMessages = [...newMessages];
+                } else {
+                  // For new messages, add to existing ones with enhanced duplicate detection
+                  const existingMessages = state.messages[roomId] || [];
+                  allMessages = [...existingMessages];
+
+                  newMessages.forEach((newMsg) => {
+                    // Enhanced duplicate detection: check by ID first, then by content/sender/time similarity
+                    const isDuplicateById = allMessages.some(
+                      (existing) => existing.id === newMsg.id,
+                    );
+
+                    if (!isDuplicateById) {
+                      // Check for potential optimistic message duplicates (same content, sender, within 5 seconds)
+                      const isDuplicateByContent = allMessages.some(
+                        (existing) =>
+                          existing.senderId === newMsg.senderId &&
+                          existing.content === newMsg.content &&
+                          Math.abs(
+                            new Date(existing.timestamp).getTime() -
+                              new Date(newMsg.timestamp).getTime(),
+                          ) < 5000,
+                      );
+
+                      if (!isDuplicateByContent) {
+                        allMessages.push(newMsg);
+                      } else {
+                        console.log(
+                          `🔄 Duplicate message detected by content/time similarity, skipping`,
+                        );
+
+                        // Remove the optimistic message and replace with the real one
+                        const optimisticIndex = allMessages.findIndex(
+                          (existing) =>
+                            existing.senderId === newMsg.senderId &&
+                            existing.content === newMsg.content &&
+                            Math.abs(
+                              new Date(existing.timestamp).getTime() -
+                                new Date(newMsg.timestamp).getTime(),
+                            ) < 5000,
+                        );
+
+                        if (optimisticIndex !== -1) {
+                          allMessages[optimisticIndex] = newMsg; // Replace optimistic with real message
+                          console.log(`🔄 Replaced optimistic message with real message`);
+                        }
+                      }
+                    }
+                  });
+                }
+
+                // Sort messages newest-first for proper FlashList inverted display
+                const sortedMessages = allMessages.sort(
+                  (a, b) =>
+                    new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+                );
+
+                return {
+                  messages: {
+                    ...state.messages,
+                    [roomId]: sortedMessages,
+                  },
+                };
+              });
+            },
+          );
 
           // Subscribe to presence for this room
-          realtimeChatService.subscribeToPresence(roomId, (members) => {
+          enhancedRealtimeChatService.subscribeToPresence(roomId, (members: ChatMember[]) => {
             set((state) => ({
               members: {
                 ...state.members,
@@ -212,9 +304,9 @@ const useChatStore = create<ChatStore>()(
           });
 
           // Subscribe to typing indicators for this room
-          realtimeChatService.subscribeToTyping(roomId, (typingUsers) => {
+          enhancedRealtimeChatService.subscribeToTyping(roomId, (typingUsers: any[]) => {
             set(() => ({
-              typingUsers: typingUsers.filter((user) => user.chatRoomId === roomId),
+              typingUsers: typingUsers.filter((user) => user.timestamp > 0), // Only active typing users
             }));
           });
 
@@ -230,8 +322,7 @@ const useChatStore = create<ChatStore>()(
       leaveChatRoom: async (roomId: string) => {
         console.log(`🚪 Leaving chat room: ${roomId}`);
 
-        await realtimeChatService.leaveRoom(roomId);
-        await realtimeChatService.cleanupRoom(roomId);
+        await enhancedRealtimeChatService.leaveRoom(roomId);
 
         const currentRoom = get().currentChatRoom;
         if (currentRoom && currentRoom.id === roomId) {
@@ -263,18 +354,12 @@ const useChatStore = create<ChatStore>()(
 
           console.log(`📨 Loading messages for room ${roomId}...`);
 
-          // Load messages from Supabase via real-time service
-          const messages = await realtimeChatService.loadRoomMessages(roomId);
+          // Load messages using enhanced service - they come pre-sorted newest-first
+          await enhancedRealtimeChatService.loadInitialMessages(roomId, 50);
 
-          set((state) => ({
-            messages: {
-              ...state.messages,
-              [roomId]: messages,
-            },
-            isLoading: false,
-          }));
+          set({ isLoading: false });
 
-          console.log(`📨 Loaded ${messages.length} messages for room ${roomId}`);
+          console.log(`📨 Loaded messages for room ${roomId}`);
         } catch (error) {
           console.error("💥 Failed to load messages:", error);
           const appError = error instanceof AppError ? error : parseSupabaseError(error);
@@ -312,8 +397,8 @@ const useChatStore = create<ChatStore>()(
           optimisticMessageId = optimisticMessage.id;
           get().addMessage(optimisticMessage);
 
-          // Send to Supabase via real-time service
-          await realtimeChatService.sendMessage(roomId, content, user.id, senderName);
+          // Send to Supabase via enhanced real-time service
+          await enhancedRealtimeChatService.sendMessage(roomId, content, user.id, senderName);
 
           console.log("✅ Message sent successfully");
         } catch (error) {
@@ -324,7 +409,9 @@ const useChatStore = create<ChatStore>()(
             set((state) => ({
               messages: {
                 ...state.messages,
-                [roomId]: (state.messages[roomId] || []).filter((msg) => msg.id !== optimisticMessageId),
+                [roomId]: (state.messages[roomId] || []).filter(
+                  (msg) => msg.id !== optimisticMessageId,
+                ),
               },
             }));
           }
@@ -343,37 +430,119 @@ const useChatStore = create<ChatStore>()(
             return state;
           }
 
+          // CRITICAL: Sort newest-first for FlashList inverted display
           return {
             messages: {
               ...state.messages,
               [message.chatRoomId]: [...roomMessages, message].sort(
-                (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
+                (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
               ),
             },
           };
         });
       },
 
-      // Add message immediately for real-time updates
-      addMessageImmediate: (message: ChatMessage) => {
-        set((state) => {
-          const roomMessages = state.messages[message.chatRoomId] || [];
+      sendVoiceMessage: async (roomId: string, audioUri: string, duration: number) => {
+        try {
+          const { user } = await requireAuthentication("send voice messages");
+          const senderName = getUserDisplayName(user);
 
-          // Check if message already exists to avoid duplicates
-          const messageExists = roomMessages.some((msg) => msg.id === message.id);
-          if (messageExists) {
-            return state;
+          // Upload audio file to storage
+          const uploadResult = await storageService.uploadFile(audioUri, {
+            bucket: storageService.getBuckets().CHAT_MEDIA,
+            folder: `${user.id}/${roomId}/audio`,
+            contentType: 'audio/mp3',
+          });
+
+          if (!uploadResult.success || !uploadResult.url) {
+            throw new Error('Failed to upload voice message');
           }
 
-          return {
-            messages: {
-              ...state.messages,
-              [message.chatRoomId]: [...roomMessages, message].sort(
-                (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
-              ),
-            },
+          const message: Partial<ChatMessage> = {
+            chatRoomId: roomId,
+            senderId: user.id,
+            senderName,
+            messageType: "voice",
+            audioUri: uploadResult.url,
+            audioDuration: duration,
+            timestamp: new Date(),
           };
-        });
+
+          get().addMessage(message as ChatMessage);
+          await enhancedRealtimeChatService.sendMessage(
+            roomId,
+            "",
+            user.id,
+            senderName,
+            "voice",
+            undefined,
+            uploadResult.url,
+            duration,
+          );
+        } catch (error) {
+          console.error("💥 Failed to send voice message:", error);
+          const appError = error instanceof AppError ? error : parseSupabaseError(error);
+          set({ error: appError.userMessage });
+          throw appError;
+        }
+      },
+
+      sendMediaMessage: async (roomId: string, mediaUri: string, mediaType: "image" | "video") => {
+        try {
+          const { user } = await requireAuthentication("send media messages");
+          const senderName = getUserDisplayName(user);
+
+          // Compress image if needed
+          let finalUri = mediaUri;
+          if (mediaType === "image") {
+            finalUri = await storageService.compressImage(mediaUri, 0.7);
+          }
+
+          // Upload media file to storage
+          const uploadResult = await storageService.uploadChatMedia(finalUri, user.id, roomId);
+
+          if (!uploadResult.success || !uploadResult.url) {
+            throw new Error('Failed to upload media');
+          }
+
+          const message: Partial<ChatMessage> = {
+            chatRoomId: roomId,
+            senderId: user.id,
+            senderName,
+            messageType: mediaType,
+            imageUri: mediaType === "image" ? uploadResult.url : undefined,
+            videoUri: mediaType === "video" ? uploadResult.url : undefined,
+            timestamp: new Date(),
+          };
+
+          get().addMessage(message as ChatMessage);
+          await enhancedRealtimeChatService.sendMessage(
+            roomId,
+            "",
+            user.id,
+            senderName,
+            mediaType,
+            undefined,
+            uploadResult.url,
+          );
+        } catch (error) {
+          console.error("💥 Failed to send media message:", error);
+          const appError = error instanceof AppError ? error : parseSupabaseError(error);
+          set({ error: appError.userMessage });
+          throw appError;
+        }
+      },
+
+      toggleNotifications: async (roomId: string) => {
+        try {
+          await requireAuthentication("toggle notifications");
+          await notificationService.toggleChatRoomSubscription(roomId);
+        } catch (error) {
+          console.error("💥 Failed to toggle notifications:", error);
+          const appError = error instanceof AppError ? error : parseSupabaseError(error);
+          set({ error: appError.userMessage });
+          throw appError;
+        }
       },
 
       markMessagesAsRead: (roomId: string) => {
@@ -388,11 +557,28 @@ const useChatStore = create<ChatStore>()(
         }));
       },
 
+      reactToMessage: async (roomId: string, messageId: string, reaction: string) => {
+        try {
+          const { user } = await requireAuthentication("react to messages");
+          await enhancedRealtimeChatService.sendReaction(roomId, messageId, user.id, reaction);
+        } catch (error) {
+          console.error("💥 Failed to send reaction:", error);
+          const appError = error instanceof AppError ? error : parseSupabaseError(error);
+          set({ error: appError.userMessage });
+          throw appError;
+        }
+      },
+
       // Typing indicators
       setTyping: (roomId: string, isTyping: boolean) => {
         const { user } = useAuthStore.getState();
         if (user) {
-          realtimeChatService.setTyping(roomId, user.id, user.email || "Anonymous", isTyping);
+          enhancedRealtimeChatService.setTyping(
+            roomId,
+            user.id,
+            user.email || "Anonymous",
+            isTyping,
+          );
         }
       },
 
@@ -411,15 +597,23 @@ const useChatStore = create<ChatStore>()(
           const oldestMessage = currentMessages[0];
           const cursor = oldestMessage.timestamp.toISOString();
 
-          // Load older messages using realtimeChatService with cursor
-          const olderMessages = await realtimeChatService.loadRoomMessages(roomId, cursor, 20);
+          // Load older messages using enhanced service with cursor
+          const olderMessages = await enhancedRealtimeChatService.loadOlderMessages(
+            roomId,
+            cursor,
+            20,
+          );
 
           if (olderMessages.length > 0) {
             // Merge messages and deduplicate by ID
             const allMessages = [...olderMessages, ...currentMessages];
             const uniqueMessages = Array.from(
-              new Map(allMessages.map(msg => [msg.id, msg])).values()
-            ).sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+              new Map(allMessages.map((msg) => [msg.id, msg])).values(),
+            ).sort(
+              // FIXED: Sort descending for FlashList inverted display
+              (a, b) =>
+                new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+            );
 
             set((state) => ({
               messages: {
@@ -458,7 +652,9 @@ const useChatStore = create<ChatStore>()(
 
       removeTypingUser: (userId: string, roomId: string) => {
         set((state) => ({
-          typingUsers: state.typingUsers.filter((u) => u.userId !== userId || u.chatRoomId !== roomId),
+          typingUsers: state.typingUsers.filter(
+            (u) => u.userId !== userId || u.chatRoomId !== roomId,
+          ),
         }));
       },
 
@@ -485,8 +681,13 @@ const useChatStore = create<ChatStore>()(
           set({ isLoading: true });
           console.log(`👥 Loading members for room ${roomId}...`);
 
-          // Load members from Supabase
-          const members = await realtimeChatService.getRoomMembers(roomId);
+          // Load members directly from Supabase
+          const { data: members, error } = await supabase
+            .from("chat_members_firebase")
+            .select("*")
+            .eq("chat_room_id", roomId);
+
+          if (error) throw error;
 
           set((state) => ({
             members: {
@@ -539,28 +740,12 @@ const useChatStore = create<ChatStore>()(
         set({ isLoading: loading });
       },
 
-      // Supabase real-time message listener
-      startListeningToMessages: (roomId: string) => {
-        return supabaseChat.onMessagesSnapshot(roomId, (messages: ChatMessage[]) => {
-          try {
-            set((state) => ({
-              messages: {
-                ...state.messages,
-                [roomId]: messages,
-              },
-            }));
-          } catch (error) {
-            console.error("Subscription update error:", error);
-            const appError = error instanceof AppError ? error : parseSupabaseError(error);
-            set({ error: appError.userMessage });
-          }
-        });
-      },
+      // Real-time message listening is now handled by enhanced service in joinChatRoom
 
       // Cleanup all subscriptions and connections
       cleanup: async () => {
         try {
-          await realtimeChatService.cleanup();
+          await enhancedRealtimeChatService.cleanup();
           set({
             connectionStatus: "disconnected",
             currentChatRoom: null,
@@ -586,5 +771,4 @@ const useChatStore = create<ChatStore>()(
     },
   ),
 );
-
 export default useChatStore;

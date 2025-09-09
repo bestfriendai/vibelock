@@ -1,63 +1,52 @@
-// Supabase configuration for LockerRoom MVP
+// Enhanced Supabase configuration for optimal real-time performance
 import { createClient } from "@supabase/supabase-js";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// Supabase configuration from environment variables
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
-// Validate configuration
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error("Missing Supabase configuration");
-  throw new Error(
-    "Missing Supabase configuration: EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY are required",
-  );
+  throw new Error("Missing Supabase configuration");
 }
 
-// Optional debug logging in development only
 if (__DEV__) {
   console.log("[Supabase Config] URL:", supabaseUrl);
   console.log("[Supabase Config] Anon Key:", supabaseAnonKey?.substring(0, 20) + "...");
 }
 
-// Create Supabase client with React Native specific configuration
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    // Use AsyncStorage for session persistence in React Native
     storage: AsyncStorage,
-    // Auto refresh tokens
     autoRefreshToken: true,
-    // Persist session across app restarts
     persistSession: true,
-    // Detect session in URL (useful for magic links)
     detectSessionInUrl: false,
-    // Use PKCE flow for better security
-    flowType: 'pkce',
-    // Reduce auth timeout to prevent hanging
+    flowType: "pkce",
     debug: __DEV__,
   },
-  // Real-time configuration with better error handling
+  // Optimized real-time configuration for chat
   realtime: {
-    // Add heartbeat and reconnection settings
-    heartbeatIntervalMs: 30000,
-    reconnectAfterMs: (tries: number) => Math.min(tries * 1000, 10000),
+    // Faster heartbeat for better connection reliability
+    heartbeatIntervalMs: 15000,
+    // Exponential backoff for reconnection
+    reconnectAfterMs: (tries: number) => Math.min(tries * 500, 5000),
+    // Enable logging in development
+    logger: __DEV__ ? console.log : undefined,
+    // Optimize for chat workloads
+    params: {
+      eventsPerSecond: 100, // Higher rate for active chats
+    },
   },
-  // Global configuration - custom headers only (do NOT override Authorization)
-  // Note: Supabase JS sets `apikey` and user `Authorization` automatically.
-  // Overriding `Authorization` with the anon key breaks authenticated calls.
   global: {
     headers: {
-      "X-App-Client-Info": "lockerroom-mobile-app",
-      "X-App-Client-Version": "1.0.0",
+      "X-App-Client-Info": "lockerroom-chat-v2",
+      "X-App-Client-Version": "2.0.0",
     },
   },
 });
 
-// Export types for TypeScript support
-export type { User } from "@supabase/supabase-js";
-export type { Session } from "@supabase/supabase-js";
-export type { AuthError } from "@supabase/supabase-js";
-export type { PostgrestError } from "@supabase/supabase-js";
+// Export enhanced types
+export type { User, Session, AuthError, PostgrestError } from "@supabase/supabase-js";
+export type { RealtimeChannel, RealtimePresenceState } from "@supabase/supabase-js";
 
 // Helper function to handle Supabase errors
 export const handleSupabaseError = (error: any): string => {

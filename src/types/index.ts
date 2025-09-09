@@ -12,7 +12,7 @@ export interface User {
       longitude: number;
     };
     // College-specific fields
-    type?: 'city' | 'college';
+    type?: "city" | "college";
     fullName?: string;
     institutionType?: string;
   };
@@ -159,7 +159,7 @@ export interface AppSettings {
 
 // Chat-related types
 export type ChatRoomType = "local" | "global" | "topic";
-export type MessageType = "text" | "image" | "system" | "join" | "leave";
+export type MessageType = "text" | "image" | "voice" | "document" | "video" | "system" | "join" | "leave";
 export type UserRole = "member" | "moderator" | "admin";
 export type ConnectionStatus = "connecting" | "connected" | "disconnected" | "error";
 
@@ -172,6 +172,7 @@ export interface ChatRoom {
   category?: ReviewCategory;
   memberCount: number;
   onlineCount: number;
+  unreadCount?: number;
   lastMessage?: ChatMessage;
   lastActivity: Date;
   isActive: boolean;
@@ -204,6 +205,16 @@ export interface ChatMessage {
     count: number;
     users: string[];
   }[];
+  // Media-specific fields
+  audioUri?: string;
+  audioDuration?: number;
+  imageUri?: string;
+  videoUri?: string;
+  documentUri?: string;
+  fileName?: string;
+  fileSize?: number;
+  mimeType?: string;
+  thumbnailUri?: string;
 }
 
 export interface ChatMember {
