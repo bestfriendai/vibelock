@@ -192,10 +192,16 @@ const useReviewsStore = create<ReviewsStore>()(
           let newReviews: Review[] = [];
 
           if (radiusFilteringActive && userLocation) {
-            // Strategy 1: Server-side city+state filtering + client-side distance filtering
-            const fetchLimit = 200;
+            // Strategy 1: Location-first approach - get ALL reviews with coordinates, then filter by distance
+            // This ensures we don't miss local reviews that are older than the most recent 200 global reviews
+
+            const fetchLimit = 1000; // Increase limit to ensure we get local reviews
             const fetchOffset = 0;
-            const baseSet = await supabaseReviews.getReviews(fetchLimit, fetchOffset, serverFilters);
+
+            // Get all reviews with coordinates (no location filters to ensure we get everything)
+            const worldwideSet = await supabaseReviews.getReviews(fetchLimit, fetchOffset, {
+              category: serverFilters.category, // Only apply category filter, not location
+            });
 
             // Ensure user location has coordinates for distance filtering
             let locationWithCoords = userLocation;
@@ -211,13 +217,23 @@ const useReviewsStore = create<ReviewsStore>()(
               }
             }
 
-            newReviews = await filterReviewsByDistanceAsync(baseSet, locationWithCoords, filters.radius!);
+            // Filter by distance first, then sort by creation date
+            const distanceFiltered = await filterReviewsByDistanceAsync(
+              worldwideSet,
+              locationWithCoords,
+              filters.radius!,
+            );
+
+            // Sort by creation date (most recent first) after distance filtering
+            newReviews = distanceFiltered.sort(
+              (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+            );
 
             if (__DEV__) {
-              console.log("📏 Distance-filtered reviews:", {
-                requested: fetchLimit,
-                baseSet: baseSet.length,
-                filtered: newReviews.length,
+              console.log("📏 Location-first distance filtering:", {
+                worldwideReviews: worldwideSet.length,
+                withinRadius: distanceFiltered.length,
+                finalResults: newReviews.length,
                 radius: filters.radius,
                 location: `${locationWithCoords.city}, ${locationWithCoords.state}`,
                 hasCoordinates: !!locationWithCoords.coordinates,
@@ -225,13 +241,15 @@ const useReviewsStore = create<ReviewsStore>()(
               });
             }
 
-            // Note: No fallback needed since we're already doing worldwide search for radius filtering
+            // Note: No fallback needed since we're prioritizing location over recency
           } else {
-            // Non-radius filtering: use server-side filters only
+            // Non-radius filtering: prioritize local reviews, then expand search
             const offset = refresh ? 0 : currentState.reviews.length;
+
+            // Strategy 1: Try exact city+state match first
             newReviews = await supabaseReviews.getReviews(20, offset, serverFilters);
 
-            // Fallback: If no results with city+state, try state-only
+            // Strategy 2: If no results with city+state, try state-only
             if (newReviews.length === 0 && refresh && serverFilters.city && serverFilters.state) {
               console.log("🔄 No results with city+state filter, trying state-only filter...");
               const stateOnlyFilters = { ...serverFilters };
@@ -241,6 +259,17 @@ const useReviewsStore = create<ReviewsStore>()(
 
               if (__DEV__) {
                 console.log("📍 State-only filtered reviews:", newReviews.length);
+              }
+            }
+
+            // Strategy 3: If still no results, get reviews from anywhere (fallback)
+            if (newReviews.length === 0 && refresh) {
+              console.log("🌍 No local results found, showing reviews from anywhere...");
+              const globalFilters = { category: serverFilters.category };
+              newReviews = await supabaseReviews.getReviews(20, offset, globalFilters);
+
+              if (__DEV__) {
+                console.log("🌐 Global fallback reviews:", newReviews.length);
               }
             }
           }

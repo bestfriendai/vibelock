@@ -4,10 +4,12 @@ const plugin = require("tailwindcss/plugin");
 module.exports = {
   content: ["./App.tsx", "./app/**/*.{js,jsx,ts,tsx}", "./src/**/*.{js,jsx,ts,tsx}"],
   presets: [require("nativewind/preset")],
+  darkMode: 'class',
   corePlugins: { space: false },
   theme: {
     extend: {
       colors: {
+        // Dark theme colors (default)
         brand: {
           red: "#EF4444",
           redDark: "#DC2626",
@@ -32,6 +34,35 @@ module.exports = {
           orange: "#FF8A65",
           peach: "#FFCC80",
           pink: "#F8BBD9",
+        },
+        // Light theme colors
+        light: {
+          brand: {
+            red: "#DC3545",
+            redLight: "#F8D7DA",
+            redDark: "#721C24",
+            coral: "#FF6B6B",
+            warm: "#FFA726",
+          },
+          surface: {
+            900: "#FFFFFF",
+            800: "#F8F9FA",
+            700: "#E9ECEF",
+            600: "#DEE2E6",
+            500: "#CED4DA",
+          },
+          text: {
+            primary: "#212529",
+            secondary: "#6C757D",
+            muted: "#ADB5BD",
+            accent: "#FF8A65",
+          },
+          border: "#E9ECEF",
+          accent: {
+            orange: "#FF8A65",
+            peach: "#FFCC80",
+            pink: "#F8BBD9",
+          },
         },
       },
       borderRadius: { xl: "16px", "2xl": "20px" },

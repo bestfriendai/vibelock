@@ -5,6 +5,7 @@ import useSubscriptionStore from "../state/subscriptionStore";
 import { canUseAdMob, buildEnv } from "../utils/buildEnvironment";
 import { adMobService } from "../services/adMobService";
 import { useAdContext } from "../contexts/AdContext";
+import { useTheme } from "../providers/ThemeProvider";
 
 interface Props {
   placement: "browse" | "chat";
@@ -15,6 +16,8 @@ const MockBannerAd: React.FC<{ onLoad: () => void; onError: (error: string) => v
   onLoad,
   onError
 }) => {
+  const { colors } = useTheme();
+
   useEffect(() => {
     // Simulate ad loading
     const timer = setTimeout(() => {
@@ -29,9 +32,20 @@ const MockBannerAd: React.FC<{ onLoad: () => void; onError: (error: string) => v
   }, [onLoad, onError]);
 
   return (
-    <View className="bg-surface-700 p-4 items-center justify-center min-h-[50px]">
-      <Text className="text-text-secondary text-xs">Mock Ad Banner</Text>
-      <Text className="text-text-muted text-[10px] mt-1">
+    <View
+      className="p-4 items-center justify-center min-h-[50px]"
+      style={{ backgroundColor: colors.surface[700] }}
+    >
+      <Text
+        className="text-xs"
+        style={{ color: colors.text.secondary }}
+      >
+        Mock Ad Banner
+      </Text>
+      <Text
+        className="text-[10px] mt-1"
+        style={{ color: colors.text.muted }}
+      >
         {buildEnv.isExpoGo ? 'Expo Go Mode' : 'Development Mode'}
       </Text>
     </View>
@@ -83,11 +97,12 @@ const RealBannerAd: React.FC<{
 export default function AdBanner({ placement }: Props) {
   const { isPremium } = useSubscriptionStore();
   const { setAdHeight, setAdVisible } = useAdContext();
+  const { colors } = useTheme();
   const [adLoaded, setAdLoaded] = useState(false);
   const [adError, setAdError] = useState<string | null>(null);
 
-  // Don't show ads to premium users (but still show in development for demo)
-  if (isPremium && !buildEnv.isExpoGo && !buildEnv.isDevelopmentBuild) {
+  // Don't show ads to premium users at all
+  if (isPremium) {
     // Ensure ad context is updated when premium
     useEffect(() => {
       setAdVisible(false);
@@ -121,12 +136,29 @@ export default function AdBanner({ placement }: Props) {
   }, [setAdVisible, setAdHeight]);
 
   return (
-    <View className="bg-surface-800 border-t border-surface-700">
+    <View
+      className="border-t"
+      style={{
+        backgroundColor: colors.surface[800],
+        borderTopColor: colors.border
+      }}
+    >
       <View className="items-center py-2">
-        <View className="w-11/12 bg-surface-800 border border-surface-700 rounded-xl overflow-hidden">
+        <View
+          className="w-11/12 border rounded-xl overflow-hidden"
+          style={{
+            backgroundColor: colors.surface[800],
+            borderColor: colors.border
+          }}
+        >
           {adError ? (
             <View className="px-4 py-3 items-center">
-              <Text className="text-text-secondary text-xs">Ad unavailable</Text>
+              <Text
+                className="text-xs"
+                style={{ color: colors.text.secondary }}
+              >
+                Ad unavailable
+              </Text>
             </View>
           ) : canUseAdMob() ? (
             <RealBannerAd
@@ -140,8 +172,16 @@ export default function AdBanner({ placement }: Props) {
 
           {/* Ad label for transparency */}
           {adLoaded && (
-            <View className="absolute top-1 right-1 bg-black/50 px-1 rounded">
-              <Text className="text-white text-[8px]">Ad</Text>
+            <View
+              className="absolute top-1 right-1 px-1 rounded"
+              style={{ backgroundColor: colors.surface[600] + '80' }}
+            >
+              <Text
+                className="text-[8px]"
+                style={{ color: colors.text.primary }}
+              >
+                Ad
+              </Text>
             </View>
           )}
         </View>

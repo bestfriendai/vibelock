@@ -49,6 +49,10 @@ export interface Review {
   reviewedPersonLocation: {
     city: string;
     state: string;
+    coordinates?: {
+      latitude: number;
+      longitude: number;
+    };
   };
   // Category tag for the reviewed person (used for filtering)
   category?: ReviewCategory;
@@ -72,6 +76,10 @@ export interface Profile {
   location: {
     city: string;
     state: string;
+    coordinates?: {
+      latitude: number;
+      longitude: number;
+    };
   };
   totalReviews: number;
   greenFlagCount: number;
@@ -112,6 +120,10 @@ export interface SearchFilters {
   location?: {
     city: string;
     state: string;
+    coordinates?: {
+      latitude: number;
+      longitude: number;
+    };
   };
   radius: number;
 }
@@ -162,6 +174,10 @@ export interface ChatRoom {
   location?: {
     city: string;
     state: string;
+    coordinates?: {
+      latitude: number;
+      longitude: number;
+    };
   };
   createdAt: Date;
   updatedAt: Date;

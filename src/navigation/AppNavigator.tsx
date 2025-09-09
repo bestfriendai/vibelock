@@ -6,6 +6,7 @@ import { View, Pressable } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets, SafeAreaView } from "react-native-safe-area-context";
 import CustomTabBar from "../components/CustomTabBar";
+import { useTheme } from "../providers/ThemeProvider";
 
 // Import screens
 import BrowseScreen from "../screens/BrowseScreen";
@@ -247,8 +248,10 @@ function SettingsStackNavigator() {
 
 // Tab Navigator Component
 function TabNavigator() {
+  const { colors } = useTheme();
+
   return (
-    <View className="flex-1 bg-surface-900">
+    <View className="flex-1" style={{ backgroundColor: colors.background }}>
       <Tab.Navigator
         tabBar={(props) => <CustomTabBar {...props} />}
         screenOptions={({ route }) => {
@@ -278,13 +281,13 @@ function TabNavigator() {
               }
               return <Ionicons name={iconName} size={size} color={color} />;
             },
-            tabBarActiveTintColor: "#FFFFFF",
-            tabBarInactiveTintColor: "#9CA3AF",
+            tabBarActiveTintColor: colors.brand.red,
+            tabBarInactiveTintColor: colors.text.muted,
             tabBarHideOnKeyboard: true,
             tabBarStyle: {
-              backgroundColor: "#000000",
+              backgroundColor: colors.surface[900],
               borderTopWidth: 1,
-              borderTopColor: "#2A2A2F",
+              borderTopColor: colors.border,
               paddingBottom: Math.max(insets.bottom, 6),
               paddingTop: 4,
               height: 52 + (insets.bottom || 0),
@@ -320,6 +323,7 @@ function TabNavigator() {
 // Main App Navigator
 export default function AppNavigator() {
   const { isAuthenticated, isGuestMode } = useAuthStore();
+  const { colors } = useTheme();
 
   return (
     <Stack.Navigator
@@ -356,8 +360,8 @@ export default function AppNavigator() {
               presentation: "modal",
               headerShown: true,
               headerTitle: "Write Review",
-              headerStyle: { backgroundColor: "#000000" },
-              headerTintColor: "#FFFFFF",
+              headerStyle: { backgroundColor: colors.surface[900] },
+              headerTintColor: colors.text.primary,
             }}
           />
           <Stack.Screen
@@ -367,8 +371,8 @@ export default function AppNavigator() {
               presentation: "modal",
               headerShown: true,
               headerTitle: "Profile",
-              headerStyle: { backgroundColor: "#141418" },
-              headerTintColor: "#FFFFFF",
+              headerStyle: { backgroundColor: colors.surface[800] },
+              headerTintColor: colors.text.primary,
             }}
           />
           <Stack.Screen
