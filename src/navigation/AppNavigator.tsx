@@ -2,7 +2,7 @@ import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
-import { View, Pressable } from "react-native";
+import { View, Pressable, Text } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets, SafeAreaView } from "react-native-safe-area-context";
 import CustomTabBar from "../components/CustomTabBar";
@@ -15,6 +15,7 @@ import CreateReviewScreen from "../screens/CreateReviewScreen";
 import ChatroomsScreen from "../screens/ChatroomsScreen";
 import ProfileScreen from "../screens/ProfileScreen";
 import PersonProfileScreen from "../screens/PersonProfileScreen";
+import ErrorBoundary from "../components/ErrorBoundary";
 
 import SignInScreen from "../screens/SignInScreen";
 import SignUpScreen from "../screens/SignUpScreen";
@@ -28,6 +29,25 @@ import LocationSettingsScreen from "../screens/LocationSettingsScreen";
 
 // Import stores
 import useAuthStore from "../state/authStore";
+
+// Wrapper component for ChatRoomScreen with error boundary
+const ChatRoomScreenWithErrorBoundary = (props: any) => (
+  <ErrorBoundary
+    fallback={
+      <SafeAreaView className="flex-1 bg-surface-900 justify-center items-center px-6">
+        <View className="items-center">
+          <Ionicons name="chatbubble-outline" size={48} color="#666" className="mb-4" />
+          <Text className="text-text-primary text-lg font-semibold mb-2">Chat Unavailable</Text>
+          <Text className="text-text-secondary text-center">
+            There was an issue loading the chat. Please try again later.
+          </Text>
+        </View>
+      </SafeAreaView>
+    }
+  >
+    <ChatRoomScreen {...props} />
+  </ErrorBoundary>
+);
 
 // Types for navigation - using serialized versions for React Navigation
 type SerializedReview = Omit<import("../types").Review, "createdAt" | "updatedAt"> & {
@@ -47,7 +67,8 @@ export type RootStackParamList = {
   CreateReview: undefined;
   ChatRoom: { roomId: string };
   ReviewDetail: {
-    review: SerializedReview;
+    review?: SerializedReview;
+    reviewId?: string;
   };
 };
 
@@ -62,14 +83,16 @@ export type TabParamList = {
 export type BrowseStackParamList = {
   Browse: undefined;
   ReviewDetail: {
-    review: SerializedReview;
+    review?: SerializedReview;
+    reviewId?: string;
   };
 };
 
 export type SearchStackParamList = {
   Search: undefined;
   ReviewDetail: {
-    review: SerializedReview;
+    review?: SerializedReview;
+    reviewId?: string;
   };
 };
 
@@ -297,8 +320,22 @@ function TabNavigator() {
           };
         }}
       >
-        <Tab.Screen name="BrowseStack" component={BrowseStackNavigator} options={{ tabBarLabel: "Browse" }} />
-        <Tab.Screen name="SearchStack" component={SearchStackNavigator} options={{ tabBarLabel: "Search" }} />
+        <Tab.Screen
+          name="BrowseStack"
+          component={BrowseStackNavigator}
+          options={{
+            tabBarLabel: "Browse",
+            tabBarAccessibilityLabel: "Browse reviews and profiles",
+          }}
+        />
+        <Tab.Screen
+          name="SearchStack"
+          component={SearchStackNavigator}
+          options={{
+            tabBarLabel: "Search",
+            tabBarAccessibilityLabel: "Search for people and reviews",
+          }}
+        />
         <Tab.Screen
           name="CreateAction"
           component={View as any}
@@ -313,8 +350,22 @@ function TabNavigator() {
             },
           }}
         />
-        <Tab.Screen name="ChatroomsStack" component={ChatroomsStackNavigator} options={{ tabBarLabel: "Chatrooms" }} />
-        <Tab.Screen name="SettingsStack" component={SettingsStackNavigator} options={{ tabBarLabel: "Settings" }} />
+        <Tab.Screen
+          name="ChatroomsStack"
+          component={ChatroomsStackNavigator}
+          options={{
+            tabBarLabel: "Chatrooms",
+            tabBarAccessibilityLabel: "View chat rooms and messages",
+          }}
+        />
+        <Tab.Screen
+          name="SettingsStack"
+          component={SettingsStackNavigator}
+          options={{
+            tabBarLabel: "Settings",
+            tabBarAccessibilityLabel: "View profile and settings",
+          }}
+        />
       </Tab.Navigator>
     </View>
   );
@@ -377,7 +428,7 @@ export default function AppNavigator() {
           />
           <Stack.Screen
             name="ChatRoom"
-            component={ChatRoomScreen}
+            component={ChatRoomScreenWithErrorBoundary}
             options={{
               headerShown: true,
               headerTitle: "Chat",

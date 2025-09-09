@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Alert } from "react-native";
+import { v4 as uuidv4 } from 'uuid';
 import { User } from "../types";
 import { supabaseAuth, supabaseUsers } from "../services/supabase";
 import { AppError, ErrorType, parseSupabaseError } from '../utils/errorHandling';
@@ -120,7 +121,7 @@ const useAuthStore = create<AuthStore>()(
             const basicProfile: Partial<User> = {
               id: supabaseUser.id,
               email: supabaseUser.email || email,
-              anonymousId: `anon_${Date.now()}`,
+              anonymousId: uuidv4(),
               location: {
                 city: "Unknown",
                 state: "Unknown",
@@ -191,7 +192,7 @@ const useAuthStore = create<AuthStore>()(
           const userProfile: Partial<User> = {
             id: supabaseUser.id,
             email: supabaseUser.email || email,
-            anonymousId: `anon_${Date.now()}`,
+            anonymousId: uuidv4(),
             location,
             genderPreference: opts?.genderPreference || "all",
             gender: opts?.gender,

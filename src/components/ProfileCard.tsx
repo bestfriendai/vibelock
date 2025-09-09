@@ -10,6 +10,7 @@ import { BrowseStackParamList } from "../navigation/AppNavigator";
 import { Review } from "../types";
 import { shareService } from "../services/shareService";
 import { useResponsiveScreen } from "../utils/responsive";
+import { useTheme } from "../providers/ThemeProvider";
 
 interface Props {
   review: Review;
@@ -23,6 +24,7 @@ type Nav = NativeStackNavigationProp<BrowseStackParamList>;
 
 export default function ProfileCard({ review, cardHeight = 280, onReport, onLike, isLiked = false }: Props) {
   const navigation = useNavigation<Nav>();
+  const { colors } = useTheme();
   const [imageLoaded, setImageLoaded] = useState(false);
   const screenData = useResponsiveScreen();
   const { cardWidth } = screenData.responsive;
@@ -138,7 +140,10 @@ export default function ProfileCard({ review, cardHeight = 280, onReport, onLike
 
         {/* Loading overlay */}
         {!imageLoaded && (
-          <View className="absolute inset-0 bg-surface-800 items-center justify-center">
+          <View
+            className="absolute inset-0 items-center justify-center"
+            style={{ backgroundColor: colors.surface[800] }}
+          >
             <View className="w-8 h-8 border-2 border-brand-red/30 border-t-brand-red rounded-full animate-spin" />
           </View>
         )}

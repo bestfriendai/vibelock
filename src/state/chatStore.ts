@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { v4 as uuidv4 } from 'uuid';
 import { ChatRoom, ChatMessage, ChatMember, TypingUser, ConnectionStatus, ChatState } from "../types";
 import { webSocketService } from "../services/websocketService";
 import { supabaseChat } from "../services/supabase";
@@ -286,6 +287,8 @@ const useChatStore = create<ChatStore>()(
       },
 
       sendMessage: async (roomId: string, content: string) => {
+        let optimisticMessageId: string | null = null;
+
         try {
           console.log(`📤 Sending message to room ${roomId}:`, content);
 
@@ -295,7 +298,7 @@ const useChatStore = create<ChatStore>()(
 
           // Optimistic update - add message locally first
           const optimisticMessage: ChatMessage = {
-            id: `temp_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+            id: uuidv4(),
             chatRoomId: roomId,
             senderId: user.id,
             senderName,
@@ -306,6 +309,7 @@ const useChatStore = create<ChatStore>()(
             isOwn: true,
           };
 
+          optimisticMessageId = optimisticMessage.id;
           get().addMessage(optimisticMessage);
 
           // Send to Supabase via real-time service
@@ -315,13 +319,15 @@ const useChatStore = create<ChatStore>()(
         } catch (error) {
           console.error("💥 Failed to send message:", error);
 
-          // Remove the optimistic message on error
-          set((state) => ({
-            messages: {
-              ...state.messages,
-              [roomId]: (state.messages[roomId] || []).filter((msg) => !msg.id.startsWith("temp_")),
-            },
-          }));
+          // Remove the optimistic message on error if it was created
+          if (optimisticMessageId) {
+            set((state) => ({
+              messages: {
+                ...state.messages,
+                [roomId]: (state.messages[roomId] || []).filter((msg) => msg.id !== optimisticMessageId),
+              },
+            }));
+          }
 
           throw error;
         }

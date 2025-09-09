@@ -6,6 +6,7 @@ import { useNavigation } from "@react-navigation/native";
 import { supabaseSearch } from "../services/supabase";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useTheme } from "../providers/ThemeProvider";
+import { validateSearchQuery, searchLimiter } from "../utils/inputValidation";
 
 // Debounce utility
 const debounce = (func: Function, delay: number) => {
@@ -116,8 +117,16 @@ export default function SearchScreen() {
   const handleSearch = async (queryOverride?: string) => {
     const query = queryOverride || searchQuery;
 
-    if (query.trim().length < 2) {
-      setSearchError("Please enter at least 2 characters to search");
+    // Validate and sanitize search query
+    const queryValidation = validateSearchQuery(query);
+    if (!queryValidation.isValid) {
+      setSearchError(queryValidation.error || "Invalid search query");
+      return;
+    }
+
+    // Rate limiting check
+    if (!searchLimiter.isAllowed('search')) {
+      setSearchError("Too many searches. Please wait a moment before searching again.");
       return;
     }
 
@@ -126,16 +135,16 @@ export default function SearchScreen() {
     setShowSuggestions(false);
 
     try {
-      const results = await supabaseSearch.searchAll(query);
+      const results = await supabaseSearch.searchAll(queryValidation.sanitized);
       setContentResults(results);
 
-      // Save to search history
-      await saveToSearchHistory(query);
+      // Save to search history (use sanitized query)
+      await saveToSearchHistory(queryValidation.sanitized);
 
       // Show feedback if no results found
       const totalResults = results.reviews.length + results.comments.length + results.messages.length;
       if (totalResults === 0) {
-        setSearchError(`No results found for "${query}". Try different keywords or check your spelling.`);
+        setSearchError(`No results found for "${queryValidation.sanitized}". Try different keywords or check your spelling.`);
       }
     } catch (e) {
       console.error('Search failed:', e);
@@ -184,12 +193,18 @@ export default function SearchScreen() {
         <View className="px-4 py-2">
           {/* Search Input */}
           <View className="mb-6">
-            <Text className="text-text-primary font-medium mb-2">Search</Text>
+            <Text className="font-medium mb-2" style={{ color: colors.text.primary }}>Search</Text>
             <View className="relative">
               <TextInput
-                className="bg-surface-800 border border-surface-700 rounded-lg px-4 py-3 pr-12 text-text-primary"
+                className="rounded-lg px-4 py-3 pr-12"
+                style={{
+                  backgroundColor: colors.surface[800],
+                  borderWidth: 1,
+                  borderColor: colors.surface[700],
+                  color: colors.text.primary,
+                }}
                 placeholder="Enter keywords..."
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={colors.text.muted}
                 value={searchQuery}
                 onChangeText={handleQueryChange}
                 autoCapitalize="none"
@@ -292,9 +307,17 @@ export default function SearchScreen() {
                 <Pressable
                   key={tab}
                   onPress={() => setActiveTab(tab)}
-                  className={`px-3 py-2 rounded-lg mr-2 ${activeTab === tab ? "bg-brand-red" : "bg-surface-800"}`}
+                  className="px-3 py-2 rounded-lg mr-2"
+                  style={{
+                    backgroundColor: activeTab === tab ? colors.brand.red : colors.surface[800],
+                  }}
                 >
-                  <Text className={activeTab === tab ? "text-black font-medium" : "text-text-secondary"}>
+                  <Text
+                    className={activeTab === tab ? "font-medium" : ""}
+                    style={{
+                      color: activeTab === tab ? '#FFFFFF' : colors.text.secondary,
+                    }}
+                  >
                     {tab.charAt(0).toUpperCase() + tab.slice(1)}
                   </Text>
                 </Pressable>
@@ -303,37 +326,63 @@ export default function SearchScreen() {
 
             <View className="space-y-3 pb-20">
               {(activeTab === "all" || activeTab === "reviews") &&
-                contentResults.reviews.map((review, idx) => (
-                  <Pressable
-                    key={`review-${idx}`}
-                    onPress={() => navigation.navigate("ReviewDetail", { reviewId: review.id })}
-                    className="bg-surface-800 rounded-lg p-4"
-                  >
-                    <View className="flex-row items-center mb-2">
-                      <View className="bg-blue-500 rounded px-2 py-1">
-                        <Text className="text-white text-xs font-medium">Review</Text>
+                contentResults.reviews.map((review, idx) => {
+                  // Transform raw database record to Review interface format
+                  const transformedReview = {
+                    id: review.id,
+                    authorId: review.author_id,
+                    reviewerAnonymousId: review.reviewer_anonymous_id,
+                    reviewedPersonName: review.reviewed_person_name,
+                    reviewedPersonLocation: review.reviewed_person_location,
+                    category: review.category,
+                    profilePhoto: review.profile_photo,
+                    greenFlags: review.green_flags || [],
+                    redFlags: review.red_flags || [],
+                    sentiment: review.sentiment,
+                    reviewText: review.review_text,
+                    media: review.media || [],
+                    socialMedia: review.social_media,
+                    status: review.status,
+                    likeCount: review.like_count || 0,
+                    dislikeCount: review.dislike_count || 0,
+                    createdAt: new Date(review.created_at).toISOString(),
+                    updatedAt: new Date(review.updated_at).toISOString(),
+                  };
+
+                  return (
+                    <Pressable
+                      key={`review-${idx}`}
+                      onPress={() => navigation.navigate("ReviewDetail", { review: transformedReview })}
+                      className="rounded-lg p-4"
+                      style={{ backgroundColor: colors.surface[800] }}
+                    >
+                      <View className="flex-row items-center mb-2">
+                        <View className="bg-blue-500 rounded px-2 py-1">
+                          <Text className="text-white text-xs font-medium">Review</Text>
+                        </View>
+                        <Text className="text-xs ml-2" style={{ color: colors.text.muted }}>{new Date(review.created_at).toLocaleDateString()}</Text>
                       </View>
-                      <Text className="text-text-muted text-xs ml-2">{new Date(review.created_at).toLocaleDateString()}</Text>
-                    </View>
-                    <Text className="text-text-primary font-medium mb-1">{review.reviewed_person_name}</Text>
-                    <Text className="text-text-secondary text-sm" numberOfLines={2}>{review.review_text}</Text>
-                  </Pressable>
-                ))}
+                      <Text className="font-medium mb-1" style={{ color: colors.text.primary }}>{review.reviewed_person_name}</Text>
+                      <Text className="text-sm" style={{ color: colors.text.secondary }} numberOfLines={2}>{review.review_text}</Text>
+                    </Pressable>
+                  );
+                })}
 
               {(activeTab === "all" || activeTab === "comments") &&
                 contentResults.comments.map((comment, idx) => (
                   <Pressable
                     key={`comment-${idx}`}
                     onPress={() => navigation.navigate("ReviewDetail", { reviewId: comment.review_id })}
-                    className="bg-surface-800 rounded-lg p-4"
+                    className="rounded-lg p-4"
+                    style={{ backgroundColor: colors.surface[800] }}
                   >
                     <View className="flex-row items-center mb-2">
                       <View className="bg-green-500 rounded px-2 py-1">
                         <Text className="text-white text-xs font-medium">Comment</Text>
                       </View>
-                      <Text className="text-text-muted text-xs ml-2">{new Date(comment.created_at).toLocaleDateString()}</Text>
+                      <Text className="text-xs ml-2" style={{ color: colors.text.muted }}>{new Date(comment.created_at).toLocaleDateString()}</Text>
                     </View>
-                    <Text className="text-text-secondary text-sm" numberOfLines={2}>{comment.content}</Text>
+                    <Text className="text-sm" style={{ color: colors.text.secondary }} numberOfLines={2}>{comment.content}</Text>
                   </Pressable>
                 ))}
 
@@ -342,15 +391,16 @@ export default function SearchScreen() {
                   <Pressable
                     key={`message-${idx}`}
                     onPress={() => navigation.navigate("ChatRoom", { roomId: message.chat_room_id })}
-                    className="bg-surface-800 rounded-lg p-4"
+                    className="rounded-lg p-4"
+                    style={{ backgroundColor: colors.surface[800] }}
                   >
                     <View className="flex-row items-center mb-2">
                       <View className="bg-purple-500 rounded px-2 py-1">
                         <Text className="text-white text-xs font-medium">Message</Text>
                       </View>
-                      <Text className="text-text-muted text-xs ml-2">{message.chat_rooms_firebase?.name || "Chat"}</Text>
+                      <Text className="text-xs ml-2" style={{ color: colors.text.muted }}>{message.chat_rooms_firebase?.name || "Chat"}</Text>
                     </View>
-                    <Text className="text-text-secondary text-sm" numberOfLines={2}>{message.content}</Text>
+                    <Text className="text-sm" style={{ color: colors.text.secondary }} numberOfLines={2}>{message.content}</Text>
                   </Pressable>
                 ))}
 
@@ -360,8 +410,8 @@ export default function SearchScreen() {
                 contentResults.messages.length === 0 && (
                   <View className="items-center justify-center py-12">
                     <Ionicons name="search-outline" size={48} color="#6B7280" />
-                    <Text className="text-text-secondary text-lg font-medium mt-4">No content found</Text>
-                    <Text className="text-text-muted text-center mt-2">Try different search terms</Text>
+                    <Text className="text-lg font-medium mt-4" style={{ color: colors.text.secondary }}>No content found</Text>
+                    <Text className="text-center mt-2" style={{ color: colors.text.muted }}>Try different search terms</Text>
                   </View>
               )}
             </View>
@@ -369,8 +419,8 @@ export default function SearchScreen() {
         ) : (
           <View className="flex-1 items-center justify-center px-6">
             <Ionicons name="search-outline" size={48} color="#6B7280" />
-            <Text className="text-text-secondary text-lg font-medium mt-4">Search content</Text>
-            <Text className="text-text-muted text-center mt-2">Enter at least 2 characters and tap the search icon</Text>
+            <Text className="text-lg font-medium mt-4" style={{ color: colors.text.secondary }}>Search content</Text>
+            <Text className="text-center mt-2" style={{ color: colors.text.muted }}>Enter at least 2 characters and tap the search icon</Text>
           </View>
         )}
       </View>

@@ -3,12 +3,14 @@ import { View, Text, Pressable, Switch, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../providers/ThemeProvider';
 import useSubscriptionStore from '../state/subscriptionStore';
-import { useNavigation } from '@react-navigation/native';
 
-export default function PremiumThemeToggle() {
+interface PremiumThemeToggleProps {
+  onShowPaywall?: () => void;
+}
+
+export default function PremiumThemeToggle({ onShowPaywall }: PremiumThemeToggleProps) {
   const { theme, colors, isDarkMode, setTheme } = useTheme();
   const { isPremium } = useSubscriptionStore();
-  const navigation = useNavigation();
 
   const handleThemeToggle = () => {
     if (!isPremium) {
@@ -18,11 +20,13 @@ export default function PremiumThemeToggle() {
         'Theme customization is available for Locker Room Talk Plus members. Upgrade to unlock light mode and other premium features.',
         [
           { text: 'Cancel', style: 'cancel' },
-          { 
-            text: 'Upgrade', 
+          {
+            text: 'Upgrade',
             onPress: () => {
-              // Navigate to upgrade screen
-              navigation.navigate('Upgrade' as never);
+              // Show paywall modal instead of navigating
+              if (onShowPaywall) {
+                onShowPaywall();
+              }
             }
           }
         ]

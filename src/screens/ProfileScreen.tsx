@@ -8,7 +8,7 @@ import useThemeStore from "../state/themeStore";
 import useSubscriptionStore from "../state/subscriptionStore";
 import ConfirmationModal from "../components/ConfirmationModal";
 import PremiumThemeToggle from "../components/PremiumThemeToggle";
-import UserStatsCard from "../components/UserStatsCard";
+
 import { useTheme } from "../providers/ThemeProvider";
 import { PaywallAdaptive } from "../components/subscription/PaywallAdaptive";
 import { LegalModal } from "../components/legal/LegalModal";
@@ -68,9 +68,9 @@ export default function ProfileScreen() {
   // Firebase test removed per product direction
 
   return (
-    <SafeAreaView className="flex-1 bg-surface-900">
+    <SafeAreaView className="flex-1" style={{ backgroundColor: colors.background }}>
       {/* Header */}
-      <View className="bg-black px-6 py-6">
+      <View className="px-6 py-6" style={{ backgroundColor: colors.surface[800] }}>
         <View className="flex-row items-center">
           <View className="w-10 h-10 mr-3">
             <Image
@@ -79,7 +79,7 @@ export default function ProfileScreen() {
               resizeMode="contain"
             />
           </View>
-          <Text className="text-2xl font-bold text-text-primary">Settings</Text>
+          <Text className="text-2xl font-bold" style={{ color: colors.text.primary }}>Settings</Text>
         </View>
       </View>
 
@@ -87,17 +87,24 @@ export default function ProfileScreen() {
         <View className="px-6 py-6">
           {/* Guest Mode Banner */}
           {isGuestMode && (
-            <View className="bg-brand-red/20 border border-brand-red/30 rounded-lg p-4 mb-6">
+            <View
+              className="border rounded-lg p-4 mb-6"
+              style={{
+                backgroundColor: `${colors.brand.red}20`,
+                borderColor: `${colors.brand.red}30`
+              }}
+            >
               <View className="flex-row items-center mb-3">
-                <Ionicons name="eye-outline" size={20} color="#FF6B6B" />
-                <Text className="text-brand-red font-semibold ml-2">Browsing as Guest</Text>
+                <Ionicons name="eye-outline" size={20} color={colors.brand.red} />
+                <Text className="font-semibold ml-2" style={{ color: colors.brand.red }}>Browsing as Guest</Text>
               </View>
-              <Text className="text-text-secondary mb-4">
+              <Text className="mb-4" style={{ color: colors.text.secondary }}>
                 Create an account to share reviews, join chat rooms, and get personalized recommendations.
               </Text>
               <View className="flex-row space-x-3">
                 <Pressable
-                  className="flex-1 bg-brand-red rounded-lg py-3 items-center"
+                  className="flex-1 rounded-lg py-3 items-center"
+                  style={{ backgroundColor: colors.brand.red }}
                   onPress={() => {
                     setGuestMode(false);
                     navigation.navigate("SignUp");
@@ -106,13 +113,14 @@ export default function ProfileScreen() {
                   <Text className="text-white font-semibold">Sign Up</Text>
                 </Pressable>
                 <Pressable
-                  className="flex-1 bg-surface-700 rounded-lg py-3 items-center"
+                  className="flex-1 rounded-lg py-3 items-center"
+                  style={{ backgroundColor: colors.surface[700] }}
                   onPress={() => {
                     setGuestMode(false);
                     navigation.navigate("SignIn");
                   }}
                 >
-                  <Text className="text-text-primary font-semibold">Sign In</Text>
+                  <Text className="font-semibold" style={{ color: colors.text.primary }}>Sign In</Text>
                 </Pressable>
               </View>
             </View>
@@ -120,16 +128,18 @@ export default function ProfileScreen() {
 
           {/* User Info */}
           {!isGuestMode && (
-            <View className="bg-surface-800 rounded-lg p-4 mb-6">
+            <View className="rounded-lg p-4 mb-6" style={{ backgroundColor: colors.surface[800] }}>
               <View className="flex-row items-center">
-                <View className="w-16 h-16 bg-brand-red rounded-full items-center justify-center">
-                  <Text className="text-black text-xl font-bold">{user?.email.charAt(0).toUpperCase()}</Text>
+                <View className="w-16 h-16 rounded-full items-center justify-center" style={{ backgroundColor: colors.brand.red }}>
+                  <Text className="text-black text-xl font-bold">
+                    {user?.email ? user.email.charAt(0).toUpperCase() : 'A'}
+                  </Text>
                 </View>
                 <View className="ml-4 flex-1">
-                  <Text className="text-lg font-semibold text-text-primary">Anonymous User</Text>
-                  <Text className="text-text-secondary">{user?.email}</Text>
-                  <Text className="text-text-muted text-sm">
-                    {user?.location.city}, {user?.location.state}
+                  <Text className="text-lg font-semibold" style={{ color: colors.text.primary }}>Anonymous User</Text>
+                  <Text style={{ color: colors.text.secondary }}>{user?.email}</Text>
+                  <Text className="text-sm" style={{ color: colors.text.muted }}>
+                    {user?.location?.city || 'Unknown'}, {user?.location?.state || 'Unknown'}
                   </Text>
                 </View>
               </View>
@@ -137,32 +147,34 @@ export default function ProfileScreen() {
           )}
 
           {/* Settings Options */}
-          <View className="bg-surface-800 rounded-lg mb-6">
+          <View className="rounded-lg mb-6" style={{ backgroundColor: colors.surface[800] }}>
             <Pressable
-              className="flex-row items-center justify-between p-5 border-b border-surface-700"
+              className="flex-row items-center justify-between p-5 border-b"
+              style={{ borderBottomColor: colors.surface[700] }}
               onPress={handleLocationSettings}
             >
               <View className="flex-row items-center">
-                <Ionicons name="location-outline" size={20} color="#9CA3AF" />
-                <Text className="text-text-primary font-medium ml-3">Location</Text>
+                <Ionicons name="location-outline" size={20} color={colors.text.muted} />
+                <Text className="font-medium ml-3" style={{ color: colors.text.primary }}>Location</Text>
               </View>
               <View className="flex-row items-center">
-                <Text className="text-text-secondary mr-2">
+                <Text className="mr-2" style={{ color: colors.text.secondary }}>
                   {user?.location.city}, {user?.location.state}
                 </Text>
-                <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
+                <Ionicons name="chevron-forward" size={16} color={colors.text.muted} />
               </View>
             </Pressable>
 
             <Pressable
-              className="flex-row items-center justify-between p-5 border-b border-surface-700"
+              className="flex-row items-center justify-between p-5 border-b"
+              style={{ borderBottomColor: colors.surface[700] }}
               onPress={handleNotificationSettings}
             >
               <View className="flex-row items-center">
-                <Ionicons name="notifications-outline" size={20} color="#9CA3AF" />
-                <Text className="text-text-primary font-medium ml-3">Notifications</Text>
+                <Ionicons name="notifications-outline" size={20} color={colors.text.muted} />
+                <Text className="font-medium ml-3" style={{ color: colors.text.primary }}>Notifications</Text>
               </View>
-              <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
+              <Ionicons name="chevron-forward" size={16} color={colors.text.muted} />
             </Pressable>
 
             {/* Premium Theme Toggle - moved outside of settings card */}
@@ -171,44 +183,44 @@ export default function ProfileScreen() {
 
             <Pressable className="flex-row items-center justify-between p-4" onPress={handleHelpSupport}>
               <View className="flex-row items-center">
-                <Ionicons name="help-circle-outline" size={20} color="#9CA3AF" />
-                <Text className="text-text-primary font-medium ml-3">Help & Support</Text>
+                <Ionicons name="help-circle-outline" size={20} color={colors.text.muted} />
+                <Text className="font-medium ml-3" style={{ color: colors.text.primary }}>Help & Support</Text>
               </View>
-              <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
+              <Ionicons name="chevron-forward" size={16} color={colors.text.muted} />
             </Pressable>
           </View>
 
-          {/* User Statistics */}
-          <UserStatsCard />
+
 
           {/* Premium Theme Toggle */}
-          <PremiumThemeToggle />
+          <PremiumThemeToggle onShowPaywall={() => setShowPaywall(true)} />
 
           {/* Subscription Section */}
-          <View className="bg-surface-800 rounded-lg mb-6">
-            <View className="p-5 border-b border-surface-700">
+          <View className="rounded-lg mb-6" style={{ backgroundColor: colors.surface[800] }}>
+            <View className="p-5 border-b" style={{ borderBottomColor: colors.surface[700] }}>
               <View className="flex-row items-center justify-between">
                 <View className="flex-row items-center">
                   <Ionicons
                     name={isPremium ? "diamond" : "diamond-outline"}
                     size={20}
-                    color={isPremium ? "#FFD700" : "#9CA3AF"}
+                    color={isPremium ? "#FFD700" : colors.text.muted}
                   />
-                  <Text className="text-text-primary font-medium ml-3">
+                  <Text className="font-medium ml-3" style={{ color: colors.text.primary }}>
                     {isPremium ? "Locker Room Plus" : "Upgrade to Plus"}
                   </Text>
                 </View>
 
                 {isPremium ? (
-                  <View className="bg-green-500/20 px-3 py-1 rounded-full">
-                    <Text className="text-green-400 text-xs font-medium">
+                  <View className="px-3 py-1 rounded-full" style={{ backgroundColor: "#22C55E20" }}>
+                    <Text className="text-xs font-medium" style={{ color: "#22C55E" }}>
                       {buildEnv.isExpoGo ? 'Demo' : 'Active'}
                     </Text>
                   </View>
                 ) : (
                   <Pressable
                     onPress={() => setShowPaywall(true)}
-                    className="bg-brand-red px-4 py-2 rounded-lg"
+                    className="px-4 py-2 rounded-lg"
+                    style={{ backgroundColor: colors.brand.red }}
                   >
                     <Text className="text-white font-medium text-sm">
                       {buildEnv.isExpoGo ? 'Try Demo' : 'Upgrade'}
@@ -217,7 +229,7 @@ export default function ProfileScreen() {
                 )}
               </View>
 
-              <Text className="text-text-secondary text-sm mt-2">
+              <Text className="text-sm mt-2" style={{ color: colors.text.secondary }}>
                 {isPremium
                   ? `Enjoying ad-free experience and premium features${buildEnv.isExpoGo ? ' (Demo)' : ''}`
                   : `Unlock advanced features and remove ads${buildEnv.isExpoGo ? ' (Demo available)' : ''}`
@@ -245,12 +257,12 @@ export default function ProfileScreen() {
                 disabled={isLoading}
               >
                 <View className="flex-row items-center">
-                  <Ionicons name="refresh-outline" size={20} color="#9CA3AF" />
-                  <Text className="text-text-primary font-medium ml-3">
+                  <Ionicons name="refresh-outline" size={20} color={colors.text.muted} />
+                  <Text className="font-medium ml-3" style={{ color: colors.text.primary }}>
                     Restore Purchases
                   </Text>
                   {isLoading && (
-                    <ActivityIndicator size="small" color="#FF6B6B" className="ml-2" />
+                    <ActivityIndicator size="small" color={colors.brand.red} className="ml-2" />
                   )}
                 </View>
               </Pressable>
@@ -258,9 +270,9 @@ export default function ProfileScreen() {
           </View>
 
           {/* Legal Documents */}
-          <View className="bg-surface-800 rounded-lg mb-6">
-            <View className="p-5 border-b border-surface-700">
-              <Text className="text-text-primary font-semibold">Legal</Text>
+          <View className="rounded-lg mb-6" style={{ backgroundColor: colors.surface[800] }}>
+            <View className="p-5 border-b" style={{ borderBottomColor: colors.surface[700] }}>
+              <Text className="font-semibold" style={{ color: colors.text.primary }}>Legal</Text>
             </View>
 
             <Pressable
@@ -268,13 +280,14 @@ export default function ProfileScreen() {
                 setLegalModalTab('privacy');
                 setShowLegalModal(true);
               }}
-              className="p-5 border-b border-surface-700"
+              className="p-5 border-b"
+              style={{ borderBottomColor: colors.surface[700] }}
             >
               <View className="flex-row items-center">
-                <Ionicons name="shield-checkmark-outline" size={20} color="#9CA3AF" />
-                <Text className="text-text-primary font-medium ml-3">Privacy Policy</Text>
+                <Ionicons name="shield-checkmark-outline" size={20} color={colors.text.muted} />
+                <Text className="font-medium ml-3" style={{ color: colors.text.primary }}>Privacy Policy</Text>
                 <View className="flex-1" />
-                <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
+                <Ionicons name="chevron-forward" size={16} color={colors.text.muted} />
               </View>
             </Pressable>
 
@@ -286,24 +299,24 @@ export default function ProfileScreen() {
               className="p-5"
             >
               <View className="flex-row items-center">
-                <Ionicons name="document-text-outline" size={20} color="#9CA3AF" />
-                <Text className="text-text-primary font-medium ml-3">Terms of Service</Text>
+                <Ionicons name="document-text-outline" size={20} color={colors.text.muted} />
+                <Text className="font-medium ml-3" style={{ color: colors.text.primary }}>Terms of Service</Text>
                 <View className="flex-1" />
-                <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
+                <Ionicons name="chevron-forward" size={16} color={colors.text.muted} />
               </View>
             </Pressable>
           </View>
 
           {/* App Info */}
-          <View className="bg-surface-800 rounded-lg mb-6">
+          <View className="rounded-lg mb-6" style={{ backgroundColor: colors.surface[800] }}>
             {/** Firebase Test and Location Filter Demo removed */}
 
             <View className="flex-row items-center justify-between p-4">
               <View className="flex-row items-center">
-                <Ionicons name="information-circle-outline" size={20} color="#9CA3AF" />
-                <Text className="text-text-primary font-medium ml-3">Version</Text>
+                <Ionicons name="information-circle-outline" size={20} color={colors.text.muted} />
+                <Text className="font-medium ml-3" style={{ color: colors.text.primary }}>Version</Text>
               </View>
-              <Text className="text-text-secondary">1.0.0</Text>
+              <Text style={{ color: colors.text.secondary }}>1.0.0</Text>
             </View>
           </View>
 
@@ -315,7 +328,7 @@ export default function ProfileScreen() {
           )}
 
           {/* Account Actions */}
-          <Pressable className="bg-surface-800 rounded-lg p-4 mb-3" onPress={handleDeleteAccount}>
+          <Pressable className="rounded-lg p-4 mb-3" style={{ backgroundColor: colors.surface[800] }} onPress={handleDeleteAccount}>
             <View className="flex-row items-center justify-center">
               <Ionicons name="trash-outline" size={20} color="#EF4444" />
               <Text className="text-red-500 font-medium ml-3">Delete Account</Text>
@@ -323,7 +336,7 @@ export default function ProfileScreen() {
           </Pressable>
 
           {/* Sign Out */}
-          <Pressable className="bg-surface-800 rounded-lg p-4" onPress={handleLogout}>
+          <Pressable className="rounded-lg p-4" style={{ backgroundColor: colors.surface[800] }} onPress={handleLogout}>
             <View className="flex-row items-center justify-center">
               <Ionicons name="log-out-outline" size={20} color="#EF4444" />
               <Text className="text-red-500 font-medium ml-3">Sign Out</Text>

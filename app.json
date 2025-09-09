@@ -44,6 +44,12 @@
       "expo-sqlite",
       "expo-video",
       "expo-web-browser"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "09080198-d670-488c-b937-23c984364f28"
+      }
+    },
+    "owner": "trappat"
   }
 }

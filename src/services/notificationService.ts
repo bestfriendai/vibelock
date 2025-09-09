@@ -177,6 +177,12 @@ class NotificationService {
    * Setup notification event listeners
    */
   private setupNotificationListeners(): void {
+    // Prevent duplicate listeners
+    if (this.notificationListeners.length > 0) {
+      console.log("Notification listeners already set up, skipping");
+      return;
+    }
+
     // Listen for notifications received while app is foregrounded
     const receivedListener = Notifications.addNotificationReceivedListener(notification => {
       console.log('Notification received:', notification);
@@ -189,6 +195,7 @@ class NotificationService {
     });
 
     this.notificationListeners.push(receivedListener, responseListener);
+    console.log("✅ Notification listeners set up successfully");
   }
 
   /**
@@ -606,12 +613,28 @@ class NotificationService {
   }
 
   /**
+   * Remove a specific notification listener
+   */
+  removeListener(subscription: Notifications.Subscription) {
+    const index = this.notificationListeners.indexOf(subscription);
+    if (index > -1) {
+      subscription.remove();
+      this.notificationListeners.splice(index, 1);
+      console.log("🧹 Removed notification listener");
+    }
+  }
+
+  /**
    * Clean up all notification listeners
    */
   cleanup() {
     console.log("🧹 Cleaning up notification service");
     this.notificationListeners.forEach(subscription => {
-      subscription.remove();
+      try {
+        subscription.remove();
+      } catch (error) {
+        console.warn("Failed to remove notification listener:", error);
+      }
     });
     this.notificationListeners = [];
     this.pushToken = null;

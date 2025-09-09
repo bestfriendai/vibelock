@@ -25,7 +25,6 @@ import ExpandableText from "../components/ExpandableText";
 import MediaViewer from "../components/MediaViewer";
 import CommentSection from "../components/CommentSection";
 import CommentInput from "../components/CommentInput";
-import ReportModal from "../components/ReportModal";
 import { Comment as ReviewComment } from "../types";
 import useReviewsStore from "../state/reviewsStore";
 import useCommentsStore from "../state/commentsStore";
@@ -42,22 +41,36 @@ export default function ReviewDetailScreen() {
   const route = useRoute<ReviewDetailRouteProp>();
   const navigation = useNavigation<any>();
 
-  // Get route params
+  // Get route params and determine if we have a review or reviewId
   const routeParams = route.params as any;
+  const hasDirectReview = !!routeParams.review;
+  const reviewId = routeParams.reviewId;
 
-  // All hooks declared at the top level - no conditional hooks
-  const [review, setReview] = useState<Review | null>(null);
-  const [reviewLoading, setReviewLoading] = useState(true);
+  // Initialize review state - if we have a direct review, process it immediately
+  const [review, setReview] = useState<Review | null>(() => {
+    if (hasDirectReview) {
+      const rawReview = routeParams.review;
+      return {
+        ...rawReview,
+        createdAt: typeof rawReview.createdAt === "string" ? new Date(rawReview.createdAt) : rawReview.createdAt,
+        updatedAt: typeof rawReview.updatedAt === "string" ? new Date(rawReview.updatedAt) : rawReview.updatedAt,
+      };
+    }
+    return null;
+  });
+
+  const [reviewLoading, setReviewLoading] = useState(!hasDirectReview && !!reviewId);
+
+  // All other state hooks
   const [showMediaViewer, setShowMediaViewer] = useState(false);
   const [selectedMediaIndex, setSelectedMediaIndex] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
   const [isDisliked, setIsDisliked] = useState(false);
-  const [likeCount, setLikeCount] = useState(0);
+  const [likeCount, setLikeCount] = useState(() => review?.likeCount || 0);
   const [dislikeCount, setDislikeCount] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [replyToComment, setReplyToComment] = useState<ReviewComment | null>(null);
-  const [showReportModal, setShowReportModal] = useState(false);
 
   // Store hooks
   const {
@@ -76,79 +89,64 @@ export default function ReviewDetailScreen() {
   const scrollY = useSharedValue(0);
   const contentScale = useSharedValue(0.95);
 
-  // Load review data
+  // Load review data if we only have reviewId
   useEffect(() => {
     const loadReviewData = async () => {
-      try {
-        setReviewLoading(true);
-
-        if (routeParams.review) {
-          // Direct review object passed
-          const rawReview = routeParams.review;
-          const processedReview = {
-            ...rawReview,
-            createdAt: typeof rawReview.createdAt === "string" ? new Date(rawReview.createdAt) : rawReview.createdAt,
-            updatedAt: typeof rawReview.updatedAt === "string" ? new Date(rawReview.updatedAt) : rawReview.updatedAt,
-          };
-          setReview(processedReview);
-          setLikeCount(processedReview.likeCount || 0);
-        } else if (routeParams.reviewId) {
-          // Only reviewId passed
-          const fetchedReview = await supabaseReviews.getReview(routeParams.reviewId);
+      if (!hasDirectReview && reviewId) {
+        // Only reviewId passed (from SearchScreen comments)
+        try {
+          setReviewLoading(true);
+          const fetchedReview = await supabaseReviews.getReview(reviewId);
           if (fetchedReview) {
             setReview(fetchedReview);
             setLikeCount(fetchedReview.likeCount || 0);
           } else {
+            // Review not found, navigate back
             navigation.goBack();
-            return;
           }
-        } else {
+        } catch (error) {
+          console.error("Error loading review:", error);
           navigation.goBack();
-          return;
+        } finally {
+          setReviewLoading(false);
         }
-      } catch (error) {
-        console.error("Error loading review:", error);
+      } else if (!hasDirectReview && !reviewId) {
+        // Invalid navigation params
         navigation.goBack();
-      } finally {
-        setReviewLoading(false);
       }
     };
 
     loadReviewData();
-  }, [routeParams, navigation]);
+  }, [hasDirectReview, reviewId, navigation]);
 
 
 
   // Get comments for this review (only access when review is available)
   const comments = review ? (commentsFromStore[review.id] || []) : [];
 
-  // Add mock media if review doesn't have any for demo purposes - with extra safety checks
-  const reviewWithMedia = React.useMemo(() => {
-    if (!review) return null;
-
-    return {
-      ...review,
-      media:
-        review.media && review.media.length > 0
-          ? review.media
-          : [
-              {
-                id: "demo_media_1",
-                uri: review.profilePhoto || "https://picsum.photos/400/600?random=1",
-                type: "image" as const,
-                width: 400,
-                height: 600,
-              },
-              {
-                id: "demo_media_2",
-                uri: "https://picsum.photos/400/500?random=2",
-                type: "image" as const,
-                width: 400,
-                height: 500,
-              },
-            ],
-    };
-  }, [review]);
+  // Add mock media if review doesn't have any for demo purposes
+  const reviewWithMedia = review ? {
+    ...review,
+    media:
+      review.media && review.media.length > 0
+        ? review.media
+        : [
+            {
+              id: "demo_media_1",
+              uri: review.profilePhoto || "https://picsum.photos/400/600?random=1",
+              type: "image" as const,
+              width: 400,
+              height: 600,
+            },
+            {
+              id: "demo_media_2",
+              uri: "https://picsum.photos/400/500?random=2",
+              type: "image" as const,
+              width: 400,
+              height: 500,
+            },
+          ],
+  } : null;
 
   // Initialize loading state and load comments
   useEffect(() => {
@@ -280,10 +278,6 @@ export default function ReviewDetailScreen() {
     console.log("Report comment:", commentId);
   };
 
-  const handleReportReview = () => {
-    setShowReportModal(true);
-  };
-
   const formatDate = (date: Date) => {
     return date.toLocaleDateString("en-US", {
       weekday: "long",
@@ -370,7 +364,7 @@ export default function ReviewDetailScreen() {
             </View>
 
             {/* Image Carousel */}
-            {reviewWithMedia && reviewWithMedia.media && reviewWithMedia.media.length > 0 && (
+            {reviewWithMedia.media && reviewWithMedia.media.length > 0 && (
               <View className="mb-8">
                 <ImageCarousel
                   media={reviewWithMedia.media}
@@ -455,10 +449,7 @@ export default function ReviewDetailScreen() {
                   <Pressable className="flex-1 bg-brand-red/20 border border-brand-red/30 rounded-lg py-3 items-center">
                     <Text className="text-brand-red font-medium">Share Review</Text>
                   </Pressable>
-                  <Pressable
-                    className="flex-1 bg-surface-700 border border-surface-600 rounded-lg py-3 items-center"
-                    onPress={handleReportReview}
-                  >
+                  <Pressable className="flex-1 bg-surface-700 border border-surface-600 rounded-lg py-3 items-center">
                     <Text className="text-text-secondary font-medium">Report</Text>
                   </Pressable>
                 </View>
@@ -499,23 +490,12 @@ export default function ReviewDetailScreen() {
       </KeyboardAvoidingView>
 
       {/* Media Viewer Modal */}
-      {reviewWithMedia && reviewWithMedia.media && (
+      {reviewWithMedia.media && (
         <MediaViewer
           visible={showMediaViewer}
           media={reviewWithMedia.media}
           initialIndex={selectedMediaIndex}
           onClose={() => setShowMediaViewer(false)}
-        />
-      )}
-
-      {/* Report Modal */}
-      {review && (
-        <ReportModal
-          visible={showReportModal}
-          onClose={() => setShowReportModal(false)}
-          itemId={review.id}
-          itemType="review"
-          itemName={`Review of ${review.reviewedPersonName}`}
         />
       )}
     </View>

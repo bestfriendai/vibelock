@@ -4,6 +4,7 @@ import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { MediaItem } from "../types";
 import { videoThumbnailService } from "../services/videoThumbnailService";
+import LazyImage from "./LazyImage";
 
 interface Props {
   media: MediaItem;
@@ -42,12 +43,13 @@ export default function MediaThumbnail({ media, size = 80, onPress, showPlayIcon
     <Pressable onPress={onPress} className="relative overflow-hidden rounded-xl" style={{ width: size, height: size }}>
       {isVideo ? (
         videoThumbnail ? (
-          // Show video thumbnail if available
-          <Image
-            source={{ uri: videoThumbnail }}
-            style={{ width: size, height: size }}
+          // Show video thumbnail if available with lazy loading
+          <LazyImage
+            uri={videoThumbnail}
+            width={size}
+            height={size}
             contentFit="cover"
-            transition={200}
+            priority="normal"
             onLoad={onLoad}
             onError={() => setImageError(true)}
           />
@@ -67,13 +69,13 @@ export default function MediaThumbnail({ media, size = 80, onPress, showPlayIcon
           <Ionicons name="image-outline" size={size * 0.4} color="#6B7280" />
         </View>
       ) : (
-        // For regular images
-        <Image
-          source={{ uri: media.uri }}
-          style={{ width: size, height: size }}
+        // For regular images with lazy loading
+        <LazyImage
+          uri={media.uri}
+          width={size}
+          height={size}
           contentFit="cover"
-          transition={200}
-          placeholder="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+          priority="normal"
           onLoad={onLoad}
           onError={() => setImageError(true)}
         />

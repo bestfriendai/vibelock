@@ -3,6 +3,7 @@ import { View, Text, Pressable, Modal, TextInput, FlatList, Keyboard, ActivityIn
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { getCurrentLocation, reverseGeocodeLocation, searchLocations, geocodeCityStateCached } from "../utils/location";
+import { useTheme } from "../providers/ThemeProvider";
 
 interface Location {
   city: string;
@@ -117,6 +118,7 @@ const mockLocations: Location[] = [
 ];
 
 export default function LocationSelector({ currentLocation, onLocationChange }: LocationSelectorProps) {
+  const { colors } = useTheme();
   const [modalVisible, setModalVisible] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [filteredLocations, setFilteredLocations] = useState<Location[]>(mockLocations);
@@ -234,7 +236,7 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
       }}
       className="px-4 py-3 border-b border-surface-700"
     >
-      <Text className="text-text-primary font-medium">{item.fullName}</Text>
+      <Text className="font-medium" style={{ color: colors.text.primary }}>{item.fullName}</Text>
     </Pressable>
   );
 
@@ -247,11 +249,11 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
           setModalVisible(true);
         }}
       >
-        <Ionicons name="location-outline" size={16} color="#F3F4F6" />
-        <Text className="text-text-primary text-sm ml-1 font-medium">
+        <Ionicons name="location-outline" size={16} color={colors.text.primary} />
+        <Text className="text-sm ml-1 font-medium" style={{ color: colors.text.primary }}>
           {currentLocation.city}, {currentLocation.state}
         </Text>
-        <Ionicons name="chevron-down" size={16} color="#F3F4F6" style={{ marginLeft: 4 }} />
+        <Ionicons name="chevron-down" size={16} color={colors.text.primary} style={{ marginLeft: 4 }} />
       </Pressable>
 
       <Modal
@@ -260,12 +262,12 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
         presentationStyle="pageSheet"
         onRequestClose={() => setModalVisible(false)}
       >
-        <View className="flex-1 bg-surface-900">
+        <View className="flex-1" style={{ backgroundColor: colors.background }}>
           {/* Header */}
-          <View className="flex-row items-center justify-between px-6 py-6 border-b border-surface-700">
-            <Text className="text-text-primary text-lg font-semibold">Select Location</Text>
+          <View className="flex-row items-center justify-between px-6 py-6 border-b" style={{ borderBottomColor: colors.surface[700] }}>
+            <Text className="text-lg font-semibold" style={{ color: colors.text.primary }}>Select Location</Text>
             <Pressable onPress={() => setModalVisible(false)} className="w-8 h-8 items-center justify-center">
-              <Ionicons name="close" size={24} color="#F3F4F6" />
+              <Ionicons name="close" size={24} color={colors.text.primary} />
             </Pressable>
           </View>
 
@@ -277,8 +279,9 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
                 value={searchText}
                 onChangeText={setSearchText}
                 placeholder="Search cities..."
-                placeholderTextColor="#9CA3AF"
-                className="flex-1 ml-2 text-text-primary"
+                placeholderTextColor={colors.text.muted}
+                className="flex-1 ml-2"
+                style={{ color: colors.text.primary }}
                 autoFocus
               />
               {searchText.length > 0 && (
@@ -301,11 +304,11 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
               ) : (
                 <Ionicons name="location" size={20} color="#FFFFFF" />
               )}
-              <Text className="text-brand-red font-medium ml-3">
+              <Text className="font-medium ml-3" style={{ color: colors.brand.red }}>
                 {isLoadingCurrentLocation ? "Getting your location..." : "Use Current Location"}
               </Text>
             </Pressable>
-            {locationError && <Text className="text-red-400 text-sm mt-2 px-1">{locationError}</Text>}
+            {locationError && <Text className="text-sm mt-2 px-1" style={{ color: "#EF4444" }}>{locationError}</Text>}
           </View>
 
           {/* Location List */}
@@ -320,9 +323,9 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
 
           {filteredLocations.length === 0 && (
             <View className="flex-1 items-center justify-center">
-              <Ionicons name="location-outline" size={48} color="#6B7280" />
-              <Text className="text-text-secondary text-lg font-medium mt-4">No locations found</Text>
-              <Text className="text-text-muted text-center mt-2 px-8">Try searching for a different city or state</Text>
+              <Ionicons name="location-outline" size={48} color={colors.text.muted} />
+              <Text className="text-lg font-medium mt-4" style={{ color: colors.text.secondary }}>No locations found</Text>
+              <Text className="text-center mt-2 px-8" style={{ color: colors.text.muted }}>Try searching for a different city or state</Text>
             </View>
           )}
         </View>

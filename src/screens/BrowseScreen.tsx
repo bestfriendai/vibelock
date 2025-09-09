@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { View, Text, Pressable } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -82,31 +82,35 @@ export default function BrowseScreen() {
     initializeLocation();
   }, [user?.location, updateUserLocation]);
 
+  // Memoize the initial load function to prevent infinite re-renders
+  const loadInitialData = useCallback(async () => {
+    try {
+      await loadReviews(true);
+    } catch (error) {
+      console.error("Error loading reviews:", error);
+    }
+  }, [loadReviews]);
+
   useEffect(() => {
     // Only load if we don't have reviews already
     if (reviews.length === 0) {
-      const loadData = async () => {
-        try {
-          await loadReviews(true);
-        } catch (error) {
-          console.error("Error loading reviews:", error);
-        }
-      };
-      loadData();
+      loadInitialData();
     }
-  }, [loadReviews, reviews.length]);
+  }, [reviews.length, loadInitialData]);
+
+  // Memoize the filter-based load function
+  const loadWithFilters = useCallback(async () => {
+    try {
+      await loadReviews(true);
+    } catch (error) {
+      console.error("Error loading reviews with filters:", error);
+    }
+  }, [loadReviews]);
 
   // Reload when filters change (category, radius) or user location changes
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        await loadReviews(true);
-      } catch (error) {
-        console.error("Error loading reviews with filters:", error);
-      }
-    };
-    loadData();
-  }, [filters.category, filters.radius, user?.location.city, user?.location.state, loadReviews]);
+    loadWithFilters();
+  }, [filters.category, filters.radius, user?.location.city, user?.location.state, loadWithFilters]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -255,14 +259,14 @@ export default function BrowseScreen() {
         <View className="flex-1 items-center justify-center px-8">
           <Ionicons name="warning-outline" size={64} color="#EF4444" />
           <Text className="text-red-400 text-xl font-medium mt-4 text-center">Error Loading Reviews</Text>
-          <Text className="text-text-secondary text-center mt-2">{error}</Text>
-          <Text className="text-text-muted text-center mt-2">Pull down to try again</Text>
+          <Text className="text-center mt-2" style={{ color: colors.text.secondary }}>{error}</Text>
+          <Text className="text-center mt-2" style={{ color: colors.text.muted }}>Pull down to try again</Text>
         </View>
       ) : !isLoading && Array.isArray(reviews) && reviews.length === 0 ? (
         <View className="flex-1 items-center justify-center">
           <Ionicons name="heart-outline" size={64} color="#9CA3AF" />
-          <Text className="text-text-secondary text-xl font-medium mt-4">No reviews yet</Text>
-          <Text className="text-text-muted text-center mt-2 px-8">
+          <Text className="text-xl font-medium mt-4" style={{ color: colors.text.secondary }}>No reviews yet</Text>
+          <Text className="text-center mt-2 px-8" style={{ color: colors.text.muted }}>
             Be the first to share your dating experience in your area
           </Text>
         </View>

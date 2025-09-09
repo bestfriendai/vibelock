@@ -116,20 +116,9 @@ export const supabaseAuth = {
   // Get current user
   getCurrentUser: async (): Promise<SupabaseUser | null> => {
     try {
-      // Prefer session-first to avoid AuthSessionMissingError on RN
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (sessionData?.session?.user) {
-        return sessionData.session.user;
-      }
-
-      // Try to refresh session if missing (in case of hot reload or expired memory)
-      try {
-        await supabase.auth.refreshSession();
-      } catch (_) {}
-
-      // Fallback to getUser
-      const { data: userData } = await supabase.auth.getUser();
-      return userData?.user ?? null;
+      // Use the session method which now includes proper expiry checks
+      const session = await supabaseAuth.getCurrentSession();
+      return session?.user ?? null;
     } catch (error: any) {
       console.error("Error getting current user:", error);
       return null;
@@ -142,7 +131,9 @@ export const supabaseAuth = {
       const {
         data: { session },
       } = await supabase.auth.getSession();
+
       if (!session) {
+        // No session exists, try to refresh
         try {
           await supabase.auth.refreshSession();
         } catch {
@@ -151,6 +142,26 @@ export const supabaseAuth = {
         const { data: refreshed } = await supabase.auth.getSession();
         return refreshed?.session ?? null;
       }
+
+      // Check if session is expired or about to expire (within 5 minutes)
+      if (session.expires_at) {
+        const expiresAt = new Date(session.expires_at * 1000); // Convert to milliseconds
+        const now = new Date();
+        const fiveMinutesFromNow = new Date(now.getTime() + 5 * 60 * 1000);
+
+        if (expiresAt <= fiveMinutesFromNow) {
+          console.log("🔄 Session expires soon, refreshing token");
+          try {
+            const { data: refreshed } = await supabase.auth.refreshSession();
+            return refreshed?.session ?? session;
+          } catch (error) {
+            console.warn("Failed to refresh session:", error);
+            // Return existing session even if refresh failed
+            return session;
+          }
+        }
+      }
+
       return session;
     } catch (error: any) {
       console.error("Error getting current session:", error);
@@ -317,7 +328,7 @@ export const supabaseReviews = {
           profile_photo: reviewData.profilePhoto,
           green_flags: reviewData.greenFlags,
           red_flags: reviewData.redFlags,
-          sentiment: reviewData.sentiment,
+          ...(reviewData.sentiment && { sentiment: reviewData.sentiment }),
           review_text: reviewData.reviewText,
           media: reviewData.media,
           social_media: reviewData.socialMedia,
@@ -391,7 +402,7 @@ export const supabaseReviews = {
         profilePhoto: item.profile_photo,
         greenFlags: item.green_flags || [],
         redFlags: item.red_flags || [],
-        sentiment: item.sentiment,
+        sentiment: item.sentiment || undefined,
         reviewText: item.review_text,
         media: item.media || [],
         socialMedia: item.social_media,
@@ -426,7 +437,7 @@ export const supabaseReviews = {
         profilePhoto: data.profile_photo,
         greenFlags: data.green_flags || [],
         redFlags: data.red_flags || [],
-        sentiment: data.sentiment,
+        sentiment: data.sentiment || undefined,
         reviewText: data.review_text,
         media: data.media || [],
         socialMedia: data.social_media,
@@ -450,7 +461,7 @@ export const supabaseReviews = {
       if (updates.reviewText) updateData.review_text = updates.reviewText;
       if (updates.greenFlags) updateData.green_flags = updates.greenFlags;
       if (updates.redFlags) updateData.red_flags = updates.redFlags;
-      if (updates.sentiment) updateData.sentiment = updates.sentiment;
+      if (updates.sentiment !== undefined) updateData.sentiment = updates.sentiment;
       if (updates.media) updateData.media = updates.media;
       if (updates.socialMedia) updateData.social_media = updates.socialMedia;
       if (updates.likeCount !== undefined) updateData.like_count = updates.likeCount;
@@ -876,13 +887,17 @@ export const supabaseSearch = {
         profile.greenFlagCount += (review.green_flags || []).length;
         profile.redFlagCount += (review.red_flags || []).length;
 
-        // Simple rating calculation based on sentiment
-        if (review.sentiment === "green") {
-          profile.totalRating += 5;
-        } else if (review.sentiment === "red") {
-          profile.totalRating += 2;
+        // Simple rating calculation based on green/red flags ratio
+        const greenFlags = (review.green_flags || []).length;
+        const redFlags = (review.red_flags || []).length;
+        const totalFlags = greenFlags + redFlags;
+
+        if (totalFlags > 0) {
+          // Rating from 1-5 based on green flag percentage
+          const greenRatio = greenFlags / totalFlags;
+          profile.totalRating += Math.max(1, Math.min(5, Math.round(1 + (greenRatio * 4))));
         } else {
-          profile.totalRating += 3; // neutral
+          profile.totalRating += 3; // neutral if no flags
         }
 
         // Update dates
@@ -894,7 +909,7 @@ export const supabaseSearch = {
 
       // Convert to Profile array
       const profiles: Profile[] = Array.from(profileMap.values()).map((profile, index) => ({
-        id: `profile_${index}_${Date.now()}`,
+        id: `${profile.firstName.toLowerCase().replace(/\s+/g, '-')}-${profile.location.city.toLowerCase().replace(/\s+/g, '-')}-${profile.location.state.toLowerCase()}`,
         firstName: profile.firstName,
         location: profile.location,
         totalReviews: profile.reviews.length,

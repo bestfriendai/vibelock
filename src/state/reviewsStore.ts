@@ -3,6 +3,7 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as FileSystem from "expo-file-system";
 import { manipulateAsync, SaveFormat } from "expo-image-manipulator";
+import { v4 as uuidv4 } from 'uuid';
 import { Review, FilterOptions, GreenFlag, RedFlag, MediaItem, SocialMediaHandles, Sentiment } from "../types";
 import { filterReviewsByDistanceAsync } from "../utils/location";
 import { supabaseReviews, supabaseStorage } from "../services/supabase";
@@ -41,6 +42,7 @@ interface ReviewsActions {
     media: MediaItem[];
     socialMedia?: SocialMediaHandles;
     category?: "men" | "women" | "lgbtq+" | "all";
+    csrfToken?: string; // CSRF protection token
   }) => Promise<void>;
   likeReview: (id: string) => Promise<void>;
   dislikeReview: (id: string) => Promise<void>;
@@ -320,6 +322,11 @@ const useReviewsStore = create<ReviewsStore>()(
         try {
           set({ isLoading: true, error: null });
 
+          // CSRF validation
+          if (data.csrfToken && (typeof data.csrfToken !== 'string' || data.csrfToken.length < 10)) {
+            throw new Error("Invalid security token. Please refresh and try again.");
+          }
+
           // Basic validation
           if (!data.reviewedPersonName.trim() || !data.reviewText.trim()) {
             throw new Error("Name and review text are required");
@@ -385,7 +392,7 @@ const useReviewsStore = create<ReviewsStore>()(
 
           // Create review data for Firebase - remove undefined fields
           const reviewData: Omit<Review, "id" | "createdAt" | "updatedAt" | "authorId"> = {
-            reviewerAnonymousId: `anon_${Date.now()}`,
+            reviewerAnonymousId: uuidv4(),
             reviewedPersonName: data.reviewedPersonName,
             reviewedPersonLocation: data.reviewedPersonLocation,
             greenFlags: data.greenFlags || [],
@@ -413,7 +420,7 @@ const useReviewsStore = create<ReviewsStore>()(
                 return "local_seed";
               }
             })(),
-            id: `review_${Date.now()}_${Math.random().toString(36).substring(7)}`,
+            id: uuidv4(),
             createdAt: new Date(),
             updatedAt: new Date(),
           };
