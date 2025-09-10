@@ -86,7 +86,14 @@ export default function MediaViewer({
           {/* Header */}
           <View className="absolute top-0 left-0 right-0 z-10 bg-black/50 px-4 py-2">
             <View className="flex-row items-center justify-between">
-              <Pressable onPress={handleClose} className="p-2">
+              <Pressable
+                onPress={handleClose}
+                className="p-2"
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel="Close media viewer"
+                accessibilityHint="Double tap to close"
+              >
                 <Ionicons name="close" size={24} color="white" />
               </Pressable>
               <Text className="text-white font-medium">
@@ -107,6 +114,8 @@ export default function MediaViewer({
                 }}
                 contentFit="contain"
                 transition={200}
+                cachePolicy="memory-disk"
+                placeholder="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
               />
             ) : (
               <View style={{ width: screenWidth, height: screenHeight * 0.8 }}>
@@ -175,6 +184,10 @@ export default function MediaViewer({
                 <Pressable
                   onPress={() => navigateMedia("prev")}
                   className="absolute left-4 top-1/2 -translate-y-6 bg-black/50 rounded-full p-3"
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Go to previous media, ${currentIndex} of ${media.length}`}
+                  accessibilityHint="Double tap to view previous"
                 >
                   <Ionicons name="chevron-back" size={24} color="white" />
                 </Pressable>
@@ -185,6 +198,10 @@ export default function MediaViewer({
                 <Pressable
                   onPress={() => navigateMedia("next")}
                   className="absolute right-4 top-1/2 -translate-y-6 bg-black/50 rounded-full p-3"
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Go to next media, ${currentIndex + 2} of ${media.length}`}
+                  accessibilityHint="Double tap to view next"
                 >
                   <Ionicons name="chevron-forward" size={24} color="white" />
                 </Pressable>
@@ -218,6 +235,10 @@ export default function MediaViewer({
                   <Pressable
                     onPress={() => onCommentPress(currentMedia, currentIndex)}
                     className="bg-white/20 rounded-full px-3 py-2 flex-row items-center"
+                    accessible={true}
+                    accessibilityRole="button"
+                    accessibilityLabel="Comment on this media"
+                    accessibilityHint="Double tap to add a comment"
                   >
                     <Ionicons name="chatbubble-outline" size={16} color="white" />
                     <Text className="text-white text-sm font-medium ml-2">Comment</Text>

@@ -177,6 +177,10 @@ export default function ImageCarousel({
         <Pressable
           onPress={handleImagePress}
           className="absolute top-4 left-4 bg-surface-900/80 backdrop-blur-sm rounded-full p-2.5 border border-surface-700/50"
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel="View media full screen"
+          accessibilityHint="Double tap to open full screen viewer"
         >
           <Ionicons name="expand" size={16} color="#F3F4F6" />
         </Pressable>

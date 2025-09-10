@@ -40,6 +40,9 @@
   - Files: src/components/ImageCarousel.tsx
 - Completed: Accessibility labels for ProfileCard interactive elements (card, share, report, like buttons).
   - Files: src/components/ProfileCard.tsx
+- Completed: Accessibility refinements in MediaViewer and ImageCarousel controls (close, prev/next, comment, full-screen) with roles/labels.
+  - Files: src/components/MediaViewer.tsx, src/components/ImageCarousel.tsx
+
 
 ### Checklist status adjustments
 - [x] Task 5.1: Implement Image Caching Optimization — Implemented in ProfileCard and ImageCarousel.
