@@ -98,6 +98,7 @@ export default function ImageCarousel({
                   style={{ width: "100%", height }}
                   contentFit="cover"
                   transition={200}
+                  cachePolicy="memory-disk"
                   placeholder="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
                 />
               ) : (
@@ -112,6 +113,7 @@ export default function ImageCarousel({
                 style={{ width: "100%", height }}
                 contentFit="cover"
                 transition={200}
+                cachePolicy="memory-disk"
                 placeholder="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
               />
             )}

@@ -144,7 +144,13 @@ export default function ProfileCard({ review, cardHeight = 280, onReport, onLike
 
   return (
     <Animated.View style={[animatedCardStyle, { width: cardWidth, height: cardHeight }]}>
-      <Pressable onPress={handlePress} className="overflow-hidden rounded-2xl mb-4 flex-1">
+      <Pressable
+        onPress={handlePress}
+        className="overflow-hidden rounded-2xl mb-4 flex-1"
+        accessible={true}
+        accessibilityRole="button"
+        accessibilityLabel={`${review.reviewedPersonName || "Profile"} in ${review.reviewedPersonLocation?.city || "Unknown"}, ${review.reviewedPersonLocation?.state || "Unknown"}. Double tap to view details.`}
+      >
         {/* Profile Media (Image or Video) */}
         {(() => {
           const mediaArray = Array.isArray(review.media) ? review.media : [];
@@ -158,6 +164,7 @@ export default function ProfileCard({ review, cardHeight = 280, onReport, onLike
                 style={{ width: cardWidth, height: cardHeight }}
                 contentFit="cover"
                 transition={300}
+                cachePolicy="memory-disk"
                 onLoad={() => setImageLoaded(true)}
                 placeholder="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
               />
@@ -175,6 +182,7 @@ export default function ProfileCard({ review, cardHeight = 280, onReport, onLike
                     style={{ width: cardWidth, height: cardHeight }}
                     contentFit="cover"
                     transition={300}
+                    cachePolicy="memory-disk"
                     onLoad={() => setImageLoaded(true)}
                     placeholder="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
                   />
@@ -213,6 +221,7 @@ export default function ProfileCard({ review, cardHeight = 280, onReport, onLike
               style={{ width: cardWidth, height: cardHeight }}
               contentFit="cover"
               transition={300}
+              cachePolicy="memory-disk"
               onLoad={() => setImageLoaded(true)}
               placeholder="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
             />
@@ -245,14 +254,28 @@ export default function ProfileCard({ review, cardHeight = 280, onReport, onLike
         <View className="absolute top-3 right-3 flex-col space-y-2">
           {/* Share Button */}
           <Animated.View style={animatedShareStyle}>
-            <Pressable onPress={handleShare} className="bg-black/60 rounded-full p-2.5" hitSlop={8}>
+            <Pressable
+              onPress={handleShare}
+              className="bg-black/60 rounded-full p-2.5"
+              hitSlop={8}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel="Share this review"
+            >
               <Ionicons name="share-outline" size={16} color="#FFFFFF" />
             </Pressable>
           </Animated.View>
 
           {/* Report Button */}
           <Animated.View style={animatedReportStyle}>
-            <Pressable onPress={handleReport} className="bg-black/60 rounded-full p-2.5" hitSlop={8}>
+            <Pressable
+              onPress={handleReport}
+              className="bg-black/60 rounded-full p-2.5"
+              hitSlop={8}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel="Report this review"
+            >
               <Ionicons name="flag" size={16} color="#FFFFFF" />
             </Pressable>
           </Animated.View>
@@ -260,7 +283,14 @@ export default function ProfileCard({ review, cardHeight = 280, onReport, onLike
 
         {/* Heart/Like Button - Top Left */}
         <Animated.View style={[animatedHeartStyle, { position: "absolute", top: 12, left: 12 }]}>
-          <Pressable onPress={handleLike} className="bg-black/60 rounded-full p-2.5" hitSlop={8}>
+          <Pressable
+            onPress={handleLike}
+            className="bg-black/60 rounded-full p-2.5"
+            hitSlop={8}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel={isLiked ? "Unlike" : "Like"}
+          >
             <Ionicons name={isLiked ? "heart" : "heart-outline"} size={16} color={isLiked ? "#EF4444" : "#FFFFFF"} />
           </Pressable>
         </Animated.View>

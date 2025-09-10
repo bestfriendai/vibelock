@@ -35,6 +35,18 @@
 - UI caching improvements (Task 5.1) remain open; we can add cachePolicy and placeholders consistently in a follow-up.
 
 ---
+## ✅ Progress Update — 2025-09-10 (continued)
+- Completed: Image caching in ImageCarousel using expo-image cachePolicy="memory-disk" for both regular images and video thumbnails.
+  - Files: src/components/ImageCarousel.tsx
+- Completed: Accessibility labels for ProfileCard interactive elements (card, share, report, like buttons).
+  - Files: src/components/ProfileCard.tsx
+
+### Checklist status adjustments
+- [x] Task 5.1: Implement Image Caching Optimization — Implemented in ProfileCard and ImageCarousel.
+- [ ] Task 6.1: Add Missing Accessibility Labels — ProfileCard completed; remaining screens/components pending.
+
+---
+
 
 
 ## **PHASE 1: CRITICAL SECURITY & CRASH FIXES** ⚠️
