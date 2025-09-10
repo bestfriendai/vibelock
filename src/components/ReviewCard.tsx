@@ -56,7 +56,14 @@ export default function ReviewCard({ review }: ReviewCardProps) {
       }}
     >
       {/* Header */}
-      <Pressable onPress={handlePersonPress} className="mb-4">
+      <Pressable
+        onPress={handlePersonPress}
+        className="mb-4"
+        accessible={true}
+        accessibilityRole="button"
+        accessibilityLabel={`View profile of ${review.reviewedPersonName} from ${review.reviewedPersonLocation.city}, ${review.reviewedPersonLocation.state}`}
+        accessibilityHint="Double tap to view this person's profile"
+      >
         <View className="flex-row items-center">
           <View
             className="w-12 h-12 rounded-full items-center justify-center"
@@ -89,6 +96,10 @@ export default function ReviewCard({ review }: ReviewCardProps) {
           onPress={handleShare}
           className="flex-row items-center px-3 py-2 rounded-full"
           style={{ backgroundColor: colors.surface[700] }}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel="Share review"
+          accessibilityHint="Double tap to share this review"
         >
           <Ionicons name="share-outline" size={16} color={colors.text.muted} />
           <Text className="text-sm ml-1 font-medium" style={{ color: colors.text.muted }}>
@@ -100,6 +111,10 @@ export default function ReviewCard({ review }: ReviewCardProps) {
           onPress={handleLike}
           className="flex-row items-center px-3 py-2 rounded-full"
           style={{ backgroundColor: colors.brand.red + "20" }}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel={`Like review. Currently has ${review.likeCount} likes`}
+          accessibilityHint="Double tap to like this review"
         >
           <Ionicons name="heart" size={16} color={colors.brand.red} />
           <Text className="text-sm ml-1 font-medium" style={{ color: colors.brand.red }}>

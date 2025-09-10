@@ -273,6 +273,10 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
         handleLocationSelect(item);
       }}
       className="px-4 py-3 border-b border-surface-700"
+      accessible={true}
+      accessibilityRole="button"
+      accessibilityLabel={`Select ${item.type === "college" ? item.fullName.split(" - ")[0] : item.fullName}`}
+      accessibilityHint="Double tap to set as your location"
     >
       <View className="flex-row items-center">
         <Ionicons
@@ -304,6 +308,10 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
           console.log("🔘 Location selector pressed");
           setModalVisible(true);
         }}
+        accessible={true}
+        accessibilityRole="button"
+        accessibilityLabel={`Location selector. Current location: ${currentLocation.type === "college" ? (currentLocation.fullName?.split(" - ")[0] || `${currentLocation.city}, ${currentLocation.state}`) : `${currentLocation.city}, ${currentLocation.state}`}`}
+        accessibilityHint="Double tap to change location"
       >
         <Ionicons
           name={currentLocation.type === "college" ? "school-outline" : "location-outline"}
@@ -333,7 +341,14 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
             <Text className="text-lg font-semibold" style={{ color: colors.text.primary }}>
               Select Location
             </Text>
-            <Pressable onPress={() => setModalVisible(false)} className="w-8 h-8 items-center justify-center">
+            <Pressable
+              onPress={() => setModalVisible(false)}
+              className="w-8 h-8 items-center justify-center"
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel="Close location selector"
+              accessibilityHint="Double tap to close"
+            >
               <Ionicons name="close" size={24} color={colors.text.primary} />
             </Pressable>
           </View>
@@ -358,7 +373,13 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
                 autoFocus
               />
               {searchText.length > 0 && (
-                <Pressable onPress={() => setSearchText("")}>
+                <Pressable
+                      onPress={() => setSearchText("")}
+                      accessible={true}
+                      accessibilityRole="button"
+                      accessibilityLabel="Clear search"
+                      accessibilityHint="Double tap to clear the search text"
+                    >
                   <Ionicons name="close-circle" size={20} color={colors.text.muted} />
                 </Pressable>
               )}
@@ -371,6 +392,10 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
               onPress={handleCurrentLocation}
               disabled={isLoadingCurrentLocation}
               className="flex-row items-center bg-brand-red/20 border border-brand-red/30 rounded-lg px-4 py-3"
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel={isLoadingCurrentLocation ? "Getting your current location" : "Use current location"}
+              accessibilityHint={isLoadingCurrentLocation ? "Please wait while we detect your location" : "Double tap to set your current location"}
             >
               {isLoadingCurrentLocation ? (
                 <ActivityIndicator size="small" color="#FFFFFF" />

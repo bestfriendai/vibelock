@@ -27,6 +27,7 @@ export default function ProfileCard({ review, cardHeight = 280, onReport, onLike
   const navigation = useNavigation<Nav>();
   const { colors } = useTheme();
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [videoThumbError, setVideoThumbError] = useState(false);
   const screenData = useResponsiveScreen();
   const { cardWidth } = screenData.responsive;
 
@@ -173,7 +174,7 @@ export default function ProfileCard({ review, cardHeight = 280, onReport, onLike
 
           if (firstVideo) {
             // Prefer a real thumbnail image for videos if available
-            const hasThumb = typeof firstVideo.thumbnailUri === "string" && /^https?:\/\//.test(firstVideo.thumbnailUri);
+            const hasThumb = typeof firstVideo.thumbnailUri === "string" && /^https?:\/\//.test(firstVideo.thumbnailUri) && !videoThumbError;
             if (hasThumb) {
               return (
                 <View style={{ width: cardWidth, height: cardHeight }}>
@@ -184,6 +185,7 @@ export default function ProfileCard({ review, cardHeight = 280, onReport, onLike
                     transition={300}
                     cachePolicy="memory-disk"
                     onLoad={() => setImageLoaded(true)}
+                    onError={() => setVideoThumbError(true)}
                     placeholder="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
                   />
                   <View className="absolute inset-0 items-center justify-center">

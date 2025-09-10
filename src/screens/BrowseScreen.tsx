@@ -3,6 +3,7 @@ import { View, Text, Pressable } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
+import { startTimer } from "../utils/performance";
 
 import useReviewsStore from "../state/reviewsStore";
 import useAuthStore from "../state/authStore";
@@ -14,6 +15,8 @@ import ReportModal from "../components/ReportModal";
 import SegmentedTabs from "../components/SegmentedTabs";
 import LocationSelector from "../components/LocationSelector";
 import DistanceFilter from "../components/DistanceFilter";
+import EmptyState from "../components/EmptyState";
+import { STRINGS } from "../constants/strings";
 import { Review } from "../types";
 
 export default function BrowseScreen() {
@@ -96,12 +99,15 @@ export default function BrowseScreen() {
     }
     abortControllerRef.current = new AbortController();
 
+    const done = startTimer("browse:initialLoad");
     try {
       await loadReviews(true);
     } catch (error: any) {
       if (error.name !== "AbortError") {
         console.error("Error loading reviews:", error);
       }
+    } finally {
+      done();
     }
   }, [loadReviews]);
 
@@ -145,7 +151,12 @@ export default function BrowseScreen() {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await loadReviews(true);
+    const done = startTimer("browse:pullToRefresh");
+    try {
+      await loadReviews(true);
+    } finally {
+      done();
+    }
     setRefreshing(false);
   };
 
@@ -303,15 +314,12 @@ export default function BrowseScreen() {
           </Text>
         </View>
       ) : !isLoading && Array.isArray(reviews) && reviews.length === 0 ? (
-        <View className="flex-1 items-center justify-center">
-          <Ionicons name="heart-outline" size={64} color="#9CA3AF" />
-          <Text className="text-xl font-medium mt-4" style={{ color: colors.text.secondary }}>
-            No reviews yet
-          </Text>
-          <Text className="text-center mt-2 px-8" style={{ color: colors.text.muted }}>
-            Be the first to share your dating experience in your area
-          </Text>
-        </View>
+        <EmptyState
+          icon={STRINGS.EMPTY_STATES.BROWSE.icon}
+          title={STRINGS.EMPTY_STATES.BROWSE.title}
+          description={STRINGS.EMPTY_STATES.BROWSE.description}
+          className="flex-1"
+        />
       ) : (
         <StaggeredGrid
           data={reviews}

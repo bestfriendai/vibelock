@@ -33,6 +33,10 @@ export default function DistanceFilter({ currentDistance, onDistanceChange }: Di
     <Pressable
       onPress={() => handleDistanceSelect(item.value)}
       className="px-6 py-6 border-b border-surface-700 flex-row items-center justify-between"
+      accessible={true}
+      accessibilityRole="button"
+      accessibilityLabel={`Set distance to ${item.label}`}
+      accessibilityHint="Double tap to apply distance filter"
     >
       <Text className="text-text-primary font-medium">{item.label}</Text>
       {currentDistance === item.value && <Ionicons name="checkmark" size={20} color="#FFFFFF" />}
@@ -44,6 +48,10 @@ export default function DistanceFilter({ currentDistance, onDistanceChange }: Di
       <Pressable
         className="bg-surface-700 px-3 py-2 rounded-full flex-row items-center"
         onPress={() => setModalVisible(true)}
+        accessible={true}
+        accessibilityRole="button"
+        accessibilityLabel={`Distance filter, currently ${currentDistance === -1 ? "All" : `${currentDistance} miles`}`}
+        accessibilityHint="Double tap to change distance"
       >
         <Ionicons name="location-outline" size={16} color="#F3F4F6" />
         <Text className="text-text-primary text-sm font-medium ml-1">
@@ -62,7 +70,14 @@ export default function DistanceFilter({ currentDistance, onDistanceChange }: Di
           {/* Header */}
           <View className="flex-row items-center justify-between px-6 py-6 border-b border-surface-700">
             <Text className="text-text-primary text-lg font-semibold">Distance Filter</Text>
-            <Pressable onPress={() => setModalVisible(false)} className="w-8 h-8 items-center justify-center">
+            <Pressable
+              onPress={() => setModalVisible(false)}
+              className="w-8 h-8 items-center justify-center"
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel="Close distance filter"
+              accessibilityHint="Double tap to close"
+            >
               <Ionicons name="close" size={24} color="#F3F4F6" />
             </Pressable>
           </View>

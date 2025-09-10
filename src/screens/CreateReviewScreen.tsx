@@ -314,7 +314,7 @@ export default function CreateReviewScreen() {
           </Text>
         </View>
 
-        <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+        <ScrollView className="flex-1" showsVerticalScrollIndicator={false} keyboardDismissMode="on-drag" keyboardShouldPersistTaps="handled">
           <View className="px-6 py-6">
             {/* Error / Success banners */}
             {error && (

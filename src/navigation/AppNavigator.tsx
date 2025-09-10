@@ -16,6 +16,8 @@ import ChatroomsScreen from "../screens/ChatroomsScreen";
 import ProfileScreen from "../screens/ProfileScreen";
 import PersonProfileScreen from "../screens/PersonProfileScreen";
 import ErrorBoundary from "../components/ErrorBoundary";
+import ScreenErrorBoundary from "../components/ScreenErrorBoundary";
+import ComponentErrorBoundary from "../components/ComponentErrorBoundary";
 
 import SignInScreen from "../screens/SignInScreen";
 import SignUpScreen from "../screens/SignUpScreen";
@@ -167,6 +169,14 @@ function CreateTabButton() {
 }
 
 // Browse Stack Navigator
+const standardHeader = {
+  headerShown: true,
+  headerStyle: { backgroundColor: "#000000" },
+  headerTintColor: "#FFFFFF",
+  headerTitleStyle: { color: "#FFFFFF" },
+  headerBackTitle: "Back",
+} as const;
+
 function BrowseStackNavigator() {
   return (
     <BrowseStack.Navigator
@@ -174,16 +184,24 @@ function BrowseStackNavigator() {
         headerShown: false,
       }}
     >
-      <BrowseStack.Screen name="Browse" component={BrowseScreen} />
+      <BrowseStack.Screen
+        name="Browse"
+        component={(props) => (
+          <ScreenErrorBoundary screenName="Browse">
+            <BrowseScreen {...props} />
+          </ScreenErrorBoundary>
+        )}
+      />
       <BrowseStack.Screen
         name="ReviewDetail"
-        component={ReviewDetailScreen}
+        component={(props) => (
+          <ScreenErrorBoundary screenName="Review Detail">
+            <ReviewDetailScreen {...props} />
+          </ScreenErrorBoundary>
+        )}
         options={{
-          headerShown: true,
+          ...standardHeader,
           headerTitle: "Review",
-          headerStyle: { backgroundColor: "#000000" },
-          headerTintColor: "#FFFFFF",
-          headerBackTitle: "Back",
         }}
       />
     </BrowseStack.Navigator>
@@ -198,16 +216,24 @@ function SearchStackNavigator() {
         headerShown: false,
       }}
     >
-      <SearchStack.Screen name="Search" component={SearchScreen} />
+      <SearchStack.Screen
+        name="Search"
+        component={(props) => (
+          <ScreenErrorBoundary screenName="Search">
+            <SearchScreen {...props} />
+          </ScreenErrorBoundary>
+        )}
+      />
       <SearchStack.Screen
         name="ReviewDetail"
-        component={ReviewDetailScreen}
+        component={(props) => (
+          <ScreenErrorBoundary screenName="Review Detail">
+            <ReviewDetailScreen {...props} />
+          </ScreenErrorBoundary>
+        )}
         options={{
-          headerShown: true,
+          ...standardHeader,
           headerTitle: "Review",
-          headerStyle: { backgroundColor: "#000000" },
-          headerTintColor: "#FFFFFF",
-          headerBackTitle: "Back",
         }}
       />
     </SearchStack.Navigator>
@@ -240,22 +266,16 @@ function SettingsStackNavigator() {
         name="Notifications"
         component={NotificationsScreen}
         options={{
-          headerShown: true,
+          ...standardHeader,
           headerTitle: "Notifications",
-          headerStyle: { backgroundColor: "#000000" },
-          headerTintColor: "#FFFFFF",
-          headerBackTitle: "Back",
         }}
       />
       <SettingsStack.Screen
         name="DeleteAccount"
         component={DeleteAccountScreen}
         options={{
-          headerShown: true,
+          ...standardHeader,
           headerTitle: "Delete Account",
-          headerStyle: { backgroundColor: "#000000" },
-          headerTintColor: "#FFFFFF",
-          headerBackTitle: "Back",
         }}
       />
       <SettingsStack.Screen
@@ -406,46 +426,44 @@ export default function AppNavigator() {
           <Stack.Screen name="MainTabs" component={TabNavigator} />
           <Stack.Screen
             name="CreateReview"
-            component={CreateReviewScreen}
+            component={(props) => (
+              <ScreenErrorBoundary screenName="Create Review">
+                <CreateReviewScreen {...props} />
+              </ScreenErrorBoundary>
+            )}
             options={{
               presentation: "modal",
-              headerShown: true,
+              ...standardHeader,
               headerTitle: "Write Review",
-              headerStyle: { backgroundColor: colors.surface[900] },
-              headerTintColor: colors.text.primary,
             }}
           />
           <Stack.Screen
             name="PersonProfile"
-            component={PersonProfileScreen}
+            component={(props) => (
+              <ScreenErrorBoundary screenName="Profile">
+                <PersonProfileScreen {...props} />
+              </ScreenErrorBoundary>
+            )}
             options={{
               presentation: "modal",
-              headerShown: true,
+              ...standardHeader,
               headerTitle: "Profile",
-              headerStyle: { backgroundColor: colors.surface[800] },
-              headerTintColor: colors.text.primary,
             }}
           />
           <Stack.Screen
             name="ChatRoom"
             component={ChatRoomScreenWithErrorBoundary}
             options={{
-              headerShown: true,
+              ...standardHeader,
               headerTitle: "Chat",
-              headerStyle: { backgroundColor: "#141418" },
-              headerTintColor: "#FFFFFF",
-              headerBackTitle: "Back",
             }}
           />
           <Stack.Screen
             name="ReviewDetail"
             component={ReviewDetailScreen}
             options={{
-              headerShown: true,
+              ...standardHeader,
               headerTitle: "Review",
-              headerStyle: { backgroundColor: "#141418" },
-              headerTintColor: "#FFFFFF",
-              headerBackTitle: "Back",
             }}
           />
           {/** LocationFilterDemo removed */}

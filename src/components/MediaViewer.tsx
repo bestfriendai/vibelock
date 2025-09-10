@@ -8,6 +8,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Constants from "expo-constants";
 import { MediaItem, Comment } from "../types";
 import { useResponsiveScreen } from "../utils/responsive";
+import ComponentErrorBoundary from "./ComponentErrorBoundary";
 
 interface Props {
   visible: boolean;
@@ -79,7 +80,8 @@ export default function MediaViewer({
   if (!visible || !currentMedia) return null;
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose}>
+    <ComponentErrorBoundary componentName="MediaViewer">
+      <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose}>
       <StatusBar hidden />
       <View className="flex-1 bg-black">
         <SafeAreaView className="flex-1">
@@ -250,6 +252,7 @@ export default function MediaViewer({
         </SafeAreaView>
       </View>
     </Modal>
+    </ComponentErrorBoundary>
   );
 }
 

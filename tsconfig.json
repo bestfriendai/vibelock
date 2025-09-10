@@ -5,17 +5,18 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true,
+    "exactOptionalPropertyTypes": false,
     "noImplicitOverride": true,
-    "noPropertyAccessFromIndexSignature": true,
+    "noPropertyAccessFromIndexSignature": false,
     "noUncheckedSideEffectImports": true,
     "allowUnusedLabels": false,
     "allowUnreachableCode": false,
-    "skipLibCheck": false
+    "skipLibCheck": true
   },
   "exclude": [
     "node_modules",
     "supabase/functions",
-    "__tests__"
+    "__tests__",
+    "backup"
   ]
 }

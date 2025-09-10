@@ -12,6 +12,52 @@ const HTML_ENTITIES: Record<string, string> = {
   "/": "&#x2F;",
 };
 
+// SQL injection prevention patterns
+const SQL_INJECTION_PATTERNS = [
+  /(\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|UNION|SCRIPT)\b)/gi,
+  /('|(\\')|(;)|(--)|(\|)|(\*)|(%)|(\+))/g,
+  /((\%3D)|(=))[^\n]*((\%27)|(\')|(\-\-)|(\%3B)|(;))/gi,
+  /((\%27)|(\'))((\%6F)|o|(\%4F))((\%72)|r|(\%52))/gi,
+  /exec(\s|\+)+(s|x)p\w+/gi,
+];
+
+// XSS prevention patterns
+const XSS_PATTERNS = [
+  /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
+  /<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi,
+  /javascript:/gi,
+  /on\w+\s*=/gi,
+  /<img[^>]+src[\\s]*=[\\s]*["\']javascript:/gi,
+];
+
+/**
+ * Check for SQL injection patterns
+ */
+export function detectSQLInjection(input: string): boolean {
+  if (typeof input !== "string") return false;
+
+  for (const pattern of SQL_INJECTION_PATTERNS) {
+    if (pattern.test(input)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Check for XSS patterns
+ */
+export function detectXSS(input: string): boolean {
+  if (typeof input !== "string") return false;
+
+  for (const pattern of XSS_PATTERNS) {
+    if (pattern.test(input)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 /**
  * Escape HTML entities to prevent XSS attacks
  */
@@ -23,8 +69,19 @@ export function escapeHtml(text: string): string {
 /**
  * Sanitize text input by removing potentially dangerous characters
  */
-export function sanitizeText(input: string, maxLength: number = 1000): string {
+export function sanitizeText(input: string, maxLength: number = 1000, options: { preventSQLInjection?: boolean; preventXSS?: boolean } = {}): string {
   if (typeof input !== "string") return "";
+
+  const { preventSQLInjection = true, preventXSS = true } = options;
+
+  // Check for malicious patterns first
+  if (preventSQLInjection && detectSQLInjection(input)) {
+    throw new Error("Input contains potentially malicious SQL patterns");
+  }
+
+  if (preventXSS && detectXSS(input)) {
+    throw new Error("Input contains potentially malicious script patterns");
+  }
 
   // Remove null bytes and control characters except newlines and tabs
   let sanitized = input.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "");

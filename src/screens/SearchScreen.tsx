@@ -7,6 +7,8 @@ import { supabaseSearch } from "../services/supabase";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useTheme } from "../providers/ThemeProvider";
 import { validateSearchQuery, searchLimiter } from "../utils/inputValidation";
+import EmptyState from "../components/EmptyState";
+import { STRINGS } from "../constants/strings";
 
 // Debounce utility
 const debounce = (func: Function, delay: number) => {
@@ -230,7 +232,7 @@ export default function SearchScreen() {
                     <Ionicons name="close-circle" size={20} color="#9CA3AF" />
                   </Pressable>
                 )}
-                <Pressable onPress={handleSearch}>
+                <Pressable onPress={() => handleSearch()}>
                   <Ionicons name={isSearching ? "hourglass" : "search"} size={20} color="#9CA3AF" />
                 </Pressable>
               </View>
@@ -312,7 +314,7 @@ export default function SearchScreen() {
 
         {/* Results */}
         {searchQuery.length >= 2 ? (
-          <ScrollView className="flex-1 px-4">
+          <ScrollView className="flex-1 px-4" keyboardDismissMode="on-drag" keyboardShouldPersistTaps="handled">
             {/* Tabs */}
             <View className="flex-row mb-3">
               {(["all", "reviews", "comments", "messages"] as const).map((tab) => (
@@ -434,28 +436,21 @@ export default function SearchScreen() {
                 contentResults.reviews.length === 0 &&
                 contentResults.comments.length === 0 &&
                 contentResults.messages.length === 0 && (
-                  <View className="items-center justify-center py-12">
-                    <Ionicons name="search-outline" size={48} color="#6B7280" />
-                    <Text className="text-lg font-medium mt-4" style={{ color: colors.text.secondary }}>
-                      No content found
-                    </Text>
-                    <Text className="text-center mt-2" style={{ color: colors.text.muted }}>
-                      Try different search terms
-                    </Text>
-                  </View>
+                  <EmptyState
+                    icon={STRINGS.EMPTY_STATES.SEARCH_EMPTY.icon}
+                    title={STRINGS.EMPTY_STATES.SEARCH_EMPTY.title}
+                    description={STRINGS.EMPTY_STATES.SEARCH_EMPTY.description}
+                  />
                 )}
             </View>
           </ScrollView>
         ) : (
-          <View className="flex-1 items-center justify-center px-6">
-            <Ionicons name="search-outline" size={48} color="#6B7280" />
-            <Text className="text-lg font-medium mt-4" style={{ color: colors.text.secondary }}>
-              Search content
-            </Text>
-            <Text className="text-center mt-2" style={{ color: colors.text.muted }}>
-              Enter at least 2 characters and tap the search icon
-            </Text>
-          </View>
+          <EmptyState
+            icon={STRINGS.EMPTY_STATES.SEARCH_PROMPT.icon}
+            title={STRINGS.EMPTY_STATES.SEARCH_PROMPT.title}
+            description={STRINGS.EMPTY_STATES.SEARCH_PROMPT.description}
+            className="px-6"
+          />
         )}
       </View>
     </SafeAreaView>

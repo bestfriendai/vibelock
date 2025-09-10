@@ -47,7 +47,7 @@ export const VoiceMessage: React.FC<VoiceMessageProps> = ({
 
   const scale = useSharedValue(1);
   const waveformOpacity = useSharedValue(0);
-  const recordingTimer = useRef<NodeJS.Timeout>();
+  const recordingTimer = useRef<NodeJS.Timeout | null>(null);
 
   // Animation for recording button
   const recordingAnimation = useSharedValue(0);

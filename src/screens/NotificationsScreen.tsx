@@ -3,6 +3,8 @@ import { View, Text, Pressable, RefreshControl } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FlashList } from "@shopify/flash-list";
 import { Ionicons } from "@expo/vector-icons";
+import EmptyState from "../components/EmptyState";
+import { STRINGS } from "../constants/strings";
 import useNotificationStore from "../state/notificationStore";
 import useAuthStore from "../state/authStore";
 
@@ -81,13 +83,11 @@ export default function NotificationsScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#9CA3AF" />}
         ListEmptyComponent={
           !isLoading ? (
-            <View className="items-center justify-center py-20">
-              <Ionicons name="notifications-off-outline" size={48} color="#6B7280" />
-              <Text className="text-text-secondary text-lg font-medium mt-4">No notifications yet</Text>
-              <Text className="text-text-muted text-center mt-2 px-8">
-                Likes, comments, replies, and chat mentions will appear here.
-              </Text>
-            </View>
+            <EmptyState
+              icon={STRINGS.EMPTY_STATES.NOTIFICATIONS.icon}
+              title={STRINGS.EMPTY_STATES.NOTIFICATIONS.title}
+              description={STRINGS.EMPTY_STATES.NOTIFICATIONS.description}
+            />
           ) : null
         }
       />

@@ -255,6 +255,10 @@ export default function MediaUploadGrid({ media, onMediaChange, maxItems = 6, re
               onPress={() => handleMediaPress(index)}
               className="relative rounded-xl overflow-hidden"
               style={{ width: ITEM_SIZE, height: ITEM_SIZE }}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel={`${item.type === "video" ? "Video" : "Image"} ${index + 1} of ${media.length}${item.duration ? `, duration ${formatVideoDurationFromMs(item.duration)}` : ""}`}
+              accessibilityHint="Double tap to view or edit this media item"
             >
               <Image
                 source={{ uri: item.uri }}
@@ -300,6 +304,11 @@ export default function MediaUploadGrid({ media, onMediaChange, maxItems = 6, re
               className="border-2 border-dashed border-border rounded-xl items-center justify-center bg-surface-800"
               style={{ width: ITEM_SIZE, height: ITEM_SIZE }}
               disabled={isLoading}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel={`Add media. Currently have ${media.length} of ${maxItems} items`}
+              accessibilityHint="Double tap to add photos or videos"
+              accessibilityState={{ disabled: isLoading }}
             >
               {isLoading ? (
                 <View className="items-center">

@@ -7,8 +7,11 @@ import { useAuthState } from "../utils/authUtils";
 import { useTheme } from "../providers/ThemeProvider";
 import SegmentedTabs from "../components/SegmentedTabs";
 import EnhancedChatRoomCard from "../components/EnhancedChatRoomCard";
+import EmptyState from "../components/EmptyState";
+import { STRINGS } from "../constants/strings";
 import { ChatRoom } from "../types";
 import { useNavigation } from "@react-navigation/native";
+import { startTimer } from "../utils/performance";
 
 export default function ChatroomsScreen() {
   const navigation = useNavigation<any>();
@@ -20,13 +23,15 @@ export default function ChatroomsScreen() {
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
-    loadChatRooms();
-  }, []);
+    const done = startTimer("chatrooms:initialLoad");
+    Promise.resolve(loadChatRooms()).finally(done);
+  }, [loadChatRooms]);
 
   useEffect(() => {
     setRoomCategoryFilter(category);
-    loadChatRooms();
-  }, [category]);
+    const done = startTimer(`chatrooms:category:${category}`);
+    Promise.resolve(loadChatRooms()).finally(done);
+  }, [category, setRoomCategoryFilter, loadChatRooms]);
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase();
@@ -40,7 +45,12 @@ export default function ChatroomsScreen() {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await loadChatRooms();
+    const done = startTimer("chatrooms:pullToRefresh");
+    try {
+      await loadChatRooms();
+    } finally {
+      done();
+    }
     setRefreshing(false);
   };
 
@@ -163,11 +173,11 @@ export default function ChatroomsScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         ListEmptyComponent={
           !isLoading ? (
-            <View className="items-center justify-center py-20">
-              <Ionicons name="chatbubbles-outline" size={48} color="#9CA3AF" />
-              <Text className="text-text-secondary text-lg font-medium mt-4">No chat rooms found</Text>
-              <Text className="text-text-muted text-center mt-2">Try adjusting your search</Text>
-            </View>
+            <EmptyState
+              icon={STRINGS.EMPTY_STATES.CHATROOMS.icon}
+              title={STRINGS.EMPTY_STATES.CHATROOMS.title}
+              description={STRINGS.EMPTY_STATES.CHATROOMS.description}
+            />
           ) : null
         }
       />

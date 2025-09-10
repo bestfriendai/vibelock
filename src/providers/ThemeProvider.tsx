@@ -45,6 +45,38 @@ export const lightTheme = {
   },
 };
 
+// High contrast theme colors - Maximum accessibility
+export const highContrastTheme = {
+  colors: {
+    background: "#000000", // Pure black background
+    surface: {
+      900: "#000000", // Pure black main background
+      800: "#1A1A1A", // Very dark gray for cards
+      700: "#333333", // Dark gray for secondary surfaces
+      600: "#4D4D4D", // Medium gray for tertiary surfaces
+      500: "#666666", // Light gray for borders
+    },
+    text: {
+      primary: "#FFFFFF", // Pure white for main text (AAA)
+      secondary: "#E0E0E0", // Very light gray for secondary text (AAA)
+      muted: "#B0B0B0", // Light gray for muted text (AA)
+      accent: "#FFFF00", // Yellow accent for maximum contrast
+    },
+    border: "#666666", // High contrast border
+    brand: {
+      red: "#FF0000", // Pure red for maximum contrast
+      redLight: "#330000", // Dark red background
+      redDark: "#FF6666", // Light red for text
+      coral: "#FF8080", // Light coral
+      warm: "#FFA500", // Orange accent
+    },
+    success: "#00FF00", // Pure green
+    warning: "#FFFF00", // Pure yellow
+    error: "#FF0000", // Pure red
+    info: "#00FFFF", // Pure cyan
+  },
+};
+
 // Dark theme colors - Pure black theme
 export const darkTheme = {
   colors: {
@@ -88,11 +120,13 @@ export const darkTheme = {
 };
 
 interface ThemeContextType {
-  theme: "light" | "dark";
-  colors: typeof lightTheme.colors | typeof darkTheme.colors;
+  theme: "light" | "dark" | "high-contrast";
+  colors: typeof lightTheme.colors | typeof darkTheme.colors | typeof highContrastTheme.colors;
   isDarkMode: boolean;
-  setTheme: (theme: "light" | "dark" | "system") => void;
+  isHighContrast?: boolean;
+  setTheme: (theme: "light" | "dark" | "system" | "high-contrast") => void;
   toggleTheme: () => void;
+  toggleHighContrast?: () => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -102,7 +136,7 @@ interface ThemeProviderProps {
 }
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
-  const { theme, isDarkMode, setTheme, toggleTheme } = useThemeStore();
+  const { theme, isDarkMode, isHighContrast, setTheme, toggleTheme, toggleHighContrast } = useThemeStore();
 
   // Listen to system theme changes
   useEffect(() => {
@@ -114,17 +148,20 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
 
       return () => subscription?.remove();
     }
+    return undefined;
   }, [theme, setTheme]);
 
-  const currentTheme = isDarkMode ? "dark" : "light";
-  const colors = isDarkMode ? darkTheme.colors : lightTheme.colors;
+  const currentTheme = isHighContrast ? "high-contrast" : (isDarkMode ? "dark" : "light");
+  const colors = isHighContrast ? highContrastTheme.colors : (isDarkMode ? darkTheme.colors : lightTheme.colors);
 
   const value: ThemeContextType = {
     theme: currentTheme,
     colors,
     isDarkMode,
+    isHighContrast,
     setTheme,
     toggleTheme,
+    toggleHighContrast,
   };
 
   return (

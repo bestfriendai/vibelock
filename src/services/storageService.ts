@@ -30,69 +30,117 @@ class StorageService {
   };
 
   // File validation constants
-  private readonly ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-  private readonly ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/quicktime'];
-  private readonly ALLOWED_AUDIO_TYPES = ['audio/mp4', 'audio/mpeg', 'audio/wav'];
+  private readonly ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+  private readonly ALLOWED_VIDEO_TYPES = ["video/mp4", "video/quicktime"];
+  private readonly ALLOWED_AUDIO_TYPES = ["audio/mp4", "audio/mpeg", "audio/wav"];
   private readonly MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 
   // Magic bytes for file type validation
   private readonly MAGIC_BYTES = {
-    'image/jpeg': [[0xFF, 0xD8, 0xFF]],
-    'image/png': [[0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]],
-    'image/webp': [[0x52, 0x49, 0x46, 0x46], [0x57, 0x45, 0x42, 0x50]], // RIFF...WEBP
-    'video/mp4': [[0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70], [0x00, 0x00, 0x00, 0x20, 0x66, 0x74, 0x79, 0x70]],
-    'video/quicktime': [[0x00, 0x00, 0x00, 0x14, 0x66, 0x74, 0x79, 0x70, 0x71, 0x74]],
-    'audio/mp4': [[0x00, 0x00, 0x00, 0x20, 0x66, 0x74, 0x79, 0x70, 0x4D, 0x34, 0x41]],
-    'audio/mpeg': [[0xFF, 0xFB], [0xFF, 0xF3], [0xFF, 0xF2]],
-    'audio/wav': [[0x52, 0x49, 0x46, 0x46]]
+    "image/jpeg": [[0xff, 0xd8, 0xff]],
+    "image/png": [[0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]],
+    "image/webp": [
+      [0x52, 0x49, 0x46, 0x46],
+      [0x57, 0x45, 0x42, 0x50],
+    ], // RIFF...WEBP
+    "video/mp4": [
+      [0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70],
+      [0x00, 0x00, 0x00, 0x20, 0x66, 0x74, 0x79, 0x70],
+    ],
+    "video/quicktime": [[0x00, 0x00, 0x00, 0x14, 0x66, 0x74, 0x79, 0x70, 0x71, 0x74]],
+    "audio/mp4": [[0x00, 0x00, 0x00, 0x20, 0x66, 0x74, 0x79, 0x70, 0x4d, 0x34, 0x41]],
+    "audio/mpeg": [
+      [0xff, 0xfb],
+      [0xff, 0xf3],
+      [0xff, 0xf2],
+    ],
+    "audio/wav": [[0x52, 0x49, 0x46, 0x46]],
   };
 
   /**
    * Sanitize file path to prevent directory traversal attacks
+   * Enhanced security implementation with comprehensive path validation
    */
   private sanitizePath(path: string): string {
-    let sanitized = path
-      .replace(/\.\.\//g, "") // Remove traversal sequences
-      .replace(/\\/g, "/") // Normalize backslashes
-      .replace(/\/+/g, "/"); // Normalize slashes
-
-    sanitized = sanitized.replace(/^\/+|\/+$/g, "");
-
-    if (sanitized.includes("..")) {
-      throw new AppError("Invalid file path", ErrorType.VALIDATION, "PATH_TRAVERSAL");
+    if (!path || typeof path !== "string") {
+      throw new AppError("Invalid file path: path must be a non-empty string", ErrorType.VALIDATION, "INVALID_PATH");
     }
+
+    // Remove null bytes and control characters
+    let sanitized = path.replace(/[\x00-\x1f\x7f-\x9f]/g, "");
+
+    // Remove various directory traversal patterns
+    sanitized = sanitized
+      .replace(/\.\.\//g, "") // Remove ../
+      .replace(/\.\.\\/g, "") // Remove ..\
+      .replace(/\.\.%2f/gi, "") // Remove URL encoded ../
+      .replace(/\.\.%5c/gi, "") // Remove URL encoded ..\
+      .replace(/%2e%2e%2f/gi, "") // Remove double URL encoded ../
+      .replace(/%2e%2e%5c/gi, "") // Remove double URL encoded ..\
+      .replace(/\\/g, "/") // Normalize backslashes to forward slashes
+      .replace(/\/+/g, "/") // Normalize multiple slashes
+      .replace(/^\/+|\/+$/g, ""); // Remove leading/trailing slashes
+
+    // Additional security checks
+    if (
+      sanitized.includes("..") ||
+      sanitized.includes("%2e%2e") ||
+      sanitized.includes("~") ||
+      sanitized.includes("$") ||
+      sanitized.match(/[<>:"|?*]/)
+    ) {
+      throw new AppError("Invalid file path: contains forbidden characters", ErrorType.VALIDATION, "PATH_TRAVERSAL");
+    }
+
+    // Ensure path doesn't start with system directories
+    const forbiddenPrefixes = ["etc/", "var/", "usr/", "bin/", "sbin/", "root/", "home/", "tmp/", "proc/", "sys/"];
+    const lowerPath = sanitized.toLowerCase();
+    if (forbiddenPrefixes.some((prefix) => lowerPath.startsWith(prefix))) {
+      throw new AppError(
+        "Invalid file path: system directory access denied",
+        ErrorType.VALIDATION,
+        "SYSTEM_PATH_ACCESS",
+      );
+    }
+
+    // Limit path length
+    if (sanitized.length > 255) {
+      throw new AppError("Invalid file path: path too long", ErrorType.VALIDATION, "PATH_TOO_LONG");
+    }
+
     return sanitized;
   }
 
   /**
    * Comprehensive file validation including size, MIME type, and magic bytes
    */
-  private async validateFile(fileUri: string, expectedType: 'image' | 'video' | 'audio'): Promise<void> {
+  private async validateFile(fileUri: string, expectedType: "image" | "video" | "audio"): Promise<void> {
     const fileInfo = await FileSystem.getInfoAsync(fileUri);
     if (!fileInfo.exists) {
-      throw new AppError('File does not exist', ErrorType.VALIDATION, 'FILE_NOT_FOUND');
+      throw new AppError("File does not exist", ErrorType.VALIDATION, "FILE_NOT_FOUND");
     }
 
     // Check file size
     if (fileInfo.size && fileInfo.size > this.MAX_FILE_SIZE) {
-      throw new AppError('File too large (max 50MB)', ErrorType.VALIDATION, 'FILE_TOO_LARGE');
+      throw new AppError("File too large (max 50MB)", ErrorType.VALIDATION, "FILE_TOO_LARGE");
     }
 
     // Validate MIME type
     const contentType = this.getContentType(fileUri);
-    const allowedTypes = expectedType === 'image' ? this.ALLOWED_IMAGE_TYPES :
-                        expectedType === 'video' ? this.ALLOWED_VIDEO_TYPES :
-                        this.ALLOWED_AUDIO_TYPES;
+    const allowedTypes =
+      expectedType === "image"
+        ? this.ALLOWED_IMAGE_TYPES
+        : expectedType === "video"
+          ? this.ALLOWED_VIDEO_TYPES
+          : this.ALLOWED_AUDIO_TYPES;
 
     if (!allowedTypes.includes(contentType)) {
-      throw new AppError(`Invalid file type: ${contentType}`, ErrorType.VALIDATION, 'INVALID_FILE_TYPE');
+      throw new AppError(`Invalid file type: ${contentType}`, ErrorType.VALIDATION, "INVALID_FILE_TYPE");
     }
 
     // Check file header (magic bytes) to prevent MIME type spoofing
     await this.validateFileHeader(fileUri, contentType);
   }
-
-
 
   /**
    * Validate file header using magic bytes to prevent MIME type spoofing
@@ -101,20 +149,20 @@ class StorageService {
     try {
       const base64 = await FileSystem.readAsStringAsync(fileUri, {
         encoding: FileSystem.EncodingType.Base64,
-        length: 20 // Read first 20 bytes
+        length: 20, // Read first 20 bytes
       });
 
       const bytes = atob(base64);
-      const header = Array.from(bytes).map(char => char.charCodeAt(0));
+      const header = Array.from(bytes).map((char) => char.charCodeAt(0));
 
       // Validate magic bytes for the expected file type
       const isValidHeader = this.checkMagicBytes(header, expectedType);
       if (!isValidHeader) {
-        throw new AppError('File header validation failed', ErrorType.VALIDATION, 'INVALID_FILE_HEADER');
+        throw new AppError("File header validation failed", ErrorType.VALIDATION, "INVALID_FILE_HEADER");
       }
     } catch (error) {
       if (error instanceof AppError) throw error;
-      throw new AppError('Failed to validate file header', ErrorType.VALIDATION, 'HEADER_VALIDATION_ERROR');
+      throw new AppError("Failed to validate file header", ErrorType.VALIDATION, "HEADER_VALIDATION_ERROR");
     }
   }
 
@@ -125,7 +173,7 @@ class StorageService {
     const magicBytes = this.MAGIC_BYTES[expectedType as keyof typeof this.MAGIC_BYTES];
     if (!magicBytes) return false;
 
-    return magicBytes.some(pattern => {
+    return magicBytes.some((pattern) => {
       if (header.length < pattern.length) return false;
       return pattern.every((byte, index) => header[index] === byte);
     });
@@ -136,14 +184,17 @@ class StorageService {
    */
   async uploadFile(fileUri: string, options: FileUploadOptions): Promise<UploadResult> {
     try {
+      // Validate bucket name to prevent injection attacks
+      this.validateBucket(options.bucket);
+
       // Determine file type for validation
       const contentType = options.contentType || this.getContentType(fileUri);
-      let expectedType: 'image' | 'video' | 'audio' = 'image';
+      let expectedType: "image" | "video" | "audio" = "image";
 
       if (this.ALLOWED_VIDEO_TYPES.includes(contentType)) {
-        expectedType = 'video';
+        expectedType = "video";
       } else if (this.ALLOWED_AUDIO_TYPES.includes(contentType)) {
-        expectedType = 'audio';
+        expectedType = "audio";
       }
 
       // Comprehensive file validation (size, MIME type, magic bytes)
@@ -365,13 +416,38 @@ class StorageService {
   }
 
   /**
-   * Generate a unique file name
+   * Generate a secure file name with timestamp and random suffix
+   * Enhanced with additional security measures
    */
   private generateFileName(fileUri: string): string {
-    const extension = fileUri.split(".").pop() || "jpg";
+    const extension = this.sanitizeFileExtension(fileUri.split(".").pop() || "jpg");
     const timestamp = Date.now();
     const random = Math.random().toString(36).substring(2, 15);
     return `${timestamp}-${random}.${extension}`;
+  }
+
+  /**
+   * Sanitize file extension to prevent malicious extensions
+   */
+  private sanitizeFileExtension(extension: string): string {
+    const allowedExtensions = ["jpg", "jpeg", "png", "webp", "mp4", "mov", "mp3", "wav", "m4a"];
+    const cleanExt = extension.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+    if (!allowedExtensions.includes(cleanExt)) {
+      return "jpg"; // Default to safe extension
+    }
+
+    return cleanExt;
+  }
+
+  /**
+   * Validate bucket name to prevent injection attacks
+   */
+  private validateBucket(bucket: string): void {
+    const validBuckets = Object.values(this.buckets);
+    if (!validBuckets.includes(bucket)) {
+      throw new AppError("Invalid storage bucket", ErrorType.VALIDATION, "INVALID_BUCKET");
+    }
   }
 
   /**

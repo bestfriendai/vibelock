@@ -73,7 +73,6 @@ class LocationService {
 
       const location = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.Balanced,
-        timeout: 10000,
       });
 
       const address = await Location.reverseGeocodeAsync({
@@ -148,9 +147,7 @@ class LocationService {
    */
   private async getIPLocation(): Promise<LocationDetectionResult> {
     try {
-      const response = await fetch("https://ipapi.co/json/", {
-        timeout: 5000,
-      });
+      const response = await fetch("https://ipapi.co/json/");
 
       if (!response.ok) {
         throw new Error("IP location service unavailable");
@@ -210,6 +207,21 @@ class LocationService {
 
     // Select a random major city as fallback
     const randomCity = fallbackCities[Math.floor(Math.random() * fallbackCities.length)];
+
+    if (!randomCity) {
+      // Fallback to first city if random selection fails
+      const defaultCity = fallbackCities[0];
+      return {
+        success: true,
+        location: {
+          city: defaultCity.city,
+          state: defaultCity.state,
+          fullName: `${defaultCity.city}, ${defaultCity.state}`,
+          coordinates: defaultCity.coords,
+        },
+        source: "fallback",
+      };
+    }
 
     return {
       success: true,

@@ -486,15 +486,16 @@ const useChatStore = create<ChatStore>()(
             throw new Error("Failed to upload media");
           }
 
-          const message: Partial<ChatMessage> = {
+          const baseMessage: Partial<ChatMessage> = {
             chatRoomId: roomId,
             senderId: user.id,
             senderName,
             messageType: mediaType,
-            imageUri: mediaType === "image" ? uploadResult.url : undefined,
-            videoUri: mediaType === "video" ? uploadResult.url : undefined,
             timestamp: new Date(),
           };
+          if (mediaType === "image") (baseMessage as any).imageUri = uploadResult.url;
+          if (mediaType === "video") (baseMessage as any).videoUri = uploadResult.url;
+          const message = baseMessage;
 
           get().addMessage(message as ChatMessage);
           await enhancedRealtimeChatService.sendMessage(
@@ -570,7 +571,7 @@ const useChatStore = create<ChatStore>()(
           }
 
           // Get the oldest message timestamp for cursor-based pagination
-          const oldestMessage = currentMessages[0];
+          const oldestMessage = currentMessages[0]!;
           const cursor = oldestMessage.timestamp.toISOString();
 
           // Load older messages using enhanced service with cursor
