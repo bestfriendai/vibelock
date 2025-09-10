@@ -34,6 +34,28 @@ export default function ImageCarousel({
   const [currentIndex, setCurrentIndex] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
 
+  // Prefetch next/prev images to improve swipe smoothness
+  React.useEffect(() => {
+    if (!media || media.length === 0) return;
+
+    const uris: string[] = [];
+    const push = (u?: string | null) => {
+      if (u && /^https?:\/\//.test(u)) uris.push(u);
+    };
+
+    const next = media[currentIndex + 1];
+    const prev = media[currentIndex - 1];
+
+    if (next) push(next.type === "video" ? next.thumbnailUri || next.uri : next.uri);
+    if (prev) push(prev.type === "video" ? prev.thumbnailUri || prev.uri : prev.uri);
+
+    uris.forEach((u) => {
+      try {
+        Image.prefetch(u);
+      } catch {}
+    });
+  }, [currentIndex, media]);
+
   if (!media || media.length === 0) {
     console.log('ImageCarousel: No media provided');
     return null;

@@ -50,6 +50,11 @@
   - Files: src/components/MediaThumbnail.tsx
 
 ### Checklist status adjustments
+- Completed: Browse header action a11y (Retry location detection button labeled).
+  - Files: src/screens/BrowseScreen.tsx
+- Completed: Carousel prefetch for next/prev images to smooth swipes.
+  - Files: src/components/ImageCarousel.tsx
+
 - [x] Task 5.1: Implement Image Caching Optimization — Implemented in ProfileCard and ImageCarousel.
 - [ ] Task 6.1: Add Missing Accessibility Labels — ProfileCard completed; remaining screens/components pending.
 

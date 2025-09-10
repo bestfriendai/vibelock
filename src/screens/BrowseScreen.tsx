@@ -217,6 +217,10 @@ export default function BrowseScreen() {
                 }
               }}
               className="flex-row items-center"
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel="Retry location detection"
+              accessibilityHint="Double tap to detect your current location"
             >
               <Ionicons name="refresh" size={16} color={colors.brand.red} />
               <Text style={{ color: colors.brand.red }} className="text-sm ml-1">

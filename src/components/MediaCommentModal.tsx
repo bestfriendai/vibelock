@@ -69,7 +69,14 @@ function CommentItem({ comment, onLike, onDislike, onReply, onReport, isReply = 
           <Text className="text-text-muted text-xs ml-2">{formatTimeAgo(comment.createdAt)}</Text>
         </View>
 
-        <Pressable onPress={() => onReport(comment.id)} className="p-1">
+        <Pressable
+          onPress={() => onReport(comment.id)}
+          className="p-1"
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel={`More options for comment by ${comment.authorName}`}
+          accessibilityHint="Double tap to report this comment"
+        >
           <Ionicons name="ellipsis-horizontal" size={16} color="#6B7280" />
         </Pressable>
       </View>
@@ -80,7 +87,15 @@ function CommentItem({ comment, onLike, onDislike, onReply, onReport, isReply = 
       {/* Comment Actions */}
       <View className="flex-row items-center space-x-4">
         {/* Like Button */}
-        <Pressable onPress={() => onLike(comment.id)} className="flex-row items-center">
+        <Pressable
+          onPress={() => onLike(comment.id)}
+          className="flex-row items-center"
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel={comment.isLiked ? `Unlike comment by ${comment.authorName}` : `Like comment by ${comment.authorName}`}
+          accessibilityHint={comment.isLiked ? "Double tap to remove your like" : "Double tap to like this comment"}
+          accessibilityState={{ selected: comment.isLiked }}
+        >
           <Ionicons
             name={comment.isLiked ? "heart" : "heart-outline"}
             size={16}
@@ -90,7 +105,15 @@ function CommentItem({ comment, onLike, onDislike, onReply, onReport, isReply = 
         </Pressable>
 
         {/* Dislike Button */}
-        <Pressable onPress={() => onDislike(comment.id)} className="flex-row items-center">
+        <Pressable
+          onPress={() => onDislike(comment.id)}
+          className="flex-row items-center"
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel={comment.isDisliked ? `Remove dislike on comment by ${comment.authorName}` : `Dislike comment by ${comment.authorName}`}
+          accessibilityHint={comment.isDisliked ? "Double tap to remove your dislike" : "Double tap to dislike this comment"}
+          accessibilityState={{ selected: comment.isDisliked }}
+        >
           <Ionicons
             name={comment.isDisliked ? "thumbs-down" : "thumbs-down-outline"}
             size={16}
@@ -101,7 +124,14 @@ function CommentItem({ comment, onLike, onDislike, onReply, onReport, isReply = 
 
         {/* Reply Button */}
         {!isReply && (
-          <Pressable onPress={() => onReply(comment)} className="flex-row items-center">
+          <Pressable
+            onPress={() => onReply(comment)}
+            className="flex-row items-center"
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel={`Reply to comment by ${comment.authorName}`}
+            accessibilityHint="Double tap to write a reply"
+          >
             <Ionicons name="chatbubble-outline" size={16} color="#9CA3AF" />
             <Text className="text-text-muted text-xs ml-1">Reply</Text>
           </Pressable>
