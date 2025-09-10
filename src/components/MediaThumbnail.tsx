@@ -47,9 +47,11 @@ export default function MediaThumbnail({ media, size = 80, onPress, showPlayIcon
       style={{ width: size, height: size }}
       accessible={true}
       accessibilityRole="button"
-      accessibilityLabel={isVideo
-        ? `Video thumbnail${media.duration ? `, duration ${formatDuration(media.duration)}` : ""}. Double tap to view`
-        : "Image thumbnail. Double tap to view"}
+      accessibilityLabel={
+        isVideo
+          ? `Video thumbnail${media.duration ? `, duration ${formatDuration(media.duration)}` : ""}. Double tap to view`
+          : "Image thumbnail. Double tap to view"
+      }
     >
       {isVideo ? (
         videoThumbnail ? (

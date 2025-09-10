@@ -40,10 +40,10 @@ export default class AsyncErrorBoundary extends Component<Props, State> {
         this.setState({ hasError: false, error: null, isRetrying: false });
       } catch (error) {
         console.error("Retry failed:", error);
-        this.setState({ 
-          hasError: true, 
-          error: error instanceof Error ? error : new Error("Retry failed"), 
-          isRetrying: false 
+        this.setState({
+          hasError: true,
+          error: error instanceof Error ? error : new Error("Retry failed"),
+          isRetrying: false,
         });
       }
     } else {
@@ -65,10 +65,11 @@ export default class AsyncErrorBoundary extends Component<Props, State> {
             </Text>
 
             <Text className="text-text-secondary text-center mb-6 leading-5">
-              {this.props.errorMessage || "Something went wrong while loading data. Please check your connection and try again."}
+              {this.props.errorMessage ||
+                "Something went wrong while loading data. Please check your connection and try again."}
             </Text>
 
-            <Pressable 
+            <Pressable
               className={`rounded-xl py-3 px-6 items-center w-full ${
                 this.state.isRetrying ? "bg-surface-700" : "bg-brand-red"
               }`}
@@ -81,9 +82,7 @@ export default class AsyncErrorBoundary extends Component<Props, State> {
                   <Text className="text-white font-semibold ml-2">Retrying...</Text>
                 </View>
               ) : (
-                <Text className="text-white font-semibold">
-                  {this.props.retryText || "Try Again"}
-                </Text>
+                <Text className="text-white font-semibold">{this.props.retryText || "Try Again"}</Text>
               )}
             </Pressable>
 

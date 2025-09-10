@@ -332,9 +332,7 @@ const useCommentsStore = create<CommentsStore>()(
                   set((state) => ({
                     comments: {
                       ...state.comments,
-                      [reviewId]: (state.comments[reviewId] || []).filter(
-                        (comment) => comment.id !== deletedId,
-                      ),
+                      [reviewId]: (state.comments[reviewId] || []).filter((comment) => comment.id !== deletedId),
                     },
                   }));
                 }

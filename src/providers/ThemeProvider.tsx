@@ -151,8 +151,8 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     return undefined;
   }, [theme, setTheme]);
 
-  const currentTheme = isHighContrast ? "high-contrast" : (isDarkMode ? "dark" : "light");
-  const colors = isHighContrast ? highContrastTheme.colors : (isDarkMode ? darkTheme.colors : lightTheme.colors);
+  const currentTheme = isHighContrast ? "high-contrast" : isDarkMode ? "dark" : "light";
+  const colors = isHighContrast ? highContrastTheme.colors : isDarkMode ? darkTheme.colors : lightTheme.colors;
 
   const value: ThemeContextType = {
     theme: currentTheme,

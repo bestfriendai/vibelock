@@ -204,7 +204,8 @@ class SupabaseTestSuite {
     await this.runTest("Storage - Upload Test Image", async () => {
       try {
         // Create a simple test blob (1x1 pixel PNG)
-        const testImageData = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
+        const testImageData =
+          "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
         const response = await fetch(testImageData);
         const blob = await response.blob();
 

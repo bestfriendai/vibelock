@@ -159,11 +159,7 @@ export default function CreateReviewScreen() {
 
   // Looser check to enable the button; full validation still runs on submit
   const hasRequired = Boolean(
-    firstName?.trim() &&
-    selectedLocation?.city &&
-    selectedLocation?.state &&
-    reviewText?.trim() &&
-    mediaCount > 0
+    firstName?.trim() && selectedLocation?.city && selectedLocation?.state && reviewText?.trim() && mediaCount > 0,
   );
 
   const handleSubmit = async () => {
@@ -314,7 +310,12 @@ export default function CreateReviewScreen() {
           </Text>
         </View>
 
-        <ScrollView className="flex-1" showsVerticalScrollIndicator={false} keyboardDismissMode="on-drag" keyboardShouldPersistTaps="handled">
+        <ScrollView
+          className="flex-1"
+          showsVerticalScrollIndicator={false}
+          keyboardDismissMode="on-drag"
+          keyboardShouldPersistTaps="handled"
+        >
           <View className="px-6 py-6">
             {/* Error / Success banners */}
             {error && (

@@ -82,176 +82,176 @@ export default function MediaViewer({
   return (
     <ComponentErrorBoundary componentName="MediaViewer">
       <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose}>
-      <StatusBar hidden />
-      <View className="flex-1 bg-black">
-        <SafeAreaView className="flex-1">
-          {/* Header */}
-          <View className="absolute top-0 left-0 right-0 z-10 bg-black/50 px-4 py-2">
-            <View className="flex-row items-center justify-between">
-              <Pressable
-                onPress={handleClose}
-                className="p-2"
-                accessible={true}
-                accessibilityRole="button"
-                accessibilityLabel="Close media viewer"
-                accessibilityHint="Double tap to close"
-              >
-                <Ionicons name="close" size={24} color="white" />
-              </Pressable>
-              <Text className="text-white font-medium">
-                {currentIndex + 1} of {media.length}
-              </Text>
-              <View className="w-10" />
+        <StatusBar hidden />
+        <View className="flex-1 bg-black">
+          <SafeAreaView className="flex-1">
+            {/* Header */}
+            <View className="absolute top-0 left-0 right-0 z-10 bg-black/50 px-4 py-2">
+              <View className="flex-row items-center justify-between">
+                <Pressable
+                  onPress={handleClose}
+                  className="p-2"
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityLabel="Close media viewer"
+                  accessibilityHint="Double tap to close"
+                >
+                  <Ionicons name="close" size={24} color="white" />
+                </Pressable>
+                <Text className="text-white font-medium">
+                  {currentIndex + 1} of {media.length}
+                </Text>
+                <View className="w-10" />
+              </View>
             </View>
-          </View>
 
-          {/* Media Content */}
-          <View className="flex-1 items-center justify-center">
-            {currentMedia.type === "image" ? (
-              <Image
-                source={{ uri: currentMedia.uri }}
-                style={{
-                  width: screenWidth,
-                  height: screenHeight * 0.8,
-                }}
-                contentFit="contain"
-                transition={200}
-                cachePolicy="memory-disk"
-                placeholder="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
-              />
-            ) : (
-              <View style={{ width: screenWidth, height: screenHeight * 0.8 }}>
-                {videoError ? (
-                  <View className="flex-1 items-center justify-center bg-surface-800">
-                    <Ionicons name="warning-outline" size={48} color="#EF4444" />
-                    <Text className="text-text-primary text-lg mt-4 text-center px-4">{videoError}</Text>
-                    <Pressable
-                      onPress={() => {
-                        setVideoError(null);
-                        setIsVideoLoading(true);
-                        if (!isExpoGo && videoPlayer?.isLoaded) {
-                          videoPlayer.replay();
-                        }
-                        // For Expo Go, the ExpoAVVideo component will handle retry automatically
-                      }}
-                      className="mt-4 bg-brand-red px-6 py-3 rounded-lg"
-                    >
-                      <Text className="text-white font-medium">Retry</Text>
-                    </Pressable>
-                  </View>
-                ) : isExpoGo ? (
-                  // Use expo-av for Expo Go compatibility
-                  <ExpoAVVideo
-                    source={{ uri: currentMedia.uri }}
-                    useNativeControls
-                    resizeMode="contain"
-                    style={{
-                      width: screenWidth,
-                      height: screenHeight * 0.8,
-                    }}
-                    isLooping={false}
-                    shouldPlay={false}
-                  />
-                ) : (
-                  <>
-                    <VideoView
-                      player={videoPlayer}
+            {/* Media Content */}
+            <View className="flex-1 items-center justify-center">
+              {currentMedia.type === "image" ? (
+                <Image
+                  source={{ uri: currentMedia.uri }}
+                  style={{
+                    width: screenWidth,
+                    height: screenHeight * 0.8,
+                  }}
+                  contentFit="contain"
+                  transition={200}
+                  cachePolicy="memory-disk"
+                  placeholder="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+                />
+              ) : (
+                <View style={{ width: screenWidth, height: screenHeight * 0.8 }}>
+                  {videoError ? (
+                    <View className="flex-1 items-center justify-center bg-surface-800">
+                      <Ionicons name="warning-outline" size={48} color="#EF4444" />
+                      <Text className="text-text-primary text-lg mt-4 text-center px-4">{videoError}</Text>
+                      <Pressable
+                        onPress={() => {
+                          setVideoError(null);
+                          setIsVideoLoading(true);
+                          if (!isExpoGo && videoPlayer?.isLoaded) {
+                            videoPlayer.replay();
+                          }
+                          // For Expo Go, the ExpoAVVideo component will handle retry automatically
+                        }}
+                        className="mt-4 bg-brand-red px-6 py-3 rounded-lg"
+                      >
+                        <Text className="text-white font-medium">Retry</Text>
+                      </Pressable>
+                    </View>
+                  ) : isExpoGo ? (
+                    // Use expo-av for Expo Go compatibility
+                    <ExpoAVVideo
+                      source={{ uri: currentMedia.uri }}
+                      useNativeControls
+                      resizeMode="contain"
                       style={{
                         width: screenWidth,
                         height: screenHeight * 0.8,
                       }}
-                      allowsFullscreen
-                      nativeControls
-                      contentFit="contain"
+                      isLooping={false}
+                      shouldPlay={false}
                     />
-                    {isVideoLoading && (
-                      <View className="absolute inset-0 bg-black/50 items-center justify-center">
-                        <View className="bg-white/90 rounded-lg p-4 items-center">
-                          <View className="w-8 h-8 border-2 border-gray-300 border-t-primary-600 rounded-full animate-spin mb-2" />
-                          <Text className="text-gray-800 font-medium">Loading video...</Text>
+                  ) : (
+                    <>
+                      <VideoView
+                        player={videoPlayer}
+                        style={{
+                          width: screenWidth,
+                          height: screenHeight * 0.8,
+                        }}
+                        allowsFullscreen
+                        nativeControls
+                        contentFit="contain"
+                      />
+                      {isVideoLoading && (
+                        <View className="absolute inset-0 bg-black/50 items-center justify-center">
+                          <View className="bg-white/90 rounded-lg p-4 items-center">
+                            <View className="w-8 h-8 border-2 border-gray-300 border-t-primary-600 rounded-full animate-spin mb-2" />
+                            <Text className="text-gray-800 font-medium">Loading video...</Text>
+                          </View>
                         </View>
-                      </View>
-                    )}
-                  </>
-                )}
-              </View>
-            )}
-          </View>
-
-          {/* Navigation Controls */}
-          {media.length > 1 && (
-            <>
-              {/* Previous Button */}
-              {currentIndex > 0 && (
-                <Pressable
-                  onPress={() => navigateMedia("prev")}
-                  className="absolute left-4 top-1/2 -translate-y-6 bg-black/50 rounded-full p-3"
-                  accessible={true}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Go to previous media, ${currentIndex} of ${media.length}`}
-                  accessibilityHint="Double tap to view previous"
-                >
-                  <Ionicons name="chevron-back" size={24} color="white" />
-                </Pressable>
-              )}
-
-              {/* Next Button */}
-              {currentIndex < media.length - 1 && (
-                <Pressable
-                  onPress={() => navigateMedia("next")}
-                  className="absolute right-4 top-1/2 -translate-y-6 bg-black/50 rounded-full p-3"
-                  accessible={true}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Go to next media, ${currentIndex + 2} of ${media.length}`}
-                  accessibilityHint="Double tap to view next"
-                >
-                  <Ionicons name="chevron-forward" size={24} color="white" />
-                </Pressable>
-              )}
-            </>
-          )}
-
-          {/* Bottom Info */}
-          <View className="absolute bottom-0 left-0 right-0 bg-black/50 px-4 py-3">
-            <View className="flex-row items-center justify-between">
-              <View className="flex-row items-center space-x-2">
-                <Ionicons name={currentMedia.type === "video" ? "videocam" : "image"} size={16} color="white" />
-                <Text className="text-white text-sm">{currentMedia.type === "video" ? "Video" : "Image"}</Text>
-                {currentMedia.type === "video" && currentMedia.duration && (
-                  <Text className="text-white/70 text-sm">• {formatDuration(currentMedia.duration)}</Text>
-                )}
-              </View>
-
-              {/* Comment Button */}
-              {onCommentPress && (
-                <View className="flex-row items-center space-x-3">
-                  {/* Comment count indicator */}
-                  {commentCounts[currentMedia.id] && commentCounts[currentMedia.id] > 0 && (
-                    <View className="flex-row items-center">
-                      <Ionicons name="chatbubble" size={14} color="white" />
-                      <Text className="text-white text-sm ml-1">{commentCounts[currentMedia.id]}</Text>
-                    </View>
+                      )}
+                    </>
                   )}
-
-                  {/* Comment button */}
-                  <Pressable
-                    onPress={() => onCommentPress(currentMedia, currentIndex)}
-                    className="bg-white/20 rounded-full px-3 py-2 flex-row items-center"
-                    accessible={true}
-                    accessibilityRole="button"
-                    accessibilityLabel="Comment on this media"
-                    accessibilityHint="Double tap to add a comment"
-                  >
-                    <Ionicons name="chatbubble-outline" size={16} color="white" />
-                    <Text className="text-white text-sm font-medium ml-2">Comment</Text>
-                  </Pressable>
                 </View>
               )}
             </View>
-          </View>
-        </SafeAreaView>
-      </View>
-    </Modal>
+
+            {/* Navigation Controls */}
+            {media.length > 1 && (
+              <>
+                {/* Previous Button */}
+                {currentIndex > 0 && (
+                  <Pressable
+                    onPress={() => navigateMedia("prev")}
+                    className="absolute left-4 top-1/2 -translate-y-6 bg-black/50 rounded-full p-3"
+                    accessible={true}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Go to previous media, ${currentIndex} of ${media.length}`}
+                    accessibilityHint="Double tap to view previous"
+                  >
+                    <Ionicons name="chevron-back" size={24} color="white" />
+                  </Pressable>
+                )}
+
+                {/* Next Button */}
+                {currentIndex < media.length - 1 && (
+                  <Pressable
+                    onPress={() => navigateMedia("next")}
+                    className="absolute right-4 top-1/2 -translate-y-6 bg-black/50 rounded-full p-3"
+                    accessible={true}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Go to next media, ${currentIndex + 2} of ${media.length}`}
+                    accessibilityHint="Double tap to view next"
+                  >
+                    <Ionicons name="chevron-forward" size={24} color="white" />
+                  </Pressable>
+                )}
+              </>
+            )}
+
+            {/* Bottom Info */}
+            <View className="absolute bottom-0 left-0 right-0 bg-black/50 px-4 py-3">
+              <View className="flex-row items-center justify-between">
+                <View className="flex-row items-center space-x-2">
+                  <Ionicons name={currentMedia.type === "video" ? "videocam" : "image"} size={16} color="white" />
+                  <Text className="text-white text-sm">{currentMedia.type === "video" ? "Video" : "Image"}</Text>
+                  {currentMedia.type === "video" && currentMedia.duration && (
+                    <Text className="text-white/70 text-sm">• {formatDuration(currentMedia.duration)}</Text>
+                  )}
+                </View>
+
+                {/* Comment Button */}
+                {onCommentPress && (
+                  <View className="flex-row items-center space-x-3">
+                    {/* Comment count indicator */}
+                    {commentCounts[currentMedia.id] && commentCounts[currentMedia.id] > 0 && (
+                      <View className="flex-row items-center">
+                        <Ionicons name="chatbubble" size={14} color="white" />
+                        <Text className="text-white text-sm ml-1">{commentCounts[currentMedia.id]}</Text>
+                      </View>
+                    )}
+
+                    {/* Comment button */}
+                    <Pressable
+                      onPress={() => onCommentPress(currentMedia, currentIndex)}
+                      className="bg-white/20 rounded-full px-3 py-2 flex-row items-center"
+                      accessible={true}
+                      accessibilityRole="button"
+                      accessibilityLabel="Comment on this media"
+                      accessibilityHint="Double tap to add a comment"
+                    >
+                      <Ionicons name="chatbubble-outline" size={16} color="white" />
+                      <Text className="text-white text-sm font-medium ml-2">Comment</Text>
+                    </Pressable>
+                  </View>
+                )}
+              </View>
+            </View>
+          </SafeAreaView>
+        </View>
+      </Modal>
     </ComponentErrorBoundary>
   );
 }

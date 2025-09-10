@@ -828,9 +828,7 @@ export const supabaseStorage = {
       const uploadOptions: any = { upsert: options?.upsert ?? true };
       if (type) uploadOptions.contentType = type;
 
-      const { data, error } = await supabase.storage
-        .from(bucket)
-        .upload(path, file as any, uploadOptions);
+      const { data, error } = await supabase.storage.from(bucket).upload(path, file as any, uploadOptions);
 
       if (error) {
         console.error(`❌ Supabase Storage upload error:`, error);

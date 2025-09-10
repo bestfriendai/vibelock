@@ -366,11 +366,10 @@ const useReviewsStore = create<ReviewsStore>()(
             try {
               if (mediaItem.type === "image") {
                 // Compress and resize image using expo-image-manipulator
-                const manipulatedImage = await manipulateAsync(
-                  mediaItem.uri,
-                  [{ resize: { width: 800 } }],
-                  { compress: 0.8, format: SaveFormat.JPEG },
-                );
+                const manipulatedImage = await manipulateAsync(mediaItem.uri, [{ resize: { width: 800 } }], {
+                  compress: 0.8,
+                  format: SaveFormat.JPEG,
+                });
 
                 // Use FileSystem to read the manipulated image as base64
                 // Then convert base64 -> ArrayBuffer via data URL (RN-safe)
@@ -395,12 +394,10 @@ const useReviewsStore = create<ReviewsStore>()(
                 }
 
                 const filename = `reviews/${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`;
-                const downloadURL = await supabaseStorage.uploadFile(
-                  "review-images",
-                  filename,
-                  arrayBuffer,
-                  { contentType: "image/jpeg", upsert: true },
-                );
+                const downloadURL = await supabaseStorage.uploadFile("review-images", filename, arrayBuffer, {
+                  contentType: "image/jpeg",
+                  upsert: true,
+                });
 
                 uploadedMedia.push({
                   ...mediaItem,
@@ -413,9 +410,7 @@ const useReviewsStore = create<ReviewsStore>()(
                 const videoBase64 = await FileSystem.readAsStringAsync(mediaItem.uri, {
                   encoding: FileSystem.EncodingType.Base64,
                 });
-                const mime = mediaItem.uri.toLowerCase().endsWith(".mov")
-                  ? "video/quicktime"
-                  : "video/mp4";
+                const mime = mediaItem.uri.toLowerCase().endsWith(".mov") ? "video/quicktime" : "video/mp4";
                 const dataUrl = `data:${mime};base64,${videoBase64}`;
                 const vResp = await fetch(dataUrl);
                 const arrayBuffer = await vResp.arrayBuffer();
@@ -435,17 +430,17 @@ const useReviewsStore = create<ReviewsStore>()(
                 let thumbnailUrl: string | undefined;
                 try {
                   const { uri: thumbLocal } = await VideoThumbnails.getThumbnailAsync(mediaItem.uri, { time: 1000 });
-                  const thumbB64 = await FileSystem.readAsStringAsync(thumbLocal, { encoding: FileSystem.EncodingType.Base64 });
+                  const thumbB64 = await FileSystem.readAsStringAsync(thumbLocal, {
+                    encoding: FileSystem.EncodingType.Base64,
+                  });
                   const thumbResp = await fetch(`data:image/jpeg;base64,${thumbB64}`);
                   const thumbBuf = await thumbResp.arrayBuffer();
                   if (thumbBuf && thumbBuf.byteLength > 0) {
                     const thumbName = `reviews/${Date.now()}_${Math.random().toString(36).substring(7)}_thumb.jpg`;
-                    thumbnailUrl = await supabaseStorage.uploadFile(
-                      "review-images",
-                      thumbName,
-                      thumbBuf,
-                      { contentType: "image/jpeg", upsert: true },
-                    );
+                    thumbnailUrl = await supabaseStorage.uploadFile("review-images", thumbName, thumbBuf, {
+                      contentType: "image/jpeg",
+                      upsert: true,
+                    });
                   }
                 } catch (thumbErr) {
                   console.warn("⚠️ Failed to generate/upload video thumbnail:", thumbErr);
@@ -454,12 +449,10 @@ const useReviewsStore = create<ReviewsStore>()(
                 const ext = mime === "video/quicktime" ? "mov" : "mp4";
                 const filename = `reviews/${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
                 // Use review-images bucket (unrestricted MIME types)
-                const downloadURL = await supabaseStorage.uploadFile(
-                  "review-images",
-                  filename,
-                  arrayBuffer,
-                  { contentType: mime, upsert: true },
-                );
+                const downloadURL = await supabaseStorage.uploadFile("review-images", filename, arrayBuffer, {
+                  contentType: mime,
+                  upsert: true,
+                });
 
                 uploadedMedia.push({
                   ...mediaItem,

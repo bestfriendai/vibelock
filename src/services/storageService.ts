@@ -108,6 +108,38 @@ class StorageService {
       throw new AppError("Invalid file path: path too long", ErrorType.VALIDATION, "PATH_TOO_LONG");
     }
 
+    // Additional check: ensure path doesn't contain consecutive dots that could be used for traversal
+    if (sanitized.match(/\.{2,}/)) {
+      throw new AppError("Invalid file path: contains suspicious dot patterns", ErrorType.VALIDATION, "DOT_PATTERN");
+    }
+
+    return sanitized;
+  }
+
+  /**
+   * Sanitize folder name to prevent directory traversal and injection attacks
+   */
+  private sanitizeFolder(folder: string): string {
+    if (!folder || typeof folder !== "string") {
+      throw new AppError(
+        "Invalid folder name: folder must be a non-empty string",
+        ErrorType.VALIDATION,
+        "INVALID_FOLDER",
+      );
+    }
+
+    // Apply the same sanitization as for paths
+    const sanitized = this.sanitizePath(folder);
+
+    // Additional folder-specific validation
+    if (sanitized === "." || sanitized === "..") {
+      throw new AppError(
+        "Invalid folder name: relative directory references not allowed",
+        ErrorType.VALIDATION,
+        "INVALID_FOLDER",
+      );
+    }
+
     return sanitized;
   }
 
@@ -310,7 +342,12 @@ class StorageService {
    */
   async deleteFile(bucket: string, filePath: string): Promise<boolean> {
     try {
-      const { error } = await supabase.storage.from(bucket).remove([filePath]);
+      // Validate bucket name to prevent injection attacks
+      this.validateBucket(bucket);
+      // Sanitize file path to prevent directory traversal attacks
+      const sanitizedPath = this.sanitizePath(filePath);
+
+      const { error } = await supabase.storage.from(bucket).remove([sanitizedPath]);
 
       if (error) {
         console.error("Delete error:", error);
@@ -328,9 +365,19 @@ class StorageService {
    * Get public URL for a file
    */
   getPublicUrl(bucket: string, filePath: string): string {
-    const { data } = supabase.storage.from(bucket).getPublicUrl(filePath);
+    try {
+      // Validate bucket name to prevent injection attacks
+      this.validateBucket(bucket);
 
-    return data.publicUrl;
+      // Sanitize file path to prevent directory traversal attacks
+      const sanitizedPath = this.sanitizePath(filePath);
+
+      const { data } = supabase.storage.from(bucket).getPublicUrl(sanitizedPath);
+      return data.publicUrl;
+    } catch (error) {
+      console.error("Error getting public URL:", error);
+      return "";
+    }
   }
 
   /**
@@ -338,7 +385,13 @@ class StorageService {
    */
   async createSignedUrl(bucket: string, filePath: string, expiresIn: number = 3600): Promise<string | null> {
     try {
-      const { data, error } = await supabase.storage.from(bucket).createSignedUrl(filePath, expiresIn);
+      // Validate bucket name to prevent injection attacks
+      this.validateBucket(bucket);
+
+      // Sanitize file path to prevent directory traversal attacks
+      const sanitizedPath = this.sanitizePath(filePath);
+
+      const { data, error } = await supabase.storage.from(bucket).createSignedUrl(sanitizedPath, expiresIn);
 
       if (error) {
         console.error("Signed URL error:", error);

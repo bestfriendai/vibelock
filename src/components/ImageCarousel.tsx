@@ -57,11 +57,11 @@ export default function ImageCarousel({
   }, [currentIndex, media]);
 
   if (!media || media.length === 0) {
-    console.log('ImageCarousel: No media provided');
+    console.log("ImageCarousel: No media provided");
     return null;
   }
 
-  console.log('ImageCarousel: Rendering with media:', media.length, 'items');
+  console.log("ImageCarousel: Rendering with media:", media.length, "items");
 
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const contentOffset = event.nativeEvent.contentOffset;
@@ -114,7 +114,7 @@ export default function ImageCarousel({
           >
             {item.type === "video" ? (
               // If we have a thumbnail for the video, show it; otherwise show a neutral placeholder
-              (item.thumbnailUri && /^https?:\/\//.test(item.thumbnailUri)) ? (
+              item.thumbnailUri && /^https?:\/\//.test(item.thumbnailUri) ? (
                 <Image
                   source={{ uri: item.thumbnailUri }}
                   style={{ width: "100%", height }}

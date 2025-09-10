@@ -56,20 +56,20 @@ export const ErrorBoundaryTestScreen: React.FC = () => {
   const runAllTests = () => {
     clearResults();
     addResult("🧪 Starting error boundary tests...");
-    
+
     // Enable all tests one by one
     setTimeout(() => {
       toggleTest("basicError");
     }, 500);
-    
+
     setTimeout(() => {
       toggleTest("componentError");
     }, 1000);
-    
+
     setTimeout(() => {
       toggleTest("screenError");
     }, 1500);
-    
+
     addResult("🎉 All error boundary tests initiated!");
   };
 
@@ -86,19 +86,13 @@ export const ErrorBoundaryTestScreen: React.FC = () => {
         {/* Test Controls */}
         <View className="bg-surface-800 rounded-xl p-4 mb-6">
           <Text className="text-text-primary text-lg font-semibold mb-4">Test Controls</Text>
-          
+
           <View className="space-y-3">
-            <Pressable
-              className="bg-brand-red rounded-lg py-3 px-4 items-center"
-              onPress={runAllTests}
-            >
+            <Pressable className="bg-brand-red rounded-lg py-3 px-4 items-center" onPress={runAllTests}>
               <Text className="text-white font-semibold">Run All Tests</Text>
             </Pressable>
 
-            <Pressable
-              className="bg-surface-700 rounded-lg py-3 px-4 items-center"
-              onPress={clearResults}
-            >
+            <Pressable className="bg-surface-700 rounded-lg py-3 px-4 items-center" onPress={clearResults}>
               <Text className="text-text-primary font-medium">Clear Results</Text>
             </Pressable>
           </View>
@@ -107,12 +101,10 @@ export const ErrorBoundaryTestScreen: React.FC = () => {
         {/* Individual Test Buttons */}
         <View className="bg-surface-800 rounded-xl p-4 mb-6">
           <Text className="text-text-primary text-lg font-semibold mb-4">Individual Tests</Text>
-          
+
           <View className="space-y-3">
             <Pressable
-              className={`rounded-lg py-3 px-4 items-center ${
-                testStates.basicError ? "bg-red-600" : "bg-surface-700"
-              }`}
+              className={`rounded-lg py-3 px-4 items-center ${testStates.basicError ? "bg-red-600" : "bg-surface-700"}`}
               onPress={() => toggleTest("basicError")}
             >
               <Text className="text-white font-medium">
@@ -176,7 +168,7 @@ export const ErrorBoundaryTestScreen: React.FC = () => {
             <AsyncErrorBoundary
               onRetry={async () => {
                 addResult("Async retry attempted");
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                await new Promise((resolve) => setTimeout(resolve, 1000));
               }}
             >
               <AsyncThrowingComponent shouldThrow={testStates.asyncError} />
@@ -207,8 +199,8 @@ export const ErrorBoundaryTestScreen: React.FC = () => {
             <Text className="text-blue-400 text-sm font-medium ml-2">Testing Instructions</Text>
           </View>
           <Text className="text-blue-300 text-xs leading-5">
-            Each test should show a different error boundary UI when enabled. The basic boundary shows a full-screen error,
-            component boundaries show inline errors, and screen boundaries provide navigation options.
+            Each test should show a different error boundary UI when enabled. The basic boundary shows a full-screen
+            error, component boundaries show inline errors, and screen boundaries provide navigation options.
           </Text>
         </View>
       </ScrollView>

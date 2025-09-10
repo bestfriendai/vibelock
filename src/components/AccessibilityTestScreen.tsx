@@ -46,11 +46,11 @@ export const AccessibilityTestScreen: React.FC = () => {
   const runAllTests = () => {
     clearResults();
     addResult("🧪 Starting comprehensive accessibility tests...");
-    
+
     setTimeout(() => testColorContrast(), 500);
     setTimeout(() => testScreenReader(), 1000);
     setTimeout(() => testKeyboardNavigation(), 1500);
-    
+
     setTimeout(() => {
       addResult("🎉 All accessibility tests completed!");
       addResult("Review results and test manually with assistive technologies");
@@ -74,7 +74,7 @@ export const AccessibilityTestScreen: React.FC = () => {
           <Text className="text-lg font-semibold mb-4" style={{ color: colors.text.primary }}>
             Theme & Contrast Controls
           </Text>
-          
+
           <View className="space-y-4">
             {/* Theme Selector */}
             <View>
@@ -86,9 +86,7 @@ export const AccessibilityTestScreen: React.FC = () => {
                   <Pressable
                     key={themeOption}
                     onPress={() => setTheme(themeOption)}
-                    className={`px-4 py-2 rounded-lg ${
-                      theme === themeOption ? "opacity-100" : "opacity-60"
-                    }`}
+                    className={`px-4 py-2 rounded-lg ${theme === themeOption ? "opacity-100" : "opacity-60"}`}
                     style={{
                       backgroundColor: theme === themeOption ? colors.brand.red : colors.surface[700],
                     }}
@@ -139,7 +137,7 @@ export const AccessibilityTestScreen: React.FC = () => {
           <Text className="text-lg font-semibold mb-4" style={{ color: colors.text.primary }}>
             Accessibility Tests
           </Text>
-          
+
           <View className="space-y-3">
             <Pressable
               className="rounded-lg py-3 px-4 items-center"
@@ -201,7 +199,7 @@ export const AccessibilityTestScreen: React.FC = () => {
           <Text className="text-lg font-semibold mb-4" style={{ color: colors.text.primary }}>
             Color Contrast Examples
           </Text>
-          
+
           <View className="space-y-3">
             <View className="p-3 rounded-lg" style={{ backgroundColor: colors.background }}>
               <Text style={{ color: colors.text.primary }} className="font-semibold">
@@ -216,15 +214,11 @@ export const AccessibilityTestScreen: React.FC = () => {
             </View>
 
             <View className="p-3 rounded-lg" style={{ backgroundColor: colors.brand.red }}>
-              <Text className="text-white font-semibold">
-                Brand Color Text (AAA)
-              </Text>
+              <Text className="text-white font-semibold">Brand Color Text (AAA)</Text>
             </View>
 
             <View className="p-3 rounded-lg" style={{ backgroundColor: colors.brand.red }}>
-              <Text className="text-white font-semibold">
-                Success Color Text
-              </Text>
+              <Text className="text-white font-semibold">Success Color Text</Text>
             </View>
           </View>
         </View>
@@ -241,11 +235,7 @@ export const AccessibilityTestScreen: React.FC = () => {
           ) : (
             <ScrollView className="max-h-40">
               {testResults.map((result, index) => (
-                <Text
-                  key={index}
-                  className="text-sm mb-1 font-mono"
-                  style={{ color: colors.text.secondary }}
-                >
+                <Text key={index} className="text-sm mb-1 font-mono" style={{ color: colors.text.secondary }}>
                   {result}
                 </Text>
               ))}

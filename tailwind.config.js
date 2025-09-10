@@ -69,7 +69,6 @@ module.exports = {
       fontSize: { xs: "10px", sm: "12px", base: "14px", lg: "18px", xl: "20px", "2xl": "24px", "3xl": "32px" },
     },
   },
-  darkMode: "class",
   plugins: [
     plugin(({ matchUtilities, theme }) => {
       const spacing = theme("spacing");

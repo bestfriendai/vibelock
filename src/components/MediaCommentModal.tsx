@@ -92,7 +92,9 @@ function CommentItem({ comment, onLike, onDislike, onReply, onReport, isReply = 
           className="flex-row items-center"
           accessible={true}
           accessibilityRole="button"
-          accessibilityLabel={comment.isLiked ? `Unlike comment by ${comment.authorName}` : `Like comment by ${comment.authorName}`}
+          accessibilityLabel={
+            comment.isLiked ? `Unlike comment by ${comment.authorName}` : `Like comment by ${comment.authorName}`
+          }
           accessibilityHint={comment.isLiked ? "Double tap to remove your like" : "Double tap to like this comment"}
           accessibilityState={{ selected: comment.isLiked }}
         >
@@ -110,8 +112,14 @@ function CommentItem({ comment, onLike, onDislike, onReply, onReport, isReply = 
           className="flex-row items-center"
           accessible={true}
           accessibilityRole="button"
-          accessibilityLabel={comment.isDisliked ? `Remove dislike on comment by ${comment.authorName}` : `Dislike comment by ${comment.authorName}`}
-          accessibilityHint={comment.isDisliked ? "Double tap to remove your dislike" : "Double tap to dislike this comment"}
+          accessibilityLabel={
+            comment.isDisliked
+              ? `Remove dislike on comment by ${comment.authorName}`
+              : `Dislike comment by ${comment.authorName}`
+          }
+          accessibilityHint={
+            comment.isDisliked ? "Double tap to remove your dislike" : "Double tap to dislike this comment"
+          }
           accessibilityState={{ selected: comment.isDisliked }}
         >
           <Ionicons

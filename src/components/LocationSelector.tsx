@@ -310,7 +310,7 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
         }}
         accessible={true}
         accessibilityRole="button"
-        accessibilityLabel={`Location selector. Current location: ${currentLocation.type === "college" ? (currentLocation.fullName?.split(" - ")[0] || `${currentLocation.city}, ${currentLocation.state}`) : `${currentLocation.city}, ${currentLocation.state}`}`}
+        accessibilityLabel={`Location selector. Current location: ${currentLocation.type === "college" ? currentLocation.fullName?.split(" - ")[0] || `${currentLocation.city}, ${currentLocation.state}` : `${currentLocation.city}, ${currentLocation.state}`}`}
         accessibilityHint="Double tap to change location"
       >
         <Ionicons
@@ -374,12 +374,12 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
               />
               {searchText.length > 0 && (
                 <Pressable
-                      onPress={() => setSearchText("")}
-                      accessible={true}
-                      accessibilityRole="button"
-                      accessibilityLabel="Clear search"
-                      accessibilityHint="Double tap to clear the search text"
-                    >
+                  onPress={() => setSearchText("")}
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityLabel="Clear search"
+                  accessibilityHint="Double tap to clear the search text"
+                >
                   <Ionicons name="close-circle" size={20} color={colors.text.muted} />
                 </Pressable>
               )}
@@ -395,7 +395,11 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
               accessible={true}
               accessibilityRole="button"
               accessibilityLabel={isLoadingCurrentLocation ? "Getting your current location" : "Use current location"}
-              accessibilityHint={isLoadingCurrentLocation ? "Please wait while we detect your location" : "Double tap to set your current location"}
+              accessibilityHint={
+                isLoadingCurrentLocation
+                  ? "Please wait while we detect your location"
+                  : "Double tap to set your current location"
+              }
             >
               {isLoadingCurrentLocation ? (
                 <ActivityIndicator size="small" color="#FFFFFF" />

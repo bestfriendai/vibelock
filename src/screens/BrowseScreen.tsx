@@ -127,7 +127,7 @@ export default function BrowseScreen() {
       }, 500);
 
       return () => clearTimeout(timeoutId);
-    }, [loadReviews])
+    }, [loadReviews]),
   );
 
   // Memoize the filter-based load function

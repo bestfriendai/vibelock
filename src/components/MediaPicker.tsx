@@ -32,36 +32,40 @@ export const MediaPicker: React.FC<MediaPickerProps> = ({ onMediaSelect, onClose
 
   // File validation constants (matching StorageService)
   const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
-  const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-  const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/quicktime'];
-  const ALLOWED_AUDIO_TYPES = ['audio/mp4', 'audio/mpeg', 'audio/wav'];
+  const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+  const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/quicktime"];
+  const ALLOWED_AUDIO_TYPES = ["audio/mp4", "audio/mpeg", "audio/wav"];
 
   /**
    * Validate selected media file
    */
-  const validateMediaFile = (asset: any, type: 'image' | 'video' | 'document'): void => {
+  const validateMediaFile = (asset: any, type: "image" | "video" | "document"): void => {
     // Check file size
     if (asset.fileSize && asset.fileSize > MAX_FILE_SIZE) {
-      throw new AppError('File too large (max 50MB)', ErrorType.VALIDATION, 'FILE_TOO_LARGE');
+      throw new AppError("File too large (max 50MB)", ErrorType.VALIDATION, "FILE_TOO_LARGE");
     }
 
     // Check file type for images and videos
-    if (type === 'image') {
-      const extension = asset.fileName?.toLowerCase().split('.').pop();
-      const mimeType = extension === 'jpg' || extension === 'jpeg' ? 'image/jpeg' :
-                      extension === 'png' ? 'image/png' :
-                      extension === 'webp' ? 'image/webp' : 'unknown';
+    if (type === "image") {
+      const extension = asset.fileName?.toLowerCase().split(".").pop();
+      const mimeType =
+        extension === "jpg" || extension === "jpeg"
+          ? "image/jpeg"
+          : extension === "png"
+            ? "image/png"
+            : extension === "webp"
+              ? "image/webp"
+              : "unknown";
 
       if (!ALLOWED_IMAGE_TYPES.includes(mimeType)) {
-        throw new AppError(`Invalid image type: ${extension}`, ErrorType.VALIDATION, 'INVALID_FILE_TYPE');
+        throw new AppError(`Invalid image type: ${extension}`, ErrorType.VALIDATION, "INVALID_FILE_TYPE");
       }
-    } else if (type === 'video') {
-      const extension = asset.fileName?.toLowerCase().split('.').pop();
-      const mimeType = extension === 'mp4' ? 'video/mp4' :
-                      extension === 'mov' ? 'video/quicktime' : 'unknown';
+    } else if (type === "video") {
+      const extension = asset.fileName?.toLowerCase().split(".").pop();
+      const mimeType = extension === "mp4" ? "video/mp4" : extension === "mov" ? "video/quicktime" : "unknown";
 
       if (!ALLOWED_VIDEO_TYPES.includes(mimeType)) {
-        throw new AppError(`Invalid video type: ${extension}`, ErrorType.VALIDATION, 'INVALID_FILE_TYPE');
+        throw new AppError(`Invalid video type: ${extension}`, ErrorType.VALIDATION, "INVALID_FILE_TYPE");
       }
     }
   };

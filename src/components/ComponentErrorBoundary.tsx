@@ -57,10 +57,7 @@ export default class ComponentErrorBoundary extends Component<Props, State> {
           </View>
 
           {this.props.showRetry !== false && (
-            <Pressable
-              className="bg-surface-700 rounded-lg py-2 px-3 items-center"
-              onPress={this.handleRetry}
-            >
+            <Pressable className="bg-surface-700 rounded-lg py-2 px-3 items-center" onPress={this.handleRetry}>
               <Text className="text-text-primary text-sm font-medium">Retry</Text>
             </Pressable>
           )}

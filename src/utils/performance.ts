@@ -13,16 +13,15 @@ class PerformanceMonitor {
   }
 
   start(label: string): () => void {
-    const startTime = (globalThis.performance?.now?.() ?? Date.now());
+    const startTime = globalThis.performance?.now?.() ?? Date.now();
     return () => {
-      const endTime = (globalThis.performance?.now?.() ?? Date.now());
+      const endTime = globalThis.performance?.now?.() ?? Date.now();
       const duration = endTime - startTime;
 
       if (!this.metrics.has(label)) this.metrics.set(label, []);
       this.metrics.get(label)!.push(duration);
 
       if (duration > 100) {
-        // eslint-disable-next-line no-console
         console.warn(`🐌 Slow operation: ${label} took ${duration.toFixed(1)}ms`);
       }
     };
@@ -41,4 +40,3 @@ export function startTimer(label: string): () => void {
 export function getAverageDuration(label: string): number {
   return PerformanceMonitor.getInstance().average(label);
 }
-

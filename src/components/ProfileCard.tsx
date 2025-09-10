@@ -128,7 +128,9 @@ export default function ProfileCard({ review, cardHeight = 280, onReport, onLike
   const getImageSource = () => {
     // Prefer the first IMAGE in media with a valid https? URL
     const mediaArray = Array.isArray(review.media) ? review.media : [];
-    const firstImage = mediaArray.find((m) => m?.type === "image" && typeof m?.uri === "string" && /^https?:\/\//.test(m.uri));
+    const firstImage = mediaArray.find(
+      (m) => m?.type === "image" && typeof m?.uri === "string" && /^https?:\/\//.test(m.uri),
+    );
     if (firstImage?.uri) {
       return firstImage.uri;
     }
@@ -155,8 +157,12 @@ export default function ProfileCard({ review, cardHeight = 280, onReport, onLike
         {/* Profile Media (Image or Video) */}
         {(() => {
           const mediaArray = Array.isArray(review.media) ? review.media : [];
-          const firstImage = mediaArray.find((m) => m?.type === "image" && typeof m?.uri === "string" && /^https?:\/\//.test(m.uri));
-          const firstVideo = mediaArray.find((m) => m?.type === "video" && typeof m?.uri === "string" && /^https?:\/\//.test(m.uri));
+          const firstImage = mediaArray.find(
+            (m) => m?.type === "image" && typeof m?.uri === "string" && /^https?:\/\//.test(m.uri),
+          );
+          const firstVideo = mediaArray.find(
+            (m) => m?.type === "video" && typeof m?.uri === "string" && /^https?:\/\//.test(m.uri),
+          );
 
           if (firstImage) {
             return (
@@ -174,7 +180,10 @@ export default function ProfileCard({ review, cardHeight = 280, onReport, onLike
 
           if (firstVideo) {
             // Prefer a real thumbnail image for videos if available
-            const hasThumb = typeof firstVideo.thumbnailUri === "string" && /^https?:\/\//.test(firstVideo.thumbnailUri) && !videoThumbError;
+            const hasThumb =
+              typeof firstVideo.thumbnailUri === "string" &&
+              /^https?:\/\//.test(firstVideo.thumbnailUri) &&
+              !videoThumbError;
             if (hasThumb) {
               return (
                 <View style={{ width: cardWidth, height: cardHeight }}>

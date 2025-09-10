@@ -11,24 +11,26 @@ o1-preview
 o1-mini
 */
 
-import { generateOpenAIResponse } from './secure-ai-service';
+import { generateOpenAIResponse } from "./secure-ai-service";
 
 /**
  * @deprecated Use generateOpenAIResponse from secure-ai-service instead
  * This function is maintained for backward compatibility but now uses secure proxy
  */
 export const getOpenAIClient = () => {
-  console.warn('getOpenAIClient is deprecated. Use generateOpenAIResponse from secure-ai-service instead.');
+  console.warn("getOpenAIClient is deprecated. Use generateOpenAIResponse from secure-ai-service instead.");
 
   // Return a mock client that throws an error to prevent direct usage
   return {
     chat: {
       completions: {
         create: () => {
-          throw new Error('Direct OpenAI client usage is disabled for security. Use generateOpenAIResponse from secure-ai-service instead.');
-        }
-      }
-    }
+          throw new Error(
+            "Direct OpenAI client usage is disabled for security. Use generateOpenAIResponse from secure-ai-service instead.",
+          );
+        },
+      },
+    },
   };
 };
 

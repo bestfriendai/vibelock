@@ -69,7 +69,11 @@ export function escapeHtml(text: string): string {
 /**
  * Sanitize text input by removing potentially dangerous characters
  */
-export function sanitizeText(input: string, maxLength: number = 1000, options: { preventSQLInjection?: boolean; preventXSS?: boolean } = {}): string {
+export function sanitizeText(
+  input: string,
+  maxLength: number = 1000,
+  options: { preventSQLInjection?: boolean; preventXSS?: boolean } = {},
+): string {
   if (typeof input !== "string") return "";
 
   const { preventSQLInjection = true, preventXSS = true } = options;
