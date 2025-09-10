@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { View, Text, Pressable } from "react-native";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
+import { Video as ExpoAVVideo, ResizeMode } from "expo-av";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import Animated, { useSharedValue, useAnimatedStyle, withSpring, withDelay, FadeIn } from "react-native-reanimated";
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from "react-native-reanimated";
 import { BrowseStackParamList } from "../navigation/AppNavigator";
 import { Review } from "../types";
 import { shareService } from "../services/shareService";
@@ -122,24 +123,104 @@ export default function ProfileCard({ review, cardHeight = 280, onReport, onLike
     }
   };
 
+  // Get the image source - prefer first valid image in media, then profilePhoto, then placeholder
+  const getImageSource = () => {
+    // Prefer the first IMAGE in media with a valid https? URL
+    const mediaArray = Array.isArray(review.media) ? review.media : [];
+    const firstImage = mediaArray.find((m) => m?.type === "image" && typeof m?.uri === "string" && /^https?:\/\//.test(m.uri));
+    if (firstImage?.uri) {
+      return firstImage.uri;
+    }
+
+    // If no image found, try profilePhoto if it's a remote URL
+    if (typeof review.profilePhoto === "string" && /^https?:\/\//.test(review.profilePhoto)) {
+      return review.profilePhoto;
+    }
+
+    // Final fallback to placeholder
+    const placeholder = `https://picsum.photos/${Math.floor(cardWidth)}/${cardHeight}?random=${review.id}`;
+    return placeholder;
+  };
+
   return (
     <Animated.View style={[animatedCardStyle, { width: cardWidth, height: cardHeight }]}>
       <Pressable onPress={handlePress} className="overflow-hidden rounded-2xl mb-4 flex-1">
-        {/* Profile Image */}
-        <Image
-          source={{
-            uri:
-              review.profilePhoto || `https://picsum.photos/${Math.floor(cardWidth)}/${cardHeight}?random=${review.id}`,
-          }}
-          style={{ width: cardWidth, height: cardHeight }}
-          contentFit="cover"
-          transition={300}
-          onLoad={() => setImageLoaded(true)}
-          placeholder="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
-        />
+        {/* Profile Media (Image or Video) */}
+        {(() => {
+          const mediaArray = Array.isArray(review.media) ? review.media : [];
+          const firstImage = mediaArray.find((m) => m?.type === "image" && typeof m?.uri === "string" && /^https?:\/\//.test(m.uri));
+          const firstVideo = mediaArray.find((m) => m?.type === "video" && typeof m?.uri === "string" && /^https?:\/\//.test(m.uri));
 
-        {/* Loading overlay */}
-        {!imageLoaded && (
+          if (firstImage) {
+            return (
+              <Image
+                source={{ uri: firstImage.uri }}
+                style={{ width: cardWidth, height: cardHeight }}
+                contentFit="cover"
+                transition={300}
+                onLoad={() => setImageLoaded(true)}
+                placeholder="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+              />
+            );
+          }
+
+          if (firstVideo) {
+            // Prefer a real thumbnail image for videos if available
+            const hasThumb = typeof firstVideo.thumbnailUri === "string" && /^https?:\/\//.test(firstVideo.thumbnailUri);
+            if (hasThumb) {
+              return (
+                <View style={{ width: cardWidth, height: cardHeight }}>
+                  <Image
+                    source={{ uri: firstVideo.thumbnailUri as string }}
+                    style={{ width: cardWidth, height: cardHeight }}
+                    contentFit="cover"
+                    transition={300}
+                    onLoad={() => setImageLoaded(true)}
+                    placeholder="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+                  />
+                  <View className="absolute inset-0 items-center justify-center">
+                    <View className="bg-black/60 rounded-full p-3">
+                      <Ionicons name="play" size={20} color="#FFFFFF" />
+                    </View>
+                  </View>
+                </View>
+              );
+            }
+            // Fallback to rendering the paused video if no thumbnail exists
+            return (
+              <View style={{ width: cardWidth, height: cardHeight }}>
+                <ExpoAVVideo
+                  source={{ uri: firstVideo.uri }}
+                  style={{ width: cardWidth, height: cardHeight }}
+                  resizeMode={ResizeMode.COVER}
+                  isMuted
+                  shouldPlay={false}
+                  useNativeControls={false}
+                />
+                <View className="absolute inset-0 items-center justify-center">
+                  <View className="bg-black/60 rounded-full p-3">
+                    <Ionicons name="play" size={20} color="#FFFFFF" />
+                  </View>
+                </View>
+              </View>
+            );
+          }
+
+          // Fallback to profilePhoto or placeholder
+          return (
+            <Image
+              source={{ uri: getImageSource() }}
+              style={{ width: cardWidth, height: cardHeight }}
+              contentFit="cover"
+              transition={300}
+              onLoad={() => setImageLoaded(true)}
+              placeholder="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+            />
+          );
+        })()}
+
+        {/* Loading overlay: only for image branch */}
+        {!imageLoaded && Array.isArray(review.media) && review.media.some((m) => m.type === "image") && (
           <View
             className="absolute inset-0 items-center justify-center"
             style={{ backgroundColor: colors.surface[800] }}

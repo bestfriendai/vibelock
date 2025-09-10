@@ -1,0 +1,66 @@
+🧪 Starting Comprehensive Image Upload Pipeline Tests
+
+📦 Test 1: Storage Bucket Access
+⚠️  Storage bucket response: 400
+
+📋 Test 2: Recent Reviews Retrieval
+✅ Retrieved 10 reviews
+
+🔍 Test 3: Media URL Validation
+📊 Media Validation Results:
+  Total media items: 18
+  Valid HTTPS URLs: 12 (67%)
+  Legacy file:// URIs: 6 (33%)
+  Empty URIs: 0
+  Valid profile photos: 7
+  Legacy profile photos: 3
+✅ Media validation passed - found valid HTTPS URLs
+
+🖼️  Test 4: Image Accessibility
+⚠️  Image empty (0 bytes): https://dqjhwqhelqwhvtpxccwj.supabase.co/storage/v1/object/public/review-images/...
+⚠️  Image empty (0 bytes): https://dqjhwqhelqwhvtpxccwj.supabase.co/storage/v1/object/public/review-images/...
+⚠️  Image empty (0 bytes): https://dqjhwqhelqwhvtpxccwj.supabase.co/storage/v1/object/public/review-images/...
+⚠️  Image empty (0 bytes): https://dqjhwqhelqwhvtpxccwj.supabase.co/storage/v1/object/public/review-images/...
+⚠️  Image empty (0 bytes): https://dqjhwqhelqwhvtpxccwj.supabase.co/storage/v1/object/public/review-images/...
+⚠️  Image empty (0 bytes): https://dqjhwqhelqwhvtpxccwj.supabase.co/storage/v1/object/public/review-images/...
+⚠️  Image empty (0 bytes): https://dqjhwqhelqwhvtpxccwj.supabase.co/storage/v1/object/public/review-images/...
+
+📊 Image Accessibility Results:
+  Accessible images: 0
+  Empty images (0 bytes): 7
+  Inaccessible images: 0
+⚠️  WARNING: Found empty image files - upload pipeline may have issues
+
+🚀 Test 5: Upload Pipeline Status
+   📸 Media: https://dqjhwqhelqwhvtpxccwj.supabase.co/storage/v1/object/p... (0 bytes)
+   📸 Media: https://dqjhwqhelqwhvtpxccwj.supabase.co/storage/v1/object/p... (0 bytes)
+
+📝 Newest Review Analysis (7fc60db9-e7f2-45dd-b32e-dfb098cc1d27):
+  Created: 2025-09-09T22:04:20.472836+00:00
+  Total media items: 2
+  Valid HTTPS media: ✅
+  Non-empty media files: 0/2
+  Has empty media files: ⚠️  YES
+❌ Upload pipeline not working - no valid media URLs
+
+============================================================
+📊 TEST SUITE SUMMARY
+============================================================
+Storage Access       ❌ FAIL
+Recent Reviews       ✅ PASS
+Media Validation     ✅ PASS
+Image Accessibility  ❌ FAIL
+Upload Pipeline      ❌ FAIL
+
+------------------------------------------------------------
+Overall Result: 2/5 tests passed
+❌ Multiple test failures detected. Image upload pipeline needs attention.
+
+💡 Recommendations:
+  - Check image upload logic in reviewsStore.ts
+  - Verify expo-image-manipulator is working correctly
+  - Test blob creation from manipulated images
+  - Check Supabase Storage bucket permissions
+  - Verify image files are not empty (0 bytes)
+  - Create a new review with images to test the current pipeline
+  - Use pull-to-refresh on browse screen to see latest reviews

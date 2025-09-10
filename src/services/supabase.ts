@@ -413,7 +413,15 @@ export const supabaseReviews = {
         redFlags: item.red_flags || [],
         sentiment: item.sentiment || undefined,
         reviewText: item.review_text,
-        media: item.media || [],
+        media: (item.media || []).map((mediaItem: any, index: number) => ({
+          id: `${item.id}_media_${index}`,
+          uri: mediaItem.uri,
+          type: mediaItem.type || "image",
+          thumbnailUri: mediaItem.thumbnail || mediaItem.thumbnailUri,
+          width: mediaItem.width,
+          height: mediaItem.height,
+          duration: mediaItem.duration,
+        })),
         socialMedia: item.social_media,
         status: item.status,
         likeCount: item.like_count || 0,
@@ -448,7 +456,15 @@ export const supabaseReviews = {
         redFlags: data.red_flags || [],
         sentiment: data.sentiment || undefined,
         reviewText: data.review_text,
-        media: data.media || [],
+        media: (data.media || []).map((mediaItem: any, index: number) => ({
+          id: `${data.id}_media_${index}`,
+          uri: mediaItem.uri,
+          type: mediaItem.type || "image",
+          thumbnailUri: mediaItem.thumbnail || mediaItem.thumbnailUri,
+          width: mediaItem.width,
+          height: mediaItem.height,
+          duration: mediaItem.duration,
+        })),
         socialMedia: data.social_media,
         status: data.status,
         likeCount: data.like_count || 0,
@@ -789,18 +805,47 @@ export const supabaseComments = {
 
 // Storage Services
 export const supabaseStorage = {
-  // Upload file
-  uploadFile: async (bucket: string, path: string, file: File | Blob): Promise<string> => {
+  // Upload file (supports ArrayBuffer or Blob). Always upsert by default and set contentType when provided
+  uploadFile: async (
+    bucket: string,
+    path: string,
+    file: ArrayBuffer | Blob,
+    options?: { contentType?: string; upsert?: boolean },
+  ): Promise<string> => {
     try {
-      const { data, error } = await supabase.storage.from(bucket).upload(path, file);
+      const isBlob = typeof Blob !== "undefined" && file instanceof Blob;
+      const size = isBlob ? (file as Blob).size : (file as ArrayBuffer).byteLength;
+      const type = isBlob ? (file as Blob).type : options?.contentType;
 
-      if (error) throw error;
+      console.log(`🗄️ Uploading to Supabase Storage:`, {
+        bucket,
+        path,
+        fileSize: size,
+        fileType: type,
+        upsert: options?.upsert ?? true,
+      });
+
+      const uploadOptions: any = { upsert: options?.upsert ?? true };
+      if (type) uploadOptions.contentType = type;
+
+      const { data, error } = await supabase.storage
+        .from(bucket)
+        .upload(path, file as any, uploadOptions);
+
+      if (error) {
+        console.error(`❌ Supabase Storage upload error:`, error);
+        throw error;
+      }
+
+      console.log(`✅ Upload successful:`, data);
 
       // Get public URL
       const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(data.path);
 
+      console.log(`🔗 Public URL generated:`, urlData.publicUrl);
       return urlData.publicUrl;
     } catch (error: any) {
+      console.error(`💥 Upload failed:`, error);
       throw new Error(handleSupabaseError(error));
     }
   },

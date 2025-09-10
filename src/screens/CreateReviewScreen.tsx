@@ -113,6 +113,7 @@ export default function CreateReviewScreen() {
   }, [firstName, selectedLocation, reviewText, sentiment, category, media, socialMedia]);
 
   const imagesCount = useMemo(() => media.filter((m) => m.type === "image").length, [media]);
+  const mediaCount = useMemo(() => media.length, [media]);
 
   // Enhanced validation with premium limits
   const maxReviewLength = isPremium ? 1000 : 500;
@@ -139,9 +140,9 @@ export default function CreateReviewScreen() {
       errors.push(reviewValidation.error || "Invalid review text");
     }
 
-    if (imagesCount < 1) errors.push("At least one photo is required");
+    if (mediaCount < 1) errors.push("At least one photo or video is required");
 
-    if (!sentiment) errors.push("Please select a sentiment (green/red flags)");
+    // Sentiment is optional; do not require it
 
     return {
       isValid: errors.length === 0,
@@ -156,13 +157,31 @@ export default function CreateReviewScreen() {
     };
   }, [firstName, selectedLocation, reviewText, imagesCount, sentiment, maxReviewLength]);
 
-  const hasRequired = validation.isValid;
+  // Looser check to enable the button; full validation still runs on submit
+  const hasRequired = Boolean(
+    firstName?.trim() &&
+    selectedLocation?.city &&
+    selectedLocation?.state &&
+    reviewText?.trim() &&
+    mediaCount > 0
+  );
 
   const handleSubmit = async () => {
+    console.log("🎬 handleSubmit called");
+    console.log("📋 Validation state:", {
+      isValid: validation.isValid,
+      errors: validation.errors,
+      firstError: validation.firstError,
+      imagesCount,
+      sentiment,
+      mediaLength: media.length,
+    });
+
     setError(null);
     setSuccess(null);
 
     if (!validation.isValid) {
+      console.log("❌ Validation failed:", validation.firstError);
       setError(validation.firstError);
       return;
     }
@@ -194,7 +213,9 @@ export default function CreateReviewScreen() {
         csrfToken, // Include CSRF token in submission
       };
 
+      console.log("🚀 Calling createReview with data:", reviewData);
       await createReview(reviewData);
+      console.log("✅ createReview completed successfully");
 
       // Reset form and draft
       setFirstName("");

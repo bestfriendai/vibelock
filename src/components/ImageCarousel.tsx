@@ -34,7 +34,12 @@ export default function ImageCarousel({
   const [currentIndex, setCurrentIndex] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
 
-  if (!media || media.length === 0) return null;
+  if (!media || media.length === 0) {
+    console.log('ImageCarousel: No media provided');
+    return null;
+  }
+
+  console.log('ImageCarousel: Rendering with media:', media.length, 'items');
 
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const contentOffset = event.nativeEvent.contentOffset;
@@ -75,21 +80,31 @@ export default function ImageCarousel({
         accessibilityLabel={`Image carousel with ${media.length} images`}
         accessibilityHint="Swipe left or right to navigate between images"
       >
-        {media.map((item) => (
+        {media.map((item, index) => (
           <Pressable
-            key={item.id}
+            key={`${item.id}-${index}`}
             onPress={handleImagePress}
             style={{ width: screenWidth - 32, height }} // Account for horizontal padding
             accessible={true}
             accessibilityRole="image"
-            accessibilityLabel={`Image ${media.indexOf(item) + 1} of ${media.length}`}
+            accessibilityLabel={`Image ${index + 1} of ${media.length}`}
             accessibilityHint="Double tap to view full screen"
           >
             {item.type === "video" ? (
-              // Show video placeholder
-              <View style={{ width: "100%", height }} className="bg-surface-700 items-center justify-center">
-                <Ionicons name="videocam" size={60} color="#6B7280" />
-              </View>
+              // If we have a thumbnail for the video, show it; otherwise show a neutral placeholder
+              (item.thumbnailUri && /^https?:\/\//.test(item.thumbnailUri)) ? (
+                <Image
+                  source={{ uri: item.thumbnailUri }}
+                  style={{ width: "100%", height }}
+                  contentFit="cover"
+                  transition={200}
+                  placeholder="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+                />
+              ) : (
+                <View style={{ width: "100%", height }} className="bg-surface-700 items-center justify-center">
+                  <Ionicons name="videocam" size={60} color="#6B7280" />
+                </View>
+              )
             ) : (
               // Show regular image
               <Image

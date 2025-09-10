@@ -119,32 +119,34 @@ export default function ReviewDetailScreen() {
   // Get comments for this review (only access when review is available)
   const comments = review ? commentsFromStore[review.id] || [] : [];
 
-  // Add mock media if review doesn't have any for demo purposes - with extra safety checks
+  // Use the review data as-is from the database
   const reviewWithMedia = React.useMemo(() => {
     if (!review) return null;
 
-    return {
-      ...review,
-      media:
-        review.media && review.media.length > 0
-          ? review.media
-          : [
-              {
-                id: "demo_media_1",
-                uri: review.profilePhoto || "https://picsum.photos/400/600?random=1",
-                type: "image" as const,
-                width: 400,
-                height: 600,
-              },
-              {
-                id: "demo_media_2",
-                uri: "https://picsum.photos/400/500?random=2",
-                type: "image" as const,
-                width: 400,
-                height: 500,
-              },
-            ],
-    };
+    // Filter to only valid remote media (avoid legacy file:// URIs)
+    const cleanedMedia = Array.isArray(review.media)
+      ? review.media.filter((m) => typeof m?.uri === "string" && /^https?:\/\//.test(m.uri))
+      : [];
+
+    if (cleanedMedia.length > 0) {
+      return { ...review, media: cleanedMedia } as Review;
+    }
+
+    // If no valid media, fall back to profilePhoto as a single media item
+    if (review.profilePhoto) {
+      return {
+        ...review,
+        media: [
+          {
+            id: `${review.id}_profile_photo`,
+            uri: review.profilePhoto,
+            type: "image" as const,
+          },
+        ],
+      } as Review;
+    }
+
+    return review;
   }, [review]);
 
   // Initialize loading state and load comments

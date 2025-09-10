@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { View, Text, Pressable } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 
 import useReviewsStore from "../state/reviewsStore";
@@ -110,6 +111,18 @@ export default function BrowseScreen() {
       loadInitialData();
     }
   }, [reviews.length, loadInitialData]);
+
+  // Refresh data when screen comes into focus (e.g., after creating a review)
+  useFocusEffect(
+    useCallback(() => {
+      // Add a small delay to ensure server has processed any new reviews
+      const timeoutId = setTimeout(() => {
+        loadReviews(true);
+      }, 500);
+
+      return () => clearTimeout(timeoutId);
+    }, [loadReviews])
+  );
 
   // Memoize the filter-based load function
   const loadWithFilters = useCallback(async () => {

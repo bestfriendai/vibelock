@@ -24,12 +24,15 @@ interface CommentItemProps {
 function CommentItem({ comment, onLike, onDislike, onReply, onReport, isReply = false }: CommentItemProps) {
   const [showReplies, setShowReplies] = useState(false);
 
-  const formatTimeAgo = (date: Date) => {
+  const formatTimeAgo = (dateLike: Date | string | null | undefined) => {
+    const date = dateLike instanceof Date ? dateLike : dateLike ? new Date(dateLike) : null;
+    if (!date || isNaN(date.getTime())) return "Just now";
     const now = new Date();
-    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+    const diffMs = now.getTime() - date.getTime();
+    const diffInHours = Math.floor(diffMs / (1000 * 60 * 60));
 
     if (diffInHours < 1) {
-      const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
+      const diffInMinutes = Math.floor(diffMs / (1000 * 60));
       return diffInMinutes < 1 ? "Just now" : `${diffInMinutes}m ago`;
     } else if (diffInHours < 24) {
       return `${diffInHours}h ago`;

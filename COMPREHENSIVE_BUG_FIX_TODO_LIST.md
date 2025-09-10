@@ -9,6 +9,33 @@
 - **SEPTEMBER 2025 STANDARDS**: React Native 0.79.5, Expo SDK 53, TypeScript 5.8, Node.js 18+ LTS
 
 ---
+## ✅ Progress Update — 2025-09-10
+- Completed: Fixed zero-byte Supabase Storage uploads for images and videos (Expo SDK 53 + React Native) by switching to base64 → data URL → ArrayBuffer uploads with explicit contentType and upsert.
+  - Files: src/state/reviewsStore.ts, src/services/supabase.ts
+  - Verification: Newest review shows non-zero sizes for all media (images ~87KB–149KB, .mov ~1.28MB). Older recent reviews (pre-fix) remain 0 bytes.
+- Completed: Automatic video thumbnail generation using expo-video-thumbnails; thumbnails uploaded to review-images and stored as thumbnailUri on each video media item.
+  - Files: src/state/reviewsStore.ts (thumbnail generation and upload)
+- Completed: Real-media rendering on browse + detail screens; ProfileCard prefers video.thumbnailUri when present; falls back to paused video only if no thumbnail; no mock/placeholder used when real media exists.
+  - Files: src/components/ProfileCard.tsx, src/components/ImageCarousel.tsx (prior work)
+- Completed: Image compression before upload (resize to width 800px, compress 0.8) for consistent perf and smaller sizes.
+  - Files: src/state/reviewsStore.ts
+
+### Checklist status adjustments
+- [x] Task 5.2: Add Image Compression Before Upload — Implemented (resize + compress) in reviewsStore.ts
+- [x] Media upload pipeline hardened (new task):
+  - React Native–compatible ArrayBuffer uploads to Supabase Storage
+  - Explicit contentType for images and videos
+  - Verified via Supabase query (size > 0)
+- [x] Video thumbnails (new task):
+  - Generate on-device, upload to Supabase, store thumbnailUri
+  - UI consumes thumbnail on browse cards
+
+### Notes
+- Future: Consider adding server-side thumbnail generation for reliability on all devices and background uploads.
+- UI caching improvements (Task 5.1) remain open; we can add cachePolicy and placeholders consistently in a follow-up.
+
+---
+
 
 ## **PHASE 1: CRITICAL SECURITY & CRASH FIXES** ⚠️
 **PRIORITY: IMMEDIATE - MUST BE COMPLETED FIRST**

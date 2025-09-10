@@ -280,6 +280,22 @@ const useCommentsStore = create<CommentsStore>()(
             return subscriptions.get(reviewId)!.unsubscribe;
           }
 
+          const mapRowToComment = (row: any): Comment => ({
+            id: row.id,
+            reviewId: row.review_id,
+            authorId: row.author_id,
+            authorName: row.author_name,
+            content: row.content,
+            likeCount: row.like_count || 0,
+            dislikeCount: row.dislike_count || 0,
+            parentCommentId: row.parent_comment_id,
+            mediaId: row.media_id,
+            createdAt: row.created_at ? new Date(row.created_at) : new Date(),
+            updatedAt: row.updated_at ? new Date(row.updated_at) : new Date(),
+            isDeleted: row.is_deleted,
+            isReported: row.is_reported,
+          });
+
           const channel = supabase
             .channel(`comments-${reviewId}`)
             .on(
@@ -291,10 +307,10 @@ const useCommentsStore = create<CommentsStore>()(
                 filter: `review_id=eq.${reviewId}`,
               },
               (payload: any) => {
-                console.log("Comment change received:", payload);
+                console.log("Comment change received:", payload.eventType, payload.new?.id || payload.old?.id);
 
                 if (payload.eventType === "INSERT") {
-                  const newComment = payload.new as Comment;
+                  const newComment = mapRowToComment(payload.new);
                   set((state) => ({
                     comments: {
                       ...state.comments,
@@ -302,7 +318,7 @@ const useCommentsStore = create<CommentsStore>()(
                     },
                   }));
                 } else if (payload.eventType === "UPDATE") {
-                  const updatedComment = payload.new as Comment;
+                  const updatedComment = mapRowToComment(payload.new);
                   set((state) => ({
                     comments: {
                       ...state.comments,
@@ -312,12 +328,12 @@ const useCommentsStore = create<CommentsStore>()(
                     },
                   }));
                 } else if (payload.eventType === "DELETE") {
-                  const deletedComment = payload.old as Comment;
+                  const deletedId = payload.old?.id;
                   set((state) => ({
                     comments: {
                       ...state.comments,
                       [reviewId]: (state.comments[reviewId] || []).filter(
-                        (comment) => comment.id !== deletedComment.id,
+                        (comment) => comment.id !== deletedId,
                       ),
                     },
                   }));

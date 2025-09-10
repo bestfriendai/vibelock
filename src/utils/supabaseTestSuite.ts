@@ -9,7 +9,7 @@ import {
 } from "../services/supabase";
 import { supabase } from "../config/supabase";
 import { storageService } from "../services/storageService";
-import { realtimeChatService } from "../services/realtimeChat";
+import { enhancedRealtimeChatService } from "../services/realtimeChat";
 import { AppError, parseSupabaseError } from "./errorHandling";
 
 export interface TestResult {
@@ -142,6 +142,28 @@ class SupabaseTestSuite {
       const results = await supabaseSearch.searchReviews("test", {});
       return `Search returned ${results.length} results`;
     });
+
+    await this.runTest("Review Operations - Media Validation", async () => {
+      const reviews = await supabaseReviews.getReviews(5, 0);
+      let validMediaCount = 0;
+      let totalMediaCount = 0;
+      let fileUriCount = 0;
+
+      for (const review of reviews) {
+        if (review.media && Array.isArray(review.media)) {
+          for (const mediaItem of review.media) {
+            totalMediaCount++;
+            if (mediaItem.uri && mediaItem.uri.startsWith("https://")) {
+              validMediaCount++;
+            } else if (mediaItem.uri && mediaItem.uri.startsWith("file://")) {
+              fileUriCount++;
+            }
+          }
+        }
+      }
+
+      return `Media validation: ${validMediaCount}/${totalMediaCount} valid URLs, ${fileUriCount} legacy file:// URIs`;
+    });
   }
 
   // Test chat operations
@@ -177,6 +199,26 @@ class SupabaseTestSuite {
     await this.runTest("Storage - Get Buckets", async () => {
       const buckets = storageService.getBuckets();
       return `Available buckets: ${Object.values(buckets).join(", ")}`;
+    });
+
+    await this.runTest("Storage - Upload Test Image", async () => {
+      try {
+        // Create a simple test blob (1x1 pixel PNG)
+        const testImageData = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
+        const response = await fetch(testImageData);
+        const blob = await response.blob();
+
+        const filename = `test-images/test_${Date.now()}.png`;
+        const uploadedUrl = await supabaseStorage.uploadFile("review-images", filename, blob);
+
+        if (uploadedUrl && uploadedUrl.startsWith("https://")) {
+          return `Upload successful: ${uploadedUrl}`;
+        } else {
+          throw new Error("Invalid URL returned");
+        }
+      } catch (error) {
+        throw new Error(`Upload failed: ${error}`);
+      }
     });
 
     await this.runTest("Storage - Public URL Generation", async () => {

@@ -1,9 +1,10 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as FileSystem from "expo-file-system";
 import { manipulateAsync, SaveFormat } from "expo-image-manipulator";
+import * as FileSystem from "expo-file-system";
 import { v4 as uuidv4 } from "uuid";
+import * as VideoThumbnails from "expo-video-thumbnails";
 import { Review, FilterOptions, GreenFlag, RedFlag, MediaItem, SocialMediaHandles, Sentiment } from "../types";
 import { filterReviewsByDistanceAsync } from "../utils/location";
 import { supabaseReviews, supabaseStorage } from "../services/supabase";
@@ -319,6 +320,12 @@ const useReviewsStore = create<ReviewsStore>()(
       },
 
       createReview: async (data) => {
+        console.log("🎬 createReview called with data:", {
+          reviewedPersonName: data.reviewedPersonName,
+          mediaCount: data.media?.length || 0,
+          mediaTypes: data.media?.map((m) => m.type) || [],
+        });
+
         try {
           set({ isLoading: true, error: null });
 
@@ -332,48 +339,68 @@ const useReviewsStore = create<ReviewsStore>()(
             throw new Error("Name and review text are required");
           }
 
-          // Require at least one image in media
-          const hasImage = Array.isArray(data.media) && data.media.some((m) => m.type === "image");
-          if (!hasImage) {
-            throw new Error("Please add at least one photo to your review");
+          // Require at least one media item (photo or video)
+          const hasMedia = Array.isArray(data.media) && data.media.length > 0;
+          if (!hasMedia) {
+            throw new Error("Please add at least one photo or video to your review");
           }
-
-          const firstImage = data.media.find((m) => m.type === "image");
 
           // Upload media files to Supabase Storage if they are local files
           const uploadedMedia: MediaItem[] = [];
+          console.log(`🚀 Starting media upload process for ${data.media.length} items`);
+
           for (const mediaItem of data.media) {
-            if (mediaItem.uri.startsWith("file://") || mediaItem.uri.startsWith("content://")) {
-              try {
+            const isLocal = mediaItem.uri.startsWith("file://") || mediaItem.uri.startsWith("content://");
+            console.log(`📁 Processing media item:`, {
+              type: mediaItem.type,
+              uri: mediaItem.uri.substring(0, 100) + "...",
+              isLocal,
+            });
+
+            if (!isLocal) {
+              console.log(`⏭️  Skipping non-local media item`);
+              uploadedMedia.push(mediaItem);
+              continue;
+            }
+
+            try {
+              if (mediaItem.type === "image") {
                 // Compress and resize image using expo-image-manipulator
                 const manipulatedImage = await manipulateAsync(
                   mediaItem.uri,
-                  [
-                    { resize: { width: 800 } }, // Resize to max width of 800px
-                  ],
-                  {
-                    compress: 0.8, // 80% quality
-                    format: SaveFormat.JPEG,
-                  },
+                  [{ resize: { width: 800 } }],
+                  { compress: 0.8, format: SaveFormat.JPEG },
                 );
 
-                // Read the compressed image as base64
+                // Use FileSystem to read the manipulated image as base64
+                // Then convert base64 -> ArrayBuffer via data URL (RN-safe)
                 const base64 = await FileSystem.readAsStringAsync(manipulatedImage.uri, {
                   encoding: FileSystem.EncodingType.Base64,
                 });
 
-                // Convert base64 to blob
-                const byteCharacters = atob(base64);
-                const byteNumbers = new Array(byteCharacters.length);
-                for (let i = 0; i < byteCharacters.length; i++) {
-                  byteNumbers[i] = byteCharacters.charCodeAt(i);
-                }
-                const byteArray = new Uint8Array(byteNumbers);
-                const blob = new Blob([byteArray], { type: "image/jpeg" });
+                const dataUrl = `data:image/jpeg;base64,${base64}`;
+                const resp = await fetch(dataUrl);
+                const arrayBuffer = await resp.arrayBuffer();
 
-                // Create unique filename
+                // Debug: Check buffer size
+                console.log(`📸 Image upload debug:`, {
+                  originalUri: mediaItem.uri,
+                  manipulatedUri: manipulatedImage.uri,
+                  base64Length: base64.length,
+                  byteLength: arrayBuffer.byteLength,
+                });
+
+                if (!arrayBuffer || arrayBuffer.byteLength === 0) {
+                  throw new Error(`Empty image buffer created from ${manipulatedImage.uri}`);
+                }
+
                 const filename = `reviews/${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`;
-                const downloadURL = await supabaseStorage.uploadFile("chat-media", filename, blob);
+                const downloadURL = await supabaseStorage.uploadFile(
+                  "review-images",
+                  filename,
+                  arrayBuffer,
+                  { contentType: "image/jpeg", upsert: true },
+                );
 
                 uploadedMedia.push({
                   ...mediaItem,
@@ -381,16 +408,86 @@ const useReviewsStore = create<ReviewsStore>()(
                   width: manipulatedImage.width,
                   height: manipulatedImage.height,
                 });
-              } catch (uploadError) {
-                console.warn("Failed to upload media, using original URI:", uploadError);
+              } else if (mediaItem.type === "video") {
+                // Read video as base64 and convert to ArrayBuffer using data URL fetch
+                const videoBase64 = await FileSystem.readAsStringAsync(mediaItem.uri, {
+                  encoding: FileSystem.EncodingType.Base64,
+                });
+                const mime = mediaItem.uri.toLowerCase().endsWith(".mov")
+                  ? "video/quicktime"
+                  : "video/mp4";
+                const dataUrl = `data:${mime};base64,${videoBase64}`;
+                const vResp = await fetch(dataUrl);
+                const arrayBuffer = await vResp.arrayBuffer();
+
+                console.log(`🎥 Video upload debug:`, {
+                  originalUri: mediaItem.uri,
+                  mime,
+                  base64Length: videoBase64.length,
+                  byteLength: arrayBuffer.byteLength,
+                });
+
+                if (!arrayBuffer || arrayBuffer.byteLength === 0) {
+                  throw new Error(`Empty video buffer created from ${mediaItem.uri}`);
+                }
+
+                // Generate a thumbnail from the local video (best-effort)
+                let thumbnailUrl: string | undefined;
+                try {
+                  const { uri: thumbLocal } = await VideoThumbnails.getThumbnailAsync(mediaItem.uri, { time: 1000 });
+                  const thumbB64 = await FileSystem.readAsStringAsync(thumbLocal, { encoding: FileSystem.EncodingType.Base64 });
+                  const thumbResp = await fetch(`data:image/jpeg;base64,${thumbB64}`);
+                  const thumbBuf = await thumbResp.arrayBuffer();
+                  if (thumbBuf && thumbBuf.byteLength > 0) {
+                    const thumbName = `reviews/${Date.now()}_${Math.random().toString(36).substring(7)}_thumb.jpg`;
+                    thumbnailUrl = await supabaseStorage.uploadFile(
+                      "review-images",
+                      thumbName,
+                      thumbBuf,
+                      { contentType: "image/jpeg", upsert: true },
+                    );
+                  }
+                } catch (thumbErr) {
+                  console.warn("⚠️ Failed to generate/upload video thumbnail:", thumbErr);
+                }
+
+                const ext = mime === "video/quicktime" ? "mov" : "mp4";
+                const filename = `reviews/${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
+                // Use review-images bucket (unrestricted MIME types)
+                const downloadURL = await supabaseStorage.uploadFile(
+                  "review-images",
+                  filename,
+                  arrayBuffer,
+                  { contentType: mime, upsert: true },
+                );
+
+                uploadedMedia.push({
+                  ...mediaItem,
+                  uri: downloadURL,
+                  ...(thumbnailUrl ? { thumbnailUri: thumbnailUrl } : {}),
+                });
+              } else {
+                // Unknown type, just keep as-is
                 uploadedMedia.push(mediaItem);
               }
-            } else {
+            } catch (uploadError) {
+              console.error("❌ Failed to upload media:", {
+                originalUri: mediaItem.uri,
+                mediaType: mediaItem.type,
+                error: uploadError instanceof Error ? uploadError.message : String(uploadError),
+                stack: uploadError instanceof Error ? uploadError.stack : undefined,
+              });
+              // For now, still push the original to avoid breaking the review creation
               uploadedMedia.push(mediaItem);
             }
           }
 
-          // Create review data for Firebase - remove undefined fields
+          // Only keep successfully uploaded remote media (with https URLs)
+          const remoteMedia = (uploadedMedia || []).filter(
+            (m) => typeof m?.uri === "string" && /^https?:\/\//.test(m.uri),
+          );
+
+          // Create review data for backend
           const reviewData: Omit<Review, "id" | "createdAt" | "updatedAt" | "authorId"> = {
             reviewerAnonymousId: uuidv4(),
             reviewedPersonName: data.reviewedPersonName,
@@ -398,10 +495,10 @@ const useReviewsStore = create<ReviewsStore>()(
             greenFlags: data.greenFlags || [],
             redFlags: data.redFlags || [],
             reviewText: data.reviewText,
-            media: uploadedMedia || [],
-            profilePhoto: firstImage
-              ? firstImage.uri
-              : `https://picsum.photos/400/${Math.floor(Math.random() * 200) + 500}?random=${Date.now()}`,
+            media: remoteMedia,
+            profilePhoto:
+              remoteMedia.find((m) => m.type === "image")?.uri ||
+              `https://picsum.photos/400/${Math.floor(Math.random() * 200) + 500}?random=${Date.now()}`,
             status: "approved", // Auto-approve for now (moderation removed)
             category: data.category || "men",
             likeCount: 0,

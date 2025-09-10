@@ -12,7 +12,7 @@ import useAuthStore from "./src/state/authStore";
 import useChatStore from "./src/state/chatStore";
 import useSubscriptionStore from "./src/state/subscriptionStore";
 import { notificationService } from "./src/services/notificationService";
-import { realtimeChatService } from "./src/services/realtimeChat";
+import { enhancedRealtimeChatService } from "./src/services/realtimeChat";
 import { adMobService } from "./src/services/adMobService";
 import { buildEnv } from "./src/utils/buildEnvironment";
 import { AdProvider } from "./src/contexts/AdContext";
@@ -120,7 +120,7 @@ export default function App() {
       // Cleanup all services
       cleanupChat();
       notificationService.cleanup();
-      realtimeChatService.cleanup();
+      enhancedRealtimeChatService.cleanup();
     };
   }, [initializeAuthListener, cleanupChat, initializeRevenueCat]);
 
