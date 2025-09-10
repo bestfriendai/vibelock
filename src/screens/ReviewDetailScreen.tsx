@@ -464,6 +464,10 @@ export default function ReviewDetailScreen() {
                   <Pressable
                     className="flex-1 bg-surface-700 border border-surface-600 rounded-lg py-3 items-center"
                     onPress={handleReportReview}
+                    accessible={true}
+                    accessibilityRole="button"
+                    accessibilityLabel="Report this review"
+                    accessibilityHint="Double tap to report"
                   >
                     <Text className="text-text-secondary font-medium">Report</Text>
                   </Pressable>

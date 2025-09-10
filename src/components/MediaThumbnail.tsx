@@ -41,7 +41,16 @@ export default function MediaThumbnail({ media, size = 80, onPress, showPlayIcon
   }, [isVideo, media.uri, videoThumbnail, thumbnailLoading]);
 
   return (
-    <Pressable onPress={onPress} className="relative overflow-hidden rounded-xl" style={{ width: size, height: size }}>
+    <Pressable
+      onPress={onPress}
+      className="relative overflow-hidden rounded-xl"
+      style={{ width: size, height: size }}
+      accessible={true}
+      accessibilityRole="button"
+      accessibilityLabel={isVideo
+        ? `Video thumbnail${media.duration ? `, duration ${formatDuration(media.duration)}` : ""}. Double tap to view`
+        : "Image thumbnail. Double tap to view"}
+    >
       {isVideo ? (
         videoThumbnail ? (
           // Show video thumbnail if available with lazy loading

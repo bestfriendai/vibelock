@@ -184,7 +184,14 @@ export default function MediaCommentModal({
           {/* Header */}
           <View className="flex-row items-center justify-between px-4 py-3 border-b border-surface-700">
             <Text className="text-text-primary text-lg font-semibold">Image Comments</Text>
-            <Pressable onPress={onClose} className="w-8 h-8 items-center justify-center">
+            <Pressable
+              onPress={onClose}
+              className="w-8 h-8 items-center justify-center"
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel="Close comments"
+              accessibilityHint="Double tap to close"
+            >
               <Ionicons name="close" size={24} color="#F3F4F6" />
             </Pressable>
           </View>
@@ -192,7 +199,13 @@ export default function MediaCommentModal({
           {/* Image Preview */}
           <View className="px-4 py-3 border-b border-surface-700">
             <View className="bg-surface-800 rounded-lg overflow-hidden">
-              <Image source={{ uri: media.uri }} style={{ width: "100%", height: 200 }} contentFit="cover" />
+              <Image
+                source={{ uri: media.uri }}
+                style={{ width: "100%", height: 200 }}
+                contentFit="cover"
+                cachePolicy="memory-disk"
+                placeholder="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+              />
             </View>
           </View>
 
