@@ -13,7 +13,7 @@ module.exports = function (api) {
     ],
     plugins: [
       // This plugin MUST be listed last!
-      "react-native-reanimated/plugin",
+      "react-native-worklets/plugin",
     ],
   };
 };
