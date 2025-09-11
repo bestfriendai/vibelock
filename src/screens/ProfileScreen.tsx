@@ -13,7 +13,6 @@ import { useTheme } from "../providers/ThemeProvider";
 import { PaywallAdaptive } from "../components/subscription/PaywallAdaptive";
 import { LegalModal } from "../components/legal/LegalModal";
 import { buildEnv } from "../utils/buildEnvironment";
-import VideoTestComponent from "../components/VideoTestComponent";
 
 export default function ProfileScreen() {
   const navigation = useNavigation<any>();
@@ -332,12 +331,7 @@ export default function ProfileScreen() {
             </View>
           </View>
 
-          {/* Video Test Component - Temporary for testing */}
-          {__DEV__ && (
-            <View className="mb-6">
-              <VideoTestComponent />
-            </View>
-          )}
+
 
           {/* Account Actions */}
           <Pressable

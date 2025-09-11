@@ -106,7 +106,7 @@ export default function LocationSettingsScreen() {
     <SafeAreaView className="flex-1 bg-surface-900">
       {/* Header */}
       <View className="bg-black px-6 py-4 flex-row items-center">
-        <Pressable onPress={() => navigation.goBack()} className="mr-4">
+        <Pressable onPress={() => navigation.canGoBack() ? navigation.goBack() : navigation.navigate("Settings")} className="mr-4">
           <Ionicons name="arrow-back" size={24} color="#F3F4F6" />
         </Pressable>
         <Text className="text-xl font-bold text-text-primary">Location Settings</Text>

@@ -102,12 +102,12 @@ export default function ReviewDetailScreen() {
           setLikeCount(finalReview.likeCount || 0);
         } else {
           Alert.alert("Review not found", "This review may have been deleted.", [
-            { text: "OK", onPress: () => navigation.goBack() },
+            { text: "OK", onPress: () => navigation.canGoBack() ? navigation.goBack() : navigation.navigate("MainTabs") },
           ]);
         }
       } catch (error) {
         console.error("Error loading review:", error);
-        Alert.alert("Error", "Failed to load review.", [{ text: "OK", onPress: () => navigation.goBack() }]);
+        Alert.alert("Error", "Failed to load review.", [{ text: "OK", onPress: () => navigation.canGoBack() ? navigation.goBack() : navigation.navigate("MainTabs") }]);
       } finally {
         setReviewLoading(false);
       }
@@ -493,7 +493,7 @@ export default function ReviewDetailScreen() {
       {/* Comment Input - Fixed at bottom */}
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 120 : 0}
       >
         <TouchableWithoutFeedback onPress={dismissKeyboard}>
           <View>

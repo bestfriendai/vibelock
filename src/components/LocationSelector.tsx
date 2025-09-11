@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, Pressable, Modal, TextInput, FlatList, Keyboard, ActivityIndicator } from "react-native";
+import { View, Text, Pressable, Modal, TextInput, FlatList, Keyboard, ActivityIndicator, KeyboardAvoidingView, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { getCurrentLocation, reverseGeocodeLocation, searchLocations, geocodeCityStateCached } from "../utils/location";
@@ -332,26 +332,30 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
         presentationStyle="pageSheet"
         onRequestClose={() => setModalVisible(false)}
       >
-        <View className="flex-1" style={{ backgroundColor: colors.background }}>
-          {/* Header */}
-          <View
-            className="flex-row items-center justify-between px-6 py-6 border-b"
-            style={{ borderBottomColor: colors.surface[700] }}
-          >
-            <Text className="text-lg font-semibold" style={{ color: colors.text.primary }}>
-              Select Location
-            </Text>
-            <Pressable
-              onPress={() => setModalVisible(false)}
-              className="w-8 h-8 items-center justify-center"
-              accessible={true}
-              accessibilityRole="button"
-              accessibilityLabel="Close location selector"
-              accessibilityHint="Double tap to close"
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={{ flex: 1 }}
+        >
+          <View className="flex-1" style={{ backgroundColor: colors.background }}>
+            {/* Header */}
+            <View
+              className="flex-row items-center justify-between px-6 py-6 border-b"
+              style={{ borderBottomColor: colors.surface[700] }}
             >
-              <Ionicons name="close" size={24} color={colors.text.primary} />
-            </Pressable>
-          </View>
+              <Text className="text-lg font-semibold" style={{ color: colors.text.primary }}>
+                Select Location
+              </Text>
+              <Pressable
+                onPress={() => setModalVisible(false)}
+                className="w-8 h-8 items-center justify-center"
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel="Close location selector"
+                accessibilityHint="Double tap to close"
+              >
+                <Ionicons name="close" size={24} color={colors.text.primary} />
+              </Pressable>
+            </View>
 
           {/* Search Input */}
           <View className="px-4 py-3 border-b border-surface-700">
@@ -438,7 +442,8 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
               </Text>
             </View>
           )}
-        </View>
+          </View>
+        </KeyboardAvoidingView>
       </Modal>
     </>
   );

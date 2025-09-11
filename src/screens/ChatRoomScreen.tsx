@@ -111,7 +111,7 @@ export default function ChatRoomScreen() {
           <Pressable onPress={() => navigation.navigate("SignIn")} className="bg-brand-red rounded-xl px-6 py-3 mt-6">
             <Text className="text-black font-semibold text-base">Sign In</Text>
           </Pressable>
-          <Pressable onPress={() => navigation.goBack()} className="mt-4">
+          <Pressable onPress={() => navigation.canGoBack() ? navigation.goBack() : navigation.navigate("MainTabs")} className="mt-4">
             <Text className="text-text-muted text-base">Go Back</Text>
           </Pressable>
         </View>
@@ -192,7 +192,7 @@ export default function ChatRoomScreen() {
       <KeyboardAvoidingView
         className="flex-1"
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 120 : 0}
       >
         {/* Simple iMessage-style header */}
         <View
@@ -203,7 +203,7 @@ export default function ChatRoomScreen() {
           }}
         >
           <View className="flex-row items-center justify-between">
-            <Pressable onPress={() => navigation.goBack()} className="mr-3">
+            <Pressable onPress={() => navigation.canGoBack() ? navigation.goBack() : navigation.navigate("MainTabs")} className="mr-3">
               <Ionicons name="chevron-back" size={24} color={colors.brand.red} />
             </Pressable>
             <View className="flex-1">

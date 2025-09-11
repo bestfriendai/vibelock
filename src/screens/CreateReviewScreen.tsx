@@ -235,7 +235,7 @@ export default function CreateReviewScreen() {
 
       // Navigate back to browse screen after a short delay
       setTimeout(() => {
-        navigation.goBack();
+        navigation.canGoBack() ? navigation.goBack() : navigation.navigate("MainTabs");
       }, 1500);
     } catch (e) {
       setError("Failed to submit review. Please try again.");
@@ -296,7 +296,11 @@ export default function CreateReviewScreen() {
 
   return (
     <SafeAreaView className="flex-1" style={{ backgroundColor: colors.background }}>
-      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 120 : 0}
+        className="flex-1"
+      >
         {/* Header */}
         <View
           className="px-6 py-6 border-b"

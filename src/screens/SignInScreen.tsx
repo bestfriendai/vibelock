@@ -126,7 +126,11 @@ export default function SignInScreen() {
       <SafeAreaView className="flex-1 bg-surface-900">
         <LinearGradient colors={["#141418", "#1A1A20", "#141418"]} className="absolute inset-0" />
 
-        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 120 : 0}
+          className="flex-1"
+        >
           <ScrollView
             className="flex-1"
             contentContainerStyle={{ flexGrow: 1 }}

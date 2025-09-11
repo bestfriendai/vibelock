@@ -184,7 +184,7 @@ export default function SearchScreen({ navigation, route }: Props) {
       <View className="px-6 py-6" style={{ backgroundColor: colors.surface[800] }}>
         <View className="flex-row items-center justify-between">
           <View className="flex-row items-center">
-            <Pressable onPress={() => navigation.goBack()} className="mr-4">
+            <Pressable onPress={() => navigation.canGoBack() ? navigation.goBack() : navigation.navigate("MainTabs")} className="mr-4">
               <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
             </Pressable>
             <View>

@@ -162,13 +162,15 @@ const useReviewsStore = create<ReviewsStore>()(
             serverFilters.category = categoryToFilter;
           }
 
-          // Decide strategy: if radius is specified and we have a user location,
-          // fetch a larger batch and apply precise client-side distance filtering
-          // (coordinates will be obtained during filtering if not already available)
-          const radiusFilteringActive = typeof filters.radius === "number" && !!filters.radius && !!userLocation;
+          // Decide strategy based on radius filter
+          const radiusFilteringActive = typeof filters.radius === "number" && filters.radius > 0 && !!userLocation;
+          const showAllActive = filters.radius === null || filters.radius === undefined;
 
           // Apply location filters based on strategy
-          if (userLocation?.city && userLocation?.state) {
+          if (showAllActive) {
+            // "Show all" mode: no location filtering at all
+            console.log("🌐 Show all mode - no location filtering");
+          } else if (userLocation?.city && userLocation?.state) {
             if (radiusFilteringActive) {
               // For radius filtering: don't apply server-side location filters
               // Let client-side distance filtering handle geographic boundaries worldwide
@@ -189,13 +191,23 @@ const useReviewsStore = create<ReviewsStore>()(
               radius: filters.radius,
               offset: refresh ? 0 : currentState.reviews.length,
               radiusFilteringActive,
+              showAllActive,
             });
           }
 
           // Load from Supabase with fallback strategy
           let newReviews: Review[] = [];
 
-          if (radiusFilteringActive && userLocation) {
+          if (showAllActive) {
+            // "Show all" mode: get reviews from anywhere without location filtering
+            const offset = refresh ? 0 : currentState.reviews.length;
+            const globalFilters = { category: serverFilters.category };
+            newReviews = await supabaseReviews.getReviews(50, offset, globalFilters);
+
+            if (__DEV__) {
+              console.log("🌐 Show all reviews loaded:", newReviews.length);
+            }
+          } else if (radiusFilteringActive && userLocation) {
             // Strategy 1: Location-first approach - get ALL reviews with coordinates, then filter by distance
             // This ensures we don't miss local reviews that are older than the most recent 200 global reviews
 

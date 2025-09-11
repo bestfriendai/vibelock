@@ -289,8 +289,8 @@ export default function BrowseScreen({ navigation, route }: Props) {
             />
           )}
           <DistanceFilter
-            currentDistance={filters.radius || 50}
-            onDistanceChange={(distance) => setFilters({ radius: distance === -1 ? undefined : distance })}
+            currentDistance={filters.radius === undefined || filters.radius === null ? -1 : filters.radius}
+            onDistanceChange={(distance) => setFilters({ radius: distance === -1 ? null : distance })}
           />
         </View>
 
