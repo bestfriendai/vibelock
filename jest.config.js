@@ -12,13 +12,7 @@ module.exports = {
     "^@/(.*)$": "<rootDir>/src/$1",
   },
   collectCoverage: true,
-  collectCoverageFrom: [
-    "src/**/*.{ts,tsx}",
-    "!src/**/*.d.ts",
-    "!src/navigation/**",
-    "!src/App.tsx",
-    "!src/main.tsx",
-  ],
+  collectCoverageFrom: ["src/**/*.{ts,tsx}", "!src/**/*.d.ts", "!src/navigation/**", "!src/App.tsx", "!src/main.tsx"],
   coverageDirectory: "coverage",
   coverageReporters: ["text", "lcov", "html"],
 };

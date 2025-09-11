@@ -1,9 +1,11 @@
 # In-App Purchases Setup Guide
 
 ## Overview
+
 This document provides a complete guide for implementing in-app purchases (IAP) in the React Native application using react-native-iap for both iOS and Android platforms.
 
 ## Prerequisites
+
 - React Native project with react-native-iap installed
 - Apple Developer account with App Store Connect configured
 - Google Play Developer account with Google Play Console configured
@@ -26,6 +28,7 @@ cd ios && pod install
 ### 2. Configure Platforms
 
 #### iOS Configuration
+
 1. Enable In-App Purchase capability in Xcode:
    - Open your iOS project in Xcode
    - Select your project in the Project Navigator
@@ -41,7 +44,9 @@ cd ios && pod install
    - Create your products (consumable, non-consumable, auto-renewable subscription, or non-renewing subscription)
 
 #### Android Configuration
+
 1. Add billing permission to your `AndroidManifest.xml`:
+
 ```xml
 <uses-permission android:name="com.android.vending.BILLING" />
 ```
@@ -55,6 +60,7 @@ cd ios && pod install
 ### 3. Create In-App Purchase Service
 
 #### Create IAP Service
+
 Create a file `src/services/inAppPurchases.ts`:
 
 ```typescript
@@ -73,51 +79,51 @@ import {
   SubscriptionPurchase,
   Product,
   Subscription,
-} from 'react-native-iap';
-import { Platform, Alert } from 'react-native';
-import { logEvent } from './analytics';
+} from "react-native-iap";
+import { Platform, Alert } from "react-native";
+import { logEvent } from "./analytics";
 
 // Product IDs - configure these based on your App Store Connect and Google Play Console
 export const PRODUCT_IDS = {
   // Consumable products
-  COINS_SMALL: 'coins_small',
-  COINS_MEDIUM: 'coins_medium',
-  COINS_LARGE: 'coins_large',
-  
+  COINS_SMALL: "coins_small",
+  COINS_MEDIUM: "coins_medium",
+  COINS_LARGE: "coins_large",
+
   // Non-consumable products
-  PREMIUM_FEATURE: 'premium_feature',
-  REMOVE_ADS: 'remove_ads',
-  
+  PREMIUM_FEATURE: "premium_feature",
+  REMOVE_ADS: "remove_ads",
+
   // Subscriptions
-  MONTHLY_SUBSCRIPTION: 'monthly_subscription',
-  YEARLY_SUBSCRIPTION: 'yearly_subscription',
+  MONTHLY_SUBSCRIPTION: "monthly_subscription",
+  YEARLY_SUBSCRIPTION: "yearly_subscription",
 };
 
 // Subscription group IDs (iOS only)
 export const SUBSCRIPTION_GROUP_IDS = {
-  PREMIUM: 'premium_subscription_group',
+  PREMIUM: "premium_subscription_group",
 };
 
 // Initialize IAP connection
 export const initIAPConnection = async (): Promise<void> => {
   try {
     await initConnection();
-    
+
     // Log analytics event
-    await logEvent('iap_connection_initialized', {
+    await logEvent("iap_connection_initialized", {
       platform: Platform.OS,
     });
-    
-    console.log('IAP connection initialized');
+
+    console.log("IAP connection initialized");
   } catch (error) {
-    console.error('Failed to initialize IAP connection:', error);
-    
+    console.error("Failed to initialize IAP connection:", error);
+
     // Log analytics event
-    await logEvent('iap_connection_initialization_error', {
+    await logEvent("iap_connection_initialization_error", {
       error: error.message,
       platform: Platform.OS,
     });
-    
+
     throw error;
   }
 };
@@ -126,22 +132,22 @@ export const initIAPConnection = async (): Promise<void> => {
 export const endIAPConnection = async (): Promise<void> => {
   try {
     await endConnection();
-    
+
     // Log analytics event
-    await logEvent('iap_connection_ended', {
+    await logEvent("iap_connection_ended", {
       platform: Platform.OS,
     });
-    
-    console.log('IAP connection ended');
+
+    console.log("IAP connection ended");
   } catch (error) {
-    console.error('Failed to end IAP connection:', error);
-    
+    console.error("Failed to end IAP connection:", error);
+
     // Log analytics event
-    await logEvent('iap_connection_ending_error', {
+    await logEvent("iap_connection_ending_error", {
       error: error.message,
       platform: Platform.OS,
     });
-    
+
     throw error;
   }
 };
@@ -150,55 +156,52 @@ export const endIAPConnection = async (): Promise<void> => {
 export const getIAPProducts = async (skus: string[] = Object.values(PRODUCT_IDS)): Promise<Product[]> => {
   try {
     const products = await getProducts({ skus });
-    
+
     // Log analytics event
-    await logEvent('iap_products_retrieved', {
+    await logEvent("iap_products_retrieved", {
       count: products.length,
       platform: Platform.OS,
     });
-    
-    console.log('IAP products retrieved:', products);
+
+    console.log("IAP products retrieved:", products);
     return products;
   } catch (error) {
-    console.error('Failed to get IAP products:', error);
-    
+    console.error("Failed to get IAP products:", error);
+
     // Log analytics event
-    await logEvent('iap_products_retrieval_error', {
+    await logEvent("iap_products_retrieval_error", {
       error: error.message,
       platform: Platform.OS,
     });
-    
+
     throw error;
   }
 };
 
 // Get subscriptions
 export const getIAPSubscriptions = async (
-  subscriptionSkus: string[] = [
-    PRODUCT_IDS.MONTHLY_SUBSCRIPTION,
-    PRODUCT_IDS.YEARLY_SUBSCRIPTION,
-  ],
+  subscriptionSkus: string[] = [PRODUCT_IDS.MONTHLY_SUBSCRIPTION, PRODUCT_IDS.YEARLY_SUBSCRIPTION],
 ): Promise<Subscription[]> => {
   try {
     const subscriptions = await getSubscriptions({ skus: subscriptionSkus });
-    
+
     // Log analytics event
-    await logEvent('iap_subscriptions_retrieved', {
+    await logEvent("iap_subscriptions_retrieved", {
       count: subscriptions.length,
       platform: Platform.OS,
     });
-    
-    console.log('IAP subscriptions retrieved:', subscriptions);
+
+    console.log("IAP subscriptions retrieved:", subscriptions);
     return subscriptions;
   } catch (error) {
-    console.error('Failed to get IAP subscriptions:', error);
-    
+    console.error("Failed to get IAP subscriptions:", error);
+
     // Log analytics event
-    await logEvent('iap_subscriptions_retrieval_error', {
+    await logEvent("iap_subscriptions_retrieval_error", {
       error: error.message,
       platform: Platform.OS,
     });
-    
+
     throw error;
   }
 };
@@ -207,24 +210,24 @@ export const getIAPSubscriptions = async (
 export const getAvailableIAPPurchases = async (): Promise<(ProductPurchase | SubscriptionPurchase)[]> => {
   try {
     const purchases = await getAvailablePurchases();
-    
+
     // Log analytics event
-    await logEvent('iap_available_purchases_retrieved', {
+    await logEvent("iap_available_purchases_retrieved", {
       count: purchases.length,
       platform: Platform.OS,
     });
-    
-    console.log('Available IAP purchases:', purchases);
+
+    console.log("Available IAP purchases:", purchases);
     return purchases;
   } catch (error) {
-    console.error('Failed to get available IAP purchases:', error);
-    
+    console.error("Failed to get available IAP purchases:", error);
+
     // Log analytics event
-    await logEvent('iap_available_purchases_retrieval_error', {
+    await logEvent("iap_available_purchases_retrieval_error", {
       error: error.message,
       platform: Platform.OS,
     });
-    
+
     throw error;
   }
 };
@@ -233,24 +236,24 @@ export const getAvailableIAPPurchases = async (): Promise<(ProductPurchase | Sub
 export const requestIAPPurchase = async (sku: string): Promise<void> => {
   try {
     await requestPurchase({ sku });
-    
+
     // Log analytics event
-    await logEvent('iap_purchase_requested', {
+    await logEvent("iap_purchase_requested", {
       sku,
       platform: Platform.OS,
     });
-    
-    console.log('IAP purchase requested:', sku);
+
+    console.log("IAP purchase requested:", sku);
   } catch (error) {
-    console.error('Failed to request IAP purchase:', error);
-    
+    console.error("Failed to request IAP purchase:", error);
+
     // Log analytics event
-    await logEvent('iap_purchase_request_error', {
+    await logEvent("iap_purchase_request_error", {
       sku,
       error: error.message,
       platform: Platform.OS,
     });
-    
+
     throw error;
   }
 };
@@ -259,24 +262,24 @@ export const requestIAPPurchase = async (sku: string): Promise<void> => {
 export const requestIAPSubscription = async (sku: string): Promise<void> => {
   try {
     await requestSubscription({ sku });
-    
+
     // Log analytics event
-    await logEvent('iap_subscription_requested', {
+    await logEvent("iap_subscription_requested", {
       sku,
       platform: Platform.OS,
     });
-    
-    console.log('IAP subscription requested:', sku);
+
+    console.log("IAP subscription requested:", sku);
   } catch (error) {
-    console.error('Failed to request IAP subscription:', error);
-    
+    console.error("Failed to request IAP subscription:", error);
+
     // Log analytics event
-    await logEvent('iap_subscription_request_error', {
+    await logEvent("iap_subscription_request_error", {
       sku,
       error: error.message,
       platform: Platform.OS,
     });
-    
+
     throw error;
   }
 };
@@ -288,26 +291,26 @@ export const finishIAPTransaction = async (
 ): Promise<void> => {
   try {
     await finishTransaction({ purchase, isConsumable });
-    
+
     // Log analytics event
-    await logEvent('iap_transaction_finished', {
+    await logEvent("iap_transaction_finished", {
       purchaseId: purchase.transactionId,
       isConsumable,
       platform: Platform.OS,
     });
-    
-    console.log('IAP transaction finished:', purchase.transactionId);
+
+    console.log("IAP transaction finished:", purchase.transactionId);
   } catch (error) {
-    console.error('Failed to finish IAP transaction:', error);
-    
+    console.error("Failed to finish IAP transaction:", error);
+
     // Log analytics event
-    await logEvent('iap_transaction_finishing_error', {
+    await logEvent("iap_transaction_finishing_error", {
       purchaseId: purchase.transactionId,
       isConsumable,
       error: error.message,
       platform: Platform.OS,
     });
-    
+
     throw error;
   }
 };
@@ -319,51 +322,52 @@ export const setupIAPPurchaseListeners = (
 ): (() => void) => {
   // Purchase updated listener
   const purchaseUpdateSubscription = purchaseUpdatedListener(async (purchase) => {
-    console.log('Purchase updated:', purchase);
-    
+    console.log("Purchase updated:", purchase);
+
     // Log analytics event
-    await logEvent('iap_purchase_updated', {
+    await logEvent("iap_purchase_updated", {
       purchaseId: purchase.transactionId,
       platform: Platform.OS,
     });
-    
+
     // Call custom handler if provided
     if (onPurchaseUpdated) {
       onPurchaseUpdated(purchase);
     }
-    
+
     // Acknowledge purchase
     try {
-      const isConsumable = Object.values(PRODUCT_IDS).includes(purchase.productId) &&
+      const isConsumable =
+        Object.values(PRODUCT_IDS).includes(purchase.productId) &&
         ![
           PRODUCT_IDS.PREMIUM_FEATURE,
           PRODUCT_IDS.REMOVE_ADS,
           PRODUCT_IDS.MONTHLY_SUBSCRIPTION,
           PRODUCT_IDS.YEARLY_SUBSCRIPTION,
         ].includes(purchase.productId);
-      
+
       await finishIAPTransaction(purchase, isConsumable);
     } catch (error) {
-      console.error('Failed to acknowledge purchase:', error);
+      console.error("Failed to acknowledge purchase:", error);
     }
   });
-  
+
   // Purchase error listener
   const purchaseErrorSubscription = purchaseErrorListener((error) => {
-    console.log('Purchase error:', error);
-    
+    console.log("Purchase error:", error);
+
     // Log analytics event
-    logEvent('iap_purchase_error', {
+    logEvent("iap_purchase_error", {
       error: error.message,
       platform: Platform.OS,
     });
-    
+
     // Call custom handler if provided
     if (onPurchaseError) {
       onPurchaseError(error);
     }
   });
-  
+
   // Return cleanup function
   return () => {
     purchaseUpdateSubscription.remove();
@@ -375,9 +379,9 @@ export const setupIAPPurchaseListeners = (
 export const hasPurchasedProduct = async (sku: string): Promise<boolean> => {
   try {
     const purchases = await getAvailableIAPPurchases();
-    return purchases.some(purchase => purchase.productId === sku);
+    return purchases.some((purchase) => purchase.productId === sku);
   } catch (error) {
-    console.error('Failed to check if user has purchased product:', error);
+    console.error("Failed to check if user has purchased product:", error);
     return false;
   }
 };
@@ -386,18 +390,18 @@ export const hasPurchasedProduct = async (sku: string): Promise<boolean> => {
 export const hasActiveSubscription = async (sku: string): Promise<boolean> => {
   try {
     const purchases = await getAvailableIAPPurchases();
-    const subscriptionPurchase = purchases.find(
-      purchase => purchase.productId === sku,
-    ) as SubscriptionPurchase | undefined;
-    
+    const subscriptionPurchase = purchases.find((purchase) => purchase.productId === sku) as
+      | SubscriptionPurchase
+      | undefined;
+
     if (!subscriptionPurchase) {
       return false;
     }
-    
+
     // Check if subscription is active
     // For Android, check if subscription is active
     // For iOS, check if subscription expiration date is in the future
-    if (Platform.OS === 'android') {
+    if (Platform.OS === "android") {
       return subscriptionPurchase.isAcknowledged;
     } else {
       // For iOS, we need to check the expiration date
@@ -405,7 +409,7 @@ export const hasActiveSubscription = async (sku: string): Promise<boolean> => {
       return true;
     }
   } catch (error) {
-    console.error('Failed to check if user has active subscription:', error);
+    console.error("Failed to check if user has active subscription:", error);
     return false;
   }
 };
@@ -414,40 +418,36 @@ export const hasActiveSubscription = async (sku: string): Promise<boolean> => {
 export const restorePurchases = async (): Promise<(ProductPurchase | SubscriptionPurchase)[]> => {
   try {
     const purchases = await getAvailableIAPPurchases();
-    
+
     // Log analytics event
-    await logEvent('iap_purchases_restored', {
+    await logEvent("iap_purchases_restored", {
       count: purchases.length,
       platform: Platform.OS,
     });
-    
-    console.log('IAP purchases restored:', purchases);
+
+    console.log("IAP purchases restored:", purchases);
     return purchases;
   } catch (error) {
-    console.error('Failed to restore IAP purchases:', error);
-    
+    console.error("Failed to restore IAP purchases:", error);
+
     // Log analytics event
-    await logEvent('iap_purchases_restoration_error', {
+    await logEvent("iap_purchases_restoration_error", {
       error: error.message,
       platform: Platform.OS,
     });
-    
+
     throw error;
   }
 };
 ```
 
 #### Create IAP Hook
+
 Create a file `src/hooks/useInAppPurchases.ts`:
 
 ```typescript
-import { useState, useEffect } from 'react';
-import {
-  Product,
-  Subscription,
-  ProductPurchase,
-  SubscriptionPurchase,
-} from 'react-native-iap';
+import { useState, useEffect } from "react";
+import { Product, Subscription, ProductPurchase, SubscriptionPurchase } from "react-native-iap";
 import {
   initIAPConnection,
   endIAPConnection,
@@ -461,9 +461,9 @@ import {
   hasActiveSubscription,
   restorePurchases,
   PRODUCT_IDS,
-} from '../services/inAppPurchases';
-import { useAuthContext } from '../contexts/AuthContext';
-import { useToast } from './useToast';
+} from "../services/inAppPurchases";
+import { useAuthContext } from "../contexts/AuthContext";
+import { useToast } from "./useToast";
 
 export interface PurchaseItem {
   productId: string;
@@ -471,7 +471,7 @@ export interface PurchaseItem {
   description: string;
   price: string;
   currency: string;
-  type: 'consumable' | 'non-consumable' | 'subscription';
+  type: "consumable" | "non-consumable" | "subscription";
   localizedPrice?: string;
 }
 
@@ -491,22 +491,22 @@ export const useInAppPurchases = () => {
       try {
         setIsLoading(true);
         await initIAPConnection();
-        
+
         // Get products and subscriptions
         const [productsData, subscriptionsData, purchasesData] = await Promise.all([
           getIAPProducts(),
           getIAPSubscriptions(),
           getAvailableIAPPurchases(),
         ]);
-        
+
         setProducts(productsData);
         setSubscriptions(subscriptionsData);
         setPurchases(purchasesData);
-        
+
         // Check purchased products and active subscriptions
         const purchasedProductsMap: Record<string, boolean> = {};
         const activeSubscriptionsMap: Record<string, boolean> = {};
-        
+
         for (const productId of Object.values(PRODUCT_IDS)) {
           if (productId === PRODUCT_IDS.MONTHLY_SUBSCRIPTION || productId === PRODUCT_IDS.YEARLY_SUBSCRIPTION) {
             activeSubscriptionsMap[productId] = await hasActiveSubscription(productId);
@@ -514,27 +514,24 @@ export const useInAppPurchases = () => {
             purchasedProductsMap[productId] = await hasPurchasedProduct(productId);
           }
         }
-        
+
         setPurchasedProducts(purchasedProductsMap);
         setActiveSubscriptions(activeSubscriptionsMap);
-        
+
         // Setup purchase listeners
-        const cleanup = setupIAPPurchaseListeners(
-          handlePurchaseUpdated,
-          handlePurchaseError,
-        );
-        
+        const cleanup = setupIAPPurchaseListeners(handlePurchaseUpdated, handlePurchaseError);
+
         return cleanup;
       } catch (error) {
-        console.error('Failed to initialize IAP:', error);
-        showToast('Failed to initialize in-app purchases', 'error');
+        console.error("Failed to initialize IAP:", error);
+        showToast("Failed to initialize in-app purchases", "error");
       } finally {
         setIsLoading(false);
       }
     };
-    
+
     initialize();
-    
+
     // Cleanup on unmount
     return () => {
       endIAPConnection();
@@ -545,8 +542,8 @@ export const useInAppPurchases = () => {
   const handlePurchaseUpdated = async (purchase: ProductPurchase | SubscriptionPurchase) => {
     try {
       // Update purchases list
-      setPurchases(prev => {
-        const existingIndex = prev.findIndex(p => p.transactionId === purchase.transactionId);
+      setPurchases((prev) => {
+        const existingIndex = prev.findIndex((p) => p.transactionId === purchase.transactionId);
         if (existingIndex >= 0) {
           const updated = [...prev];
           updated[existingIndex] = purchase;
@@ -554,40 +551,43 @@ export const useInAppPurchases = () => {
         }
         return [...prev, purchase];
       });
-      
+
       // Update purchased products or active subscriptions
-      if (purchase.productId === PRODUCT_IDS.MONTHLY_SUBSCRIPTION || purchase.productId === PRODUCT_IDS.YEARLY_SUBSCRIPTION) {
+      if (
+        purchase.productId === PRODUCT_IDS.MONTHLY_SUBSCRIPTION ||
+        purchase.productId === PRODUCT_IDS.YEARLY_SUBSCRIPTION
+      ) {
         const isActive = await hasActiveSubscription(purchase.productId);
-        setActiveSubscriptions(prev => ({ ...prev, [purchase.productId]: isActive }));
-        
-        showToast('Subscription activated successfully', 'success');
+        setActiveSubscriptions((prev) => ({ ...prev, [purchase.productId]: isActive }));
+
+        showToast("Subscription activated successfully", "success");
       } else {
-        setPurchasedProducts(prev => ({ ...prev, [purchase.productId]: true }));
-        
-        showToast('Purchase completed successfully', 'success');
+        setPurchasedProducts((prev) => ({ ...prev, [purchase.productId]: true }));
+
+        showToast("Purchase completed successfully", "success");
       }
-      
+
       // This would typically sync with your backend
-      console.log('Purchase updated:', purchase);
+      console.log("Purchase updated:", purchase);
     } catch (error) {
-      console.error('Failed to handle purchase updated:', error);
-      showToast('Failed to process purchase', 'error');
+      console.error("Failed to handle purchase updated:", error);
+      showToast("Failed to process purchase", "error");
     }
   };
 
   // Handle purchase error
   const handlePurchaseError = (error: any) => {
-    console.error('Purchase error:', error);
-    
-    let errorMessage = 'Purchase failed';
-    
-    if (error.message.includes('User cancelled')) {
-      errorMessage = 'Purchase cancelled';
-    } else if (error.message.includes('Billing response code')) {
-      errorMessage = 'Billing error occurred';
+    console.error("Purchase error:", error);
+
+    let errorMessage = "Purchase failed";
+
+    if (error.message.includes("User cancelled")) {
+      errorMessage = "Purchase cancelled";
+    } else if (error.message.includes("Billing response code")) {
+      errorMessage = "Billing error occurred";
     }
-    
-    showToast(errorMessage, 'error');
+
+    showToast(errorMessage, "error");
   };
 
   // Purchase product
@@ -596,8 +596,8 @@ export const useInAppPurchases = () => {
       setIsLoading(true);
       await requestIAPPurchase(productId);
     } catch (error) {
-      console.error('Failed to purchase product:', error);
-      showToast('Failed to purchase product', 'error');
+      console.error("Failed to purchase product:", error);
+      showToast("Failed to purchase product", "error");
     } finally {
       setIsLoading(false);
     }
@@ -609,8 +609,8 @@ export const useInAppPurchases = () => {
       setIsLoading(true);
       await requestIAPSubscription(productId);
     } catch (error) {
-      console.error('Failed to purchase subscription:', error);
-      showToast('Failed to purchase subscription', 'error');
+      console.error("Failed to purchase subscription:", error);
+      showToast("Failed to purchase subscription", "error");
     } finally {
       setIsLoading(false);
     }
@@ -621,14 +621,14 @@ export const useInAppPurchases = () => {
     try {
       setIsLoading(true);
       const restoredPurchases = await restorePurchases();
-      
+
       // Update purchases list
       setPurchases(restoredPurchases);
-      
+
       // Update purchased products and active subscriptions
       const purchasedProductsMap: Record<string, boolean> = {};
       const activeSubscriptionsMap: Record<string, boolean> = {};
-      
+
       for (const productId of Object.values(PRODUCT_IDS)) {
         if (productId === PRODUCT_IDS.MONTHLY_SUBSCRIPTION || productId === PRODUCT_IDS.YEARLY_SUBSCRIPTION) {
           activeSubscriptionsMap[productId] = await hasActiveSubscription(productId);
@@ -636,14 +636,14 @@ export const useInAppPurchases = () => {
           purchasedProductsMap[productId] = await hasPurchasedProduct(productId);
         }
       }
-      
+
       setPurchasedProducts(purchasedProductsMap);
       setActiveSubscriptions(activeSubscriptionsMap);
-      
-      showToast('Purchases restored successfully', 'success');
+
+      showToast("Purchases restored successfully", "success");
     } catch (error) {
-      console.error('Failed to restore purchases:', error);
-      showToast('Failed to restore purchases', 'error');
+      console.error("Failed to restore purchases:", error);
+      showToast("Failed to restore purchases", "error");
     } finally {
       setIsLoading(false);
     }
@@ -651,16 +651,13 @@ export const useInAppPurchases = () => {
 
   // Format products for display
   const formatProducts = (): PurchaseItem[] => {
-    return products.map(product => {
-      let type: 'consumable' | 'non-consumable' | 'subscription' = 'consumable';
-      
-      if (
-        product.productId === PRODUCT_IDS.PREMIUM_FEATURE ||
-        product.productId === PRODUCT_IDS.REMOVE_ADS
-      ) {
-        type = 'non-consumable';
+    return products.map((product) => {
+      let type: "consumable" | "non-consumable" | "subscription" = "consumable";
+
+      if (product.productId === PRODUCT_IDS.PREMIUM_FEATURE || product.productId === PRODUCT_IDS.REMOVE_ADS) {
+        type = "non-consumable";
       }
-      
+
       return {
         productId: product.productId,
         title: product.title,
@@ -675,13 +672,13 @@ export const useInAppPurchases = () => {
 
   // Format subscriptions for display
   const formatSubscriptions = (): PurchaseItem[] => {
-    return subscriptions.map(subscription => ({
+    return subscriptions.map((subscription) => ({
       productId: subscription.productId,
       title: subscription.title,
       description: subscription.description,
       price: subscription.price,
       currency: subscription.currency,
-      type: 'subscription',
+      type: "subscription",
       localizedPrice: subscription.localizedPrice,
     }));
   };
@@ -719,6 +716,7 @@ export const useInAppPurchases = () => {
 ### 4. Create In-App Purchase Components
 
 #### Create Product Card Component
+
 Create a file `src/components/iap/ProductCard.tsx`:
 
 ```typescript
@@ -784,16 +782,16 @@ const ProductCard: React.FC<ProductCardProps> = ({
         <Text style={[styles.title, { color: theme.text }]} numberOfLines={1}>
           {product.title}
         </Text>
-        
+
         <Text style={[styles.description, { color: theme.secondaryText }]} numberOfLines={2}>
           {product.description}
         </Text>
-        
+
         <Text style={[styles.price, { color: theme.primary }]}>
           {product.localizedPrice || `${product.currency} ${product.price}`}
         </Text>
       </View>
-      
+
       <TouchableOpacity
         style={[styles.button, getButtonStyle()]}
         onPress={handlePurchase}
@@ -854,6 +852,7 @@ export default ProductCard;
 ```
 
 #### Create Subscription Card Component
+
 Create a file `src/components/iap/SubscriptionCard.tsx`:
 
 ```typescript
@@ -925,21 +924,21 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
           <Text style={styles.recommendedText}>Recommended</Text>
         </View>
       )}
-      
+
       <View style={styles.content}>
         <Text style={[styles.title, { color: theme.text }]} numberOfLines={1}>
           {subscription.title}
         </Text>
-        
+
         <Text style={[styles.description, { color: theme.secondaryText }]} numberOfLines={2}>
           {subscription.description}
         </Text>
-        
+
         <Text style={[styles.price, { color: theme.primary }]}>
           {subscription.localizedPrice || `${subscription.currency} ${subscription.price}`}
         </Text>
       </View>
-      
+
       <TouchableOpacity
         style={[styles.button, getButtonStyle()]}
         onPress={handlePurchase}
@@ -1015,6 +1014,7 @@ export default SubscriptionCard;
 ```
 
 #### Create Store Screen Component
+
 Create a file `src/components/iap/StoreScreen.tsx`:
 
 ```typescript
@@ -1049,7 +1049,7 @@ const StoreScreen: React.FC<StoreScreenProps> = ({ onBack }) => {
     hasPremiumAccess,
     areAdsRemoved,
   } = useInAppPurchases();
-  
+
   const [refreshing, setRefreshing] = useState(false);
   const [activeTab, setActiveTab] = useState<'products' | 'subscriptions'>('products');
 
@@ -1120,24 +1120,24 @@ const StoreScreen: React.FC<StoreScreenProps> = ({ onBack }) => {
         <TouchableOpacity onPress={onBack}>
           <Text style={[styles.backButton, { color: theme.primary }]}>Back</Text>
         </TouchableOpacity>
-        
+
         <Text style={[styles.title, { color: theme.text }]}>Store</Text>
-        
+
         <TouchableOpacity onPress={handleRestore}>
           <Text style={[styles.restoreButton, { color: theme.primary }]}>Restore</Text>
         </TouchableOpacity>
       </View>
-      
+
       <View style={[styles.statusContainer, { backgroundColor: theme.card }]}>
         <Text style={[styles.statusText, { color: theme.text }]}>
           Premium Access: {hasPremiumAccess() ? '✅ Active' : '❌ Inactive'}
         </Text>
-        
+
         <Text style={[styles.statusText, { color: theme.text }]}>
           Ads Removed: {areAdsRemoved() ? '✅ Yes' : '❌ No'}
         </Text>
       </View>
-      
+
       <View style={[styles.tabContainer, { backgroundColor: theme.card }]}>
         <TouchableOpacity
           style={[
@@ -1155,7 +1155,7 @@ const StoreScreen: React.FC<StoreScreenProps> = ({ onBack }) => {
             Products
           </Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity
           style={[
             styles.tab,
@@ -1173,7 +1173,7 @@ const StoreScreen: React.FC<StoreScreenProps> = ({ onBack }) => {
           </Text>
         </TouchableOpacity>
       </View>
-      
+
       <ScrollView
         style={styles.content}
         refreshControl={
@@ -1189,7 +1189,7 @@ const StoreScreen: React.FC<StoreScreenProps> = ({ onBack }) => {
             <Text style={[styles.sectionTitle, { color: theme.text }]}>
               In-App Products
             </Text>
-            
+
             {products.length === 0 ? (
               <Text style={[styles.emptyText, { color: theme.secondaryText }]}>
                 No products available
@@ -1211,7 +1211,7 @@ const StoreScreen: React.FC<StoreScreenProps> = ({ onBack }) => {
             <Text style={[styles.sectionTitle, { color: theme.text }]}>
               Subscriptions
             </Text>
-            
+
             {subscriptions.length === 0 ? (
               <Text style={[styles.emptyText, { color: theme.secondaryText }]}>
                 No subscriptions available
@@ -1314,6 +1314,7 @@ export default StoreScreen;
 ### 5. Create Store Screen
 
 #### Create Store Screen
+
 Create a file `src/screens/store/StoreScreen.tsx`:
 
 ```typescript
@@ -1335,11 +1336,12 @@ export default StoreScreen;
 ### 6. Integration in App
 
 #### Update App Entry Point
+
 Update your `App.tsx` to include IAP initialization:
 
 ```typescript
-import React, { useEffect } from 'react';
-import { initIAPConnection } from './src/services/inAppPurchases';
+import React, { useEffect } from "react";
+import { initIAPConnection } from "./src/services/inAppPurchases";
 
 const App = () => {
   useEffect(() => {
@@ -1347,7 +1349,7 @@ const App = () => {
     const setupIAP = async () => {
       await initIAPConnection();
     };
-    
+
     setupIAP();
   }, []);
 
@@ -1356,6 +1358,7 @@ const App = () => {
 ```
 
 #### Update App Navigation
+
 Add the StoreScreen to your navigation stack:
 
 ```typescript
@@ -1373,21 +1376,22 @@ import StoreScreen from '../screens/store/StoreScreen';
 ### 7. Advanced Features Implementation
 
 #### Create IAP Analytics Service
+
 Create a file `src/services/iapAnalytics.ts`:
 
 ```typescript
-import { logEvent } from './analytics';
-import { ProductPurchase, SubscriptionPurchase } from 'react-native-iap';
+import { logEvent } from "./analytics";
+import { ProductPurchase, SubscriptionPurchase } from "react-native-iap";
 
 // Track purchase event
 export const trackPurchase = async (
   purchase: ProductPurchase | SubscriptionPurchase,
-  productType: 'consumable' | 'non-consumable' | 'subscription',
+  productType: "consumable" | "non-consumable" | "subscription",
   value: number,
   currency: string,
 ): Promise<void> => {
   try {
-    await logEvent('purchase', {
+    await logEvent("purchase", {
       transaction_id: purchase.transactionId,
       value,
       currency,
@@ -1395,22 +1399,22 @@ export const trackPurchase = async (
       product_type: productType,
       platform: purchase.platform,
     });
-    
-    console.log('Purchase tracked:', purchase);
+
+    console.log("Purchase tracked:", purchase);
   } catch (error) {
-    console.error('Failed to track purchase:', error);
+    console.error("Failed to track purchase:", error);
   }
 };
 
 // Track subscription event
 export const trackSubscription = async (
   purchase: SubscriptionPurchase,
-  subscriptionPeriod: 'monthly' | 'yearly',
+  subscriptionPeriod: "monthly" | "yearly",
   value: number,
   currency: string,
 ): Promise<void> => {
   try {
-    await logEvent('subscription', {
+    await logEvent("subscription", {
       transaction_id: purchase.transactionId,
       value,
       currency,
@@ -1418,10 +1422,10 @@ export const trackSubscription = async (
       subscription_period: subscriptionPeriod,
       platform: purchase.platform,
     });
-    
-    console.log('Subscription tracked:', purchase);
+
+    console.log("Subscription tracked:", purchase);
   } catch (error) {
-    console.error('Failed to track subscription:', error);
+    console.error("Failed to track subscription:", error);
   }
 };
 
@@ -1432,63 +1436,56 @@ export const trackRevenue = async (
   currency: string,
 ): Promise<void> => {
   try {
-    await logEvent('revenue', {
+    await logEvent("revenue", {
       transaction_id: purchase.transactionId,
       value,
       currency,
       platform: purchase.platform,
     });
-    
-    console.log('Revenue tracked:', purchase);
+
+    console.log("Revenue tracked:", purchase);
   } catch (error) {
-    console.error('Failed to track revenue:', error);
+    console.error("Failed to track revenue:", error);
   }
 };
 
 // Track refund event
-export const trackRefund = async (
-  transactionId: string,
-  value: number,
-  currency: string,
-): Promise<void> => {
+export const trackRefund = async (transactionId: string, value: number, currency: string): Promise<void> => {
   try {
-    await logEvent('refund', {
+    await logEvent("refund", {
       transaction_id: transactionId,
       value,
       currency,
     });
-    
-    console.log('Refund tracked:', transactionId);
+
+    console.log("Refund tracked:", transactionId);
   } catch (error) {
-    console.error('Failed to track refund:', error);
+    console.error("Failed to track refund:", error);
   }
 };
 
 // Track store view event
 export const trackStoreView = async (): Promise<void> => {
   try {
-    await logEvent('store_view');
-    
-    console.log('Store view tracked');
+    await logEvent("store_view");
+
+    console.log("Store view tracked");
   } catch (error) {
-    console.error('Failed to track store view:', error);
+    console.error("Failed to track store view:", error);
   }
 };
 
 // Track product view event
-export const trackProductView = async (
-  productId: string,
-  productName: string,
-): Promise<void> => {
+export const trackProductView = async (productId: string, productName: string): Promise<void> => {
   try {
-    await logEvent('product_view', {
+    await logEvent("product_view", {
       product_id: productId,
       product_name: productName,
     });
-    
-    console.log('Product view tracked:', productId);
+
+    console.log("Product view tracked:", productId);
   } catch (error) {
-    console.error('Failed to track product view:', error);
+    console.error("Failed to track product view:", error);
   }
 };
 
@@ -1500,16 +1497,16 @@ export const trackAddToCart = async (
   currency: string,
 ): Promise<void> => {
   try {
-    await logEvent('add_to_cart', {
+    await logEvent("add_to_cart", {
       product_id: productId,
       product_name: productName,
       value,
       currency,
     });
-    
-    console.log('Add to cart tracked:', productId);
+
+    console.log("Add to cart tracked:", productId);
   } catch (error) {
-    console.error('Failed to track add to cart:', error);
+    console.error("Failed to track add to cart:", error);
   }
 };
 
@@ -1523,13 +1520,13 @@ export const trackBeginCheckout = async (
   }>,
 ): Promise<void> => {
   try {
-    await logEvent('begin_checkout', {
+    await logEvent("begin_checkout", {
       products,
     });
-    
-    console.log('Begin checkout tracked:', products);
+
+    console.log("Begin checkout tracked:", products);
   } catch (error) {
-    console.error('Failed to track begin checkout:', error);
+    console.error("Failed to track begin checkout:", error);
   }
 };
 ```
@@ -1537,21 +1534,22 @@ export const trackBeginCheckout = async (
 ### 8. Testing and Debugging
 
 #### Enable Debug Mode
+
 Create a file `src/services/iapDebug.ts`:
 
 ```typescript
-import { logEvent } from './analytics';
+import { logEvent } from "./analytics";
 
 // Enable debug mode for IAP
 export const enableIAPDebugMode = async () => {
   try {
     // Note: This is a placeholder for any platform-specific debug setup
-    console.log('IAP debug mode enabled');
-    
+    console.log("IAP debug mode enabled");
+
     // Log analytics event
-    await logEvent('iap_debug_mode_enabled');
+    await logEvent("iap_debug_mode_enabled");
   } catch (error) {
-    console.error('Failed to enable IAP debug mode:', error);
+    console.error("Failed to enable IAP debug mode:", error);
   }
 };
 
@@ -1559,12 +1557,12 @@ export const enableIAPDebugMode = async () => {
 export const testIAPPurchase = async () => {
   try {
     // This is a placeholder for testing IAP purchases
-    console.log('Testing IAP purchase...');
-    
+    console.log("Testing IAP purchase...");
+
     // Log analytics event
-    await logEvent('test_iap_purchase');
+    await logEvent("test_iap_purchase");
   } catch (error) {
-    console.error('Failed to test IAP purchase:', error);
+    console.error("Failed to test IAP purchase:", error);
   }
 };
 ```
@@ -1572,6 +1570,7 @@ export const testIAPPurchase = async () => {
 ### 9. Best Practices and Optimization
 
 #### In-App Purchases Best Practices
+
 1. **Provide clear value**: Clearly communicate what users get with each purchase
 2. **Offer a free trial**: Consider offering a free trial for subscriptions
 3. **Use appropriate pricing**: Set prices that reflect the value of your products
@@ -1579,6 +1578,7 @@ export const testIAPPurchase = async () => {
 5. **Handle edge cases**: Handle edge cases like network failures and interrupted purchases
 
 #### Performance Optimization
+
 1. **Cache products**: Cache product information to reduce loading times
 2. **Lazy load**: Load products and subscriptions only when needed
 3. **Minimize API calls**: Reduce unnecessary API calls for product information
@@ -1586,6 +1586,7 @@ export const testIAPPurchase = async () => {
 5. **Optimize for slow connections**: Handle slow network connections gracefully
 
 #### User Experience Guidelines
+
 1. **Make purchasing easy**: Provide a simple and intuitive purchase flow
 2. **Show purchase confirmation**: Show confirmation when a purchase is successful
 3. **Handle errors gracefully**: Show clear error messages when purchases fail
@@ -1597,33 +1598,39 @@ export const testIAPPurchase = async () => {
 ### Common Issues
 
 #### Products Not Loading
+
 1. Check if products are configured in App Store Connect and Google Play Console
 2. Verify product IDs match exactly with those in the stores
 3. Ensure IAP connection is properly initialized
 4. Check if device has internet connection
 
 #### Purchases Failing
+
 1. Check if user is signed in to their app store account
 2. Verify payment method is valid
 3. Ensure IAP capability is enabled in Xcode
 4. Check if billing permission is added to AndroidManifest.xml
 
 #### Subscriptions Not Renewing
+
 1. Check if subscription is properly configured in App Store Connect and Google Play Console
 2. Verify subscription status with server validation
 3. Ensure subscription receipts are properly handled
 4. Check if user has sufficient funds for renewal
 
 ### Debugging Tools
+
 1. **App Store Connect and Google Play Console**: Use console dashboards to monitor sales and issues
 2. **Device Logs**: Check device logs for IAP-related errors
 3. **Network Inspector**: Monitor network requests for product information
 4. **Sandbox Testing**: Test purchases in sandbox environments before releasing
 
 ## Conclusion
+
 This guide provides a comprehensive implementation of in-app purchases in your React Native application. By following these steps, you'll be able to effectively monetize your app with products and subscriptions.
 
 Remember to:
+
 - Always follow platform guidelines for in-app purchases
 - Provide clear value to users with each purchase
 - Test thoroughly across different devices and platforms

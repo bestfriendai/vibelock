@@ -183,6 +183,54 @@ export const handleComponentError = (error: any, componentName: string): string 
   return appError.userMessage;
 };
 
+// Worklet-safe error creation for use in reanimated/worklets contexts
+export const createWorkletSafeError = (
+  message: string,
+  type: ErrorType = ErrorType.UNKNOWN,
+  code?: string,
+): { message: string; type: ErrorType; code?: string; userMessage: string } => {
+  "worklet";
+
+  // Generate user message without class construction
+  let userMessage: string;
+  switch (type) {
+    case ErrorType.NETWORK:
+      userMessage = "Network connection issue. Please check your internet connection and try again.";
+      break;
+    case ErrorType.AUTH:
+      userMessage = "Authentication failed. Please sign in again.";
+      break;
+    case ErrorType.PERMISSION:
+      userMessage = "You don't have permission to perform this action.";
+      break;
+    case ErrorType.VALIDATION:
+      userMessage = "Please check your input and try again.";
+      break;
+    case ErrorType.SERVER:
+      userMessage = "Server error. Please try again in a few moments.";
+      break;
+    default:
+      userMessage = "An unexpected error occurred. Please try again.";
+  }
+
+  return {
+    message,
+    type,
+    code,
+    userMessage,
+  };
+};
+
+// Convert worklet-safe error to AppError (use on JS thread)
+export const convertToAppError = (workletError: {
+  message: string;
+  type: ErrorType;
+  code?: string;
+  userMessage: string;
+}): AppError => {
+  return new AppError(workletError.message, workletError.type, workletError.code);
+};
+
 // Network status checker
 export const checkNetworkStatus = async (): Promise<boolean> => {
   try {

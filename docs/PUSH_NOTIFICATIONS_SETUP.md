@@ -1,9 +1,11 @@
 # Push Notifications Setup Guide
 
 ## Overview
+
 This document provides a complete guide for implementing push notifications in the React Native application using Firebase Cloud Messaging (FCM) for Android and Apple Push Notification Service (APNs) for iOS.
 
 ## Prerequisites
+
 - React Native project with `@react-native-firebase/app` and `@react-native-firebase/messaging` installed
 - Firebase project set up with FCM enabled
 - Apple Developer account with APNs certificates configured
@@ -26,9 +28,11 @@ cd ios && pod install
 ### 2. Configure Firebase
 
 #### Android Configuration
+
 1. Download `google-services.json` from your Firebase project
 2. Place it in the `android/app` directory
 3. Add the google-services plugin to your `android/build.gradle`:
+
 ```gradle
 buildscript {
   dependencies {
@@ -39,12 +43,14 @@ buildscript {
 ```
 
 4. Apply the plugin in your `android/app/build.gradle`:
+
 ```gradle
 apply plugin: 'com.android.application'
 apply plugin: 'com.google.gms.google-services'
 ```
 
 #### iOS Configuration
+
 1. Download `GoogleService-Info.plist` from your Firebase project
 2. Open your iOS project in Xcode
 3. Right-click on your project directory and select "Add Files to [project name]"
@@ -58,31 +64,29 @@ apply plugin: 'com.google.gms.google-services'
 ### 3. Create Push Notification Service
 
 #### Create Notification Service
+
 Create a file `src/services/pushNotifications.ts`:
 
 ```typescript
-import messaging, {
-  FirebaseMessagingTypes,
-} from '@react-native-firebase/messaging';
-import { Platform, PermissionsAndroid, Alert } from 'react-native';
-import { logEvent } from './analytics';
+import messaging, { FirebaseMessagingTypes } from "@react-native-firebase/messaging";
+import { Platform, PermissionsAndroid, Alert } from "react-native";
+import { logEvent } from "./analytics";
 
 // Request notification permission
 export const requestNotificationPermission = async (): Promise<boolean> => {
   try {
     let authStatus: FirebaseMessagingTypes.AuthorizationStatus;
 
-    if (Platform.OS === 'ios') {
+    if (Platform.OS === "ios") {
       authStatus = await messaging().requestPermission();
     } else {
       // For Android, we need to request POST_NOTIFICATIONS permission for API 33+
       if (Platform.Version >= 33) {
-        const granted = await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
-        );
-        authStatus = granted === PermissionsAndroid.RESULTS.GRANTED
-          ? messaging.AuthorizationStatus.AUTHORIZED
-          : messaging.AuthorizationStatus.DENIED;
+        const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS);
+        authStatus =
+          granted === PermissionsAndroid.RESULTS.GRANTED
+            ? messaging.AuthorizationStatus.AUTHORIZED
+            : messaging.AuthorizationStatus.DENIED;
       } else {
         authStatus = messaging.AuthorizationStatus.AUTHORIZED;
       }
@@ -93,21 +97,21 @@ export const requestNotificationPermission = async (): Promise<boolean> => {
       authStatus === messaging.AuthorizationStatus.PROVISIONAL;
 
     // Log analytics event
-    await logEvent('notification_permission_requested', {
+    await logEvent("notification_permission_requested", {
       enabled,
       platform: Platform.OS,
     });
 
     return enabled;
   } catch (error) {
-    console.error('Failed to request notification permission:', error);
-    
+    console.error("Failed to request notification permission:", error);
+
     // Log analytics event
-    await logEvent('notification_permission_error', {
+    await logEvent("notification_permission_error", {
       error: error.message,
       platform: Platform.OS,
     });
-    
+
     return false;
   }
 };
@@ -117,30 +121,30 @@ export const getFCMToken = async (): Promise<string | null> => {
   try {
     // Check if notification permission is granted
     const enabled = await requestNotificationPermission();
-    
+
     if (!enabled) {
-      console.log('Notification permission not granted');
+      console.log("Notification permission not granted");
       return null;
     }
 
     // Get FCM token
     const token = await messaging().getToken();
-    
+
     // Log analytics event
-    await logEvent('fcm_token_received', {
+    await logEvent("fcm_token_received", {
       platform: Platform.OS,
     });
-    
+
     return token;
   } catch (error) {
-    console.error('Failed to get FCM token:', error);
-    
+    console.error("Failed to get FCM token:", error);
+
     // Log analytics event
-    await logEvent('fcm_token_error', {
+    await logEvent("fcm_token_error", {
       error: error.message,
       platform: Platform.OS,
     });
-    
+
     return null;
   }
 };
@@ -149,24 +153,24 @@ export const getFCMToken = async (): Promise<string | null> => {
 export const subscribeToTopic = async (topic: string): Promise<void> => {
   try {
     await messaging().subscribeToTopic(topic);
-    
+
     // Log analytics event
-    await logEvent('topic_subscribed', {
+    await logEvent("topic_subscribed", {
       topic,
       platform: Platform.OS,
     });
-    
+
     console.log(`Subscribed to topic: ${topic}`);
   } catch (error) {
     console.error(`Failed to subscribe to topic ${topic}:`, error);
-    
+
     // Log analytics event
-    await logEvent('topic_subscription_error', {
+    await logEvent("topic_subscription_error", {
       topic,
       error: error.message,
       platform: Platform.OS,
     });
-    
+
     throw error;
   }
 };
@@ -175,76 +179,70 @@ export const subscribeToTopic = async (topic: string): Promise<void> => {
 export const unsubscribeFromTopic = async (topic: string): Promise<void> => {
   try {
     await messaging().unsubscribeFromTopic(topic);
-    
+
     // Log analytics event
-    await logEvent('topic_unsubscribed', {
+    await logEvent("topic_unsubscribed", {
       topic,
       platform: Platform.OS,
     });
-    
+
     console.log(`Unsubscribed from topic: ${topic}`);
   } catch (error) {
     console.error(`Failed to unsubscribe from topic ${topic}:`, error);
-    
+
     // Log analytics event
-    await logEvent('topic_unsubscription_error', {
+    await logEvent("topic_unsubscription_error", {
       topic,
       error: error.message,
       platform: Platform.OS,
     });
-    
+
     throw error;
   }
 };
 
 // Register FCM token with backend
-export const registerFCMToken = async (
-  token: string,
-  userId?: string,
-): Promise<void> => {
+export const registerFCMToken = async (token: string, userId?: string): Promise<void> => {
   try {
     // This would typically be an API call to your backend
-    console.log('Registering FCM token with backend:', token);
-    
+    console.log("Registering FCM token with backend:", token);
+
     // Log analytics event
-    await logEvent('fcm_token_registered', {
+    await logEvent("fcm_token_registered", {
       platform: Platform.OS,
     });
   } catch (error) {
-    console.error('Failed to register FCM token with backend:', error);
-    
+    console.error("Failed to register FCM token with backend:", error);
+
     // Log analytics event
-    await logEvent('fcm_token_registration_error', {
+    await logEvent("fcm_token_registration_error", {
       error: error.message,
       platform: Platform.OS,
     });
-    
+
     throw error;
   }
 };
 
 // Unregister FCM token from backend
-export const unregisterFCMToken = async (
-  token: string,
-  userId?: string,
-): Promise<void> => {
+export const unregisterFCMToken = async (token: string, userId?: string): Promise<void> => {
   try {
     // This would typically be an API call to your backend
-    console.log('Unregistering FCM token from backend:', token);
-    
+    console.log("Unregistering FCM token from backend:", token);
+
     // Log analytics event
-    await logEvent('fcm_token_unregistered', {
+    await logEvent("fcm_token_unregistered", {
       platform: Platform.OS,
     });
   } catch (error) {
-    console.error('Failed to unregister FCM token from backend:', error);
-    
+    console.error("Failed to unregister FCM token from backend:", error);
+
     // Log analytics event
-    await logEvent('fcm_token_unregistration_error', {
+    await logEvent("fcm_token_unregistration_error", {
       error: error.message,
       platform: Platform.OS,
     });
-    
+
     throw error;
   }
 };
@@ -258,15 +256,15 @@ export const initializePushNotifications = async (
   try {
     // Request permission
     const enabled = await requestNotificationPermission();
-    
+
     if (!enabled) {
-      console.log('Notification permission not granted');
+      console.log("Notification permission not granted");
       return;
     }
 
     // Get FCM token
     const token = await getFCMToken();
-    
+
     if (token) {
       // Register token with backend
       await registerFCMToken(token, userId);
@@ -274,13 +272,13 @@ export const initializePushNotifications = async (
 
     // Handle foreground notifications
     const unsubscribeOnMessage = messaging().onMessage(async (remoteMessage) => {
-      console.log('A new FCM message arrived!', JSON.stringify(remoteMessage));
-      
+      console.log("A new FCM message arrived!", JSON.stringify(remoteMessage));
+
       // Log analytics event
-      await logEvent('notification_received_foreground', {
+      await logEvent("notification_received_foreground", {
         platform: Platform.OS,
       });
-      
+
       // Call custom handler if provided
       if (onNotification) {
         onNotification(remoteMessage);
@@ -288,40 +286,32 @@ export const initializePushNotifications = async (
     });
 
     // Handle notification opened from background
-    const unsubscribeOnNotificationOpenedApp = messaging().onNotificationOpenedApp(
-      (remoteMessage) => {
-        console.log(
-          'Notification caused app to open from background state:',
-          JSON.stringify(remoteMessage),
-        );
-        
-        // Log analytics event
-        logEvent('notification_opened_background', {
-          platform: Platform.OS,
-        });
-        
-        // Call custom handler if provided
-        if (onNotificationOpened) {
-          onNotificationOpened(remoteMessage);
-        }
-      },
-    );
+    const unsubscribeOnNotificationOpenedApp = messaging().onNotificationOpenedApp((remoteMessage) => {
+      console.log("Notification caused app to open from background state:", JSON.stringify(remoteMessage));
+
+      // Log analytics event
+      logEvent("notification_opened_background", {
+        platform: Platform.OS,
+      });
+
+      // Call custom handler if provided
+      if (onNotificationOpened) {
+        onNotificationOpened(remoteMessage);
+      }
+    });
 
     // Check whether an initial notification is available
     messaging()
       .getInitialNotification()
       .then((remoteMessage) => {
         if (remoteMessage) {
-          console.log(
-            'Notification caused app to open from quit state:',
-            JSON.stringify(remoteMessage),
-          );
-          
+          console.log("Notification caused app to open from quit state:", JSON.stringify(remoteMessage));
+
           // Log analytics event
-          logEvent('notification_opened_quit', {
+          logEvent("notification_opened_quit", {
             platform: Platform.OS,
           });
-          
+
           // Call custom handler if provided
           if (onNotificationOpened) {
             onNotificationOpened(remoteMessage);
@@ -330,19 +320,17 @@ export const initializePushNotifications = async (
       });
 
     // Handle token refresh
-    const unsubscribeOnTokenRefresh = messaging().onTokenRefresh(
-      async (newToken) => {
-        console.log('FCM token refreshed:', newToken);
-        
-        // Log analytics event
-        await logEvent('fcm_token_refreshed', {
-          platform: Platform.OS,
-        });
-        
-        // Register new token with backend
-        await registerFCMToken(newToken, userId);
-      },
-    );
+    const unsubscribeOnTokenRefresh = messaging().onTokenRefresh(async (newToken) => {
+      console.log("FCM token refreshed:", newToken);
+
+      // Log analytics event
+      await logEvent("fcm_token_refreshed", {
+        platform: Platform.OS,
+      });
+
+      // Register new token with backend
+      await registerFCMToken(newToken, userId);
+    });
 
     // Return cleanup function
     return () => {
@@ -351,14 +339,14 @@ export const initializePushNotifications = async (
       unsubscribeOnTokenRefresh();
     };
   } catch (error) {
-    console.error('Failed to initialize push notifications:', error);
-    
+    console.error("Failed to initialize push notifications:", error);
+
     // Log analytics event
-    await logEvent('push_notifications_initialization_error', {
+    await logEvent("push_notifications_initialization_error", {
       error: error.message,
       platform: Platform.OS,
     });
-    
+
     throw error;
   }
 };
@@ -371,21 +359,21 @@ export const displayLocalNotification = async (
 ): Promise<void> => {
   try {
     // This would typically use react-native-push-notification or similar
-    console.log('Displaying local notification:', { title, body, data });
-    
+    console.log("Displaying local notification:", { title, body, data });
+
     // Log analytics event
-    await logEvent('local_notification_displayed', {
+    await logEvent("local_notification_displayed", {
       platform: Platform.OS,
     });
   } catch (error) {
-    console.error('Failed to display local notification:', error);
-    
+    console.error("Failed to display local notification:", error);
+
     // Log analytics event
-    await logEvent('local_notification_error', {
+    await logEvent("local_notification_error", {
       error: error.message,
       platform: Platform.OS,
     });
-    
+
     throw error;
   }
 };
@@ -399,21 +387,21 @@ export const scheduleLocalNotification = async (
 ): Promise<void> => {
   try {
     // This would typically use react-native-push-notification or similar
-    console.log('Scheduling local notification:', { title, body, date, data });
-    
+    console.log("Scheduling local notification:", { title, body, date, data });
+
     // Log analytics event
-    await logEvent('local_notification_scheduled', {
+    await logEvent("local_notification_scheduled", {
       platform: Platform.OS,
     });
   } catch (error) {
-    console.error('Failed to schedule local notification:', error);
-    
+    console.error("Failed to schedule local notification:", error);
+
     // Log analytics event
-    await logEvent('local_notification_scheduling_error', {
+    await logEvent("local_notification_scheduling_error", {
       error: error.message,
       platform: Platform.OS,
     });
-    
+
     throw error;
   }
 };
@@ -422,21 +410,21 @@ export const scheduleLocalNotification = async (
 export const cancelLocalNotification = async (id: string): Promise<void> => {
   try {
     // This would typically use react-native-push-notification or similar
-    console.log('Cancelling local notification:', id);
-    
+    console.log("Cancelling local notification:", id);
+
     // Log analytics event
-    await logEvent('local_notification_cancelled', {
+    await logEvent("local_notification_cancelled", {
       platform: Platform.OS,
     });
   } catch (error) {
-    console.error('Failed to cancel local notification:', error);
-    
+    console.error("Failed to cancel local notification:", error);
+
     // Log analytics event
-    await logEvent('local_notification_cancellation_error', {
+    await logEvent("local_notification_cancellation_error", {
       error: error.message,
       platform: Platform.OS,
     });
-    
+
     throw error;
   }
 };
@@ -445,34 +433,33 @@ export const cancelLocalNotification = async (id: string): Promise<void> => {
 export const cancelAllLocalNotifications = async (): Promise<void> => {
   try {
     // This would typically use react-native-push-notification or similar
-    console.log('Cancelling all local notifications');
-    
+    console.log("Cancelling all local notifications");
+
     // Log analytics event
-    await logEvent('all_local_notifications_cancelled', {
+    await logEvent("all_local_notifications_cancelled", {
       platform: Platform.OS,
     });
   } catch (error) {
-    console.error('Failed to cancel all local notifications:', error);
-    
+    console.error("Failed to cancel all local notifications:", error);
+
     // Log analytics event
-    await logEvent('all_local_notifications_cancellation_error', {
+    await logEvent("all_local_notifications_cancellation_error", {
       error: error.message,
       platform: Platform.OS,
     });
-    
+
     throw error;
   }
 };
 ```
 
 #### Create Push Notification Hook
+
 Create a file `src/hooks/usePushNotifications.ts`:
 
 ```typescript
-import { useState, useEffect } from 'react';
-import messaging, {
-  FirebaseMessagingTypes,
-} from '@react-native-firebase/messaging';
+import { useState, useEffect } from "react";
+import messaging, { FirebaseMessagingTypes } from "@react-native-firebase/messaging";
 import {
   initializePushNotifications,
   subscribeToTopic,
@@ -481,9 +468,9 @@ import {
   scheduleLocalNotification,
   cancelLocalNotification,
   cancelAllLocalNotifications,
-} from '../services/pushNotifications';
-import { useAuthContext } from '../contexts/AuthContext';
-import { useToast } from './useToast';
+} from "../services/pushNotifications";
+import { useAuthContext } from "../contexts/AuthContext";
+import { useToast } from "./useToast";
 
 export interface NotificationData {
   id?: string;
@@ -506,85 +493,69 @@ export const usePushNotifications = () => {
     const initialize = async () => {
       try {
         setIsLoading(true);
-        
-        const cleanup = await initializePushNotifications(
-          user?.id,
-          handleNotification,
-          handleNotificationOpened,
-        );
-        
+
+        const cleanup = await initializePushNotifications(user?.id, handleNotification, handleNotificationOpened);
+
         return cleanup;
       } catch (error) {
-        console.error('Failed to initialize push notifications:', error);
-        showToast('Failed to enable notifications', 'error');
+        console.error("Failed to initialize push notifications:", error);
+        showToast("Failed to enable notifications", "error");
       } finally {
         setIsLoading(false);
       }
     };
-    
+
     initialize();
   }, [user]);
 
   // Handle notification
-  const handleNotification = async (
-    notification: FirebaseMessagingTypes.RemoteMessage,
-  ) => {
+  const handleNotification = async (notification: FirebaseMessagingTypes.RemoteMessage) => {
     try {
       const { notification, data } = notification;
-      
+
       if (notification) {
         const newNotification: NotificationData = {
           id: data?.id || Date.now().toString(),
-          title: notification.title || '',
-          body: notification.body || '',
+          title: notification.title || "",
+          body: notification.body || "",
           data,
           timestamp: Date.now(),
           read: false,
         };
-        
+
         // Add to notifications list
-        setNotifications(prev => [newNotification, ...prev]);
-        
+        setNotifications((prev) => [newNotification, ...prev]);
+
         // Display local notification for foreground notifications
-        await displayLocalNotification(
-          notification.title || '',
-          notification.body || '',
-          data,
-        );
-        
+        await displayLocalNotification(notification.title || "", notification.body || "", data);
+
         // Show toast
-        showToast(notification.title || 'New notification', 'info');
+        showToast(notification.title || "New notification", "info");
       }
     } catch (error) {
-      console.error('Failed to handle notification:', error);
+      console.error("Failed to handle notification:", error);
     }
   };
 
   // Handle notification opened
-  const handleNotificationOpened = async (
-    notificationOpen: FirebaseMessagingTypes.NotificationOpen,
-  ) => {
+  const handleNotificationOpened = async (notificationOpen: FirebaseMessagingTypes.NotificationOpen) => {
     try {
       const { notification } = notificationOpen;
-      
+
       if (notification) {
         // Mark notification as read
         const notificationId = notification.data?.id;
-        
+
         if (notificationId) {
-          setNotifications(prev =>
-            prev.map(n =>
-              n.id === notificationId ? { ...n, read: true } : n,
-            ),
-          );
+          setNotifications((prev) => prev.map((n) => (n.id === notificationId ? { ...n, read: true } : n)));
         }
-        
+
         // Navigate to relevant screen based on notification data
         // This would typically use navigation
-        console.log('Notification opened:', notification.data);
+        console.log("Notification opened:", notification.data);
       }
     } catch (error) {
-      console.error('Failed to handle notification opened:', error);
+      console.error("Failed to handle notification opened:", error);
     }
   };
 
@@ -593,10 +564,10 @@ export const usePushNotifications = () => {
     try {
       setIsLoading(true);
       await subscribeToTopic(topic);
-      showToast(`Subscribed to ${topic}`, 'success');
+      showToast(`Subscribed to ${topic}`, "success");
     } catch (error) {
       console.error(`Failed to subscribe to topic ${topic}:`, error);
-      showToast(`Failed to subscribe to ${topic}`, 'error');
+      showToast(`Failed to subscribe to ${topic}`, "error");
     } finally {
       setIsLoading(false);
     }
@@ -607,26 +578,22 @@ export const usePushNotifications = () => {
     try {
       setIsLoading(true);
       await unsubscribeFromTopic(topic);
-      showToast(`Unsubscribed from ${topic}`, 'success');
+      showToast(`Unsubscribed from ${topic}`, "success");
     } catch (error) {
       console.error(`Failed to unsubscribe from topic ${topic}:`, error);
-      showToast(`Failed to unsubscribe from ${topic}`, 'error');
+      showToast(`Failed to unsubscribe from ${topic}`, "error");
     } finally {
       setIsLoading(false);
     }
   };
 
   // Display local notification
-  const handleDisplayLocalNotification = async (
-    title: string,
-    body: string,
-    data?: Record<string, any>,
-  ) => {
+  const handleDisplayLocalNotification = async (title: string, body: string, data?: Record<string, any>) => {
     try {
       await displayLocalNotification(title, body, data);
     } catch (error) {
-      console.error('Failed to display local notification:', error);
-      showToast('Failed to display notification', 'error');
+      console.error("Failed to display local notification:", error);
+      showToast("Failed to display notification", "error");
     }
   };
 
@@ -640,10 +607,10 @@ export const usePushNotifications = () => {
     try {
       setIsLoading(true);
       await scheduleLocalNotification(title, body, date, data);
-      showToast('Notification scheduled', 'success');
+      showToast("Notification scheduled", "success");
     } catch (error) {
-      console.error('Failed to schedule local notification:', error);
-      showToast('Failed to schedule notification', 'error');
+      console.error("Failed to schedule local notification:", error);
+      showToast("Failed to schedule notification", "error");
     } finally {
       setIsLoading(false);
     }
@@ -654,10 +621,10 @@ export const usePushNotifications = () => {
     try {
       setIsLoading(true);
       await cancelLocalNotification(id);
-      showToast('Notification cancelled', 'success');
+      showToast("Notification cancelled", "success");
     } catch (error) {
-      console.error('Failed to cancel local notification:', error);
-      showToast('Failed to cancel notification', 'error');
+      console.error("Failed to cancel local notification:", error);
+      showToast("Failed to cancel notification", "error");
     } finally {
       setIsLoading(false);
     }
@@ -668,10 +635,10 @@ export const usePushNotifications = () => {
     try {
       setIsLoading(true);
       await cancelAllLocalNotifications();
-      showToast('All notifications cancelled', 'success');
+      showToast("All notifications cancelled", "success");
     } catch (error) {
-      console.error('Failed to cancel all local notifications:', error);
-      showToast('Failed to cancel notifications', 'error');
+      console.error("Failed to cancel all local notifications:", error);
+      showToast("Failed to cancel notifications", "error");
     } finally {
       setIsLoading(false);
     }
@@ -679,19 +646,17 @@ export const usePushNotifications = () => {
 
   // Mark notification as read
   const markAsRead = (id: string) => {
-    setNotifications(prev =>
-      prev.map(n => (n.id === id ? { ...n, read: true } : n)),
-    );
+    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
   };
 
   // Mark all notifications as read
   const markAllAsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   };
 
   // Delete notification
   const deleteNotification = (id: string) => {
-    setNotifications(prev => prev.filter(n => n.id !== id));
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
   };
 
   // Delete all notifications
@@ -700,7 +665,7 @@ export const usePushNotifications = () => {
   };
 
   // Get unread notifications count
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const unreadCount = notifications.filter((n) => !n.read).length;
 
   return {
     isLoading,
@@ -724,6 +689,7 @@ export const usePushNotifications = () => {
 ### 4. Create Push Notification Components
 
 #### Create Notification Item Component
+
 Create a file `src/components/notifications/NotificationItem.tsx`:
 
 ```typescript
@@ -757,23 +723,23 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
   // Format timestamp
   const formatTime = (timestamp?: number) => {
     if (!timestamp) return '';
-    
+
     const date = new Date(timestamp);
     const now = new Date();
-    
+
     // If today, show time
     if (date.toDateString() === now.toDateString()) {
       return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
-    
+
     // If yesterday, show "Yesterday"
     const yesterday = new Date(now);
     yesterday.setDate(yesterday.getDate() - 1);
-    
+
     if (date.toDateString() === yesterday.toDateString()) {
       return 'Yesterday';
     }
-    
+
     // Otherwise, show date
     return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
   };
@@ -811,16 +777,16 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
         <Text style={[styles.title, { color: theme.text }]} numberOfLines={1}>
           {title}
         </Text>
-        
+
         <Text style={[styles.body, { color: theme.secondaryText }]} numberOfLines={2}>
           {body}
         </Text>
-        
+
         <View style={styles.footer}>
           <Text style={[styles.time, { color: theme.secondaryText }]}>
             {formatTime(timestamp)}
           </Text>
-          
+
           {!read && (
             <TouchableOpacity onPress={handleMarkAsRead}>
               <Text style={[styles.markAsRead, { color: theme.primary }]}>
@@ -830,7 +796,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
           )}
         </View>
       </View>
-      
+
       <TouchableOpacity onPress={handleDelete} style={styles.deleteButton}>
         <Text style={[styles.deleteText, { color: theme.error }]}>Delete</Text>
       </TouchableOpacity>
@@ -883,6 +849,7 @@ export default NotificationItem;
 ```
 
 #### Create Notifications List Component
+
 Create a file `src/components/notifications/NotificationsList.tsx`:
 
 ```typescript
@@ -915,7 +882,7 @@ const NotificationsList: React.FC<NotificationsListProps> = ({
     deleteNotification,
     deleteAllNotifications,
   } = usePushNotifications();
-  
+
   const [refreshing, setRefreshing] = React.useState(false);
 
   // Handle refresh
@@ -937,7 +904,7 @@ const NotificationsList: React.FC<NotificationsListProps> = ({
   // Render header
   const renderHeader = () => {
     if (notifications.length === 0) return null;
-    
+
     return (
       <View style={styles.header}>
         <TouchableOpacity onPress={markAllAsRead}>
@@ -945,7 +912,7 @@ const NotificationsList: React.FC<NotificationsListProps> = ({
             Mark all as read
           </Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity onPress={deleteAllNotifications}>
           <Text style={[styles.headerButton, { color: theme.error }]}>
             Delete all
@@ -1015,6 +982,7 @@ export default NotificationsList;
 ```
 
 #### Create Notification Settings Component
+
 Create a file `src/components/notifications/NotificationSettings.tsx`:
 
 ```typescript
@@ -1043,7 +1011,7 @@ const NotificationSettings: React.FC<NotificationSettingsProps> = ({ onBack }) =
     handleSubscribeToTopic,
     handleUnsubscribeFromTopic,
   } = usePushNotifications();
-  
+
   const [notificationsEnabled, setNotificationsEnabled] = useState(permissionEnabled);
   const [topics, setTopics] = useState([
     { id: 'general', name: 'General Notifications', subscribed: true },
@@ -1061,7 +1029,7 @@ const NotificationSettings: React.FC<NotificationSettingsProps> = ({ onBack }) =
   const toggleNotifications = async (value: boolean) => {
     try {
       setNotificationsEnabled(value);
-      
+
       // This would typically enable/disable notifications at the system level
       // For now, we'll just update the state
     } catch (error) {
@@ -1078,7 +1046,7 @@ const NotificationSettings: React.FC<NotificationSettingsProps> = ({ onBack }) =
           topic.id === topicId ? { ...topic, subscribed } : topic,
         ),
       );
-      
+
       if (subscribed) {
         await handleSubscribeToTopic(topicId);
       } else {
@@ -1130,24 +1098,24 @@ const NotificationSettings: React.FC<NotificationSettingsProps> = ({ onBack }) =
         <TouchableOpacity onPress={onBack}>
           <Text style={[styles.backButton, { color: theme.primary }]}>Back</Text>
         </TouchableOpacity>
-        
+
         <Text style={[styles.title, { color: theme.text }]}>
           Notification Settings
         </Text>
-        
+
         <View style={styles.placeholder} />
       </View>
-      
+
       <View style={[styles.section, { backgroundColor: theme.card }]}>
         <Text style={[styles.sectionTitle, { color: theme.text }]}>
           Notifications
         </Text>
-        
+
         <View style={styles.settingRow}>
           <Text style={[styles.settingLabel, { color: theme.text }]}>
             Enable Notifications
           </Text>
-          
+
           <Switch
             value={notificationsEnabled}
             onValueChange={toggleNotifications}
@@ -1156,18 +1124,18 @@ const NotificationSettings: React.FC<NotificationSettingsProps> = ({ onBack }) =
           />
         </View>
       </View>
-      
+
       <View style={[styles.section, { backgroundColor: theme.card }]}>
         <Text style={[styles.sectionTitle, { color: theme.text }]}>
           Notification Topics
         </Text>
-        
+
         {topics.map(topic => (
           <View key={topic.id} style={styles.settingRow}>
             <Text style={[styles.settingLabel, { color: theme.text }]}>
               {topic.name}
             </Text>
-            
+
             <Switch
               value={topic.subscribed}
               onValueChange={value => toggleTopicSubscription(topic.id, value)}
@@ -1177,12 +1145,12 @@ const NotificationSettings: React.FC<NotificationSettingsProps> = ({ onBack }) =
           </View>
         ))}
       </View>
-      
+
       <View style={[styles.section, { backgroundColor: theme.card }]}>
         <Text style={[styles.sectionTitle, { color: theme.text }]}>
           Information
         </Text>
-        
+
         <Text style={[styles.infoText, { color: theme.secondaryText }]}>
           Notifications help you stay updated with the latest information. You can
           customize which notifications you receive and how you receive them.
@@ -1249,6 +1217,7 @@ export default NotificationSettings;
 ### 5. Create Notifications Screen
 
 #### Create Notifications Screen
+
 Create a file `src/screens/notifications/NotificationsScreen.tsx`:
 
 ```typescript
@@ -1290,14 +1259,14 @@ const NotificationsScreen: React.FC = () => {
             <Text style={[styles.title, { color: theme.text }]}>
               Notifications
             </Text>
-            
+
             <TouchableOpacity onPress={() => setShowSettings(true)}>
               <Text style={[styles.settingsButton, { color: theme.primary }]}>
                 Settings
               </Text>
             </TouchableOpacity>
           </View>
-          
+
           <NotificationsList onNotificationPress={handleNotificationPress} />
         </>
       )}
@@ -1334,11 +1303,12 @@ export default NotificationsScreen;
 ### 6. Integration in App
 
 #### Update App Entry Point
+
 Update your `App.tsx` to include push notifications initialization:
 
 ```typescript
-import React, { useEffect } from 'react';
-import { initializePushNotifications } from './src/services/pushNotifications';
+import React, { useEffect } from "react";
+import { initializePushNotifications } from "./src/services/pushNotifications";
 
 const App = () => {
   useEffect(() => {
@@ -1346,7 +1316,7 @@ const App = () => {
     const setupPushNotifications = async () => {
       await initializePushNotifications();
     };
-    
+
     setupPushNotifications();
   }, []);
 
@@ -1355,6 +1325,7 @@ const App = () => {
 ```
 
 #### Update App Navigation
+
 Add the NotificationsScreen to your navigation stack:
 
 ```typescript
@@ -1365,7 +1336,7 @@ import NotificationsScreen from '../screens/notifications/NotificationsScreen';
 <Stack.Screen
   name="Notifications"
   component={NotificationsScreen}
-  options={{ 
+  options={{
     title: 'Notifications',
     tabBarBadge: notifications.unreadCount > 0 ? notifications.unreadCount : undefined,
   }}
@@ -1375,15 +1346,12 @@ import NotificationsScreen from '../screens/notifications/NotificationsScreen';
 ### 7. Advanced Features Implementation
 
 #### Create Notification Scheduler Service
+
 Create a file `src/services/notificationScheduler.ts`:
 
 ```typescript
-import {
-  scheduleLocalNotification,
-  cancelLocalNotification,
-  cancelAllLocalNotifications,
-} from './pushNotifications';
-import { logEvent } from './analytics';
+import { scheduleLocalNotification, cancelLocalNotification, cancelAllLocalNotifications } from "./pushNotifications";
+import { logEvent } from "./analytics";
 
 // Scheduled notification interface
 export interface ScheduledNotification {
@@ -1393,38 +1361,31 @@ export interface ScheduledNotification {
   date: Date;
   data?: Record<string, any>;
   recurring?: boolean;
-  recurringInterval?: 'daily' | 'weekly' | 'monthly';
+  recurringInterval?: "daily" | "weekly" | "monthly";
 }
 
 // Schedule notification
-export const scheduleNotification = async (
-  notification: ScheduledNotification,
-): Promise<void> => {
+export const scheduleNotification = async (notification: ScheduledNotification): Promise<void> => {
   try {
-    await scheduleLocalNotification(
-      notification.title,
-      notification.body,
-      notification.date,
-      notification.data,
-    );
-    
+    await scheduleLocalNotification(notification.title, notification.body, notification.date, notification.data);
+
     // Log analytics event
-    await logEvent('notification_scheduled', {
+    await logEvent("notification_scheduled", {
       id: notification.id,
       recurring: notification.recurring,
       recurringInterval: notification.recurringInterval,
     });
-    
-    console.log('Notification scheduled:', notification);
+
+    console.log("Notification scheduled:", notification);
   } catch (error) {
-    console.error('Failed to schedule notification:', error);
-    
+    console.error("Failed to schedule notification:", error);
+
     // Log analytics event
-    await logEvent('notification_scheduling_error', {
+    await logEvent("notification_scheduling_error", {
       id: notification.id,
       error: error.message,
     });
-    
+
     throw error;
   }
 };
@@ -1433,22 +1394,22 @@ export const scheduleNotification = async (
 export const cancelScheduledNotification = async (id: string): Promise<void> => {
   try {
     await cancelLocalNotification(id);
-    
+
     // Log analytics event
-    await logEvent('scheduled_notification_cancelled', {
+    await logEvent("scheduled_notification_cancelled", {
       id,
     });
-    
-    console.log('Scheduled notification cancelled:', id);
+
+    console.log("Scheduled notification cancelled:", id);
   } catch (error) {
-    console.error('Failed to cancel scheduled notification:', error);
-    
+    console.error("Failed to cancel scheduled notification:", error);
+
     // Log analytics event
-    await logEvent('scheduled_notification_cancellation_error', {
+    await logEvent("scheduled_notification_cancellation_error", {
       id,
       error: error.message,
     });
-    
+
     throw error;
   }
 };
@@ -1457,75 +1418,73 @@ export const cancelScheduledNotification = async (id: string): Promise<void> => 
 export const cancelAllScheduledNotifications = async (): Promise<void> => {
   try {
     await cancelAllLocalNotifications();
-    
+
     // Log analytics event
-    await logEvent('all_scheduled_notifications_cancelled');
-    
-    console.log('All scheduled notifications cancelled');
+    await logEvent("all_scheduled_notifications_cancelled");
+
+    console.log("All scheduled notifications cancelled");
   } catch (error) {
-    console.error('Failed to cancel all scheduled notifications:', error);
-    
+    console.error("Failed to cancel all scheduled notifications:", error);
+
     // Log analytics event
-    await logEvent('all_scheduled_notifications_cancellation_error', {
+    await logEvent("all_scheduled_notifications_cancellation_error", {
       error: error.message,
     });
-    
+
     throw error;
   }
 };
 
 // Schedule recurring notification
-export const scheduleRecurringNotification = async (
-  notification: ScheduledNotification,
-): Promise<void> => {
+export const scheduleRecurringNotification = async (notification: ScheduledNotification): Promise<void> => {
   try {
     if (!notification.recurring || !notification.recurringInterval) {
-      throw new Error('Recurring notification must have recurring interval');
+      throw new Error("Recurring notification must have recurring interval");
     }
-    
+
     // Schedule initial notification
     await scheduleNotification(notification);
-    
+
     // Calculate next notification date based on recurring interval
     let nextDate = new Date(notification.date);
-    
+
     switch (notification.recurringInterval) {
-      case 'daily':
+      case "daily":
         nextDate.setDate(nextDate.getDate() + 1);
         break;
-      case 'weekly':
+      case "weekly":
         nextDate.setDate(nextDate.getDate() + 7);
         break;
-      case 'monthly':
+      case "monthly":
         nextDate.setMonth(nextDate.getMonth() + 1);
         break;
     }
-    
+
     // Schedule next notification
     const nextNotification: ScheduledNotification = {
       ...notification,
       date: nextDate,
     };
-    
+
     await scheduleNotification(nextNotification);
-    
+
     // Log analytics event
-    await logEvent('recurring_notification_scheduled', {
+    await logEvent("recurring_notification_scheduled", {
       id: notification.id,
       recurringInterval: notification.recurringInterval,
     });
-    
-    console.log('Recurring notification scheduled:', notification);
+
+    console.log("Recurring notification scheduled:", notification);
   } catch (error) {
-    console.error('Failed to schedule recurring notification:', error);
-    
+    console.error("Failed to schedule recurring notification:", error);
+
     // Log analytics event
-    await logEvent('recurring_notification_scheduling_error', {
+    await logEvent("recurring_notification_scheduling_error", {
       id: notification.id,
       recurringInterval: notification.recurringInterval,
       error: error.message,
     });
-    
+
     throw error;
   }
 };
@@ -1534,21 +1493,22 @@ export const scheduleRecurringNotification = async (
 ### 8. Testing and Debugging
 
 #### Enable Debug Mode
+
 Create a file `src/services/pushNotificationsDebug.ts`:
 
 ```typescript
-import { logEvent } from './analytics';
+import { logEvent } from "./analytics";
 
 // Enable debug mode for push notifications
 export const enablePushNotificationsDebugMode = async () => {
   try {
     // Note: This is a placeholder for any platform-specific debug setup
-    console.log('Push notifications debug mode enabled');
-    
+    console.log("Push notifications debug mode enabled");
+
     // Log analytics event
-    await logEvent('push_notifications_debug_mode_enabled');
+    await logEvent("push_notifications_debug_mode_enabled");
   } catch (error) {
-    console.error('Failed to enable push notifications debug mode:', error);
+    console.error("Failed to enable push notifications debug mode:", error);
   }
 };
 
@@ -1556,12 +1516,12 @@ export const enablePushNotificationsDebugMode = async () => {
 export const testPushNotification = async () => {
   try {
     // This is a placeholder for testing push notifications
-    console.log('Testing push notification...');
-    
+    console.log("Testing push notification...");
+
     // Log analytics event
-    await logEvent('test_push_notification');
+    await logEvent("test_push_notification");
   } catch (error) {
-    console.error('Failed to test push notification:', error);
+    console.error("Failed to test push notification:", error);
   }
 };
 ```
@@ -1569,6 +1529,7 @@ export const testPushNotification = async () => {
 ### 9. Best Practices and Optimization
 
 #### Push Notifications Best Practices
+
 1. **Request permission at the right time**: Ask for notification permission after showing value
 2. **Personalize notifications**: Use user data to personalize notification content
 3. **Provide clear value**: Ensure notifications provide clear value to users
@@ -1576,6 +1537,7 @@ export const testPushNotification = async () => {
 5. **Send notifications at appropriate times**: Avoid sending notifications late at night
 
 #### Performance Optimization
+
 1. **Batch notifications**: Group related notifications together
 2. **Use appropriate priority**: Set appropriate priority for different types of notifications
 3. **Optimize images**: Use optimized images for notifications
@@ -1583,6 +1545,7 @@ export const testPushNotification = async () => {
 5. **Use collapse key**: Use collapse key to replace similar notifications
 
 #### User Experience Guidelines
+
 1. **Provide clear context**: Make sure notifications provide clear context
 2. **Allow easy dismissal**: Allow users to easily dismiss notifications
 3. **Provide actionable content**: Make notifications actionable when possible
@@ -1594,33 +1557,39 @@ export const testPushNotification = async () => {
 ### Common Issues
 
 #### Notifications Not Received
+
 1. Check if notification permission is granted
 2. Verify FCM token is registered with backend
 3. Ensure device is connected to internet
 4. Check if app is in foreground or background
 
 #### Notifications Not Displayed in Foreground
+
 1. Verify foreground notification handler is implemented
 2. Check if local notification display is working
 3. Ensure notification content is properly formatted
 4. Check if notification priority is set correctly
 
 #### Token Registration Failing
+
 1. Check if Firebase is properly configured
 2. Verify internet connectivity
 3. Ensure app has proper permissions
 4. Check if Firebase project is correctly set up
 
 ### Debugging Tools
+
 1. **Firebase Console**: Use Firebase Console to send test notifications
 2. **Device Logs**: Check device logs for notification-related errors
 3. **Network Inspector**: Monitor network requests for token registration
 4. **Background App Refresh**: Ensure background app refresh is enabled
 
 ## Conclusion
+
 This guide provides a comprehensive implementation of push notifications in your React Native application. By following these steps, you'll be able to effectively engage users with timely and relevant notifications.
 
 Remember to:
+
 - Always follow platform guidelines for push notifications
 - Provide clear value to users with each notification
 - Test thoroughly across different devices and platforms

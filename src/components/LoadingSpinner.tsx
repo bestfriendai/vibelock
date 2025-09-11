@@ -9,65 +9,67 @@ interface Props {
   className?: string;
 }
 
-const LoadingSpinner = React.forwardRef<View, Props>(({ size = "medium", color = "#FFFFFF", text, className = "" }, ref) => {
-  const rotation = useSharedValue(0);
-  const [reduceMotion, setReduceMotion] = useState(false);
+const LoadingSpinner = React.forwardRef<View, Props>(
+  ({ size = "medium", color = "#FFFFFF", text, className = "" }, ref) => {
+    const rotation = useSharedValue(0);
+    const [reduceMotion, setReduceMotion] = useState(false);
 
-  const sizeMap = {
-    small: 20,
-    medium: 32,
-    large: 48,
-  };
+    const sizeMap = {
+      small: 20,
+      medium: 32,
+      large: 48,
+    };
 
-  const spinnerSize = sizeMap[size];
+    const spinnerSize = sizeMap[size];
 
-  useEffect(() => {
-    // Check for reduced motion preference
-    AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion);
+    useEffect(() => {
+      // Check for reduced motion preference
+      AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion);
 
-    if (!reduceMotion) {
-      rotation.value = withRepeat(
-        withTiming(360, {
-          duration: 1000,
-          easing: Easing.linear,
-        }),
-        -1,
-        false,
-      );
-    }
-  }, [reduceMotion]);
+      if (!reduceMotion) {
+        rotation.value = withRepeat(
+          withTiming(360, {
+            duration: 1000,
+            easing: Easing.linear,
+          }),
+          -1,
+          false,
+        );
+      }
+    }, [reduceMotion]);
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${rotation.value}deg` }],
-  }));
+    const animatedStyle = useAnimatedStyle(() => ({
+      transform: [{ rotate: `${rotation.value}deg` }],
+    }));
 
-  return (
-    <View
-      ref={ref}
-      className={`items-center justify-center ${className}`}
-      accessible={true}
-      accessibilityRole="progressbar"
-      accessibilityLabel={text || "Loading"}
-    >
-      <Animated.View style={[reduceMotion ? {} : animatedStyle]}>
-        <View
-          className="rounded-full border-2 border-transparent"
-          style={{
-            width: spinnerSize,
-            height: spinnerSize,
-            borderTopColor: color,
-            borderRightColor: `${color}40`,
-            borderBottomColor: `${color}20`,
-            borderLeftColor: `${color}60`,
-          }}
-        />
-      </Animated.View>
+    return (
+      <View
+        ref={ref}
+        className={`items-center justify-center ${className}`}
+        accessible={true}
+        accessibilityRole="progressbar"
+        accessibilityLabel={text || "Loading"}
+      >
+        <Animated.View style={[reduceMotion ? {} : animatedStyle]}>
+          <View
+            className="rounded-full border-2 border-transparent"
+            style={{
+              width: spinnerSize,
+              height: spinnerSize,
+              borderTopColor: color,
+              borderRightColor: `${color}40`,
+              borderBottomColor: `${color}20`,
+              borderLeftColor: `${color}60`,
+            }}
+          />
+        </Animated.View>
 
-      {text && <Text className="text-text-secondary text-sm mt-3 font-medium">{text}</Text>}
-    </View>
-  );
-});
+        {text && <Text className="text-text-secondary text-sm mt-3 font-medium">{text}</Text>}
+      </View>
+    );
+  },
+);
 
-LoadingSpinner.displayName = 'LoadingSpinner';
+LoadingSpinner.displayName = "LoadingSpinner";
 
 export default LoadingSpinner;

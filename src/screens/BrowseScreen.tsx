@@ -3,6 +3,8 @@ import { View, Text, Pressable } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
+import { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { BrowseStackParamList } from "../navigation/AppNavigator";
 import { startTimer } from "../utils/performance";
 
 import useReviewsStore from "../state/reviewsStore";
@@ -19,7 +21,9 @@ import EmptyState from "../components/EmptyState";
 import { STRINGS } from "../constants/strings";
 import { Review } from "../types";
 
-export default function BrowseScreen() {
+type Props = NativeStackScreenProps<BrowseStackParamList, "Browse">;
+
+export default function BrowseScreen({ navigation, route }: Props) {
   const insets = useSafeAreaInsets();
   const { user, updateUserLocation } = useAuthStore();
   const { theme, colors, isDarkMode } = useTheme();
@@ -122,8 +126,12 @@ export default function BrowseScreen() {
   useFocusEffect(
     useCallback(() => {
       // Add a small delay to ensure server has processed any new reviews
-      const timeoutId = setTimeout(() => {
-        loadReviews(true);
+      const timeoutId = setTimeout(async () => {
+        try {
+          await loadReviews(true);
+        } catch (error) {
+          console.error("Error loading reviews on focus:", error);
+        }
       }, 500);
 
       return () => clearTimeout(timeoutId);

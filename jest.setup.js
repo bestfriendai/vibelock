@@ -17,4 +17,3 @@ jest.spyOn(global.console, "warn").mockImplementation((msg, ...args) => {
   // @ts-ignore
   return console.__proto__.warn.call(console, msg, ...args);
 });
-

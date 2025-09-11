@@ -89,7 +89,7 @@ class ImageCompressionService {
       }
 
       const compressedInfo = await FileSystem.getInfoAsync(result.uri);
-      const compressedSize = compressedInfo.size || 0;
+      const compressedSize = compressedInfo.exists ? compressedInfo.size || 0 : 0;
 
       return {
         success: true,
@@ -200,7 +200,7 @@ class ImageCompressionService {
 
     while (attempts < maxAttempts) {
       const fileInfo = await FileSystem.getInfoAsync(currentUri);
-      const fileSizeKB = (fileInfo.size || 0) / 1024;
+      const fileSizeKB = (fileInfo.exists ? fileInfo.size || 0 : 0) / 1024;
 
       if (fileSizeKB <= maxSizeKB) {
         break;

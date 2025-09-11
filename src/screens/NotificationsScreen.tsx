@@ -1,5 +1,5 @@
 import React, { useEffect, useCallback, useState } from "react";
-import { View, Text, Pressable, RefreshControl } from "react-native";
+import { View, Text, Pressable, RefreshControl, Platform, PermissionsAndroid } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FlashList } from "@shopify/flash-list";
 import { Ionicons } from "@expo/vector-icons";
@@ -16,6 +16,17 @@ export default function NotificationsScreen() {
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
+    // On Android 13+ request POST_NOTIFICATIONS permission when viewing Notifications
+    const requestNotifPermission = async () => {
+      try {
+        if (Platform.OS === "android" && Platform.Version >= 33) {
+          await PermissionsAndroid.request("android.permission.POST_NOTIFICATIONS");
+        }
+      } catch (e) {
+        // Ignore errors
+      }
+    };
+
     // Combine both initialization and loading notifications
     const initializeAndLoad = async () => {
       await initialize();
@@ -24,6 +35,7 @@ export default function NotificationsScreen() {
       }
     };
 
+    requestNotifPermission();
     initializeAndLoad();
   }, [initialize, user?.id, loadNotifications]);
 

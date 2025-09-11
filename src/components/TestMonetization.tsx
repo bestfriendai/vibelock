@@ -57,8 +57,8 @@ export const TestMonetization: React.FC = () => {
       await loadOfferings();
       addResult(`✅ Loaded ${offerings.length} offerings`);
       if (offerings.length > 0) {
-        addResult(`First offering: ${offerings[0].identifier}`);
-        addResult(`Packages: ${offerings[0].availablePackages?.length || 0}`);
+        addResult(`First offering: ${offerings[0]?.identifier}`);
+        addResult(`Packages: ${offerings[0]?.availablePackages?.length || 0}`);
       }
     } catch (error) {
       addResult(`❌ Offerings failed: ${error}`);

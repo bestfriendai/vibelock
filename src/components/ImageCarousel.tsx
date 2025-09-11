@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { View, ScrollView, Dimensions, NativeScrollEvent, NativeSyntheticEvent, Text, Pressable } from "react-native";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
@@ -33,9 +33,10 @@ export default function ImageCarousel({
 }: Props) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
+  const prefetchedUrisRef = useRef<Set<string>>(new Set());
 
   // Prefetch next/prev images to improve swipe smoothness
-  React.useEffect(() => {
+  useEffect(() => {
     if (!media || media.length === 0) return;
 
     const uris: string[] = [];
@@ -51,10 +52,21 @@ export default function ImageCarousel({
 
     uris.forEach((u) => {
       try {
-        Image.prefetch(u);
+        if (!prefetchedUrisRef.current.has(u)) {
+          Image.prefetch(u);
+          prefetchedUrisRef.current.add(u);
+        }
       } catch {}
     });
   }, [currentIndex, media]);
+
+  // Cleanup prefetched images on unmount
+  useEffect(() => {
+    return () => {
+      // Clear prefetch cache on unmount to prevent memory leaks
+      prefetchedUrisRef.current.clear();
+    };
+  }, []);
 
   if (!media || media.length === 0) {
     console.log("ImageCarousel: No media provided");
@@ -82,7 +94,7 @@ export default function ImageCarousel({
   };
 
   const handleImagePress = () => {
-    if (onImagePress) {
+    if (onImagePress && media[currentIndex]) {
       onImagePress(media[currentIndex], currentIndex);
     }
   };
@@ -158,7 +170,7 @@ export default function ImageCarousel({
             {/* Comment indicator and button */}
             <View className="absolute bottom-3 right-3 flex-row items-center space-x-2">
               {/* Comment count indicator */}
-              {commentCounts[item.id] && commentCounts[item.id] > 0 && (
+              {commentCounts?.[item.id] && commentCounts[item.id] > 0 && (
                 <View className="bg-black/70 rounded-full px-2 py-1 flex-row items-center">
                   <Ionicons name="chatbubble" size={12} color="#FFFFFF" />
                   <Text className="text-white text-xs font-medium ml-1">{commentCounts[item.id]}</Text>

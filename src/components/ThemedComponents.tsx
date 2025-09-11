@@ -170,7 +170,11 @@ export const ThemedButton: React.FC<ThemedButtonProps> = ({
   const themeClasses = isDarkMode ? "dark" : "";
 
   return (
-    <Pressable className={`${themeClasses} ${className}`} style={[getButtonStyles(), style]} {...props}>
+    <Pressable
+      className={`${themeClasses} ${className}`}
+      style={(state) => [getButtonStyles(), typeof style === "function" ? style(state) : style]}
+      {...props}
+    >
       {children}
     </Pressable>
   );

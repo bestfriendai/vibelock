@@ -220,7 +220,7 @@ export const VoiceMessage: React.FC<VoiceMessageProps> = ({
               Recording...
             </Text>
 
-              {showWaveform && (
+            {showWaveform && (
               <Animated.View style={[waveformStyle, { flexDirection: "row", alignItems: "center", marginTop: 8 }]}>
                 {Array.from({ length: 20 }).map((_, index) => (
                   <View

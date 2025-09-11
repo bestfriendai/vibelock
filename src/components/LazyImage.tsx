@@ -55,14 +55,22 @@ export default function LazyImage({
 
     const checkVisibility = () => {
       if (viewRef.current) {
-        viewRef.current.measure((x, y, width, height, pageX, pageY) => {
-          const screenHeight = Dimensions.get("window").height;
-          const isVisible = pageY < screenHeight + 200 && pageY + height > -200;
+        try {
+          viewRef.current.measure((x, y, width, height, pageX, pageY) => {
+            try {
+              const screenHeight = Dimensions.get("window").height;
+              const isVisible = pageY < screenHeight + 200 && pageY + height > -200;
 
-          if (isVisible && !isInView) {
-            setIsInView(true);
-          }
-        });
+              if (isVisible && !isInView) {
+                setIsInView(true);
+              }
+            } catch (error) {
+              console.warn("LazyImage: Error in measure callback:", error);
+            }
+          });
+        } catch (error) {
+          console.warn("LazyImage: Error calling measure:", error);
+        }
       }
     };
 

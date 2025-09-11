@@ -4,9 +4,7 @@ IMPORTANT NOTICE: DO NOT REMOVE
 If the user wants to use AI to generate text, answer questions, or analyze images you can use the functions defined in this file to communicate with the OpenAI, Anthropic, and Grok APIs.
 */
 import { AIMessage, AIRequestOptions, AIResponse } from "../types/ai";
-import { getAnthropicClient } from "./anthropic";
-import { getOpenAIClient } from "./openai";
-import { getGrokClient } from "./grok";
+import { generateAnthropicResponse, generateOpenAIResponse, generateGrokResponse } from "./secure-ai-service";
 
 /**
  * Get a text response from Anthropic
@@ -19,46 +17,27 @@ export const getAnthropicTextResponse = async (
   options?: AIRequestOptions,
 ): Promise<AIResponse> => {
   try {
-    const client = getAnthropicClient();
-    const defaultModel = "claude-3-5-sonnet-20240620";
+    const defaultModel = "claude-3-5-sonnet-20241022";
 
-    const response = await client.messages.create({
-      model: options?.model || defaultModel,
-      messages: messages.map((msg) => ({
-        role: msg.role === "assistant" ? "assistant" : "user",
-        content: msg.content,
-      })),
-      max_tokens: options?.maxTokens || 2048,
+    // Convert messages to a single prompt for the secure service
+    const prompt = messages.map((msg) => `${msg.role}: ${msg.content}`).join("\n\n");
+
+    const response = await generateAnthropicResponse(prompt, options?.model || defaultModel, {
+      maxTokens: options?.maxTokens || 2048,
       temperature: options?.temperature || 0.7,
     });
 
-    // Handle content blocks from the response with null checks
-    if (!response?.content || !Array.isArray(response.content)) {
-      throw new Error("Invalid response format: missing or invalid content");
-    }
-
-    const content = response.content.reduce((acc, block) => {
-      if (block && "text" in block && typeof block.text === "string") {
-        return acc + block.text;
-      }
-      return acc;
-    }, "");
-
-    if (!content) {
-      throw new Error("No text content found in response");
-    }
-
     return {
-      content,
+      content: response,
       usage: {
-        promptTokens: response.usage?.input_tokens || 0,
-        completionTokens: response.usage?.output_tokens || 0,
-        totalTokens: (response.usage?.input_tokens || 0) + (response.usage?.output_tokens || 0),
+        promptTokens: 0, // Usage tracking handled by secure service
+        completionTokens: 0,
+        totalTokens: 0,
       },
     };
   } catch (error) {
     console.error("Anthropic API Error:", error);
-    throw error;
+    throw new Error(`Failed to get Anthropic response: ${error instanceof Error ? error.message : "Unknown error"}`);
   }
 };
 
@@ -79,37 +58,27 @@ export const getAnthropicChatResponse = async (prompt: string): Promise<AIRespon
  */
 export const getOpenAITextResponse = async (messages: AIMessage[], options?: AIRequestOptions): Promise<AIResponse> => {
   try {
-    const client = getOpenAIClient();
-    const defaultModel = "gpt-4o"; //accepts images as well, use this for image analysis
+    const defaultModel = "gpt-4o-2024-11-20"; // accepts images as well, use this for image analysis
 
-    const response = await client.chat.completions.create({
-      model: options?.model || defaultModel,
-      messages: messages,
+    // Convert messages to a single prompt for the secure service
+    const prompt = messages.map((msg) => `${msg.role}: ${msg.content}`).join("\n\n");
+
+    const response = await generateOpenAIResponse(prompt, options?.model || defaultModel, {
+      maxTokens: options?.maxTokens || 2048,
       temperature: options?.temperature ?? 0.7,
-      max_tokens: options?.maxTokens || 2048,
     });
 
-    // Validate response structure
-    if (!response?.choices || !Array.isArray(response.choices) || response.choices.length === 0) {
-      throw new Error("Invalid response format: missing or empty choices");
-    }
-
-    const content = response.choices[0]?.message?.content;
-    if (typeof content !== "string") {
-      throw new Error("Invalid response format: missing or invalid content");
-    }
-
     return {
-      content,
+      content: response,
       usage: {
-        promptTokens: response.usage?.prompt_tokens || 0,
-        completionTokens: response.usage?.completion_tokens || 0,
-        totalTokens: response.usage?.total_tokens || 0,
+        promptTokens: 0, // Usage tracking handled by secure service
+        completionTokens: 0,
+        totalTokens: 0,
       },
     };
   } catch (error) {
     console.error("OpenAI API Error:", error);
-    throw error;
+    throw new Error(`Failed to get OpenAI response: ${error instanceof Error ? error.message : "Unknown error"}`);
   }
 };
 
@@ -130,37 +99,27 @@ export const getOpenAIChatResponse = async (prompt: string): Promise<AIResponse>
  */
 export const getGrokTextResponse = async (messages: AIMessage[], options?: AIRequestOptions): Promise<AIResponse> => {
   try {
-    const client = getGrokClient();
     const defaultModel = "grok-3-beta";
 
-    const response = await client.chat.completions.create({
-      model: options?.model || defaultModel,
-      messages: messages,
+    // Convert messages to a single prompt for the secure service
+    const prompt = messages.map((msg) => `${msg.role}: ${msg.content}`).join("\n\n");
+
+    const response = await generateGrokResponse(prompt, options?.model || defaultModel, {
+      maxTokens: options?.maxTokens || 2048,
       temperature: options?.temperature ?? 0.7,
-      max_tokens: options?.maxTokens || 2048,
     });
 
-    // Validate response structure
-    if (!response?.choices || !Array.isArray(response.choices) || response.choices.length === 0) {
-      throw new Error("Invalid response format: missing or empty choices");
-    }
-
-    const content = response.choices[0]?.message?.content;
-    if (typeof content !== "string") {
-      throw new Error("Invalid response format: missing or invalid content");
-    }
-
     return {
-      content,
+      content: response,
       usage: {
-        promptTokens: response.usage?.prompt_tokens || 0,
-        completionTokens: response.usage?.completion_tokens || 0,
-        totalTokens: response.usage?.total_tokens || 0,
+        promptTokens: 0, // Usage tracking handled by secure service
+        completionTokens: 0,
+        totalTokens: 0,
       },
     };
   } catch (error) {
     console.error("Grok API Error:", error);
-    throw error;
+    throw new Error(`Failed to get Grok response: ${error instanceof Error ? error.message : "Unknown error"}`);
   }
 };
 

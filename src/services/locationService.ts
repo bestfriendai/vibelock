@@ -211,6 +211,13 @@ class LocationService {
     if (!randomCity) {
       // Fallback to first city if random selection fails
       const defaultCity = fallbackCities[0];
+      if (!defaultCity) {
+        return {
+          success: false,
+          error: "No fallback cities available",
+          source: "fallback",
+        };
+      }
       return {
         success: true,
         location: {

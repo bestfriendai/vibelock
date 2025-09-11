@@ -90,7 +90,7 @@ export const PaywallAdaptive: React.FC<PaywallProps> = ({ visible, onClose }) =>
   }, [visible]);
 
   useEffect(() => {
-    if (offerings.length > 0 && offerings[0].availablePackages) {
+    if (offerings.length > 0 && offerings[0]?.availablePackages) {
       const availablePackages = offerings[0].availablePackages;
       setPackages(availablePackages);
 

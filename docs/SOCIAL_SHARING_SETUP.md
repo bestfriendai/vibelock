@@ -1,9 +1,11 @@
 # Social Sharing Setup Guide
 
 ## Overview
+
 This document provides a complete guide for implementing social sharing features in the React Native application using react-native-share and other complementary tools.
 
 ## Prerequisites
+
 - React Native project with `react-native-share` installed (already in package.json)
 - App icons and images prepared for sharing
 - Social media platform developer accounts (for deep linking)
@@ -19,6 +21,7 @@ yarn add react-native-share
 ```
 
 For iOS, install pods:
+
 ```bash
 cd ios && pod install
 ```
@@ -26,70 +29,60 @@ cd ios && pod install
 ### 2. Configure Social Sharing
 
 #### Create Social Sharing Service
+
 Create a file `src/services/socialSharing.ts`:
 
 ```typescript
-import {
-  Share,
-  openInbox,
-  isPackageInstalled,
-  shareSingle,
-  Options,
-} from 'react-native-share';
-import { Platform } from 'react-native';
-import { logEvent } from './analytics';
+import { Share, openInbox, isPackageInstalled, shareSingle, Options } from "react-native-share";
+import { Platform } from "react-native";
+import { logEvent } from "./analytics";
 
 // Social media package names
 const SOCIAL_PACKAGES = {
   FACEBOOK: Platform.select({
-    ios: 'com.facebook.Facebook',
-    android: 'com.facebook.katana',
+    ios: "com.facebook.Facebook",
+    android: "com.facebook.katana",
   }),
   INSTAGRAM: Platform.select({
-    ios: 'com.burbn.instagram',
-    android: 'com.instagram.android',
+    ios: "com.burbn.instagram",
+    android: "com.instagram.android",
   }),
   TWITTER: Platform.select({
-    ios: 'com.atebits.Tweetie2',
-    android: 'com.twitter.android',
+    ios: "com.atebits.Tweetie2",
+    android: "com.twitter.android",
   }),
   WHATSAPP: Platform.select({
-    ios: 'net.whatsapp.WhatsApp',
-    android: 'com.whatsapp',
+    ios: "net.whatsapp.WhatsApp",
+    android: "com.whatsapp",
   }),
   TELEGRAM: Platform.select({
-    ios: 'org.telegram.messenger',
-    android: 'org.telegram.messenger',
+    ios: "org.telegram.messenger",
+    android: "org.telegram.messenger",
   }),
   LINKEDIN: Platform.select({
-    ios: 'com.linkedin.LinkedIn',
-    android: 'com.linkedin.android',
+    ios: "com.linkedin.LinkedIn",
+    android: "com.linkedin.android",
   }),
   PINTEREST: Platform.select({
-    ios: 'com.pinterest.Pinterest',
-    android: 'com.pinterest',
+    ios: "com.pinterest.Pinterest",
+    android: "com.pinterest",
   }),
   SNAPCHAT: Platform.select({
-    ios: 'com.toyopagroup.picaboo',
-    android: 'com.snapchat.android',
+    ios: "com.toyopagroup.picaboo",
+    android: "com.snapchat.android",
   }),
   YOUTUBE: Platform.select({
-    ios: 'com.google.ios.youtube',
-    android: 'com.google.android.youtube',
+    ios: "com.google.ios.youtube",
+    android: "com.google.android.youtube",
   }),
   TIKTOK: Platform.select({
-    ios: 'com.zhiliaoapp.musically',
-    android: 'com.zhiliaoapp.musically.go',
+    ios: "com.zhiliaoapp.musically",
+    android: "com.zhiliaoapp.musically.go",
   }),
 };
 
 // Share content using native share dialog
-export const shareContent = async (
-  title: string,
-  message: string,
-  url?: string,
-  imageUrl?: string,
-): Promise<void> => {
+export const shareContent = async (title: string, message: string, url?: string, imageUrl?: string): Promise<void> => {
   try {
     const shareOptions: Options = {
       title,
@@ -105,19 +98,19 @@ export const shareContent = async (
     }
 
     const result = await Share.open(shareOptions);
-    
+
     // Log analytics event
-    await logEvent('share_content', {
-      method: result.app || 'unknown',
+    await logEvent("share_content", {
+      method: result.app || "unknown",
       success: result.success,
     });
-    
-    console.log('Share result:', result);
+
+    console.log("Share result:", result);
   } catch (error) {
-    console.error('Error sharing content:', error);
-    
+    console.error("Error sharing content:", error);
+
     // Log analytics event
-    await logEvent('share_error', {
+    await logEvent("share_error", {
       error: error.message,
     });
   }
@@ -134,7 +127,7 @@ export const shareToSocialMedia = async (
   try {
     // Check if the app is installed
     const isInstalled = await isPackageInstalled(SOCIAL_PACKAGES[platform]);
-    
+
     if (!isInstalled) {
       throw new Error(`${platform} app is not installed`);
     }
@@ -153,122 +146,111 @@ export const shareToSocialMedia = async (
     }
 
     const result = await shareSingle(shareOptions);
-    
+
     // Log analytics event
-    await logEvent('share_to_social_media', {
+    await logEvent("share_to_social_media", {
       platform,
       success: result.success,
     });
-    
-    console.log('Share to social media result:', result);
+
+    console.log("Share to social media result:", result);
   } catch (error) {
     console.error(`Error sharing to ${platform}:`, error);
-    
+
     // Log analytics event
-    await logEvent('share_to_social_media_error', {
+    await logEvent("share_to_social_media_error", {
       platform,
       error: error.message,
     });
-    
+
     throw error;
   }
 };
 
 // Share image
-export const shareImage = async (
-  imageUrl: string,
-  title?: string,
-  message?: string,
-): Promise<void> => {
+export const shareImage = async (imageUrl: string, title?: string, message?: string): Promise<void> => {
   try {
     const shareOptions: Options = {
-      title: title || 'Check out this image',
-      message: message || '',
+      title: title || "Check out this image",
+      message: message || "",
       url: imageUrl,
-      type: 'image/jpeg',
+      type: "image/jpeg",
       failOnCancel: false,
     };
 
     const result = await Share.open(shareOptions);
-    
+
     // Log analytics event
-    await logEvent('share_image', {
-      method: result.app || 'unknown',
+    await logEvent("share_image", {
+      method: result.app || "unknown",
       success: result.success,
     });
-    
-    console.log('Share image result:', result);
+
+    console.log("Share image result:", result);
   } catch (error) {
-    console.error('Error sharing image:', error);
-    
+    console.error("Error sharing image:", error);
+
     // Log analytics event
-    await logEvent('share_image_error', {
+    await logEvent("share_image_error", {
       error: error.message,
     });
   }
 };
 
 // Share to Instagram
-export const shareToInstagram = async (
-  imageUrl: string,
-  type: 'feed' | 'story' = 'feed',
-): Promise<void> => {
+export const shareToInstagram = async (imageUrl: string, type: "feed" | "story" = "feed"): Promise<void> => {
   try {
     // Check if Instagram is installed
     const isInstalled = await isPackageInstalled(SOCIAL_PACKAGES.INSTAGRAM);
-    
+
     if (!isInstalled) {
-      throw new Error('Instagram app is not installed');
+      throw new Error("Instagram app is not installed");
     }
 
     const shareOptions: Options = {
-      type: 'image/jpeg',
+      type: "image/jpeg",
       url: imageUrl,
       social: Share.SOCIAL.INSTAGRAM,
       forceDialog: true,
     };
 
     // For Instagram Stories, we need to use a different approach
-    if (type === 'story') {
+    if (type === "story") {
       shareOptions.stickerImage = imageUrl;
-      shareOptions.backgroundBottomColor = '#ffffff';
-      shareOptions.backgroundTopColor = '#000000';
+      shareOptions.backgroundBottomColor = "#ffffff";
+      shareOptions.backgroundTopColor = "#000000";
     }
 
     const result = await shareSingle(shareOptions);
-    
+
     // Log analytics event
-    await logEvent('share_to_instagram', {
+    await logEvent("share_to_instagram", {
       type,
       success: result.success,
     });
-    
-    console.log('Share to Instagram result:', result);
+
+    console.log("Share to Instagram result:", result);
   } catch (error) {
-    console.error('Error sharing to Instagram:', error);
-    
+    console.error("Error sharing to Instagram:", error);
+
     // Log analytics event
-    await logEvent('share_to_instagram_error', {
+    await logEvent("share_to_instagram_error", {
       type,
       error: error.message,
     });
-    
+
     throw error;
   }
 };
 
 // Share to WhatsApp
-export const shareToWhatsApp = async (
-  message: string,
-  url?: string,
-  imageUrl?: string,
-): Promise<void> => {
+export const shareToWhatsApp = async (message: string, url?: string, imageUrl?: string): Promise<void> => {
   try {
     // Check if WhatsApp is installed
     const isInstalled = await isPackageInstalled(SOCIAL_PACKAGES.WHATSAPP);
-    
+
     if (!isInstalled) {
-      throw new Error('WhatsApp app is not installed');
+      throw new Error("WhatsApp app is not installed");
     }
 
     const shareOptions: Options = {
@@ -283,41 +265,37 @@ export const shareToWhatsApp = async (
     }
 
     const result = await shareSingle(shareOptions);
-    
+
     // Log analytics event
-    await logEvent('share_to_whatsapp', {
+    await logEvent("share_to_whatsapp", {
       success: result.success,
     });
-    
-    console.log('Share to WhatsApp result:', result);
+
+    console.log("Share to WhatsApp result:", result);
   } catch (error) {
-    console.error('Error sharing to WhatsApp:', error);
-    
+    console.error("Error sharing to WhatsApp:", error);
+
     // Log analytics event
-    await logEvent('share_to_whatsapp_error', {
+    await logEvent("share_to_whatsapp_error", {
       error: error.message,
     });
-    
+
     throw error;
   }
 };
 
 // Share to Twitter
-export const shareToTwitter = async (
-  text: string,
-  url?: string,
-  imageUrl?: string,
-): Promise<void> => {
+export const shareToTwitter = async (text: string, url?: string, imageUrl?: string): Promise<void> => {
   try {
     // Check if Twitter is installed
     const isInstalled = await isPackageInstalled(SOCIAL_PACKAGES.TWITTER);
-    
+
     if (!isInstalled) {
-      throw new Error('Twitter app is not installed');
+      throw new Error("Twitter app is not installed");
     }
 
     const shareOptions: Options = {
-      title: 'Share via Twitter',
+      title: "Share via Twitter",
       message: text,
       url,
       social: Share.SOCIAL.TWITTER,
@@ -329,36 +307,33 @@ export const shareToTwitter = async (
     }
 
     const result = await shareSingle(shareOptions);
-    
+
     // Log analytics event
-    await logEvent('share_to_twitter', {
+    await logEvent("share_to_twitter", {
       success: result.success,
     });
-    
-    console.log('Share to Twitter result:', result);
+
+    console.log("Share to Twitter result:", result);
   } catch (error) {
-    console.error('Error sharing to Twitter:', error);
-    
+    console.error("Error sharing to Twitter:", error);
+
     // Log analytics event
-    await logEvent('share_to_twitter_error', {
+    await logEvent("share_to_twitter_error", {
       error: error.message,
     });
-    
+
     throw error;
   }
 };
 
 // Share to Facebook
-export const shareToFacebook = async (
-  link?: string,
-  imageUrl?: string,
-): Promise<void> => {
+export const shareToFacebook = async (link?: string, imageUrl?: string): Promise<void> => {
   try {
     // Check if Facebook is installed
     const isInstalled = await isPackageInstalled(SOCIAL_PACKAGES.FACEBOOK);
-    
+
     if (!isInstalled) {
-      throw new Error('Facebook app is not installed');
+      throw new Error("Facebook app is not installed");
     }
 
     const shareOptions: Options = {
@@ -372,29 +347,27 @@ export const shareToFacebook = async (
     }
 
     const result = await shareSingle(shareOptions);
-    
+
     // Log analytics event
-    await logEvent('share_to_facebook', {
+    await logEvent("share_to_facebook", {
       success: result.success,
     });
-    
-    console.log('Share to Facebook result:', result);
+
+    console.log("Share to Facebook result:", result);
   } catch (error) {
-    console.error('Error sharing to Facebook:', error);
-    
+    console.error("Error sharing to Facebook:", error);
+
     // Log analytics event
-    await logEvent('share_to_facebook_error', {
+    await logEvent("share_to_facebook_error", {
       error: error.message,
     });
-    
+
     throw error;
   }
 };
 
 // Check if social media app is installed
-export const checkSocialMediaAppInstalled = async (
-  platform: keyof typeof SOCIAL_PACKAGES,
-): Promise<boolean> => {
+export const checkSocialMediaAppInstalled = async (platform: keyof typeof SOCIAL_PACKAGES): Promise<boolean> => {
   try {
     const isInstalled = await isPackageInstalled(SOCIAL_PACKAGES[platform]);
     return isInstalled;
@@ -405,62 +378,56 @@ export const checkSocialMediaAppInstalled = async (
 };
 
 // Open email client
-export const openEmailClient = async (
-  to: string,
-  subject: string,
-  body: string,
-): Promise<void> => {
+export const openEmailClient = async (to: string, subject: string, body: string): Promise<void> => {
   try {
     const url = `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    
+
     // Log analytics event
-    await logEvent('open_email_client');
-    
+    await logEvent("open_email_client");
+
     // This would typically use Linking.openURL
-    console.log('Opening email client with URL:', url);
+    console.log("Opening email client with URL:", url);
   } catch (error) {
-    console.error('Error opening email client:', error);
-    
+    console.error("Error opening email client:", error);
+
     // Log analytics event
-    await logEvent('open_email_client_error', {
+    await logEvent("open_email_client_error", {
       error: error.message,
     });
-    
+
     throw error;
   }
 };
 
 // Open SMS client
-export const openSMSClient = async (
-  phoneNumber: string,
-  body: string,
-): Promise<void> => {
+export const openSMSClient = async (phoneNumber: string, body: string): Promise<void> => {
   try {
     const url = `sms:${phoneNumber}?body=${encodeURIComponent(body)}`;
-    
+
     // Log analytics event
-    await logEvent('open_sms_client');
-    
+    await logEvent("open_sms_client");
+
     // This would typically use Linking.openURL
-    console.log('Opening SMS client with URL:', url);
+    console.log("Opening SMS client with URL:", url);
   } catch (error) {
-    console.error('Error opening SMS client:', error);
-    
+    console.error("Error opening SMS client:", error);
+
     // Log analytics event
-    await logEvent('open_sms_client_error', {
+    await logEvent("open_sms_client_error", {
       error: error.message,
     });
-    
+
     throw error;
   }
 };
 ```
 
 #### Create Social Sharing Hook
+
 Create a file `src/hooks/useSocialSharing.ts`:
 
 ```typescript
-import { useState } from 'react';
+import { useState } from "react";
 import {
   shareContent,
   shareToSocialMedia,
@@ -472,8 +439,8 @@ import {
   checkSocialMediaAppInstalled,
   openEmailClient,
   openSMSClient,
-} from '../services/socialSharing';
-import { useToast } from './useToast';
+} from "../services/socialSharing";
+import { useToast } from "./useToast";
 
 export interface SocialMediaApp {
   id: string;
@@ -491,16 +458,16 @@ export const useSocialSharing = () => {
   const checkInstalledApps = async () => {
     try {
       const apps: SocialMediaApp[] = [
-        { id: 'facebook', name: 'Facebook', icon: '📘', installed: false },
-        { id: 'instagram', name: 'Instagram', icon: '📷', installed: false },
-        { id: 'twitter', name: 'Twitter', icon: '🐦', installed: false },
-        { id: 'whatsapp', name: 'WhatsApp', icon: '💬', installed: false },
-        { id: 'telegram', name: 'Telegram', icon: '✈️', installed: false },
-        { id: 'linkedin', name: 'LinkedIn', icon: '👔', installed: false },
-        { id: 'pinterest', name: 'Pinterest', icon: '📌', installed: false },
-        { id: 'snapchat', name: 'Snapchat', icon: '👻', installed: false },
-        { id: 'youtube', name: 'YouTube', icon: '📺', installed: false },
-        { id: 'tiktok', name: 'TikTok', icon: '🎵', installed: false },
+        { id: "facebook", name: "Facebook", icon: "📘", installed: false },
+        { id: "instagram", name: "Instagram", icon: "📷", installed: false },
+        { id: "twitter", name: "Twitter", icon: "🐦", installed: false },
+        { id: "whatsapp", name: "WhatsApp", icon: "💬", installed: false },
+        { id: "telegram", name: "Telegram", icon: "✈️", installed: false },
+        { id: "linkedin", name: "LinkedIn", icon: "👔", installed: false },
+        { id: "pinterest", name: "Pinterest", icon: "📌", installed: false },
+        { id: "snapchat", name: "Snapchat", icon: "👻", installed: false },
+        { id: "youtube", name: "YouTube", icon: "📺", installed: false },
+        { id: "tiktok", name: "TikTok", icon: "🎵", installed: false },
       ];
 
       // Check installation status for each app
@@ -510,24 +477,19 @@ export const useSocialSharing = () => {
 
       setSocialApps(apps);
     } catch (error) {
-      console.error('Failed to check installed apps:', error);
+      console.error("Failed to check installed apps:", error);
     }
   };
 
   // Share content
-  const handleShareContent = async (
-    title: string,
-    message: string,
-    url?: string,
-    imageUrl?: string,
-  ) => {
+  const handleShareContent = async (title: string, message: string, url?: string, imageUrl?: string) => {
     try {
       setIsLoading(true);
       await shareContent(title, message, url, imageUrl);
-      showToast('Content shared successfully', 'success');
+      showToast("Content shared successfully", "success");
     } catch (error) {
-      console.error('Failed to share content:', error);
-      showToast('Failed to share content', 'error');
+      console.error("Failed to share content:", error);
+      showToast("Failed to share content", "error");
     } finally {
       setIsLoading(false);
     }
@@ -544,133 +506,108 @@ export const useSocialSharing = () => {
     try {
       setIsLoading(true);
       await shareToSocialMedia(platform as any, title, message, url, imageUrl);
-      showToast(`Shared to ${platform} successfully`, 'success');
+      showToast(`Shared to ${platform} successfully`, "success");
     } catch (error) {
       console.error(`Failed to share to ${platform}:`, error);
-      showToast(`Failed to share to ${platform}`, 'error');
+      showToast(`Failed to share to ${platform}`, "error");
     } finally {
       setIsLoading(false);
     }
   };
 
   // Share image
-  const handleShareImage = async (
-    imageUrl: string,
-    title?: string,
-    message?: string,
-  ) => {
+  const handleShareImage = async (imageUrl: string, title?: string, message?: string) => {
     try {
       setIsLoading(true);
       await shareImage(imageUrl, title, message);
-      showToast('Image shared successfully', 'success');
+      showToast("Image shared successfully", "success");
     } catch (error) {
-      console.error('Failed to share image:', error);
-      showToast('Failed to share image', 'error');
+      console.error("Failed to share image:", error);
+      showToast("Failed to share image", "error");
     } finally {
       setIsLoading(false);
     }
   };
 
   // Share to Instagram
-  const handleShareToInstagram = async (
-    imageUrl: string,
-    type: 'feed' | 'story' = 'feed',
-  ) => {
+  const handleShareToInstagram = async (imageUrl: string, type: "feed" | "story" = "feed") => {
     try {
       setIsLoading(true);
       await shareToInstagram(imageUrl, type);
-      showToast(`Shared to Instagram ${type} successfully`, 'success');
+      showToast(`Shared to Instagram ${type} successfully`, "success");
     } catch (error) {
-      console.error('Failed to share to Instagram:', error);
-      showToast('Failed to share to Instagram', 'error');
+      console.error("Failed to share to Instagram:", error);
+      showToast("Failed to share to Instagram", "error");
     } finally {
       setIsLoading(false);
     }
   };
 
   // Share to WhatsApp
-  const handleShareToWhatsApp = async (
-    message: string,
-    url?: string,
-    imageUrl?: string,
-  ) => {
+  const handleShareToWhatsApp = async (message: string, url?: string, imageUrl?: string) => {
     try {
       setIsLoading(true);
       await shareToWhatsApp(message, url, imageUrl);
-      showToast('Shared to WhatsApp successfully', 'success');
+      showToast("Shared to WhatsApp successfully", "success");
     } catch (error) {
-      console.error('Failed to share to WhatsApp:', error);
-      showToast('Failed to share to WhatsApp', 'error');
+      console.error("Failed to share to WhatsApp:", error);
+      showToast("Failed to share to WhatsApp", "error");
     } finally {
       setIsLoading(false);
     }
   };
 
   // Share to Twitter
-  const handleShareToTwitter = async (
-    text: string,
-    url?: string,
-    imageUrl?: string,
-  ) => {
+  const handleShareToTwitter = async (text: string, url?: string, imageUrl?: string) => {
     try {
       setIsLoading(true);
       await shareToTwitter(text, url, imageUrl);
-      showToast('Shared to Twitter successfully', 'success');
+      showToast("Shared to Twitter successfully", "success");
     } catch (error) {
-      console.error('Failed to share to Twitter:', error);
-      showToast('Failed to share to Twitter', 'error');
+      console.error("Failed to share to Twitter:", error);
+      showToast("Failed to share to Twitter", "error");
     } finally {
       setIsLoading(false);
     }
   };
 
   // Share to Facebook
-  const handleShareToFacebook = async (
-    link?: string,
-    imageUrl?: string,
-  ) => {
+  const handleShareToFacebook = async (link?: string, imageUrl?: string) => {
     try {
       setIsLoading(true);
       await shareToFacebook(link, imageUrl);
-      showToast('Shared to Facebook successfully', 'success');
+      showToast("Shared to Facebook successfully", "success");
     } catch (error) {
-      console.error('Failed to share to Facebook:', error);
-      showToast('Failed to share to Facebook', 'error');
+      console.error("Failed to share to Facebook:", error);
+      showToast("Failed to share to Facebook", "error");
     } finally {
       setIsLoading(false);
     }
   };
 
   // Open email client
-  const handleOpenEmailClient = async (
-    to: string,
-    subject: string,
-    body: string,
-  ) => {
+  const handleOpenEmailClient = async (to: string, subject: string, body: string) => {
     try {
       setIsLoading(true);
       await openEmailClient(to, subject, body);
-      showToast('Email client opened', 'success');
+      showToast("Email client opened", "success");
     } catch (error) {
-      console.error('Failed to open email client:', error);
-      showToast('Failed to open email client', 'error');
+      console.error("Failed to open email client:", error);
+      showToast("Failed to open email client", "error");
     } finally {
       setIsLoading(false);
     }
   };
 
   // Open SMS client
-  const handleOpenSMSClient = async (
-    phoneNumber: string,
-    body: string,
-  ) => {
+  const handleOpenSMSClient = async (phoneNumber: string, body: string) => {
     try {
       setIsLoading(true);
       await openSMSClient(phoneNumber, body);
-      showToast('SMS client opened', 'success');
+      showToast("SMS client opened", "success");
     } catch (error) {
-      console.error('Failed to open SMS client:', error);
-      showToast('Failed to open SMS client', 'error');
+      console.error("Failed to open SMS client:", error);
+      showToast("Failed to open SMS client", "error");
     } finally {
       setIsLoading(false);
     }
@@ -696,6 +633,7 @@ export const useSocialSharing = () => {
 ### 3. Create Social Sharing Components
 
 #### Create Share Menu Component
+
 Create a file `src/components/social/ShareMenu.tsx`:
 
 ```typescript
@@ -737,7 +675,7 @@ const ShareMenu: React.FC<ShareMenuProps> = ({
     handleShareContent,
     handleShareToSocialMedia,
   } = useSocialSharing();
-  
+
   const [apps, setApps] = useState<SocialMediaApp[]>([]);
 
   // Load installed apps
@@ -747,7 +685,7 @@ const ShareMenu: React.FC<ShareMenuProps> = ({
         await checkInstalledApps();
         setApps(socialApps);
       };
-      
+
       loadApps();
     }
   }, [visible, socialApps]);
@@ -808,7 +746,7 @@ const ShareMenu: React.FC<ShareMenuProps> = ({
               </Text>
             </TouchableOpacity>
           </View>
-          
+
           {isLoading ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color={theme.primary} />
@@ -821,11 +759,11 @@ const ShareMenu: React.FC<ShareMenuProps> = ({
               >
                 <Text style={styles.nativeShareButtonText}>Share via...</Text>
               </TouchableOpacity>
-              
+
               <Text style={[styles.sectionTitle, { color: theme.secondaryText }]}>
                 Share to apps
               </Text>
-              
+
               <FlatList
                 data={apps}
                 renderItem={renderAppItem}
@@ -918,6 +856,7 @@ export default ShareMenu;
 ```
 
 #### Create Share Button Component
+
 Create a file `src/components/social/ShareButton.tsx`:
 
 ```typescript
@@ -962,7 +901,7 @@ const ShareButton: React.FC<ShareButtonProps> = ({
       >
         {icon || <Text style={[styles.icon, { color: theme.primary }]}>📤</Text>}
       </TouchableOpacity>
-      
+
       <ShareMenu
         visible={showShareMenu}
         onClose={handleClose}
@@ -992,6 +931,7 @@ export default ShareButton;
 ```
 
 #### Create Instagram Story Share Component
+
 Create a file `src/components/social/InstagramStoryShare.tsx`:
 
 ```typescript
@@ -1082,6 +1022,7 @@ export default InstagramStoryShare;
 ### 4. Create Social Sharing Screen
 
 #### Create Social Sharing Screen
+
 Create a file `src/screens/social/SocialSharingScreen.tsx`:
 
 ```typescript
@@ -1114,7 +1055,7 @@ const SocialSharingScreen: React.FC = () => {
     handleOpenEmailClient,
     handleOpenSMSClient,
   } = useSocialSharing();
-  
+
   const [title, setTitle] = useState('Check out this amazing app!');
   const [message, setMessage] = useState('I found this awesome app that I think you\'ll love. Download it now!');
   const [url, setUrl] = useState('https://example.com');
@@ -1151,7 +1092,7 @@ const SocialSharingScreen: React.FC = () => {
       Alert.alert('Error', 'Please select an image first');
       return;
     }
-    
+
     try {
       await handleShareToInstagram(imageUrl, 'story');
       Alert.alert('Success', 'Shared to Instagram Story successfully');
@@ -1213,10 +1154,10 @@ const SocialSharingScreen: React.FC = () => {
   return (
     <ScrollView style={[styles.container, { backgroundColor: theme.background }]}>
       <Text style={[styles.title, { color: theme.text }]}>Social Sharing</Text>
-      
+
       <View style={[styles.card, { backgroundColor: theme.card }]}>
         <Text style={[styles.cardTitle, { color: theme.text }]}>Content</Text>
-        
+
         <Text style={[styles.label, { color: theme.secondaryText }]}>Title</Text>
         <TextInput
           style={[styles.input, { backgroundColor: theme.background, color: theme.text }]}
@@ -1225,7 +1166,7 @@ const SocialSharingScreen: React.FC = () => {
           placeholder="Enter title"
           placeholderTextColor={theme.secondaryText}
         />
-        
+
         <Text style={[styles.label, { color: theme.secondaryText }]}>Message</Text>
         <TextInput
           style={[
@@ -1239,7 +1180,7 @@ const SocialSharingScreen: React.FC = () => {
           placeholderTextColor={theme.secondaryText}
           multiline
         />
-        
+
         <Text style={[styles.label, { color: theme.secondaryText }]}>URL</Text>
         <TextInput
           style={[styles.input, { backgroundColor: theme.background, color: theme.text }]}
@@ -1249,10 +1190,10 @@ const SocialSharingScreen: React.FC = () => {
           placeholderTextColor={theme.secondaryText}
         />
       </View>
-      
+
       <View style={[styles.card, { backgroundColor: theme.card }]}>
         <Text style={[styles.cardTitle, { color: theme.text }]}>Image</Text>
-        
+
         {imageUrl ? (
           <View style={styles.imageContainer}>
             {/* You would use an Image component here */}
@@ -1275,10 +1216,10 @@ const SocialSharingScreen: React.FC = () => {
           </TouchableOpacity>
         )}
       </View>
-      
+
       <View style={[styles.card, { backgroundColor: theme.card }]}>
         <Text style={[styles.cardTitle, { color: theme.text }]}>Share Options</Text>
-        
+
         <TouchableOpacity
           style={[styles.shareButton, { backgroundColor: theme.primary }]}
           onPress={handleShare}
@@ -1290,14 +1231,14 @@ const SocialSharingScreen: React.FC = () => {
             <Text style={styles.shareButtonText}>Share Content</Text>
           )}
         </TouchableOpacity>
-        
+
         <View style={styles.shareOptions}>
           <InstagramStoryShare
             imageUrl={imageUrl || ''}
             onShare={() => Alert.alert('Success', 'Shared to Instagram Story')}
             onError={(error) => Alert.alert('Error', error.message)}
           />
-          
+
           <TouchableOpacity
             style={[styles.socialButton, { backgroundColor: '#25D366' }]}
             onPress={handleWhatsAppShare}
@@ -1305,7 +1246,7 @@ const SocialSharingScreen: React.FC = () => {
           >
             <Text style={styles.socialButtonText}>WhatsApp</Text>
           </TouchableOpacity>
-          
+
           <TouchableOpacity
             style={[styles.socialButton, { backgroundColor: '#1DA1F2' }]}
             onPress={handleTwitterShare}
@@ -1313,7 +1254,7 @@ const SocialSharingScreen: React.FC = () => {
           >
             <Text style={styles.socialButtonText}>Twitter</Text>
           </TouchableOpacity>
-          
+
           <TouchableOpacity
             style={[styles.socialButton, { backgroundColor: '#4267B2' }]}
             onPress={handleFacebookShare}
@@ -1321,7 +1262,7 @@ const SocialSharingScreen: React.FC = () => {
           >
             <Text style={styles.socialButtonText}>Facebook</Text>
           </TouchableOpacity>
-          
+
           <TouchableOpacity
             style={[styles.socialButton, { backgroundColor: '#EA4335' }]}
             onPress={handleEmailShare}
@@ -1329,7 +1270,7 @@ const SocialSharingScreen: React.FC = () => {
           >
             <Text style={styles.socialButtonText}>Email</Text>
           </TouchableOpacity>
-          
+
           <TouchableOpacity
             style={[styles.socialButton, { backgroundColor: '#34B7F1' }]}
             onPress={handleSMSShare}
@@ -1438,6 +1379,7 @@ export default SocialSharingScreen;
 ### 5. Integration in App
 
 #### Update App Navigation
+
 Add the SocialSharingScreen to your navigation stack:
 
 ```typescript
@@ -1455,67 +1397,68 @@ import SocialSharingScreen from '../screens/social/SocialSharingScreen';
 ### 6. Advanced Features Implementation
 
 #### Create Deep Linking Service
+
 Create a file `src/services/deepLinking.ts`:
 
 ```typescript
-import { Linking, Platform } from 'react-native';
-import { logEvent } from './analytics';
+import { Linking, Platform } from "react-native";
+import { logEvent } from "./analytics";
 
 // Deep linking configuration
 export const DEEP_LINKING_CONFIG = {
   // App scheme
-  scheme: 'yourapp',
-  
+  scheme: "yourapp",
+
   // Universal links
   universalLinks: {
-    ios: 'https://yourapp.com',
-    android: 'https://yourapp.com',
+    ios: "https://yourapp.com",
+    android: "https://yourapp.com",
   },
-  
+
   // Social media app schemes
   socialSchemes: {
-    facebook: 'fb://',
-    instagram: 'instagram://',
-    twitter: 'twitter://',
-    whatsapp: 'whatsapp://',
-    telegram: 'tg://',
-    linkedin: 'linkedin://',
-    pinterest: 'pinterest://',
-    snapchat: 'snapchat://',
-    youtube: 'youtube://',
-    tiktok: 'tiktok://',
+    facebook: "fb://",
+    instagram: "instagram://",
+    twitter: "twitter://",
+    whatsapp: "whatsapp://",
+    telegram: "tg://",
+    linkedin: "linkedin://",
+    pinterest: "pinterest://",
+    snapchat: "snapchat://",
+    youtube: "youtube://",
+    tiktok: "tiktok://",
   },
 };
 
 // Initialize deep linking
 export const initializeDeepLinking = (handleDeepLink: (url: string) => void) => {
   // Handle initial URL
-  Linking.getInitialURL().then(url => {
+  Linking.getInitialURL().then((url) => {
     if (url) {
       handleDeepLink(url);
     }
   });
-  
+
   // Handle incoming URLs
-  Linking.addEventListener('url', ({ url }) => {
+  Linking.addEventListener("url", ({ url }) => {
     handleDeepLink(url);
   });
-  
-  console.log('Deep linking initialized');
+
+  console.log("Deep linking initialized");
 };
 
 // Create deep link URL
 export const createDeepLink = (path: string, params?: Record<string, string>): string => {
   let url = `${DEEP_LINKING_CONFIG.scheme}://${path}`;
-  
+
   if (params) {
     const queryString = Object.keys(params)
-      .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`)
-      .join('&');
-    
+      .map((key) => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`)
+      .join("&");
+
     url += `?${queryString}`;
   }
-  
+
   return url;
 };
 
@@ -1525,37 +1468,39 @@ export const createUniversalLink = (path: string, params?: Record<string, string
     ios: DEEP_LINKING_CONFIG.universalLinks.ios,
     android: DEEP_LINKING_CONFIG.universalLinks.android,
   });
-  
+
   let url = `${baseUrl}/${path}`;
-  
+
   if (params) {
     const queryString = Object.keys(params)
-      .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`)
-      .join('&');
-    
+      .map((key) => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`)
+      .join("&");
+
     url += `?${queryString}`;
   }
-  
+
   return url;
 };
 
 // Open social media app
-export const openSocialMediaApp = async (platform: keyof typeof DEEP_LINKING_CONFIG.socialSchemes): Promise<boolean> => {
+export const openSocialMediaApp = async (
+  platform: keyof typeof DEEP_LINKING_CONFIG.socialSchemes,
+): Promise<boolean> => {
   try {
     const scheme = DEEP_LINKING_CONFIG.socialSchemes[platform];
     const canOpen = await Linking.canOpenURL(scheme);
-    
+
     if (canOpen) {
       await Linking.openURL(scheme);
-      
+
       // Log analytics event
-      await logEvent('open_social_media_app', {
+      await logEvent("open_social_media_app", {
         platform,
       });
-      
+
       return true;
     }
-    
+
     return false;
   } catch (error) {
     console.error(`Failed to open ${platform}:`, error);
@@ -1567,16 +1512,16 @@ export const openSocialMediaApp = async (platform: keyof typeof DEEP_LINKING_CON
 export const openAppStore = async (): Promise<void> => {
   try {
     const url = Platform.select({
-      ios: 'https://apps.apple.com/app/idYOUR_APP_ID',
-      android: 'market://details?id=YOUR_PACKAGE_NAME',
+      ios: "https://apps.apple.com/app/idYOUR_APP_ID",
+      android: "market://details?id=YOUR_PACKAGE_NAME",
     });
-    
+
     await Linking.openURL(url);
-    
+
     // Log analytics event
-    await logEvent('open_app_store');
+    await logEvent("open_app_store");
   } catch (error) {
-    console.error('Failed to open app store:', error);
+    console.error("Failed to open app store:", error);
   }
 };
 
@@ -1591,13 +1536,13 @@ export const shareWithDeepLink = async (
   try {
     // Create deep link URL
     const deepLinkUrl = createDeepLink(path, params);
-    
+
     // Create universal link URL
     const universalLinkUrl = createUniversalLink(path, params);
-    
+
     // Share content with universal link
-    const { Share } = await import('react-native-share');
-    
+    const { Share } = await import("react-native-share");
+
     const shareOptions = {
       title,
       message: `${message}\n\n${universalLinkUrl}`,
@@ -1605,22 +1550,22 @@ export const shareWithDeepLink = async (
       subject: title,
       failOnCancel: false,
     };
-    
+
     const result = await Share.open(shareOptions);
-    
+
     // Log analytics event
-    await logEvent('share_with_deep_link', {
-      method: result.app || 'unknown',
+    await logEvent("share_with_deep_link", {
+      method: result.app || "unknown",
       success: result.success,
       path,
     });
-    
-    console.log('Share with deep link result:', result);
+
+    console.log("Share with deep link result:", result);
   } catch (error) {
-    console.error('Error sharing with deep link:', error);
-    
+    console.error("Error sharing with deep link:", error);
+
     // Log analytics event
-    await logEvent('share_with_deep_link_error', {
+    await logEvent("share_with_deep_link_error", {
       error: error.message,
       path,
     });
@@ -1631,21 +1576,22 @@ export const shareWithDeepLink = async (
 ### 7. Testing and Debugging
 
 #### Enable Debug Mode
+
 Create a file `src/services/socialSharingDebug.ts`:
 
 ```typescript
-import { logEvent } from './analytics';
+import { logEvent } from "./analytics";
 
 // Enable debug mode for social sharing
 export const enableSocialSharingDebugMode = async () => {
   try {
     // Note: This is a placeholder for any platform-specific debug setup
-    console.log('Social sharing debug mode enabled');
-    
+    console.log("Social sharing debug mode enabled");
+
     // Log analytics event
-    await logEvent('social_sharing_debug_mode_enabled');
+    await logEvent("social_sharing_debug_mode_enabled");
   } catch (error) {
-    console.error('Failed to enable social sharing debug mode:', error);
+    console.error("Failed to enable social sharing debug mode:", error);
   }
 };
 
@@ -1653,12 +1599,12 @@ export const enableSocialSharingDebugMode = async () => {
 export const testSocialSharing = async () => {
   try {
     // This is a placeholder for testing social sharing
-    console.log('Testing social sharing...');
-    
+    console.log("Testing social sharing...");
+
     // Log analytics event
-    await logEvent('test_social_sharing');
+    await logEvent("test_social_sharing");
   } catch (error) {
-    console.error('Failed to test social sharing:', error);
+    console.error("Failed to test social sharing:", error);
   }
 };
 ```
@@ -1666,6 +1612,7 @@ export const testSocialSharing = async () => {
 ### 8. Best Practices and Optimization
 
 #### Social Sharing Best Practices
+
 1. **Provide clear value**: Clearly communicate what users are sharing
 2. **Pre-fill content**: Pre-fill shareable content with relevant information
 3. **Use appropriate images**: Use high-quality, properly sized images
@@ -1673,6 +1620,7 @@ export const testSocialSharing = async () => {
 5. **Track shares**: Track which content is shared most often
 
 #### Performance Optimization
+
 1. **Cache images**: Cache images to improve loading times
 2. **Compress images**: Compress images before sharing to reduce data usage
 3. **Lazy load**: Load social media app installation status only when needed
@@ -1680,6 +1628,7 @@ export const testSocialSharing = async () => {
 5. **Use appropriate image formats**: Use appropriate image formats for different platforms
 
 #### User Experience Guidelines
+
 1. **Make sharing easy**: Provide prominent and accessible sharing buttons
 2. **Offer multiple options**: Allow users to share to multiple platforms
 3. **Provide feedback**: Show confirmation when content is shared
@@ -1691,33 +1640,39 @@ export const testSocialSharing = async () => {
 ### Common Issues
 
 #### Share Dialog Not Appearing
+
 1. Check if react-native-share is properly installed
 2. Verify permissions are granted
 3. Ensure content is properly formatted
 4. Check if the device has sharing capabilities
 
 #### Specific Social Media Apps Not Working
+
 1. Verify the social media app is installed
 2. Check if the app's package name is correct
 3. Ensure the content format is compatible with the platform
 4. Verify the app's sharing capabilities
 
 #### Images Not Sharing Correctly
+
 1. Check if the image URL is valid
 2. Verify the image format is supported
 3. Ensure the image size is within platform limits
 4. Check if the image is accessible
 
 ### Debugging Tools
+
 1. **Console Logs**: Enable verbose logging to trace sharing flow
 2. **Device Logs**: Check native logs for platform-specific issues
 3. **Network Inspector**: Monitor image loading and sharing requests
 4. **Simulator Testing**: Test sharing on different simulators and devices
 
 ## Conclusion
+
 This guide provides a comprehensive implementation of social sharing features in your React Native application. By following these steps, you'll be able to effectively enable users to share content across various platforms.
 
 Remember to:
+
 - Always follow platform guidelines for social sharing
 - Provide clear value to users with each share
 - Test thoroughly across different platforms and devices

@@ -13,10 +13,5 @@
     "allowUnreachableCode": false,
     "skipLibCheck": true
   },
-  "exclude": [
-    "node_modules",
-    "supabase/functions",
-    "__tests__",
-    "backup"
-  ]
+  "exclude": ["node_modules", "supabase/functions", "__tests__", "backup"]
 }

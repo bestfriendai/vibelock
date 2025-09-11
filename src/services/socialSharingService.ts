@@ -162,7 +162,7 @@ class SocialSharingService {
    */
   private createShareMessage(review: Review): string {
     const location = `${review.reviewedPersonLocation.city}, ${review.reviewedPersonLocation.state}`;
-    const sentiment = review.sentiment === "positive" ? "🟢" : review.sentiment === "negative" ? "🔴" : "⚪";
+    const sentiment = review.sentiment === "green" ? "🟢" : review.sentiment === "red" ? "🔴" : "⚪";
 
     // Truncate review text for sharing
     const maxLength = 200;

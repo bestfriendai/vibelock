@@ -405,13 +405,15 @@ class ChatApiService {
       const content = sampleMessages[Math.floor(Math.random() * sampleMessages.length)];
       const timestamp = new Date(Date.now() - i * 300000 - Math.random() * 300000);
 
+      if (!user) continue; // Skip if user is undefined (shouldn't happen with our array)
+
       messages.unshift({
         id: `msg_${roomId}_${i}`,
         chatRoomId: roomId,
         senderId: user.id,
         senderName: user.name,
         senderAvatar: `https://picsum.photos/100/100?random=${i + 10}`,
-        content,
+        content: content || "Hello!",
         messageType: "text",
         timestamp,
         isRead: true,

@@ -856,6 +856,13 @@ export const supabaseStorage = {
   },
 };
 
+// Utility: sanitize user input for LIKE queries (escape % _ ' " \ and cap length)
+const sanitizeLikeQuery = (query: string): string =>
+  query
+    .trim()
+    .slice(0, 100)
+    .replace(/[%_'"\\]/g, "\\$&");
+
 // Search Services
 export const supabaseSearch = {
   // Search for profiles by name with optional location filtering
@@ -1018,12 +1025,13 @@ export const supabaseSearch = {
     },
   ): Promise<any[]> => {
     try {
+      const sanitized = sanitizeLikeQuery(query);
       let queryBuilder = supabase
         .from("reviews_firebase")
         .select("*")
         .eq("status", "approved")
         .or(
-          `review_text.ilike.%${query}%,reviewed_person_name.ilike.%${query}%,reviewed_person_location->>city.ilike.%${query}%,reviewed_person_location->>state.ilike.%${query}%`,
+          `review_text.ilike.%${sanitized}%,reviewed_person_name.ilike.%${sanitized}%,reviewed_person_location->>city.ilike.%${sanitized}%,reviewed_person_location->>state.ilike.%${sanitized}%`,
         )
         .order("created_at", { ascending: false })
         .limit(20);
@@ -1051,10 +1059,11 @@ export const supabaseSearch = {
   // Search comments by content
   searchComments: async (query: string): Promise<any[]> => {
     try {
+      const sanitized = sanitizeLikeQuery(query);
       const { data, error } = await supabase
         .from("comments_firebase")
         .select("*, reviews_firebase!inner(id, reviewed_person_name)")
-        .ilike("content", `%${query}%`)
+        .ilike("content", `%${sanitized}%`)
         .eq("is_deleted", false)
         .order("created_at", { ascending: false })
         .limit(20);
@@ -1069,11 +1078,12 @@ export const supabaseSearch = {
   // Search chat messages by content
   searchMessages: async (query: string): Promise<any[]> => {
     try {
+      const sanitized = sanitizeLikeQuery(query);
       const { data, error } = await supabase
         .from("chat_messages_firebase")
         // Use the correct related table name that matches DB schema
         .select("*, chat_rooms_firebase(id, name)")
-        .ilike("content", `%${query}%`)
+        .ilike("content", `%${sanitized}%`)
         .order("timestamp", { ascending: false })
         .limit(20);
 
@@ -1098,10 +1108,11 @@ export const supabaseSearch = {
     messages: any[];
   }> => {
     try {
+      const sanitized = sanitizeLikeQuery(query);
       const [reviews, comments, messages] = await Promise.all([
-        supabaseSearch.searchReviews(query, filters),
-        supabaseSearch.searchComments(query),
-        supabaseSearch.searchMessages(query),
+        supabaseSearch.searchReviews(sanitized, filters),
+        supabaseSearch.searchComments(sanitized),
+        supabaseSearch.searchMessages(sanitized),
       ]);
 
       return {

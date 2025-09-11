@@ -191,13 +191,16 @@ function BrowseStackNavigator() {
           </ScreenErrorBoundary>
         )}
       </BrowseStack.Screen>
-      <BrowseStack.Screen name="ReviewDetail" options={{
+      <BrowseStack.Screen
+        name="ReviewDetail"
+        options={{
           ...standardHeader,
           headerTitle: "Review",
-        }}>
-        {(props) => (
+        }}
+      >
+        {() => (
           <ScreenErrorBoundary screenName="Review Detail">
-            <ReviewDetailScreen {...props} />
+            <ReviewDetailScreen />
           </ScreenErrorBoundary>
         )}
       </BrowseStack.Screen>
@@ -220,13 +223,16 @@ function SearchStackNavigator() {
           </ScreenErrorBoundary>
         )}
       </SearchStack.Screen>
-      <SearchStack.Screen name="ReviewDetail" options={{
+      <SearchStack.Screen
+        name="ReviewDetail"
+        options={{
           ...standardHeader,
           headerTitle: "Review",
-        }}>
-        {(props) => (
+        }}
+      >
+        {() => (
           <ScreenErrorBoundary screenName="Review Detail">
-            <ReviewDetailScreen {...props} />
+            <ReviewDetailScreen />
           </ScreenErrorBoundary>
         )}
       </SearchStack.Screen>
@@ -426,9 +432,9 @@ export default function AppNavigator() {
               headerTitle: "Write Review",
             }}
           >
-            {(props) => (
+            {() => (
               <ScreenErrorBoundary screenName="Create Review">
-                <CreateReviewScreen {...props} />
+                <CreateReviewScreen />
               </ScreenErrorBoundary>
             )}
           </Stack.Screen>
@@ -440,9 +446,9 @@ export default function AppNavigator() {
               headerTitle: "Profile",
             }}
           >
-            {(props) => (
+            {() => (
               <ScreenErrorBoundary screenName="Profile">
-                <PersonProfileScreen {...props} />
+                <PersonProfileScreen />
               </ScreenErrorBoundary>
             )}
           </Stack.Screen>

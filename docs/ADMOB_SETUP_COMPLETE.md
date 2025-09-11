@@ -1,9 +1,11 @@
 # AdMob Setup Complete Guide
 
 ## Overview
+
 This document provides a complete guide for implementing Google AdMob in the React Native application using the `react-native-google-mobile-ads` package.
 
 ## Prerequisites
+
 - React Native project with `react-native-google-mobile-ads` installed (already in package.json)
 - Google AdMob account (https://apps.admob.com)
 - iOS and Android development environments set up
@@ -13,11 +15,13 @@ This document provides a complete guide for implementing Google AdMob in the Rea
 ### 1. Google AdMob Account Setup
 
 #### Create an AdMob Account
+
 1. Go to [Google AdMob](https://apps.admob.com)
 2. Sign in with your Google account
 3. Follow the on-screen instructions to create your AdMob account
 
 #### Register Your App
+
 1. In the AdMob dashboard, click "Add App"
 2. Select your app platform (iOS or Android)
 3. For Android:
@@ -30,6 +34,7 @@ This document provides a complete guide for implementing Google AdMob in the Rea
 ### 2. Ad Unit Configuration
 
 #### Create Ad Units
+
 1. In your app dashboard, go to "Ad units" tab
 2. Click "Create ad unit"
 3. Select the ad type you want to implement:
@@ -39,7 +44,9 @@ This document provides a complete guide for implementing Google AdMob in the Rea
    - **Native**: For custom-designed ads that match your app's UI
 
 #### Ad Unit Naming Convention
+
 Use a consistent naming convention for your ad units:
+
 - `android_banner_home`
 - `ios_interstitial_level_complete`
 - `android_rewarded_premium_feature`
@@ -50,6 +57,7 @@ Use a consistent naming convention for your ad units:
 #### Android Configuration
 
 1. Add your App ID to `android/app/src/main/AndroidManifest.xml`:
+
 ```xml
 <application>
   <!-- Sample AdMob app ID: ca-app-pub-3940256099942544~3347511713 -->
@@ -60,6 +68,7 @@ Use a consistent naming convention for your ad units:
 ```
 
 2. Update `android/app/src/main/res/values/strings.xml`:
+
 ```xml
 <resources>
   <string name="app_name">Your App Name</string>
@@ -68,6 +77,7 @@ Use a consistent naming convention for your ad units:
 ```
 
 3. Add required permissions to `AndroidManifest.xml`:
+
 ```xml
 <uses-permission android:name="android.permission.INTERNET" />
 <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -76,12 +86,14 @@ Use a consistent naming convention for your ad units:
 #### iOS Configuration
 
 1. Add your App ID to `ios/YourAppName/Info.plist`:
+
 ```xml
 <key>GADApplicationIdentifier</key>
 <string>YOUR_ADMOB_APP_ID</string>
 ```
 
 2. Add the following to `Info.plist` for SKAdNetwork support:
+
 ```xml
 <key>SKAdNetworkItems</key>
 <array>
@@ -93,6 +105,7 @@ Use a consistent naming convention for your ad units:
 ```
 
 3. Update your Podfile with required settings:
+
 ```ruby
 platform :ios, '11.0'
 
@@ -107,6 +120,7 @@ end
 ### 4. React Native Implementation
 
 #### Initialize the SDK
+
 Create a file `src/services/admob.ts`:
 
 ```typescript
@@ -203,7 +217,7 @@ export const showRewardedAd = async (onUserEarnedReward: () => void) => {
         console.log('User earned reward:', reward);
         onUserEarnedReward();
       };
-      
+
       await rewardedAd.show();
       console.log('Rewarded ad shown');
       // Load a new ad for next time
@@ -238,11 +252,12 @@ export const preloadAds = () => {
 ```
 
 #### Integration in App Entry Point
+
 Update your `App.tsx` or main entry point:
 
 ```typescript
-import React, { useEffect } from 'react';
-import { initializeAdMob, preloadAds } from './src/services/admob';
+import React, { useEffect } from "react";
+import { initializeAdMob, preloadAds } from "./src/services/admob";
 
 const App = () => {
   useEffect(() => {
@@ -253,7 +268,7 @@ const App = () => {
         preloadAds();
       }
     };
-    
+
     setupAds();
   }, []);
 
@@ -264,6 +279,7 @@ const App = () => {
 ### 5. Implementing Ad Placements
 
 #### Banner Ads
+
 Create a component `src/components/ads/BannerAdWrapper.tsx`:
 
 ```typescript
@@ -274,9 +290,9 @@ import { useTheme } from '../../hooks/useTheme';
 
 const BannerAdWrapper = () => {
   const { theme } = useTheme();
-  
-  const adUnitId = __DEV__ 
-    ? TestIds.BANNER 
+
+  const adUnitId = __DEV__
+    ? TestIds.BANNER
     : Platform.select({
         android: 'ca-app-pub-xxxxxxxxxxxxxxxx/yyyyyyyyyy',
         ios: 'ca-app-pub-xxxxxxxxxxxxxxxx/yyyyyyyyyy',
@@ -308,11 +324,12 @@ export default BannerAdWrapper;
 ```
 
 #### Interstitial Ads
+
 Create a hook `src/hooks/useInterstitialAd.ts`:
 
 ```typescript
-import { useCallback } from 'react';
-import { showInterstitialAd } from '../services/admob';
+import { useCallback } from "react";
+import { showInterstitialAd } from "../services/admob";
 
 export const useInterstitialAd = () => {
   const showAd = useCallback(() => {
@@ -324,6 +341,7 @@ export const useInterstitialAd = () => {
 ```
 
 Usage in components:
+
 ```typescript
 import { useInterstitialAd } from '../../hooks/useInterstitialAd';
 
@@ -343,11 +361,12 @@ const SomeScreen = ({ navigation }) => {
 ```
 
 #### Rewarded Ads
+
 Create a hook `src/hooks/useRewardedAd.ts`:
 
 ```typescript
-import { useCallback } from 'react';
-import { showRewardedAd } from '../services/admob';
+import { useCallback } from "react";
+import { showRewardedAd } from "../services/admob";
 
 export const useRewardedAd = () => {
   const showAd = useCallback((onReward: () => void) => {
@@ -359,6 +378,7 @@ export const useRewardedAd = () => {
 ```
 
 Usage in components:
+
 ```typescript
 import { useRewardedAd } from '../../hooks/useRewardedAd';
 
@@ -371,7 +391,7 @@ const PremiumFeature = () => {
       setUnlocked(true);
       // Grant temporary access to premium feature
     };
-    
+
     showAd(onReward);
   };
 
@@ -390,16 +410,17 @@ const PremiumFeature = () => {
 ### 6. Ad Frequency and Mediation
 
 #### Implement Ad Frequency Control
+
 Create a utility `src/utils/adFrequency.ts`:
 
 ```typescript
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const STORAGE_KEYS = {
-  LAST_INTERSTITIAL: 'last_interstitial_ad_time',
-  LAST_REWARDED: 'last_rewarded_ad_time',
-  INTERSTITIAL_COUNT: 'interstitial_ad_count',
-  REWARDED_COUNT: 'rewarded_ad_count',
+  LAST_INTERSTITIAL: "last_interstitial_ad_time",
+  LAST_REWARDED: "last_rewarded_ad_time",
+  INTERSTITIAL_COUNT: "interstitial_ad_count",
+  REWARDED_COUNT: "rewarded_ad_count",
 };
 
 // Minimum time between ads (in milliseconds)
@@ -414,19 +435,15 @@ const MAX_ADS_PER_SESSION = {
   rewarded: 10,
 };
 
-export const shouldShowAd = async (adType: 'interstitial' | 'rewarded') => {
+export const shouldShowAd = async (adType: "interstitial" | "rewarded") => {
   try {
     const now = Date.now();
-    const lastAdKey = adType === 'interstitial' 
-      ? STORAGE_KEYS.LAST_INTERSTITIAL 
-      : STORAGE_KEYS.LAST_REWARDED;
-    const countKey = adType === 'interstitial' 
-      ? STORAGE_KEYS.INTERSTITIAL_COUNT 
-      : STORAGE_KEYS.REWARDED_COUNT;
-    
+    const lastAdKey = adType === "interstitial" ? STORAGE_KEYS.LAST_INTERSTITIAL : STORAGE_KEYS.LAST_REWARDED;
+    const countKey = adType === "interstitial" ? STORAGE_KEYS.INTERSTITIAL_COUNT : STORAGE_KEYS.REWARDED_COUNT;
+
     const lastAdTime = await AsyncStorage.getItem(lastAdKey);
     const adCount = await AsyncStorage.getItem(countKey);
-    
+
     // Check if enough time has passed since last ad
     if (lastAdTime) {
       const timeSinceLastAd = now - parseInt(lastAdTime);
@@ -434,38 +451,34 @@ export const shouldShowAd = async (adType: 'interstitial' | 'rewarded') => {
         return false;
       }
     }
-    
+
     // Check if we've exceeded max ads per session
     if (adCount && parseInt(adCount) >= MAX_ADS_PER_SESSION[adType]) {
       return false;
     }
-    
+
     return true;
   } catch (error) {
-    console.error('Error checking ad frequency:', error);
+    console.error("Error checking ad frequency:", error);
     return false; // Default to not showing ad if there's an error
   }
 };
 
-export const recordAdShown = async (adType: 'interstitial' | 'rewarded') => {
+export const recordAdShown = async (adType: "interstitial" | "rewarded") => {
   try {
     const now = Date.now();
-    const lastAdKey = adType === 'interstitial' 
-      ? STORAGE_KEYS.LAST_INTERSTITIAL 
-      : STORAGE_KEYS.LAST_REWARDED;
-    const countKey = adType === 'interstitial' 
-      ? STORAGE_KEYS.INTERSTITIAL_COUNT 
-      : STORAGE_KEYS.REWARDED_COUNT;
-    
+    const lastAdKey = adType === "interstitial" ? STORAGE_KEYS.LAST_INTERSTITIAL : STORAGE_KEYS.LAST_REWARDED;
+    const countKey = adType === "interstitial" ? STORAGE_KEYS.INTERSTITIAL_COUNT : STORAGE_KEYS.REWARDED_COUNT;
+
     // Update last shown time
     await AsyncStorage.setItem(lastAdKey, now.toString());
-    
+
     // Update count
     const currentCount = await AsyncStorage.getItem(countKey);
     const newCount = currentCount ? parseInt(currentCount) + 1 : 1;
     await AsyncStorage.setItem(countKey, newCount.toString());
   } catch (error) {
-    console.error('Error recording ad shown:', error);
+    console.error("Error recording ad shown:", error);
   }
 };
 
@@ -478,24 +491,25 @@ export const resetAdCounts = async () => {
       STORAGE_KEYS.REWARDED_COUNT,
     ]);
   } catch (error) {
-    console.error('Error resetting ad counts:', error);
+    console.error("Error resetting ad counts:", error);
   }
 };
 ```
 
 #### Update Ad Hooks to Use Frequency Control
+
 Update `src/hooks/useInterstitialAd.ts`:
 
 ```typescript
-import { useCallback } from 'react';
-import { showInterstitialAd } from '../services/admob';
-import { shouldShowAd, recordAdShown } from '../utils/adFrequency';
+import { useCallback } from "react";
+import { showInterstitialAd } from "../services/admob";
+import { shouldShowAd, recordAdShown } from "../utils/adFrequency";
 
 export const useInterstitialAd = () => {
   const showAd = useCallback(async () => {
-    const canShow = await shouldShowAd('interstitial');
+    const canShow = await shouldShowAd("interstitial");
     if (canShow) {
-      await recordAdShown('interstitial');
+      await recordAdShown("interstitial");
       showInterstitialAd();
     }
   }, []);
@@ -507,6 +521,7 @@ export const useInterstitialAd = () => {
 ### 7. AdMob Policy Compliance
 
 #### Privacy and User Consent
+
 Create a component `src/components/ads/ConsentForm.tsx`:
 
 ```typescript
@@ -532,16 +547,16 @@ const ConsentForm = ({ onConsent Obtained }) => {
     try {
       // Set debug geography for testing (remove in production)
       await AdsConsent.setDebugGeography(AdsConsentDebugGeography.EEA);
-      
+
       // Request consent info update
       const consentInfo = await AdsConsent.requestInfoUpdate([]);
       setConsentStatus(consentInfo.status);
-      
+
       // If consent is not required, proceed
       if (consentInfo.status === AdsConsentStatus.NOT_REQUIRED) {
         onConsentObtained(true);
       }
-      
+
       setIsLoading(false);
     } catch (error) {
       console.error('Error checking consent status:', error);
@@ -629,73 +644,76 @@ export default ConsentForm;
 ### 8. Testing and Debugging
 
 #### Test Ad Units
+
 The package provides test ad unit IDs that can be used during development:
 
 ```typescript
-import { TestIds } from 'react-native-google-mobile-ads';
+import { TestIds } from "react-native-google-mobile-ads";
 
 // Test IDs
-TestIds.BANNER // Banner test ad
-TestIds.INTERSTITIAL // Interstitial test ad
-TestIds.REWARDED // Rewarded test ad
-TestIds.NATIVE // Native test ad
+TestIds.BANNER; // Banner test ad
+TestIds.INTERSTITIAL; // Interstitial test ad
+TestIds.REWARDED; // Rewarded test ad
+TestIds.NATIVE; // Native test ad
 ```
 
 #### Enable Test Devices
+
 Add your device as a test device to avoid invalid clicks:
 
 ```typescript
-import { mobileAds } from 'react-native-google-mobile-ads';
+import { mobileAds } from "react-native-google-mobile-ads";
 
 // Add your device ID
 await mobileAds().setRequestConfiguration({
-  testDeviceIdentifiers: ['33BE2250B43518CCDA7DE426D04EE231'],
+  testDeviceIdentifiers: ["33BE2250B43518CCDA7DE426D04EE231"],
 });
 ```
 
 ### 9. Analytics and Performance Monitoring
 
 #### Track Ad Performance
+
 Create a service `src/services/adAnalytics.ts`:
 
 ```typescript
-import analytics from '@react-native-firebase/analytics';
+import analytics from "@react-native-firebase/analytics";
 
 export const trackAdImpression = async (adType: string, adUnitId: string) => {
   try {
-    await analytics().logEvent('ad_impression', {
+    await analytics().logEvent("ad_impression", {
       ad_type: adType,
       ad_unit_id: adUnitId,
       timestamp: Date.now(),
     });
   } catch (error) {
-    console.error('Error tracking ad impression:', error);
+    console.error("Error tracking ad impression:", error);
   }
 };
 
 export const trackAdClick = async (adType: string, adUnitId: string) => {
   try {
-    await analytics().logEvent('ad_click', {
+    await analytics().logEvent("ad_click", {
       ad_type: adType,
       ad_unit_id: adUnitId,
       timestamp: Date.now(),
     });
   } catch (error) {
-    console.error('Error tracking ad click:', error);
+    console.error("Error tracking ad click:", error);
   }
 };
 
 export const trackAdRevenue = async (adType: string, adUnitId: string, revenue: number) => {
   try {
-    await analytics().logEvent('ad_revenue', {
+    await analytics().logEvent("ad_revenue", {
       ad_type: adType,
       ad_unit_id: adUnitId,
       revenue: revenue,
-      currency: 'USD',
+      currency: "USD",
       timestamp: Date.now(),
     });
   } catch (error) {
-    console.error('Error tracking ad revenue:', error);
+    console.error("Error tracking ad revenue:", error);
   }
 };
 ```
@@ -703,18 +721,21 @@ export const trackAdRevenue = async (adType: string, adUnitId: string, revenue: 
 ### 10. Best Practices and Optimization
 
 #### Ad Loading Best Practices
+
 1. **Preload ads**: Load interstitial and rewarded ads during app startup or natural pauses
 2. **Refresh rate**: For banner ads, use a refresh rate of 30-60 seconds
 3. **Ad placement**: Place ads where they won't interrupt user experience
 4. **Ad density**: Don't overload screens with ads
 
 #### Performance Optimization
+
 1. **Lazy loading**: Only load ads when they're likely to be shown
 2. **Memory management**: Clean up ad references when they're no longer needed
 3. **Network awareness**: Don't request ads when the device is offline
 4. **Battery optimization**: Consider battery impact when showing ads
 
 #### User Experience Guidelines
+
 1. **Never interrupt core flows**: Don't show ads during critical user actions
 2. **Provide value**: For rewarded ads, ensure the reward is worth the user's time
 3. **Be transparent**: Clearly indicate when content is an advertisement
@@ -725,31 +746,37 @@ export const trackAdRevenue = async (adType: string, adUnitId: string, revenue: 
 ### Common Issues
 
 #### Ads Not Showing
+
 1. Check if AdMob is properly initialized
 2. Verify ad unit IDs are correct
 3. Ensure test ads are enabled in development
 4. Check network connectivity
 
 #### Test Ads Showing in Production
+
 1. Remove test device IDs from production builds
 2. Replace test ad unit IDs with production IDs
 3. Double-check conditional compilation flags
 
 #### Consent Form Not Appearing
+
 1. Verify user is in EEA region (or using debug geography)
 2. Check if consent info update is successful
 3. Ensure Google Mobile Ads SDK is properly initialized
 
 ### Debugging Tools
+
 1. **AdMob Dashboard**: Check ad performance and status
 2. **Console Logs**: Enable verbose logging in development
 3. **Network Inspector**: Monitor ad requests and responses
 4. **Device Logs**: Check native logs for platform-specific issues
 
 ## Conclusion
+
 This guide provides a comprehensive implementation of AdMob in your React Native application. By following these steps, you'll be able to effectively monetize your app while maintaining a good user experience.
 
 Remember to:
+
 - Always follow AdMob policies and guidelines
 - Test thoroughly before releasing to production
 - Monitor ad performance and user metrics

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Pressable, Text, Alert, ActionSheetIOS, Platform } from "react-native";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
@@ -8,8 +8,17 @@ import { videoThumbnailService } from "../services/videoThumbnailService";
 import { formatVideoDurationFromMs, validateVideoFile } from "../utils/videoUtils";
 import { imageCompressionService } from "../services/imageCompressionService";
 import MediaViewer from "./MediaViewer";
-import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming } from "react-native-reanimated";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+  withSequence,
+  withRepeat,
+  runOnJS,
+} from "react-native-reanimated";
 import { useResponsiveScreen } from "../utils/responsive";
+import { handleMediaUploadError, showMediaErrorAlert } from "../utils/mediaErrorHandling";
 
 interface Props {
   media: MediaItem[];
@@ -25,6 +34,13 @@ export default function MediaUploadGrid({ media, onMediaChange, maxItems = 6, re
   const screenData = useResponsiveScreen();
 
   const addButtonScale = useSharedValue(1);
+  const spinRotation = useSharedValue(0);
+
+  // Safe error handler for media operations
+  const handleMediaError = (error: any, context: string) => {
+    const mediaError = handleMediaUploadError(error, context);
+    showMediaErrorAlert(mediaError);
+  };
 
   // Calculate responsive grid dimensions
   const ITEMS_PER_ROW = screenData.deviceInfo.isTablet ? 4 : 3;
@@ -121,7 +137,7 @@ export default function MediaUploadGrid({ media, onMediaChange, maxItems = 6, re
         onMediaChange([...media, newMediaItem]);
       }
     } catch (error) {
-      Alert.alert("Error", "Failed to capture media. Please try again.");
+      handleMediaError(error, "camera capture");
     } finally {
       setIsLoading(false);
     }
@@ -208,7 +224,7 @@ export default function MediaUploadGrid({ media, onMediaChange, maxItems = 6, re
         onMediaChange([...media, ...newMediaItems]);
       }
     } catch (error) {
-      Alert.alert("Error", "Failed to select media. Please try again.");
+      handleMediaError(error, "media library selection");
     } finally {
       setIsLoading(false);
     }
@@ -234,13 +250,33 @@ export default function MediaUploadGrid({ media, onMediaChange, maxItems = 6, re
   };
 
   const handleAddPress = () => {
-    addButtonScale.value = withSequence(withTiming(0.95, { duration: 100 }), withSpring(1, { duration: 200 }));
+    addButtonScale.value = withSequence(
+      withTiming(0.95, { duration: 100 }),
+      withSpring(1, { damping: 15, stiffness: 200 }),
+    );
     showMediaOptions();
   };
 
   const addButtonAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: addButtonScale.value }],
   }));
+
+  const spinAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${spinRotation.value}deg` }],
+  }));
+
+  // Start spinning animation when loading
+  useEffect(() => {
+    if (isLoading) {
+      spinRotation.value = withRepeat(
+        withTiming(360, { duration: 1000 }),
+        -1,
+        false
+      );
+    } else {
+      spinRotation.value = 0;
+    }
+  }, [isLoading]);
 
   const canAddMore = media.length < maxItems;
   const hasMinimumImages = media.filter((item) => item.type === "image").length >= 1;
@@ -312,7 +348,20 @@ export default function MediaUploadGrid({ media, onMediaChange, maxItems = 6, re
             >
               {isLoading ? (
                 <View className="items-center">
-                  <View className="w-6 h-6 border-2 border-brand-red/30 border-t-brand-red rounded-full animate-spin mb-2" />
+                  <Animated.View
+                    style={[
+                      spinAnimatedStyle,
+                      {
+                        width: 24,
+                        height: 24,
+                        borderWidth: 2,
+                        borderColor: '#DC2626',
+                        borderTopColor: 'transparent',
+                        borderRadius: 12,
+                        marginBottom: 8
+                      }
+                    ]}
+                  />
                   <Text className="text-text-muted text-xs">Loading...</Text>
                 </View>
               ) : (
@@ -357,11 +406,4 @@ export default function MediaUploadGrid({ media, onMediaChange, maxItems = 6, re
       />
     </View>
   );
-}
-
-// Helper function for animation sequence
-function withSequence(...animations: any[]) {
-  return animations.reduce((acc, animation) => {
-    return acc ? withTiming(animation) : animation;
-  });
 }

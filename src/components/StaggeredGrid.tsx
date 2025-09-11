@@ -199,6 +199,10 @@ function StaggeredGrid({
           ListEmptyComponent={renderEmptyComponent}
           // Add dynamic bottom spacing for floating button and tab bar
           ListFooterComponent={() => <View style={{ height: insets.bottom + 80 }} />}
+          // Performance optimizations
+          getItemType={(item) => item.review.category || "default"}
+          keyExtractor={(item) => item.review.id}
+          drawDistance={200}
         />
       </ErrorBoundary>
     </View>

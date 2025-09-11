@@ -74,11 +74,11 @@ export default function SmartChatFeatures({
 
   const formatTypingUsers = () => {
     if (typingUsers.length === 0) return "";
-    if (typingUsers.length === 1) return `${typingUsers[0].userName} is typing...`;
+    if (typingUsers.length === 1) return `${typingUsers[0]?.userName} is typing...`;
     if (typingUsers.length === 2) {
-      return `${typingUsers[0].userName} and ${typingUsers[1].userName} are typing...`;
+      return `${typingUsers[0]?.userName} and ${typingUsers[1]?.userName} are typing...`;
     }
-    return `${typingUsers[0].userName} and ${typingUsers.length - 1} others are typing...`;
+    return `${typingUsers[0]?.userName} and ${typingUsers.length - 1} others are typing...`;
   };
 
   const getConnectionStatusColor = () => {

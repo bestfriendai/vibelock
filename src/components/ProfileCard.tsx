@@ -59,11 +59,15 @@ function ProfileCard({ review, cardHeight = 280, onReport, onLike, isLiked = fal
     return null;
   }
 
+  const navigateToReview = () => {
+    navigation.navigate("ReviewDetail", { reviewId: review.id });
+  };
+
   const handlePress = () => {
     "worklet";
     scale.value = withSpring(0.95);
     scale.value = withSpring(1);
-    runOnJS(navigation.navigate)("ReviewDetail", { reviewId: review.id, review: review as any });
+    runOnJS(navigateToReview)();
   };
 
   const handleReport = (e: any) => {
@@ -351,7 +355,14 @@ function ProfileCard({ review, cardHeight = 280, onReport, onLike, isLiked = fal
             <View style={{ flexDirection: "row", alignItems: "center" }}>
               {/* Sentiment badge if available */}
               {review.sentiment && (
-                <View style={{ backgroundColor: colors.brand.red, borderRadius: 9999, paddingHorizontal: 10, paddingVertical: 4 }}>
+                <View
+                  style={{
+                    backgroundColor: colors.brand.red,
+                    borderRadius: 9999,
+                    paddingHorizontal: 10,
+                    paddingVertical: 4,
+                  }}
+                >
                   <Text className="text-white text-sm font-bold capitalize">{review.sentiment}</Text>
                 </View>
               )}

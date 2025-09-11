@@ -119,9 +119,49 @@ export const darkTheme = {
   },
 };
 
+// Define the theme colors type
+type ThemeColors = {
+  background: string;
+  surface: {
+    900: string;
+    800: string;
+    700: string;
+    600: string;
+    500: string;
+  };
+  text: {
+    primary: string;
+    secondary: string;
+    muted: string;
+    accent: string;
+  };
+  border: string;
+  brand: {
+    red: string;
+    redLight: string;
+    redDark: string;
+    coral: string;
+    warm: string;
+  };
+  accent: {
+    orange: string;
+    peach: string;
+    pink: string;
+    blue: string;
+    green: string;
+    yellow: string;
+  };
+  status: {
+    success: string;
+    warning: string;
+    error: string;
+    info: string;
+  };
+};
+
 interface ThemeContextType {
   theme: "light" | "dark" | "high-contrast";
-  colors: typeof lightTheme.colors | typeof darkTheme.colors | typeof highContrastTheme.colors;
+  colors: ThemeColors;
   isDarkMode: boolean;
   isHighContrast?: boolean;
   setTheme: (theme: "light" | "dark" | "system" | "high-contrast") => void;

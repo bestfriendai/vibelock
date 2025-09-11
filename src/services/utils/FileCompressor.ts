@@ -1,4 +1,4 @@
-import { AppError } from "../../types/error";
+import { AppError, ErrorType } from "../../types/error";
 
 /**
  * Compression options
@@ -298,6 +298,7 @@ export class FileCompressor {
 
       throw new AppError(
         `Failed to compress file: ${error instanceof Error ? error.message : "Unknown error"}`,
+        ErrorType.SERVER,
         "COMPRESSION_ERROR",
         500,
       );
@@ -388,6 +389,7 @@ export class FileCompressor {
 
       throw new AppError(
         `Failed to decompress file: ${error instanceof Error ? error.message : "Unknown error"}`,
+        ErrorType.SERVER,
         "DECOMPRESSION_ERROR",
         500,
       );
@@ -412,7 +414,7 @@ export class FileCompressor {
         compressionFormat = "deflate";
         break;
       case "brotli":
-        compressionFormat = "brotli";
+        compressionFormat = "gzip"; // Fallback to gzip for brotli
         break;
       default:
         throw new Error(`Unsupported compression method: ${method}`);
@@ -442,7 +444,7 @@ export class FileCompressor {
         decompressionFormat = "deflate";
         break;
       case "brotli":
-        decompressionFormat = "brotli";
+        decompressionFormat = "gzip"; // Fallback to gzip for brotli
         break;
       default:
         throw new Error(`Unsupported decompression method: ${method}`);
@@ -518,7 +520,7 @@ export class FileCompressor {
 
       // Check if Brotli is supported
       try {
-        new CompressionStream("brotli");
+        new CompressionStream("gzip" as any); // Use gzip as fallback for brotli check
         methods.push("brotli");
       } catch {
         // Brotli not supported

@@ -272,7 +272,7 @@ export function getResponsiveSpacing(deviceType: DeviceInfo["deviceType"]) {
  * Hook for responsive chat styling
  */
 export function useChatResponsiveStyles() {
-  const { width } = useScreenDimensions();
+  const { width } = Dimensions.get("window");
   const deviceInfo = getDeviceInfo({ width, height: 0, scale: 1, fontScale: 1 });
 
   return {

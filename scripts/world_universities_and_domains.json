@@ -26305,13 +26305,7 @@
     "name": "Sorbonne Université - Faculté des Sciences (Paris VI)",
     "alpha_two_code": "FR",
     "state-province": null,
-    "domains": [
-      "jussieu.fr",
-      "etu.upmc.fr",
-      "upmc.fr",
-      "etu.sorbonne-universite.fr",
-      "sorbonne-universite.fr"
-    ],
+    "domains": ["jussieu.fr", "etu.upmc.fr", "upmc.fr", "etu.sorbonne-universite.fr", "sorbonne-universite.fr"],
     "country": "France"
   },
   {
@@ -37592,11 +37586,7 @@
     "country": "Ireland"
   },
   {
-    "web_pages": [
-      "https://www.universityofgalway.ie/",
-      "https://www.nuigalway.ie/",
-      "http://www.ucg.ie/"
-    ],
+    "web_pages": ["https://www.universityofgalway.ie/", "https://www.nuigalway.ie/", "http://www.ucg.ie/"],
     "name": "University of Galway",
     "alpha_two_code": "IE",
     "state-province": null,
@@ -77755,11 +77745,11 @@
     "country": "India"
   },
   {
-    "web_pages": ["https://coeruniversity.ac.in","https://coer.ac.in/"],
+    "web_pages": ["https://coeruniversity.ac.in", "https://coer.ac.in/"],
     "name": "COER University Roorkee",
     "alpha_two_code": "IN",
     "state-province": "Uttarakhand",
-    "domains": [ "coeruniversity.ac.in", "coer.ac.in"],
+    "domains": ["coeruniversity.ac.in", "coer.ac.in"],
     "country": "India"
   },
   {
@@ -77779,11 +77769,7 @@
     "country": "Germany"
   },
   {
-    "web_pages": [
-      "https://unifatecie.edu.br/",
-      "https://ead.unifatecie.edu.br/",
-      "https://fatecie.edu.br/"
-    ],
+    "web_pages": ["https://unifatecie.edu.br/", "https://ead.unifatecie.edu.br/", "https://fatecie.edu.br/"],
     "name": "Centro Universitário UniFatecie",
     "alpha_two_code": "BR",
     "state-province": null,

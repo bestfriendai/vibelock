@@ -11,6 +11,7 @@ import { supabaseReviews, supabaseStorage } from "../services/supabase";
 import useAuthStore from "./authStore";
 import { notificationService } from "../services/notificationService";
 import { AppError, parseSupabaseError } from "../utils/errorHandling";
+import { withMediaErrorHandling, handleMediaUploadError } from "../utils/mediaErrorHandling";
 
 interface ReviewsState {
   reviews: Review[];
@@ -374,7 +375,7 @@ const useReviewsStore = create<ReviewsStore>()(
                 // Use FileSystem to read the manipulated image as base64
                 // Then convert base64 -> ArrayBuffer via data URL (RN-safe)
                 const base64 = await FileSystem.readAsStringAsync(manipulatedImage.uri, {
-                  encoding: FileSystem.EncodingType.Base64,
+                  encoding: "base64" as any,
                 });
 
                 const dataUrl = `data:image/jpeg;base64,${base64}`;
@@ -408,7 +409,7 @@ const useReviewsStore = create<ReviewsStore>()(
               } else if (mediaItem.type === "video") {
                 // Read video as base64 and convert to ArrayBuffer using data URL fetch
                 const videoBase64 = await FileSystem.readAsStringAsync(mediaItem.uri, {
-                  encoding: FileSystem.EncodingType.Base64,
+                  encoding: "base64" as any,
                 });
                 const mime = mediaItem.uri.toLowerCase().endsWith(".mov") ? "video/quicktime" : "video/mp4";
                 const dataUrl = `data:${mime};base64,${videoBase64}`;
@@ -431,7 +432,7 @@ const useReviewsStore = create<ReviewsStore>()(
                 try {
                   const { uri: thumbLocal } = await VideoThumbnails.getThumbnailAsync(mediaItem.uri, { time: 1000 });
                   const thumbB64 = await FileSystem.readAsStringAsync(thumbLocal, {
-                    encoding: FileSystem.EncodingType.Base64,
+                    encoding: "base64" as any,
                   });
                   const thumbResp = await fetch(`data:image/jpeg;base64,${thumbB64}`);
                   const thumbBuf = await thumbResp.arrayBuffer();
@@ -470,6 +471,11 @@ const useReviewsStore = create<ReviewsStore>()(
                 error: uploadError instanceof Error ? uploadError.message : String(uploadError),
                 stack: uploadError instanceof Error ? uploadError.stack : undefined,
               });
+
+              // Use safe media error handling
+              const mediaError = handleMediaUploadError(uploadError, `media upload for ${mediaItem.type}`);
+              console.warn(`Media upload failed:`, mediaError);
+
               // For now, still push the original to avoid breaking the review creation
               uploadedMedia.push(mediaItem);
             }

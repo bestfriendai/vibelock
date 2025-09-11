@@ -109,6 +109,16 @@ const useCommentsStore = create<CommentsStore>()(
             try {
               const createdId = await supabaseComments.createComment(reviewId, commentData);
 
+              // Replace optimistic ID with server ID
+              set((state) => ({
+                comments: {
+                  ...state.comments,
+                  [reviewId]: (state.comments[reviewId] || []).map((c) =>
+                    c.id === optimisticComment.id ? { ...c, id: createdId } : c,
+                  ),
+                },
+              }));
+
               // Notify review author about new comment (if not self)
               const review = await supabaseReviews.getReview(reviewId);
               const currentUser = useAuthStore.getState().user;
@@ -144,6 +154,13 @@ const useCommentsStore = create<CommentsStore>()(
               }
             } catch (persistErr) {
               console.warn("Failed to save comment or create notifications:", persistErr);
+              // Rollback optimistic comment on failure
+              set((state) => ({
+                comments: {
+                  ...state.comments,
+                  [reviewId]: (state.comments[reviewId] || []).filter((c) => c.id !== optimisticComment.id),
+                },
+              }));
             }
           } catch (error) {
             set({

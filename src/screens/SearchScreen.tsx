@@ -2,7 +2,10 @@ import React, { useState, useEffect, useCallback } from "react";
 import { View, Text, TextInput, Pressable, ScrollView, Image } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { useNavigation } from "@react-navigation/native";
+import { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { SearchStackParamList } from "../navigation/AppNavigator";
+import { useNavigation, NavigationProp } from "@react-navigation/native";
+import { RootStackParamList } from "../navigation/AppNavigator";
 import { supabaseSearch } from "../services/supabase";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useTheme } from "../providers/ThemeProvider";
@@ -19,9 +22,11 @@ const debounce = (func: Function, delay: number) => {
   };
 };
 
-export default function SearchScreen() {
-  const navigation = useNavigation<any>();
+type Props = NativeStackScreenProps<SearchStackParamList, "Search">;
+
+export default function SearchScreen({ navigation, route }: Props) {
   const { colors } = useTheme();
+  const rootNavigation = useNavigation<NavigationProp<RootStackParamList>>();
 
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
@@ -120,7 +125,7 @@ export default function SearchScreen() {
         .slice(0, 3);
 
       setSuggestions([...historySuggestions, ...commonSuggestions]);
-    }, 300),
+    }, 500),
     [searchHistory],
   );
 
@@ -414,7 +419,7 @@ export default function SearchScreen() {
                 contentResults.messages.map((message, idx) => (
                   <Pressable
                     key={`message-${idx}`}
-                    onPress={() => navigation.navigate("ChatRoom", { roomId: message.chat_room_id })}
+                    onPress={() => rootNavigation.navigate("ChatRoom", { roomId: message.chat_room_id })}
                     className="rounded-lg p-4"
                     style={{ backgroundColor: colors.surface[800] }}
                   >

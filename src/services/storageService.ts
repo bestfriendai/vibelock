@@ -180,7 +180,7 @@ class StorageService {
   private async validateFileHeader(fileUri: string, expectedType: string): Promise<void> {
     try {
       const base64 = await FileSystem.readAsStringAsync(fileUri, {
-        encoding: FileSystem.EncodingType.Base64,
+        encoding: "base64" as any,
         length: 20, // Read first 20 bytes
       });
 
@@ -239,7 +239,7 @@ class StorageService {
 
       // Read file as base64
       const base64 = await FileSystem.readAsStringAsync(fileUri, {
-        encoding: FileSystem.EncodingType.Base64,
+        encoding: "base64" as any,
       });
 
       // Convert base64 to ArrayBuffer
@@ -267,8 +267,16 @@ class StorageService {
       };
     } catch (error) {
       console.error("Storage service upload error:", error);
-      const appError = error instanceof AppError ? error : parseSupabaseError(error);
-      throw appError;
+
+      // Safely handle error construction to avoid worklet issues
+      try {
+        const appError = error instanceof AppError ? error : parseSupabaseError(error);
+        throw appError;
+      } catch (constructionError) {
+        // Fallback to simple error if class construction fails
+        console.error("Error construction failed:", constructionError);
+        throw new Error(`File upload failed: ${error instanceof Error ? error.message : "Unknown error"}`);
+      }
     }
   }
 

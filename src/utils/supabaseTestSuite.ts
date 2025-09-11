@@ -177,7 +177,7 @@ class SupabaseTestSuite {
   // Test real-time subscriptions
   private async testRealtimeSubscriptions() {
     await this.runTest("Real-time - Initialize Service", async () => {
-      await realtimeChatService.initialize();
+      await enhancedRealtimeChatService.initialize();
       return "Real-time service initialized";
     });
 
@@ -189,7 +189,7 @@ class SupabaseTestSuite {
     });
 
     await this.runTest("Real-time - Service Cleanup", async () => {
-      await realtimeChatService.cleanup();
+      await enhancedRealtimeChatService.cleanup();
       return "Real-time service cleaned up successfully";
     });
   }

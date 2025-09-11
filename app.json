@@ -16,7 +16,7 @@
     "ios": {
       "supportsTablet": true,
       "icon": "./assets/app-icon.png",
-      "bundleIdentifier": "com.lockerroomtalk.app",
+      "bundleIdentifier": "com.lockerroom.app",
       "buildNumber": "1",
       "infoPlist": {
         "SKAdNetworkItems": [
@@ -308,7 +308,7 @@
         "foregroundImage": "./assets/app-icon.png",
         "backgroundColor": "#000000"
       },
-      "package": "com.lockerroomtalk.app",
+      "package": "com.lockerroom.app",
       "versionCode": 1,
       "permissions": [
         "RECEIVE_BOOT_COMPLETED",
@@ -320,7 +320,8 @@
         "CAMERA",
         "RECORD_AUDIO",
         "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE"
+        "WRITE_EXTERNAL_STORAGE",
+        "POST_NOTIFICATIONS"
       ],
       "googleServicesFile": "./google-services.json"
     },

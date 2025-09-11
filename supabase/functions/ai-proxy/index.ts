@@ -1,7 +1,7 @@
 // AI Proxy Edge Function - Secure API key management
 // This function acts as a proxy for AI API calls, keeping API keys secure on the server
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -62,17 +62,29 @@ serve(async (req) => {
       throw new Error("Missing required fields: provider and prompt");
     }
 
+    // Input guardrails
+    const MAX_PROMPT_LENGTH = 4000;
+    if (prompt.length > MAX_PROMPT_LENGTH) {
+      return new Response(JSON.stringify({ error: "Prompt too long" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 413,
+      });
+    }
+
+    // Remove script tags as a basic sanitation step
+    const sanitizedPrompt = prompt.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
+
     let response: AIResponse;
 
     switch (provider) {
       case "openai":
-        response = await callOpenAI(prompt, model || "gpt-4o-2024-11-20", maxTokens, temperature);
+        response = await callOpenAI(sanitizedPrompt, model || "gpt-4o-2024-11-20", maxTokens, temperature);
         break;
       case "anthropic":
-        response = await callAnthropic(prompt, model || "claude-3-5-sonnet-20241022", maxTokens, temperature);
+        response = await callAnthropic(sanitizedPrompt, model || "claude-3-5-sonnet-20241022", maxTokens, temperature);
         break;
       case "grok":
-        response = await callGrok(prompt, model || "grok-beta", maxTokens, temperature);
+        response = await callGrok(sanitizedPrompt, model || "grok-beta", maxTokens, temperature);
         break;
       default:
         throw new Error(`Unsupported AI provider: ${provider}`);
