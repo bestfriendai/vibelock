@@ -5,17 +5,25 @@ const { withNativeWind } = require("nativewind/metro");
 /** @type {import('expo/metro-config').MetroConfig} */
 const config = getDefaultConfig(__dirname);
 
-// React Native 0.79.5 specific configurations
-config.resolver.useWatchman = false;
+// React Native 0.81 specific configurations
 config.resolver.sourceExts.push("cjs");
-config.resolver.unstable_enablePackageExports = false;
+config.resolver.unstable_enablePackageExports = true;
 
-// New Hermes compatibility for React Native 0.79.5
+// Hermes compatibility for React Native 0.81
 config.transformer.hermesParser = true;
 config.transformer.unstable_allowRequireContext = true;
 
-// Enhanced resolver configuration for September 2025 standards
+// Resolver configuration for React Native 0.81
 config.resolver.platforms = ["ios", "android", "native", "web"];
 config.resolver.resolverMainFields = ["react-native", "browser", "main"];
+
+// New Architecture support
+config.transformer.asyncRequireModulePath = require.resolve("metro-runtime/src/modules/asyncRequire");
+
+// SDK 54 improvements - experimentalImportSupport is enabled by default
+// No need to set it explicitly as it's the default now
+
+// Enable live bindings for better ESM support (default in SDK 54)
+// Can be disabled with EXPO_UNSTABLE_LIVE_BINDINGS=false if needed
 
 module.exports = withNativeWind(config, { input: "./global.css" });

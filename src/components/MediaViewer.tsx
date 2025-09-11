@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { View, Modal, Pressable, Text, StatusBar, Alert } from "react-native";
+import { View, Modal, Pressable, Text, StatusBar } from "react-native";
 import { Image } from "expo-image";
 import { VideoView, useVideoPlayer } from "expo-video";
-import { Video as ExpoAVVideo } from "expo-av";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Constants from "expo-constants";
-import { MediaItem, Comment } from "../types";
+import { MediaItem } from "../types";
 import { useResponsiveScreen } from "../utils/responsive";
 import ComponentErrorBoundary from "./ComponentErrorBoundary";
 
@@ -129,7 +128,7 @@ export default function MediaViewer({
                         onPress={() => {
                           setVideoError(null);
                           setIsVideoLoading(true);
-                          if (!isExpoGo && videoPlayer?.isLoaded) {
+                          if (!isExpoGo && videoPlayer) {
                             videoPlayer.replay();
                           }
                           // For Expo Go, the ExpoAVVideo component will handle retry automatically
@@ -139,19 +138,6 @@ export default function MediaViewer({
                         <Text className="text-white font-medium">Retry</Text>
                       </Pressable>
                     </View>
-                  ) : isExpoGo ? (
-                    // Use expo-av for Expo Go compatibility
-                    <ExpoAVVideo
-                      source={{ uri: currentMedia.uri }}
-                      useNativeControls
-                      resizeMode="contain"
-                      style={{
-                        width: screenWidth,
-                        height: screenHeight * 0.8,
-                      }}
-                      isLooping={false}
-                      shouldPlay={false}
-                    />
                   ) : (
                     <>
                       <VideoView
@@ -226,12 +212,15 @@ export default function MediaViewer({
                 {onCommentPress && (
                   <View className="flex-row items-center space-x-3">
                     {/* Comment count indicator */}
-                    {commentCounts[currentMedia.id] && commentCounts[currentMedia.id] > 0 && (
-                      <View className="flex-row items-center">
-                        <Ionicons name="chatbubble" size={14} color="white" />
-                        <Text className="text-white text-sm ml-1">{commentCounts[currentMedia.id]}</Text>
-                      </View>
-                    )}
+                    {(() => {
+                      const count = currentMedia ? commentCounts[currentMedia.id] : 0;
+                      return count && count > 0 ? (
+                        <View className="flex-row items-center">
+                          <Ionicons name="chatbubble" size={14} color="white" />
+                          <Text className="text-white text-sm ml-1">{count}</Text>
+                        </View>
+                      ) : null;
+                    })()}
 
                     {/* Comment button */}
                     <Pressable

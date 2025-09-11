@@ -168,7 +168,6 @@ function StaggeredGrid({
         <FlashList
           data={[]}
           renderItem={() => null}
-          estimatedItemSize={280}
           contentContainerStyle={{ padding: 24 }}
           refreshControl={
             onRefresh ? (
@@ -188,7 +187,6 @@ function StaggeredGrid({
           data={itemsWithHeights}
           renderItem={renderItem}
           numColumns={screenData.responsive.columns}
-          estimatedItemSize={280}
           contentContainerStyle={{ padding: screenData.responsive.basePadding }}
           showsVerticalScrollIndicator={false}
           refreshControl={

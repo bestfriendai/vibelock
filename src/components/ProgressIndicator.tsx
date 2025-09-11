@@ -41,7 +41,7 @@ export default function ProgressIndicator({
     <View className={cn("space-y-4", className)}>
       {/* Progress Bar */}
       <View className="h-1 bg-surface-700 rounded-full overflow-hidden">
-        <Animated.View style={[progressBarStyle, { backgroundColor: activeColor }]} className="h-full rounded-full" />
+        <Animated.View style={[progressBarStyle, { backgroundColor: activeColor, height: "100%", borderRadius: 9999 }]} />
       </View>
 
       {/* Step Indicators */}

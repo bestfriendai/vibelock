@@ -19,7 +19,7 @@ interface Props {
   disabled?: boolean;
 }
 
-export default function LikeDislikeButtons({
+const LikeDislikeButtons = React.forwardRef<View, Props>(({
   onLike,
   onDislike,
   isLiked = false,
@@ -27,7 +27,7 @@ export default function LikeDislikeButtons({
   likeCount = 0,
   dislikeCount = 0,
   disabled = false,
-}: Props) {
+}, ref) => {
   const likeScale = useSharedValue(1);
   const dislikeScale = useSharedValue(1);
 
@@ -58,7 +58,7 @@ export default function LikeDislikeButtons({
   }));
 
   return (
-    <View className="flex-row space-x-3 justify-center">
+    <View ref={ref} className="flex-row space-x-3 justify-center">
       {/* Like Button */}
       <Animated.View style={likeAnimatedStyle} className="flex-1">
         <Pressable
@@ -114,4 +114,8 @@ export default function LikeDislikeButtons({
       </Animated.View>
     </View>
   );
-}
+});
+
+LikeDislikeButtons.displayName = 'LikeDislikeButtons';
+
+export default LikeDislikeButtons;

@@ -184,26 +184,23 @@ function BrowseStackNavigator() {
         headerShown: false,
       }}
     >
-      <BrowseStack.Screen
-        name="Browse"
-        component={(props) => (
+      <BrowseStack.Screen name="Browse">
+        {(props) => (
           <ScreenErrorBoundary screenName="Browse">
             <BrowseScreen {...props} />
           </ScreenErrorBoundary>
         )}
-      />
-      <BrowseStack.Screen
-        name="ReviewDetail"
-        component={(props) => (
+      </BrowseStack.Screen>
+      <BrowseStack.Screen name="ReviewDetail" options={{
+          ...standardHeader,
+          headerTitle: "Review",
+        }}>
+        {(props) => (
           <ScreenErrorBoundary screenName="Review Detail">
             <ReviewDetailScreen {...props} />
           </ScreenErrorBoundary>
         )}
-        options={{
-          ...standardHeader,
-          headerTitle: "Review",
-        }}
-      />
+      </BrowseStack.Screen>
     </BrowseStack.Navigator>
   );
 }
@@ -216,26 +213,23 @@ function SearchStackNavigator() {
         headerShown: false,
       }}
     >
-      <SearchStack.Screen
-        name="Search"
-        component={(props) => (
+      <SearchStack.Screen name="Search">
+        {(props) => (
           <ScreenErrorBoundary screenName="Search">
             <SearchScreen {...props} />
           </ScreenErrorBoundary>
         )}
-      />
-      <SearchStack.Screen
-        name="ReviewDetail"
-        component={(props) => (
+      </SearchStack.Screen>
+      <SearchStack.Screen name="ReviewDetail" options={{
+          ...standardHeader,
+          headerTitle: "Review",
+        }}>
+        {(props) => (
           <ScreenErrorBoundary screenName="Review Detail">
             <ReviewDetailScreen {...props} />
           </ScreenErrorBoundary>
         )}
-        options={{
-          ...standardHeader,
-          headerTitle: "Review",
-        }}
-      />
+      </SearchStack.Screen>
     </SearchStack.Navigator>
   );
 }
@@ -426,30 +420,32 @@ export default function AppNavigator() {
           <Stack.Screen name="MainTabs" component={TabNavigator} />
           <Stack.Screen
             name="CreateReview"
-            component={(props) => (
-              <ScreenErrorBoundary screenName="Create Review">
-                <CreateReviewScreen {...props} />
-              </ScreenErrorBoundary>
-            )}
             options={{
               presentation: "modal",
               ...standardHeader,
               headerTitle: "Write Review",
             }}
-          />
-          <Stack.Screen
-            name="PersonProfile"
-            component={(props) => (
-              <ScreenErrorBoundary screenName="Profile">
-                <PersonProfileScreen {...props} />
+          >
+            {(props) => (
+              <ScreenErrorBoundary screenName="Create Review">
+                <CreateReviewScreen {...props} />
               </ScreenErrorBoundary>
             )}
+          </Stack.Screen>
+          <Stack.Screen
+            name="PersonProfile"
             options={{
               presentation: "modal",
               ...standardHeader,
               headerTitle: "Profile",
             }}
-          />
+          >
+            {(props) => (
+              <ScreenErrorBoundary screenName="Profile">
+                <PersonProfileScreen {...props} />
+              </ScreenErrorBoundary>
+            )}
+          </Stack.Screen>
           <Stack.Screen
             name="ChatRoom"
             component={ChatRoomScreenWithErrorBoundary}

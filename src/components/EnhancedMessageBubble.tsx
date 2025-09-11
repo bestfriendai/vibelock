@@ -38,7 +38,7 @@ interface Props {
 const { width: screenWidth } = Dimensions.get("window");
 const REACTIONS = ["❤️", "😂", "😮", "😢", "😡", "👍"];
 
-export default function EnhancedMessageBubble({
+const EnhancedMessageBubble = React.forwardRef<View, Props>(({
   message,
   isOwn,
   previousMessage,
@@ -48,7 +48,7 @@ export default function EnhancedMessageBubble({
   onReact,
   onLongPress,
   onShowReactionPicker,
-}: Props) {
+}, ref) => {
   const { colors } = useTheme();
   const [showReactions, setShowReactions] = useState(false);
   const [showTimestamp, setShowTimestamp] = useState(false);
@@ -362,4 +362,8 @@ export default function EnhancedMessageBubble({
       </View>
     </SwipeToReply>
   );
-}
+});
+
+EnhancedMessageBubble.displayName = 'EnhancedMessageBubble';
+
+export default EnhancedMessageBubble;

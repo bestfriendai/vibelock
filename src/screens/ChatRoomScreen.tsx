@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { View, Text, Pressable, Modal, KeyboardAvoidingView, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRoute, RouteProp, useNavigation } from "@react-navigation/native";
-import { FlashList } from "@shopify/flash-list";
+import { FlashList, type FlashListRef } from "@shopify/flash-list";
 import { Ionicons } from "@expo/vector-icons";
 import useChatStore from "../state/chatStore";
 import { useAuthState } from "../utils/authUtils";
@@ -58,7 +58,7 @@ export default function ChatRoomScreen() {
     loadOlderMessages,
   } = useChatStore();
 
-  const listRef = useRef<FlashList<any>>(null);
+  const listRef = useRef<FlashListRef<any>>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
   const [selectedMessage, setSelectedMessage] = useState<ChatMessage | null>(null);
@@ -251,8 +251,6 @@ export default function ChatRoomScreen() {
               />
             );
           }}
-          estimatedItemSize={60}
-          inverted // This fixes the scroll behavior
           contentContainerStyle={{
             paddingHorizontal: 16,
             paddingTop: 4, // Further reduced top padding for compact header
@@ -349,7 +347,6 @@ export default function ChatRoomScreen() {
                 {item.isOnline && <View className="w-2 h-2 bg-green-500 rounded-full" />}
               </View>
             )}
-            estimatedItemSize={56}
             ListEmptyComponent={
               <View className="items-center justify-center py-12">
                 <Ionicons name="people-outline" size={48} color="#6B7280" />

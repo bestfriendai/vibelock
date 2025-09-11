@@ -1,6 +1,15 @@
 import React, { useState, useRef, useEffect } from "react";
 import { View, Pressable, Text, Alert } from "react-native";
-import { Audio } from "expo-av";
+import {
+  useAudioRecorder,
+  useAudioPlayer,
+  useAudioPlayerStatus,
+  useAudioRecorderState,
+  requestRecordingPermissionsAsync,
+  setAudioModeAsync,
+  RecordingPresets,
+  type RecordingOptions,
+} from "expo-audio";
 import * as Haptics from "expo-haptics";
 import Animated, {
   useSharedValue,
@@ -31,7 +40,6 @@ export const VoiceMessage: React.FC<VoiceMessageProps> = ({
   duration = 0,
   onSend,
   isRecording = false,
-  isPlaying = false,
   onStartRecording,
   onStopRecording,
   onPlay,
@@ -39,11 +47,28 @@ export const VoiceMessage: React.FC<VoiceMessageProps> = ({
   showWaveform = true,
 }) => {
   const { colors } = useTheme();
-  const [recording, setRecording] = useState<Audio.Recording | null>(null);
-  const [sound, setSound] = useState<Audio.Sound | null>(null);
+  const recordingOptions: RecordingOptions = RecordingPresets.HIGH_QUALITY || {
+    extension: ".m4a",
+    sampleRate: 44100,
+    numberOfChannels: 2,
+    bitRate: 128000,
+    android: {
+      outputFormat: "mpeg4",
+      audioEncoder: "aac",
+    },
+    ios: {
+      outputFormat: "aac ",
+      audioQuality: 127,
+      linearPCMBitDepth: 16,
+      linearPCMIsBigEndian: false,
+      linearPCMIsFloat: false,
+    },
+  };
+  const recorder = useAudioRecorder(recordingOptions);
+  const recorderState = useAudioRecorderState(recorder);
+  const player = useAudioPlayer(audioUri || null);
+  const playerStatus = useAudioPlayerStatus(player);
   const [recordingDuration, setRecordingDuration] = useState(0);
-  const [playbackPosition, setPlaybackPosition] = useState(0);
-  const [playbackDuration, setPlaybackDuration] = useState(0);
 
   const scale = useSharedValue(1);
   const waveformOpacity = useSharedValue(0);
@@ -60,22 +85,33 @@ export const VoiceMessage: React.FC<VoiceMessageProps> = ({
     }
   }, [isRecording]);
 
+  // Set up permissions on mount
+  useEffect(() => {
+    const setupAudio = async () => {
+      const { status } = await requestRecordingPermissionsAsync();
+      if (status !== "granted") {
+        console.log("Recording permission not granted");
+      }
+
+      await setAudioModeAsync({
+        playsInSilentMode: true,
+        allowsRecording: true,
+      });
+    };
+    setupAudio();
+  }, []);
+
   const startRecording = async () => {
     try {
-      const permission = await Audio.requestPermissionsAsync();
-      if (permission.status !== "granted") {
+      const { status } = await requestRecordingPermissionsAsync();
+      if (status !== "granted") {
         Alert.alert("Permission Required", "Please grant microphone permission to record voice messages.");
         return;
       }
 
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: true,
-        playsInSilentModeIOS: true,
-      });
+      await recorder.prepareToRecordAsync();
+      recorder.record();
 
-      const { recording } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
-
-      setRecording(recording);
       setRecordingDuration(0);
 
       // Haptic feedback
@@ -98,17 +134,14 @@ export const VoiceMessage: React.FC<VoiceMessageProps> = ({
   };
 
   const stopRecording = async () => {
-    if (!recording) return;
-
     try {
-      await recording.stopAndUnloadAsync();
+      await recorder.stop();
 
-      const uri = recording.getURI();
+      const uri = recorder.uri;
       if (uri && recordingDuration > 1) {
         onSend?.(uri, recordingDuration);
       }
 
-      setRecording(null);
       scale.value = withSpring(1);
       waveformOpacity.value = withTiming(0);
 
@@ -123,44 +156,27 @@ export const VoiceMessage: React.FC<VoiceMessageProps> = ({
     }
   };
 
-  const playAudio = async () => {
+  const playAudio = () => {
     if (!audioUri) return;
 
     try {
-      if (sound) {
-        await sound.unloadAsync();
-      }
-
-      const { sound: newSound } = await Audio.Sound.createAsync({ uri: audioUri }, { shouldPlay: true });
-
-      setSound(newSound);
-
-      newSound.setOnPlaybackStatusUpdate((status) => {
-        if (status.isLoaded) {
-          setPlaybackPosition(status.positionMillis || 0);
-          setPlaybackDuration(status.durationMillis || 0);
-
-          if (status.didJustFinish) {
-            onPause?.();
-          }
-        }
-      });
-
+      player.play();
       onPlay?.();
     } catch (error) {
       console.error("Failed to play audio", error);
     }
   };
 
-  const pauseAudio = async () => {
-    if (sound) {
-      await sound.pauseAsync();
+  const pauseAudio = () => {
+    try {
+      player.pause();
       onPause?.();
+    } catch (error) {
+      console.error("Failed to pause audio", error);
     }
   };
 
-  const formatDuration = (milliseconds: number) => {
-    const seconds = Math.floor(milliseconds / 1000);
+  const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, "0")}`;
@@ -188,24 +204,24 @@ export const VoiceMessage: React.FC<VoiceMessageProps> = ({
             onPressOut={stopRecording}
             className="w-12 h-12 rounded-full items-center justify-center"
             style={{
-              backgroundColor: isRecording ? colors.status.error : colors.brand.red,
+              backgroundColor: recorderState.isRecording ? colors.brand.red : colors.brand.red,
             }}
           >
-            <Ionicons name={isRecording ? "stop" : "mic"} size={24} color="white" />
+            <Ionicons name={recorderState.isRecording ? "stop" : "mic"} size={24} color="white" />
           </Pressable>
         </Animated.View>
 
-        {isRecording && (
+        {recorderState.isRecording && (
           <View className="ml-3 flex-1">
-            <Text className="font-mono text-base" style={{ color: colors.status.error }}>
-              {formatDuration(recordingDuration * 1000)}
+            <Text className="font-mono text-base" style={{ color: colors.brand.red }}>
+              {formatDuration(Math.floor(recorderState.durationMillis / 1000))}
             </Text>
             <Text className="text-xs" style={{ color: colors.text.muted }}>
               Recording...
             </Text>
 
-            {showWaveform && (
-              <Animated.View style={[waveformStyle]} className="flex-row items-center mt-2">
+              {showWaveform && (
+              <Animated.View style={[waveformStyle, { flexDirection: "row", alignItems: "center", marginTop: 8 }]}>
                 {Array.from({ length: 20 }).map((_, index) => (
                   <View
                     key={index}
@@ -225,16 +241,16 @@ export const VoiceMessage: React.FC<VoiceMessageProps> = ({
   }
 
   // Playback UI
-  const progress = playbackDuration > 0 ? playbackPosition / playbackDuration : 0;
+  const progress = playerStatus.duration > 0 ? playerStatus.currentTime / playerStatus.duration : 0;
 
   return (
     <View className="flex-row items-center p-3 rounded-lg" style={{ backgroundColor: colors.surface[700] }}>
       <Pressable
-        onPress={isPlaying ? pauseAudio : playAudio}
+        onPress={playerStatus.playing ? pauseAudio : playAudio}
         className="w-10 h-10 rounded-full items-center justify-center mr-3"
         style={{ backgroundColor: colors.brand.red }}
       >
-        <Ionicons name={isPlaying ? "pause" : "play"} size={20} color="white" />
+        <Ionicons name={playerStatus.playing ? "pause" : "play"} size={20} color="white" />
       </Pressable>
 
       <View className="flex-1">
@@ -251,7 +267,7 @@ export const VoiceMessage: React.FC<VoiceMessageProps> = ({
 
         {/* Duration */}
         <Text className="text-xs" style={{ color: colors.text.muted }}>
-          {formatDuration(playbackPosition)} / {formatDuration(duration * 1000)}
+          {formatDuration(playerStatus.currentTime)} / {formatDuration(duration)}
         </Text>
       </View>
     </View>

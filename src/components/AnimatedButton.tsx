@@ -11,8 +11,6 @@ import Animated, {
 } from "react-native-reanimated";
 import { cn } from "../utils/cn";
 
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-
 interface AnimatedButtonProps extends Omit<PressableProps, "style"> {
   title: string;
   variant?: "primary" | "secondary" | "ghost";
@@ -23,7 +21,7 @@ interface AnimatedButtonProps extends Omit<PressableProps, "style"> {
   textClassName?: string;
 }
 
-export default function AnimatedButton({
+const AnimatedButton = React.forwardRef<Pressable, AnimatedButtonProps>(({
   title,
   variant = "primary",
   size = "medium",
@@ -33,7 +31,7 @@ export default function AnimatedButton({
   textClassName,
   onPress,
   ...props
-}: AnimatedButtonProps) {
+}, ref) => {
   const scale = useSharedValue(1);
   const opacity = useSharedValue(1);
   const rotation = useSharedValue(0);
@@ -138,29 +136,35 @@ export default function AnimatedButton({
   };
 
   return (
-    <AnimatedPressable
-      style={animatedStyle}
-      className={cn(
-        "rounded-lg items-center justify-center",
-        getVariantStyles(),
-        getSizeStyles(),
-        (loading || disabled) && "opacity-50",
-        className,
-      )}
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
-      onPress={handlePress}
-      disabled={loading || disabled}
-      {...props}
-    >
-      {loading ? (
-        <Animated.View
-          style={spinnerStyle}
-          className="w-5 h-5 border-2 border-current border-t-transparent rounded-full"
-        />
-      ) : (
-        <Text className={cn("font-semibold", getTextVariantStyles(), getTextSizeStyles(), textClassName)}>{title}</Text>
-      )}
-    </AnimatedPressable>
+    <Animated.View style={animatedStyle}>
+      <Pressable
+        ref={ref}
+        className={cn(
+          "rounded-lg items-center justify-center",
+          getVariantStyles(),
+          getSizeStyles(),
+          (loading || disabled) && "opacity-50",
+          className,
+        )}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        onPress={handlePress}
+        disabled={loading || disabled}
+        {...props}
+      >
+        {loading ? (
+          <Animated.View
+            style={spinnerStyle}
+            className="w-5 h-5 border-2 border-current border-t-transparent rounded-full"
+          />
+        ) : (
+          <Text className={cn("font-semibold", getTextVariantStyles(), getTextSizeStyles(), textClassName)}>{title}</Text>
+        )}
+      </Pressable>
+    </Animated.View>
   );
-}
+});
+
+AnimatedButton.displayName = 'AnimatedButton';
+
+export default AnimatedButton;

@@ -79,7 +79,6 @@ export default function NotificationsScreen() {
             </View>
           </Pressable>
         )}
-        estimatedItemSize={72}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#9CA3AF" />}
         ListEmptyComponent={
           !isLoading ? (

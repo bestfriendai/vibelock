@@ -9,7 +9,7 @@ interface Props {
   className?: string;
 }
 
-export default function LoadingSpinner({ size = "medium", color = "#FFFFFF", text, className = "" }: Props) {
+const LoadingSpinner = React.forwardRef<View, Props>(({ size = "medium", color = "#FFFFFF", text, className = "" }, ref) => {
   const rotation = useSharedValue(0);
   const [reduceMotion, setReduceMotion] = useState(false);
 
@@ -43,6 +43,7 @@ export default function LoadingSpinner({ size = "medium", color = "#FFFFFF", tex
 
   return (
     <View
+      ref={ref}
       className={`items-center justify-center ${className}`}
       accessible={true}
       accessibilityRole="progressbar"
@@ -65,4 +66,8 @@ export default function LoadingSpinner({ size = "medium", color = "#FFFFFF", tex
       {text && <Text className="text-text-secondary text-sm mt-3 font-medium">{text}</Text>}
     </View>
   );
-}
+});
+
+LoadingSpinner.displayName = 'LoadingSpinner';
+
+export default LoadingSpinner;

@@ -1,3 +1,4 @@
+import "react-native-reanimated";
 //DO NOT REMOVE THIS CODE
 console.log("[index] Project ID is: ", process.env.EXPO_PUBLIC_VIBECODE_PROJECT_ID);
 import "./global.css";

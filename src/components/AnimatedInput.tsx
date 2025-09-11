@@ -9,6 +9,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
 import { cn } from "../utils/cn";
+import { useTheme } from "../providers/ThemeProvider";
 
 const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
 
@@ -43,6 +44,7 @@ const AnimatedInput = forwardRef<TextInput, AnimatedInputProps>(
     ref,
   ) => {
     const [isFocused, setIsFocused] = useState(false);
+    const { colors } = useTheme();
     const focusAnimation = useSharedValue(0);
     const errorAnimation = useSharedValue(0);
 
@@ -114,8 +116,16 @@ const AnimatedInput = forwardRef<TextInput, AnimatedInputProps>(
         )}
 
         <Animated.View
-          style={containerAnimatedStyle}
-          className="border bg-surface-800 rounded-lg flex-row items-center"
+          style={[
+            containerAnimatedStyle,
+            {
+              borderWidth: 1,
+              backgroundColor: colors.surface[800],
+              borderRadius: 8,
+              flexDirection: "row",
+              alignItems: "center",
+            },
+          ]}
         >
           {leftIcon && (
             <View className="pl-4">
