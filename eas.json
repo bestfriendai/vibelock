@@ -9,6 +9,9 @@
       "distribution": "internal",
       "ios": {
         "resourceClass": "m-medium"
+      },
+      "android": {
+        "resourceClass": "m-medium"
       }
     },
     "preview": {
@@ -16,12 +19,19 @@
       "ios": {
         "resourceClass": "m-medium",
         "simulator": true
+      },
+      "android": {
+        "resourceClass": "m-medium"
       }
     },
     "production": {
       "autoIncrement": true,
       "ios": {
         "resourceClass": "m-medium"
+      },
+      "android": {
+        "resourceClass": "m-medium",
+        "buildType": "aab"
       }
     },
     "production-simulator": {
@@ -35,6 +45,10 @@
     "production": {
       "ios": {
         "appleId": "trappat@gmail.com"
+      },
+      "android": {
+        "serviceAccountKeyPath": "./path/to/service-account-key.json",
+        "track": "production"
       }
     }
   }

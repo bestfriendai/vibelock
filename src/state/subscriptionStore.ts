@@ -3,6 +3,12 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { canUseRevenueCat, buildEnv } from "../utils/buildEnvironment";
 
+// Environment-configurable premium entitlements
+const PREMIUM_ENTITLEMENTS = (process.env.EXPO_PUBLIC_REVENUECAT_PREMIUM_ENTITLEMENTS || "premium,pro")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+
 // Types (always available)
 interface CustomerInfo {
   entitlements: {
@@ -130,9 +136,10 @@ const useSubscriptionStore = create<SubscriptionState>()(
       },
 
       updateCustomerInfo: (info: CustomerInfo) => {
-        const isPremium = "premium" in info.entitlements.active;
-        const isPro = "pro" in info.entitlements.active;
-        const activeSubscription = info.entitlements.active["premium"] || info.entitlements.active["pro"] || null;
+        const active = info.entitlements.active || {};
+        const isPremium = Object.keys(active).some((id) => PREMIUM_ENTITLEMENTS.includes(id)) || Object.keys(active).length > 0;
+        const isPro = "pro" in active; // Keep backward compatibility for isPro
+        const activeSubscription = Object.values(active)[0] || null;
 
         set({
           customerInfo: info,

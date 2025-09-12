@@ -9,9 +9,15 @@
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --ext .js,.ts,.tsx",
+    "format": "prettier --write .",
     "check": "npm run typecheck && npm run lint",
     "verify:env": "node scripts/verify-env.js",
-    "test": "jest"
+    "test": "jest",
+    "prebuild:clean": "expo prebuild --clean",
+    "build:development": "eas build --platform all --profile development",
+    "build:preview": "eas build --platform all --profile preview",
+    "build:production": "eas build --platform all --profile production",
+    "submit:production": "eas submit --platform all --profile production"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.62.0",

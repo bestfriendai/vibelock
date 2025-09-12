@@ -13,17 +13,11 @@ export const getBuildEnvironment = (): BuildEnvironment => {
   const isDevelopmentBuild = Constants.appOwnership !== "expo" && __DEV__;
   const isProduction = Constants.appOwnership !== "expo" && !__DEV__;
 
-  // Check if native modules are available
-  let hasNativeModules = false;
-  try {
-    // Try to check if we're in a development build with native modules
-    // Use a safer approach that doesn't cause runtime errors
-    const purchases = require.resolve("react-native-purchases");
-    hasNativeModules = !!purchases && !isExpoGo;
-  } catch (error) {
-    // Package not found or not available, which is fine for Expo Go
-    hasNativeModules = false;
-  }
+  // Package-agnostic native runtime detection
+  // This detects if we're running in a native runtime environment (development build or standalone)
+  // rather than coupling detection to specific packages like react-native-purchases
+  const isNativeRuntime = Constants.appOwnership !== "expo" && Platform.OS !== "web";
+  const hasNativeModules = isNativeRuntime;
 
   return {
     isExpoGo,

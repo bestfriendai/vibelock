@@ -177,9 +177,9 @@ class AdMobService {
     }
 
     try {
-      return getAdUnitId("BANNER");
+      return getAdUnitId("BANNER") || "ca-app-pub-3940256099942544/6300978111";
     } catch {
-      return "mock-banner-unit-id";
+      return "ca-app-pub-3940256099942544/6300978111";
     }
   }
 
@@ -189,9 +189,9 @@ class AdMobService {
     }
 
     try {
-      return getAdUnitId("INTERSTITIAL");
+      return getAdUnitId("INTERSTITIAL") || "ca-app-pub-3940256099942544/1033173712";
     } catch {
-      return "mock-interstitial-unit-id";
+      return "ca-app-pub-3940256099942544/1033173712";
     }
   }
 
@@ -201,9 +201,9 @@ class AdMobService {
     }
 
     try {
-      return getAdUnitId("APP_OPEN");
+      return getAdUnitId("APP_OPEN") || "ca-app-pub-3940256099942544/5662855259";
     } catch {
-      return "mock-app-open-unit-id";
+      return "ca-app-pub-3940256099942544/5662855259";
     }
   }
 

@@ -150,7 +150,7 @@ export default function AdBanner({ placement }: Props) {
             </View>
           ) : canUseAdMob() ? (
             <RealBannerAd
-              unitId={adMobService.getBannerAdUnitId() || ""}
+              unitId={adMobService.getBannerAdUnitId()!}
               onLoad={handleAdLoad}
               onError={handleAdError}
             />
