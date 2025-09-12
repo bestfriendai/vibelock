@@ -42,7 +42,7 @@ export default class ErrorBoundary extends Component<Props, State> {
           hasError: false,
           error: null,
           resetCount: this.state.resetCount + 1,
-          isResetting: false
+          isResetting: false,
         });
       }, 100);
     });
@@ -101,15 +101,15 @@ export default class ErrorBoundary extends Component<Props, State> {
     // Use resetCount as key to force remount of children when retrying
     if (React.Children.count(this.props.children) === 1) {
       return React.cloneElement(this.props.children as React.ReactElement, {
-        key: this.state.resetCount
+        key: this.state.resetCount,
       });
     }
-    
+
     // Handle multiple children
     return React.createElement(
       React.Fragment,
       { key: this.state.resetCount },
-      ...React.Children.toArray(this.props.children)
+      ...React.Children.toArray(this.props.children),
     );
   }
 }
