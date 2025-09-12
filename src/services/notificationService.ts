@@ -117,7 +117,7 @@ class NotificationService {
       this.isInitialized = true;
       console.log("Notification service initialized successfully");
     } catch (error) {
-      console.error("Failed to initialize notification service:", error);
+      console.warn("Failed to initialize notification service:", error);
 
       // Don't throw error in production to prevent app crashes
       if (__DEV__) {
@@ -176,7 +176,7 @@ class NotificationService {
 
       console.log("Android notification channels created successfully");
     } catch (error) {
-      console.error("Failed to create Android notification channels:", error);
+      console.warn("Failed to create Android notification channels:", error);
     }
   }
 
@@ -251,7 +251,7 @@ class NotificationService {
       console.log("Push token retrieved successfully:", token.data.substring(0, 20) + "...");
       return token.data;
     } catch (error) {
-      console.error("Failed to get push token:", error);
+      console.warn("Failed to get push token:", error);
 
       // Retry mechanism for transient failures
       if (this.retryAttempts < this.maxRetries && !(error instanceof AppError && error.type === ErrorType.SERVER)) {
@@ -303,7 +303,7 @@ class NotificationService {
       );
 
       if (error) {
-        console.error("Failed to register push token:", error);
+        console.warn("Failed to register push token:", error);
         throw new AppError(
           "Failed to register push token",
           ErrorType.SERVER,
@@ -315,7 +315,7 @@ class NotificationService {
         console.log("Push token registered successfully");
       }
     } catch (error) {
-      console.error("Error registering push token:", error);
+      console.warn("Error registering push token:", error);
       const appError = error instanceof AppError ? error : parseSupabaseError(error);
       throw appError;
     }
@@ -355,7 +355,7 @@ class NotificationService {
 
       return cleanDeviceId;
     } catch (error) {
-      console.error("Failed to get device ID:", error);
+      console.warn("Failed to get device ID:", error);
       // Fallback with timestamp for uniqueness
       return `${Platform.OS}-fallback-${Date.now().toString(36)}`;
     }
@@ -376,7 +376,7 @@ class NotificationService {
         trigger: null, // Send immediately
       });
     } catch (error) {
-      console.error("Failed to send local notification:", error);
+      console.warn("Failed to send local notification:", error);
     }
   }
 
@@ -395,7 +395,7 @@ class NotificationService {
       });
 
       if (error) {
-        console.error("Failed to create notification via RPC, falling back to direct insert:", error);
+        console.warn("Failed to create notification via RPC, falling back to direct insert:", error);
         // Safe fallback for dev environments where a permissive policy may exist
         const { error: insertError } = await supabase.from("notifications").insert({
           user_id: userId,
@@ -408,7 +408,7 @@ class NotificationService {
         });
 
         if (insertError) {
-          console.error("Failed to create notification:", insertError);
+          console.warn("Failed to create notification:", insertError);
           throw new AppError(
             "Failed to create notification",
             ErrorType.SERVER,
@@ -419,7 +419,7 @@ class NotificationService {
         }
       }
     } catch (error) {
-      console.error("Error creating notification:", error);
+      console.warn("Error creating notification:", error);
       const appError = error instanceof AppError ? error : parseSupabaseError(error);
       throw appError;
     }
@@ -438,13 +438,13 @@ class NotificationService {
         .limit(limit);
 
       if (error) {
-        console.error("Failed to get notifications:", error);
+        console.warn("Failed to get notifications:", error);
         return [];
       }
 
       return data || [];
     } catch (error) {
-      console.error("Error getting notifications:", error);
+      console.warn("Error getting notifications:", error);
       return [];
     }
   }
@@ -457,7 +457,7 @@ class NotificationService {
       const { error } = await supabase.from("notifications").update({ is_read: true }).eq("id", notificationId);
 
       if (error) {
-        console.error("Failed to mark notification as read:", error);
+        console.warn("Failed to mark notification as read:", error);
         throw new AppError(
           "Failed to mark notification as read",
           ErrorType.SERVER,
@@ -467,7 +467,7 @@ class NotificationService {
         );
       }
     } catch (error) {
-      console.error("Error marking notification as read:", error);
+      console.warn("Error marking notification as read:", error);
       const appError = error instanceof AppError ? error : parseSupabaseError(error);
       throw appError;
     }
@@ -485,7 +485,7 @@ class NotificationService {
         .eq("is_read", false);
 
       if (error) {
-        console.error("Failed to mark all notifications as read:", error);
+        console.warn("Failed to mark all notifications as read:", error);
         throw new AppError(
           "Failed to mark all notifications as read",
           ErrorType.SERVER,
@@ -495,7 +495,7 @@ class NotificationService {
         );
       }
     } catch (error) {
-      console.error("Error marking all notifications as read:", error);
+      console.warn("Error marking all notifications as read:", error);
       const appError = error instanceof AppError ? error : parseSupabaseError(error);
       throw appError;
     }
@@ -513,13 +513,13 @@ class NotificationService {
         .eq("is_read", false);
 
       if (error) {
-        console.error("Failed to get unread count:", error);
+        console.warn("Failed to get unread count:", error);
         return 0;
       }
 
       return count || 0;
     } catch (error) {
-      console.error("Error getting unread count:", error);
+      console.warn("Error getting unread count:", error);
       return 0;
     }
   }
@@ -543,10 +543,10 @@ class NotificationService {
         .eq("device_id", deviceId);
 
       if (error) {
-        console.error("Failed to remove push token:", error);
+        console.warn("Failed to remove push token:", error);
       }
     } catch (error) {
-      console.error("Error removing push token:", error);
+      console.warn("Error removing push token:", error);
     }
   }
 
@@ -571,10 +571,10 @@ class NotificationService {
       );
 
       if (error) {
-        console.error("Failed to update chat room subscription:", error);
+        console.warn("Failed to update chat room subscription:", error);
       }
     } catch (error) {
-      console.error("Error updating chat room subscription:", error);
+      console.warn("Error updating chat room subscription:", error);
     }
   }
 
@@ -597,7 +597,7 @@ class NotificationService {
 
       return !!data?.is_subscribed;
     } catch (error) {
-      console.error("Error fetching chat room subscription:", error);
+      console.warn("Error fetching chat room subscription:", error);
       return false;
     }
   }
@@ -610,7 +610,7 @@ class NotificationService {
       const currentSubscription = await this.getChatRoomSubscription(roomId);
       await this.setChatRoomSubscription(roomId, !currentSubscription);
     } catch (error) {
-      console.error("Error toggling chat room subscription:", error);
+      console.warn("Error toggling chat room subscription:", error);
     }
   }
 

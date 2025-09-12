@@ -13,6 +13,9 @@
       "resizeMode": "contain",
       "backgroundColor": "#000000"
     },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "icon": "./assets/app-icon.png",
@@ -270,10 +273,6 @@
           {
             "CFBundleURLName": "com.lockerroomtalk.app",
             "CFBundleURLSchemes": ["locker-room-talk"]
-          },
-          {
-            "CFBundleURLName": "com.lockerroomtalk.app",
-            "CFBundleURLSchemes": ["locker-room-talk"]
           }
         ],
         "ITSAppUsesNonExemptEncryption": false
@@ -319,8 +318,6 @@
         "com.android.vending.BILLING",
         "CAMERA",
         "RECORD_AUDIO",
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE",
         "POST_NOTIFICATIONS"
       ],
       "googleServicesFile": "./google-services.json"

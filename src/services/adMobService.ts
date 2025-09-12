@@ -48,7 +48,7 @@ class AdMobService {
       this.initialized = true;
       console.log("AdMob initialized successfully");
     } catch (error) {
-      console.error("Failed to initialize AdMob:", error);
+      console.warn("Failed to initialize AdMob:", error);
       // Fallback to mock implementation
       this.initializeMockAds();
       this.initialized = true;
@@ -91,7 +91,7 @@ class AdMobService {
       });
 
       this.interstitialAd.addAdEventListener(AdEventType.ERROR, (error: any) => {
-        console.error("Interstitial ad error:", error);
+        console.warn("Interstitial ad error:", error);
       });
 
       this.interstitialAd.addAdEventListener(AdEventType.CLOSED, () => {
@@ -102,7 +102,7 @@ class AdMobService {
 
       this.interstitialAd.load();
     } catch (error) {
-      console.error("Failed to initialize interstitial ad:", error);
+      console.warn("Failed to initialize interstitial ad:", error);
     }
   }
 
@@ -126,7 +126,7 @@ class AdMobService {
       });
 
       this.appOpenAd.addAdEventListener(AdEventType.ERROR, (error: any) => {
-        console.error("App Open ad error:", error);
+        console.warn("App Open ad error:", error);
       });
 
       this.appOpenAd.addAdEventListener(AdEventType.CLOSED, () => {
@@ -137,7 +137,7 @@ class AdMobService {
 
       this.appOpenAd.load();
     } catch (error) {
-      console.error("Failed to initialize App Open ad:", error);
+      console.warn("Failed to initialize App Open ad:", error);
     }
   }
 
@@ -166,7 +166,7 @@ class AdMobService {
         return false;
       }
     } catch (error) {
-      console.error("Failed to show interstitial ad:", error);
+      console.warn("Failed to show interstitial ad:", error);
       return false;
     }
   }
@@ -262,7 +262,7 @@ class AdMobService {
       this.lastAppOpenAdTime = now;
       return true;
     } catch (error) {
-      console.error("Failed to show App Open ad:", error);
+      console.warn("Failed to show App Open ad:", error);
       return false;
     }
   }

@@ -111,7 +111,10 @@ export default function ChatRoomScreen() {
           <Pressable onPress={() => navigation.navigate("SignIn")} className="bg-brand-red rounded-xl px-6 py-3 mt-6">
             <Text className="text-black font-semibold text-base">Sign In</Text>
           </Pressable>
-          <Pressable onPress={() => navigation.canGoBack() ? navigation.goBack() : navigation.navigate("MainTabs")} className="mt-4">
+          <Pressable
+            onPress={() => (navigation.canGoBack() ? navigation.goBack() : navigation.navigate("MainTabs"))}
+            className="mt-4"
+          >
             <Text className="text-text-muted text-base">Go Back</Text>
           </Pressable>
         </View>
@@ -181,7 +184,7 @@ export default function ChatRoomScreen() {
     try {
       await loadOlderMessages(roomId);
     } catch (error) {
-      console.error("Failed to load older messages:", error);
+      console.warn("Failed to load older messages:", error);
     } finally {
       setIsLoadingOlderMessages(false);
     }
@@ -203,7 +206,10 @@ export default function ChatRoomScreen() {
           }}
         >
           <View className="flex-row items-center justify-between">
-            <Pressable onPress={() => navigation.canGoBack() ? navigation.goBack() : navigation.navigate("MainTabs")} className="mr-3">
+            <Pressable
+              onPress={() => (navigation.canGoBack() ? navigation.goBack() : navigation.navigate("MainTabs"))}
+              className="mr-3"
+            >
               <Ionicons name="chevron-back" size={24} color={colors.brand.red} />
             </Pressable>
             <View className="flex-1">

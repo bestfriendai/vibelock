@@ -52,7 +52,7 @@ export async function generateImage(
         errorData = { message: "Unknown error" };
       }
       const safeError = errorData || { message: "Unknown error" };
-      console.error("[AssetGenerationService] Error response:", safeError);
+      console.warn("[AssetGenerationService] Error response:", safeError);
       throw new Error(`Image generation API error: ${response.status} ${JSON.stringify(safeError)}`);
     }
 
@@ -69,12 +69,12 @@ export async function generateImage(
     if (result?.success && result?.data?.imageUrl) {
       return result.data.imageUrl as string;
     } else {
-      console.error("[AssetGenerationService] Invalid response format:", result);
+      console.warn("[AssetGenerationService] Invalid response format:", result);
       const errorMessage = result?.error?.message || result?.message || "Invalid response format from API";
       throw new Error(errorMessage);
     }
   } catch (error) {
-    console.error("Image Generation Error:", error);
+    console.warn("Image Generation Error:", error);
     throw error;
   }
 }

@@ -42,7 +42,7 @@ class VideoThumbnailService {
         return await this.generateThumbnailNative(videoUri, timeStamp);
       }
     } catch (error) {
-      console.error("Video thumbnail generation failed:", error);
+      console.warn("Video thumbnail generation failed:", error);
       return await this.generateThumbnailFallback(videoUri, timeStamp);
     }
   }

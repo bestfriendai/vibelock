@@ -27,7 +27,7 @@ export const useInterstitialAds = () => {
       console.log("Attempting to show interstitial ad after post creation");
       return await adMobService.showInterstitialAdForPlacement("postCreation");
     } catch (error) {
-      console.error("Failed to show post creation interstitial ad:", error);
+      console.warn("Failed to show post creation interstitial ad:", error);
       return false;
     }
   }, [isPremium]);
@@ -41,7 +41,7 @@ export const useInterstitialAds = () => {
       console.log("Attempting to show interstitial ad after chat exit");
       return await adMobService.showInterstitialAdForPlacement("chatExit");
     } catch (error) {
-      console.error("Failed to show chat exit interstitial ad:", error);
+      console.warn("Failed to show chat exit interstitial ad:", error);
       return false;
     }
   }, [isPremium]);
@@ -55,7 +55,7 @@ export const useInterstitialAds = () => {
       console.log("Attempting to show general interstitial ad");
       return await adMobService.showInterstitialAd();
     } catch (error) {
-      console.error("Failed to show general interstitial ad:", error);
+      console.warn("Failed to show general interstitial ad:", error);
       return false;
     }
   }, [isPremium]);

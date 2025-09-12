@@ -88,7 +88,7 @@ const useChatStore = create<ChatStore>()(
           set({ connectionStatus: "connected" });
           console.log("✅ Connected to enhanced real-time chat service");
         } catch (error) {
-          console.error("❌ Failed to connect to chat service:", error);
+          console.warn("❌ Failed to connect to chat service:", error);
           set({
             connectionStatus: "disconnected",
             error: "Failed to connect to chat service",
@@ -102,7 +102,7 @@ const useChatStore = create<ChatStore>()(
           set({ connectionStatus: "disconnected" });
           console.log("👋 Disconnected from chat service");
         } catch (error) {
-          console.error("❌ Error during disconnect:", error);
+          console.warn("❌ Error during disconnect:", error);
         }
       },
 
@@ -172,7 +172,7 @@ const useChatStore = create<ChatStore>()(
             isLoading: false,
           });
         } catch (error) {
-          console.error("💥 Failed to load chat rooms:", error);
+          console.warn("💥 Failed to load chat rooms:", error);
           const appError = error instanceof AppError ? error : parseSupabaseError(error);
 
           set({
@@ -295,7 +295,7 @@ const useChatStore = create<ChatStore>()(
 
           console.log(`✅ Successfully joined room: ${room.name}`);
         } catch (error) {
-          console.error("💥 Failed to join chat room:", error);
+          console.warn("💥 Failed to join chat room:", error);
           const appError = error instanceof AppError ? error : parseSupabaseError(error);
           set({ error: appError.userMessage });
           throw appError;
@@ -344,7 +344,7 @@ const useChatStore = create<ChatStore>()(
 
           console.log(`📨 Loaded messages for room ${roomId}`);
         } catch (error) {
-          console.error("💥 Failed to load messages:", error);
+          console.warn("💥 Failed to load messages:", error);
           const appError = error instanceof AppError ? error : parseSupabaseError(error);
           set({
             error: appError.userMessage,
@@ -385,7 +385,7 @@ const useChatStore = create<ChatStore>()(
 
           console.log("✅ Message sent successfully");
         } catch (error) {
-          console.error("💥 Failed to send message:", error);
+          console.warn("💥 Failed to send message:", error);
 
           // Remove the optimistic message on error if it was created
           if (optimisticMessageId) {
@@ -461,7 +461,7 @@ const useChatStore = create<ChatStore>()(
             duration,
           );
         } catch (error) {
-          console.error("💥 Failed to send voice message:", error);
+          console.warn("💥 Failed to send voice message:", error);
           const appError = error instanceof AppError ? error : parseSupabaseError(error);
           set({ error: appError.userMessage });
           throw appError;
@@ -508,7 +508,7 @@ const useChatStore = create<ChatStore>()(
             uploadResult.url,
           );
         } catch (error) {
-          console.error("💥 Failed to send media message:", error);
+          console.warn("💥 Failed to send media message:", error);
           const appError = error instanceof AppError ? error : parseSupabaseError(error);
           set({ error: appError.userMessage });
           throw appError;
@@ -520,7 +520,7 @@ const useChatStore = create<ChatStore>()(
           await requireAuthentication("toggle notifications");
           await notificationService.toggleChatRoomSubscription(roomId);
         } catch (error) {
-          console.error("💥 Failed to toggle notifications:", error);
+          console.warn("💥 Failed to toggle notifications:", error);
           const appError = error instanceof AppError ? error : parseSupabaseError(error);
           set({ error: appError.userMessage });
           throw appError;
@@ -544,7 +544,7 @@ const useChatStore = create<ChatStore>()(
           const { user } = await requireAuthentication("react to messages");
           await enhancedRealtimeChatService.sendReaction(roomId, messageId, user.id, reaction);
         } catch (error) {
-          console.error("💥 Failed to send reaction:", error);
+          console.warn("💥 Failed to send reaction:", error);
           const appError = error instanceof AppError ? error : parseSupabaseError(error);
           set({ error: appError.userMessage });
           throw appError;
@@ -596,7 +596,7 @@ const useChatStore = create<ChatStore>()(
             set({ isLoading: false });
           }
         } catch (error) {
-          console.error("Failed to load older messages:", error);
+          console.warn("Failed to load older messages:", error);
           set({
             isLoading: false,
             error: "Failed to load older messages",
@@ -667,7 +667,7 @@ const useChatStore = create<ChatStore>()(
 
           console.log(`👥 Loaded ${members.length} members for room ${roomId}`);
         } catch (error) {
-          console.error("💥 Failed to load members:", error);
+          console.warn("💥 Failed to load members:", error);
           const appError = error instanceof AppError ? error : parseSupabaseError(error);
           set({
             error: appError.userMessage,
@@ -722,7 +722,7 @@ const useChatStore = create<ChatStore>()(
             error: null,
           });
         } catch (error) {
-          console.error("Failed to cleanup chat store:", error);
+          console.warn("Failed to cleanup chat store:", error);
         }
       },
     }),

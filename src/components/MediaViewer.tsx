@@ -48,7 +48,7 @@ export default function MediaViewer({
           player.play();
           setIsVideoLoading(false);
         } catch (error) {
-          console.error("Video player error:", error);
+          console.warn("Video player error:", error);
           setVideoError("Failed to load video");
           setIsVideoLoading(false);
         }

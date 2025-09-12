@@ -35,7 +35,7 @@ class ScreenErrorBoundaryComponent extends Component<Props & { navigation: any }
   }
 
   override componentDidCatch(error: Error, errorInfo: any) {
-    console.error(`ScreenErrorBoundary caught error in ${this.props.screenName}:`, error, errorInfo);
+    console.warn(`ScreenErrorBoundary caught error in ${this.props.screenName}:`, error, errorInfo);
     this.props.onError?.(error, errorInfo);
   }
 

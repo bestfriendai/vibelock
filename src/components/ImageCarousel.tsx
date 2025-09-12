@@ -170,7 +170,7 @@ export default function ImageCarousel({
             {/* Comment indicator and button */}
             <View className="absolute bottom-3 right-3 flex-row items-center space-x-2">
               {/* Comment count indicator */}
-              {commentCounts?.[item.id] && commentCounts[item.id] > 0 && (
+              {commentCounts?.[item.id] && commentCounts[item.id]! > 0 && (
                 <View className="bg-black/70 rounded-full px-2 py-1 flex-row items-center">
                   <Ionicons name="chatbubble" size={12} color="#FFFFFF" />
                   <Text className="text-white text-xs font-medium ml-1">{commentCounts[item.id]}</Text>

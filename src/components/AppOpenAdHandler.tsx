@@ -36,7 +36,7 @@ const AppOpenAdHandler: React.FC = () => {
           try {
             await adMobService.showAppOpenAd();
           } catch (error) {
-            console.error("Failed to show App Open ad:", error);
+            console.warn("Failed to show App Open ad:", error);
           }
         }
       }

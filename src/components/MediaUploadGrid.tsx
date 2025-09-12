@@ -268,11 +268,7 @@ export default function MediaUploadGrid({ media, onMediaChange, maxItems = 6, re
   // Start spinning animation when loading
   useEffect(() => {
     if (isLoading) {
-      spinRotation.value = withRepeat(
-        withTiming(360, { duration: 1000 }),
-        -1,
-        false
-      );
+      spinRotation.value = withRepeat(withTiming(360, { duration: 1000 }), -1, false);
     } else {
       spinRotation.value = 0;
     }
@@ -355,11 +351,11 @@ export default function MediaUploadGrid({ media, onMediaChange, maxItems = 6, re
                         width: 24,
                         height: 24,
                         borderWidth: 2,
-                        borderColor: '#DC2626',
-                        borderTopColor: 'transparent',
+                        borderColor: "#DC2626",
+                        borderTopColor: "transparent",
                         borderRadius: 12,
-                        marginBottom: 8
-                      }
+                        marginBottom: 8,
+                      },
                     ]}
                   />
                   <Text className="text-text-muted text-xs">Loading...</Text>

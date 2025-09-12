@@ -125,7 +125,7 @@ export const MediaPicker: React.FC<MediaPickerProps> = ({ onMediaSelect, onClose
         }
       }
     } catch (error) {
-      console.error("Camera error:", error);
+      console.warn("Camera error:", error);
       Alert.alert("Error", "Failed to take photo. Please try again.");
     }
   };
@@ -170,7 +170,7 @@ export const MediaPicker: React.FC<MediaPickerProps> = ({ onMediaSelect, onClose
         }
       }
     } catch (error) {
-      console.error("Gallery error:", error);
+      console.warn("Gallery error:", error);
       Alert.alert("Error", "Failed to pick media. Please try again.");
     }
   };
@@ -198,7 +198,7 @@ export const MediaPicker: React.FC<MediaPickerProps> = ({ onMediaSelect, onClose
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       }
     } catch (error) {
-      console.error("Document picker error:", error);
+      console.warn("Document picker error:", error);
       Alert.alert("Error", "Failed to pick document. Please try again.");
     }
   };

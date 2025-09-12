@@ -1,4 +1,4 @@
-import { AppError } from "../../types/error";
+import { AppError, ErrorType } from "../../types/error";
 
 /**
  * Preview options
@@ -244,6 +244,7 @@ export class FilePreviewGenerator {
 
       throw new AppError(
         `Failed to generate preview: ${error instanceof Error ? error.message : "Unknown error"}`,
+        ErrorType.SERVER,
         "PREVIEW_GENERATION_ERROR",
         500,
       );

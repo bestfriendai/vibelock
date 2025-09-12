@@ -70,10 +70,20 @@ export const highContrastTheme = {
       coral: "#FF8080", // Light coral
       warm: "#FFA500", // Orange accent
     },
-    success: "#00FF00", // Pure green
-    warning: "#FFFF00", // Pure yellow
-    error: "#FF0000", // Pure red
-    info: "#00FFFF", // Pure cyan
+    accent: {
+      orange: "#FFA500", // Orange accent
+      peach: "#FFCC80", // Peach accent
+      pink: "#FF80FF", // Pink accent
+      blue: "#00FFFF", // Blue accent for links/actions
+      green: "#00FF00", // Green for success states
+      yellow: "#FFFF00", // Yellow for warnings
+    },
+    status: {
+      success: "#00FF00", // Pure green
+      warning: "#FFFF00", // Pure yellow
+      error: "#FF0000", // Pure red
+      info: "#00FFFF", // Pure cyan
+    },
   },
 };
 

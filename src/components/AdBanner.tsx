@@ -57,7 +57,7 @@ const RealBannerAd: React.FC<{
         setBannerAd(adModule.BannerAd);
         setBannerAdSize(adModule.BannerAdSize);
       } catch (error) {
-        console.error("Failed to load AdMob components:", error);
+        console.warn("Failed to load AdMob components:", error);
         onError("Failed to load ad components");
       }
     };
@@ -90,14 +90,24 @@ export default function AdBanner({ placement }: Props) {
   const [adLoaded, setAdLoaded] = useState(false);
   const [adError, setAdError] = useState<string | null>(null);
 
-  // Don't show ads to premium users at all
-  if (isPremium) {
-    // Ensure ad context is updated when premium
-    useEffect(() => {
+  // Update ad context when premium status changes
+  useEffect(() => {
+    if (isPremium) {
       setAdVisible(false);
       setAdHeight(0);
-    }, [setAdVisible, setAdHeight]);
+    }
+  }, [isPremium, setAdVisible, setAdHeight]);
 
+  // Update ad context when component unmounts
+  useEffect(() => {
+    return () => {
+      setAdVisible(false);
+      setAdHeight(0);
+    };
+  }, [setAdVisible, setAdHeight]);
+
+  // Don't show ads to premium users at all
+  if (isPremium) {
     return null;
   }
 
@@ -109,20 +119,12 @@ export default function AdBanner({ placement }: Props) {
   };
 
   const handleAdError = (error: string) => {
-    console.error("Banner ad error:", error);
+    console.warn("Banner ad error:", error);
     setAdError(error);
     setAdLoaded(false);
     setAdVisible(false);
     setAdHeight(0);
   };
-
-  // Update ad context when component unmounts
-  useEffect(() => {
-    return () => {
-      setAdVisible(false);
-      setAdHeight(0);
-    };
-  }, [setAdVisible, setAdHeight]);
 
   return (
     <View

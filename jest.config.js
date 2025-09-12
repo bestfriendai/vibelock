@@ -2,7 +2,7 @@ module.exports = {
   preset: "jest-expo",
   // Let jest-expo handle transforms; add common RN packages to ignore-exception list
   transformIgnorePatterns: [
-    "node_modules/(?!(react-native|@react-native|@react-navigation|react-native-reanimated|@shopify/flash-list|expo(nent)?|@expo(nent)?|expo-modules-core|@expo/vector-icons|react-native-svg)/)",
+    "node_modules/(?!(react-native|@react-native|@react-navigation|react-native-reanimated|@shopify/flash-list|expo(nent)?|@expo(nent)?|expo-modules-core|@expo/vector-icons|react-native-svg|react-native-css-interop|expo-font|expo-asset|expo-constants)/)",
   ],
   moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json"],
   testEnvironment: "node",

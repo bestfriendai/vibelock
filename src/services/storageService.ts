@@ -216,6 +216,18 @@ class StorageService {
    */
   async uploadFile(fileUri: string, options: FileUploadOptions): Promise<UploadResult> {
     try {
+      // Check authentication first
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
+      if (authError || !user) {
+        console.warn("❌ Authentication required for storage upload:", authError);
+        throw new AppError("Authentication required. Please sign in and try again.", ErrorType.AUTH, "AUTH_REQUIRED");
+      }
+
+      console.log("🔐 Authenticated user for upload:", { userId: user.id, email: user.email });
+
       // Validate bucket name to prevent injection attacks
       this.validateBucket(options.bucket);
 
@@ -252,7 +264,7 @@ class StorageService {
       });
 
       if (error) {
-        console.error("Upload error:", error);
+        console.warn("Upload error:", error);
         const appError = parseSupabaseError(error);
         throw appError;
       }
@@ -266,7 +278,7 @@ class StorageService {
         path: data.path,
       };
     } catch (error) {
-      console.error("Storage service upload error:", error);
+      console.warn("Storage service upload error:", error);
 
       // Safely handle error construction to avoid worklet issues
       try {
@@ -274,7 +286,7 @@ class StorageService {
         throw appError;
       } catch (constructionError) {
         // Fallback to simple error if class construction fails
-        console.error("Error construction failed:", constructionError);
+        console.warn("Error construction failed:", constructionError);
         throw new Error(`File upload failed: ${error instanceof Error ? error.message : "Unknown error"}`);
       }
     }
@@ -358,13 +370,13 @@ class StorageService {
       const { error } = await supabase.storage.from(bucket).remove([sanitizedPath]);
 
       if (error) {
-        console.error("Delete error:", error);
+        console.warn("Delete error:", error);
         return false;
       }
 
       return true;
     } catch (error) {
-      console.error("Storage service delete error:", error);
+      console.warn("Storage service delete error:", error);
       return false;
     }
   }
@@ -383,7 +395,7 @@ class StorageService {
       const { data } = supabase.storage.from(bucket).getPublicUrl(sanitizedPath);
       return data.publicUrl;
     } catch (error) {
-      console.error("Error getting public URL:", error);
+      console.warn("Error getting public URL:", error);
       return "";
     }
   }
@@ -402,13 +414,13 @@ class StorageService {
       const { data, error } = await supabase.storage.from(bucket).createSignedUrl(sanitizedPath, expiresIn);
 
       if (error) {
-        console.error("Signed URL error:", error);
+        console.warn("Signed URL error:", error);
         return null;
       }
 
       return data.signedUrl;
     } catch (error) {
-      console.error("Storage service signed URL error:", error);
+      console.warn("Storage service signed URL error:", error);
       return null;
     }
   }
@@ -452,7 +464,7 @@ class StorageService {
 
       return result;
     } catch (error) {
-      console.error("Image picker error:", error);
+      console.warn("Image picker error:", error);
       throw error;
     }
   }
@@ -470,7 +482,7 @@ class StorageService {
 
       return manipResult.uri;
     } catch (error) {
-      console.error("Image compression error:", error);
+      console.warn("Image compression error:", error);
       Alert.alert("Warning", "Image not compressed. Upload may be large.");
       return uri; // Return original if compression fails
     }
@@ -578,14 +590,14 @@ class StorageService {
       });
 
       if (error) {
-        console.error("List files error:", error);
+        console.warn("List files error:", error);
         const appError = parseSupabaseError(error);
         throw appError;
       }
 
       return data || [];
     } catch (error) {
-      console.error("Storage service list files error:", error);
+      console.warn("Storage service list files error:", error);
       const appError = error instanceof AppError ? error : parseSupabaseError(error);
       throw appError;
     }

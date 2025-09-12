@@ -1,4 +1,4 @@
-import { AppError } from "../../types/error";
+import { AppError, ErrorType } from "../../types/error";
 import { FileValidator, ValidationOptions, ValidationResult } from "./FileValidator";
 import { FileCompressor, CompressionOptions, CompressionResult } from "./FileCompressor";
 
@@ -434,6 +434,7 @@ export class FileUploader {
 
       throw new AppError(
         `Failed to upload file: ${error instanceof Error ? error.message : "Unknown error"}`,
+        ErrorType.SERVER,
         "UPLOAD_ERROR",
         500,
       );
@@ -460,6 +461,7 @@ export class FileUploader {
         if (!validationResult.isValid) {
           throw new AppError(
             `File validation failed: ${validationResult.errors.map((e) => e.message).join(", ")}`,
+            ErrorType.VALIDATION,
             "VALIDATION_ERROR",
             400,
           );
@@ -497,6 +499,7 @@ export class FileUploader {
 
       const appError = new AppError(
         `Failed to upload file: ${error instanceof Error ? error.message : "Unknown error"}`,
+        ErrorType.SERVER,
         "UPLOAD_ERROR",
         500,
       );
@@ -548,7 +551,7 @@ export class FileUploader {
 
       // Create request with timeout
       const controller = uploadRequest.abortController;
-      const timeoutId = options.timeout ? setTimeout(() => controller.abort(), options.timeout) : undefined;
+      const timeoutId = options.timeout ? setTimeout(() => controller?.abort(), options.timeout) : undefined;
 
       // Perform the upload
       const response = await fetch(url, {
@@ -556,7 +559,7 @@ export class FileUploader {
         headers: options.headers,
         body: formData,
         credentials: options.withCredentials ? "include" : "same-origin",
-        signal: controller.signal,
+        signal: controller?.signal,
       });
 
       // Clear timeout
@@ -602,11 +605,11 @@ export class FileUploader {
       this.clearProgressReporting(uploadRequest);
 
       if (error instanceof Error && error.name === "AbortError") {
-        throw new AppError("Upload was cancelled", "UPLOAD_CANCELLED", 499);
+        throw new AppError("Upload was cancelled", ErrorType.UNKNOWN, "UPLOAD_CANCELLED", 499);
       }
 
       if (error instanceof Error && error.name === "TimeoutError") {
-        throw new AppError("Upload timed out", "UPLOAD_TIMEOUT", 408);
+        throw new AppError("Upload timed out", ErrorType.NETWORK, "UPLOAD_TIMEOUT", 408);
       }
 
       throw error;
@@ -693,7 +696,7 @@ export class FileUploader {
       this.clearProgressReporting(uploadRequest);
 
       if (error instanceof Error && error.name === "AbortError") {
-        throw new AppError("Upload was cancelled", "UPLOAD_CANCELLED", 499);
+        throw new AppError("Upload was cancelled", ErrorType.UNKNOWN, "UPLOAD_CANCELLED", 499);
       }
 
       throw error;
@@ -722,6 +725,7 @@ export class FileUploader {
       }
 
       const chunk = chunks[i];
+      if (!chunk) continue;
 
       // Skip if already uploaded
       if (chunk.uploaded) {
@@ -889,7 +893,7 @@ export class FileUploader {
       }
 
       // Call progress callback
-      options.onProgress({ ...uploadRequest.progress });
+      options.onProgress?.({ ...uploadRequest.progress });
     }, options.progressInterval || this.DEFAULT_PROGRESS_INTERVAL);
 
     uploadRequest.progressIntervalId = intervalId;

@@ -319,7 +319,7 @@ const useReviewsStore = create<ReviewsStore>()(
             });
           }
         } catch (error) {
-          console.error("💥 Failed to load reviews:", error);
+          console.warn("💥 Failed to load reviews:", error);
           const appError = error instanceof AppError ? error : parseSupabaseError(error);
 
           set({
@@ -477,7 +477,7 @@ const useReviewsStore = create<ReviewsStore>()(
                 uploadedMedia.push(mediaItem);
               }
             } catch (uploadError) {
-              console.error("❌ Failed to upload media:", {
+              console.warn("❌ Failed to upload media:", {
                 originalUri: mediaItem.uri,
                 mediaType: mediaItem.type,
                 error: uploadError instanceof Error ? uploadError.message : String(uploadError),

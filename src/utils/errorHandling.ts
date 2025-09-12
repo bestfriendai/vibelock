@@ -55,7 +55,7 @@ export class AppError extends Error {
 
 // Enhanced error parser for Supabase errors
 export const parseSupabaseError = (error: any): AppError => {
-  console.error("Parsing Supabase error:", error);
+  console.warn("Parsing Supabase error:", error);
 
   // Handle network/timeout errors
   if (error?.name === "AbortError" || error?.message?.includes("timeout")) {
@@ -169,7 +169,7 @@ export const safeAsync = async <T>(
     if (onError) {
       onError(appError);
     } else {
-      console.error("Safe async operation failed:", appError);
+      console.warn("Safe async operation failed:", appError);
     }
 
     return fallback;
@@ -179,7 +179,7 @@ export const safeAsync = async <T>(
 // Error boundary helper for React components
 export const handleComponentError = (error: any, componentName: string): string => {
   const appError = error instanceof AppError ? error : parseSupabaseError(error);
-  console.error(`Error in ${componentName}:`, appError);
+  console.warn(`Error in ${componentName}:`, appError);
   return appError.userMessage;
 };
 

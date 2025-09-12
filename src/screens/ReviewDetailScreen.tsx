@@ -102,12 +102,20 @@ export default function ReviewDetailScreen() {
           setLikeCount(finalReview.likeCount || 0);
         } else {
           Alert.alert("Review not found", "This review may have been deleted.", [
-            { text: "OK", onPress: () => navigation.canGoBack() ? navigation.goBack() : navigation.navigate("MainTabs") },
+            {
+              text: "OK",
+              onPress: () => (navigation.canGoBack() ? navigation.goBack() : navigation.navigate("MainTabs")),
+            },
           ]);
         }
       } catch (error) {
-        console.error("Error loading review:", error);
-        Alert.alert("Error", "Failed to load review.", [{ text: "OK", onPress: () => navigation.canGoBack() ? navigation.goBack() : navigation.navigate("MainTabs") }]);
+        console.warn("Error loading review:", error);
+        Alert.alert("Error", "Failed to load review.", [
+          {
+            text: "OK",
+            onPress: () => (navigation.canGoBack() ? navigation.goBack() : navigation.navigate("MainTabs")),
+          },
+        ]);
       } finally {
         setReviewLoading(false);
       }
@@ -159,9 +167,7 @@ export default function ReviewDetailScreen() {
         damping: 20,
         stiffness: 200,
         mass: 0.8,
-        overshootClamping: false,
-        restDisplacementThreshold: 0.01,
-        restSpeedThreshold: 0.01,
+        // clamp: false, // Removed as it's not supported in this version
       });
 
       // Load comments from Firebase
@@ -228,7 +234,7 @@ export default function ReviewDetailScreen() {
     try {
       await loadComments(review.id);
     } catch (error) {
-      console.error("Error refreshing comments:", error);
+      console.warn("Error refreshing comments:", error);
     } finally {
       setRefreshing(false);
     }
@@ -242,7 +248,7 @@ export default function ReviewDetailScreen() {
       // Clear reply state after successful comment
       setReplyToComment(null);
     } catch (error) {
-      console.error("Error posting comment:", error);
+      console.warn("Error posting comment:", error);
     }
   };
 
@@ -252,7 +258,7 @@ export default function ReviewDetailScreen() {
     try {
       await likeComment(review.id, commentId);
     } catch (error) {
-      console.error("Error liking comment:", error);
+      console.warn("Error liking comment:", error);
     }
   };
 
@@ -262,7 +268,7 @@ export default function ReviewDetailScreen() {
     try {
       await dislikeComment(review.id, commentId);
     } catch (error) {
-      console.error("Error disliking comment:", error);
+      console.warn("Error disliking comment:", error);
     }
   };
 

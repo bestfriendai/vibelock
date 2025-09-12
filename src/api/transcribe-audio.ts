@@ -58,7 +58,7 @@ export const transcribeAudio = async (localAudioUri: string) => {
 
     return result.text;
   } catch (error) {
-    console.error("Transcription error:", error);
+    console.warn("Transcription error:", error);
     throw error;
   }
 };

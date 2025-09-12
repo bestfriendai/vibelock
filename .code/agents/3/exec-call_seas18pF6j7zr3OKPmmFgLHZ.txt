@@ -1,0 +1,400 @@
+v22.14.0
+10.9.2
+\nHas scripts/verify-env.js?
+ls: scripts: No such file or directory
+\nRun: npm run verify:env
+node:internal/modules/cjs/loader:1228
+  throw err;
+  ^
+
+Error: Cannot find module '/Users/iamabillionaire/Downloads/loccc/scripts/verify-env.js'
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+    at Function._load (node:internal/modules/cjs/loader:1055:27)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:170:5)
+    at node:internal/main/run_main_module:36:49 {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: []
+}
+
+Node.js v22.14.0
+verify:env failed (ok)
+\nRun: npm run check (typecheck+lint)
+
+/Users/iamabillionaire/Downloads/loccc/App.tsx
+  2:10  warning  'StatusBar' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/create_storage_buckets.js
+   4:34  error    Replace `'@supabase/supabase-js'` with `"@supabase/supabase-js"`                                                                                                                                                                                                                                                                prettier/prettier
+   7:21  error    Replace `'https://dqjhwqhelqwhvtpxccwj.supabase.co'` with `"https://dqjhwqhelqwhvtpxccwj.supabase.co"`                                                                                                                                                                                                                          prettier/prettier
+  11:17  error    Replace `'❌·SUPABASE_SERVICE_KEY·environment·variable·is·required'` with `"❌·SUPABASE_SERVICE_KEY·environment·variable·is·required"`                                                                                                                                                                                            prettier/prettier
+  12:15  error    Replace `'Get·your·service·key·from:·https://supabase.com/dashboard/project/dqjhwqhelqwhvtpxccwj/settings/api'` with `"Get·your·service·key·from:·https://supabase.com/dashboard/project/dqjhwqhelqwhvtpxccwj/settings/api"`                                                                                                    prettier/prettier
+  19:15  error    Replace `'🗄️·Creating·storage·buckets...'` with `"🗄️·Creating·storage·buckets..."`                                                                                                                                                                                                                                            prettier/prettier
+  23:11  error    Replace `'avatars'` with `"avatars"`                                                                                                                                                                                                                                                                                            prettier/prettier
+  24:13  error    Replace `'avatars'` with `"avatars"`                                                                                                                                                                                                                                                                                            prettier/prettier
+  27:26  error    Replace `'image/jpeg',·'image/png',·'image/webp']` with `"image/jpeg",·"image/png",·"image/webp"],`                                                                                                                                                                                                                             prettier/prettier
+  30:11  error    Replace `'review-images'` with `"review-images"`                                                                                                                                                                                                                                                                                prettier/prettier
+  31:13  error    Replace `'review-images',·` with `"review-images",`                                                                                                                                                                                                                                                                             prettier/prettier
+  34:26  error    Replace `'image/jpeg',·'image/png',·'image/webp',·'video/mp4',·'video/quicktime',·'video/x-msvideo']` with `"image/jpeg",·"image/png",·"image/webp",·"video/mp4",·"video/quicktime",·"video/x-msvideo"],`                                                                                                                       prettier/prettier
+  37:11  error    Replace `'chat-media'` with `"chat-media"`                                                                                                                                                                                                                                                                                      prettier/prettier
+  38:13  error    Replace `'chat-media'` with `"chat-media"`                                                                                                                                                                                                                                                                                      prettier/prettier
+  41:26  error    Replace `'image/jpeg',·'image/png',·'image/webp',·'video/mp4',·'video/quicktime',·'audio/mpeg',·'audio/wav',·'audio/m4a']` with `⏎········"image/jpeg",⏎········"image/png",⏎········"image/webp",⏎········"video/mp4",⏎········"video/quicktime",⏎········"audio/mpeg",⏎········"audio/wav",⏎········"audio/m4a",⏎······],`    prettier/prettier
+  44:11  error    Replace `'documents'` with `"documents"`                                                                                                                                                                                                                                                                                        prettier/prettier
+  45:13  error    Replace `'documents'` with `"documents"`                                                                                                                                                                                                                                                                                        prettier/prettier
+  48:26  error    Replace `'application/pdf',·'text/plain',·'application/msword',·'application/vnd.openxmlformats-officedocument.wordprocessingml.document']` with `⏎········"application/pdf",⏎········"text/plain",⏎········"application/msword",⏎········"application/vnd.openxmlformats-officedocument.wordprocessingml.document",⏎······],`  prettier/prettier
+  49:6   error    Insert `,`                                                                                                                                                                                                                                                                                                                      prettier/prettier
+  55:1   error    Delete `······`                                                                                                                                                                                                                                                                                                                 prettier/prettier
+  56:15  warning  'data' is assigned a value but never used                                                                                                                                                                                                                                                                                       no-unused-vars
+  59:50  error    Insert `,`                                                                                                                                                                                                                                                                                                                      prettier/prettier
+  63:36  error    Replace `'already·exists'` with `"already·exists"`                                                                                                                                                                                                                                                                              prettier/prettier
+  76:15  error    Replace `'\n🎉·Storage·bucket·creation·completed!'` with `"\n🎉·Storage·bucket·creation·completed!"`                                                                                                                                                                                                                            prettier/prettier
+  77:15  error    Replace `'\n📋·Next·steps:'` with `"\n📋·Next·steps:"`                                                                                                                                                                                                                                                                          prettier/prettier
+  78:15  error    Replace `'1.·Go·to·Supabase·Dashboard·>·Storage·>·Policies'` with `"1.·Go·to·Supabase·Dashboard·>·Storage·>·Policies"`                                                                                                                                                                                                          prettier/prettier
+  79:15  error    Replace `'2.·Create·policies·for·each·bucket·using·the·policy·definitions·in·storage_policies_individual.sql'` with `"2.·Create·policies·for·each·bucket·using·the·policy·definitions·in·storage_policies_individual.sql"`                                                                                                      prettier/prettier
+  80:15  error    Replace `'3.·Test·storage·upload·in·your·app'` with `"3.·Test·storage·upload·in·your·app"`                                                                                                                                                                                                                                      prettier/prettier
+
+/Users/iamabillionaire/Downloads/loccc/debug_storage_test.js
+  2:34  error  Replace `'./src/utils/storageDebug'` with `"./src/utils/storageDebug"`  prettier/prettier
+  9:1   error  Delete `··`                                                             prettier/prettier
+
+/Users/iamabillionaire/Downloads/loccc/src/api/chatApi.ts
+  175:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+  195:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+  228:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+  265:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+  330:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+  349:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+  349:21  warning  Unreachable code                   no-unreachable
+  368:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+  368:21  warning  Unreachable code                   no-unreachable
+
+/Users/iamabillionaire/Downloads/loccc/src/components/AccessibilityTestScreen.tsx
+  9:19  warning  'isDarkMode' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/components/AdBanner.tsx
+  2:22  warning  'Platform' is defined but never used           @typescript-eslint/no-unused-vars
+  3:10  warning  'useSafeAreaInsets' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/components/AnimatedButton.tsx
+  57:8  warning  React Hook useEffect has a missing dependency: 'rotation'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/Users/iamabillionaire/Downloads/loccc/src/components/AnimatedInput.tsx
+  71:8  warning  React Hook React.useEffect has a missing dependency: 'errorAnimation'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/Users/iamabillionaire/Downloads/loccc/src/components/AuthErrorTestScreen.tsx
+   2:45  warning  'Alert' is defined but never used  @typescript-eslint/no-unused-vars
+  21:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+  31:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+  41:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+  51:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+  61:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/components/ChatInput.tsx
+    2:51  warning  'Platform' is defined but never used  @typescript-eslint/no-unused-vars
+  146:14  warning  'error' is defined but never used     @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/components/ChatRoomCard.tsx
+  3:10  warning  'Ionicons' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/components/CommentInput.tsx
+  36:16  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/components/ConfirmationModal.tsx
+  42:6  warning  React Hook React.useEffect has missing dependencies: 'opacity' and 'scale'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+/Users/iamabillionaire/Downloads/loccc/src/components/DistanceFilter.tsx
+  22:9  warning  'getCurrentLabel' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/components/EmojiPicker.tsx
+  7:16  warning  'screenWidth' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  7:37  warning  'screenHeight' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/components/EnhancedChatRoomCard.tsx
+  13:10  warning  'formatTime' is defined but never used                                                                                         @typescript-eslint/no-unused-vars
+  24:16  warning  'screenWidth' is assigned a value but never used                                                                               @typescript-eslint/no-unused-vars
+  56:10  warning  'isPressed' is assigned a value but never used                                                                                 @typescript-eslint/no-unused-vars
+  70:6   warning  React Hook useEffect has missing dependencies: 'opacity' and 'translateY'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  79:6   warning  React Hook useEffect has a missing dependency: 'typingDots'. Either include it or remove the dependency array                  react-hooks/exhaustive-deps
+
+/Users/iamabillionaire/Downloads/loccc/src/components/EnhancedMessageBubble.tsx
+   8:3   warning  'runOnJS' is defined but never used                                                                                            @typescript-eslint/no-unused-vars
+   9:3   warning  'interpolate' is defined but never used                                                                                        @typescript-eslint/no-unused-vars
+  11:13  warning  'Haptics' is defined but never used                                                                                            @typescript-eslint/no-unused-vars
+  38:16  warning  'screenWidth' is assigned a value but never used                                                                               @typescript-eslint/no-unused-vars
+  78:8   warning  React Hook useEffect has missing dependencies: 'opacity' and 'translateY'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+/Users/iamabillionaire/Downloads/loccc/src/components/EnhancedMessageInput.tsx
+   7:3   warning  'withTiming' is defined but never used                                                                              @typescript-eslint/no-unused-vars
+  40:16  warning  'screenWidth' is assigned a value but never used                                                                    @typescript-eslint/no-unused-vars
+  53:19  warning  'isDarkMode' is assigned a value but never used                                                                     @typescript-eslint/no-unused-vars
+  79:6   warning  React Hook useEffect has a missing dependency: 'sendButtonScale'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  87:6   warning  React Hook useEffect has a missing dependency: 'replyHeight'. Either include it or remove the dependency array      react-hooks/exhaustive-deps
+  95:6   warning  React Hook useEffect has a missing dependency: 'focusedScale'. Either include it or remove the dependency array     react-hooks/exhaustive-deps
+
+/Users/iamabillionaire/Downloads/loccc/src/components/ImageCarousel.tsx
+  67:25  warning  The ref value 'prefetchedUrisRef.current' will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by React, copy 'prefetchedUrisRef.current' to a variable inside the effect, and use that variable in the cleanup function  react-hooks/exhaustive-deps
+
+/Users/iamabillionaire/Downloads/loccc/src/components/LazyImage.tsx
+  26:7   warning  'SCREEN_WIDTH' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  44:10  warning  'isLoaded' is assigned a value but never used      @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/components/LoadingSpinner.tsx
+  39:8  warning  React Hook useEffect has a missing dependency: 'rotation'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/Users/iamabillionaire/Downloads/loccc/src/components/LocationSelector.tsx
+   18:26  warning  'CollegeSearchResult' is defined but never used  @typescript-eslint/no-unused-vars
+  272:14  warning  'error' is defined but never used                @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/components/MediaGallery.tsx
+  15:12  warning  'loadedImages' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/components/MediaPicker.tsx
+   5:13  warning  'MediaLibrary' is defined but never used                  @typescript-eslint/no-unused-vars
+  37:9   warning  'ALLOWED_AUDIO_TYPES' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/components/MediaThumbnail.tsx
+  3:10  warning  'Image' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/components/MediaUploadGrid.tsx
+    7:10  warning  'videoThumbnailService' is defined but never used                                                                @typescript-eslint/no-unused-vars
+   18:3   warning  'runOnJS' is defined but never used                                                                              @typescript-eslint/no-unused-vars
+  275:6   warning  React Hook useEffect has a missing dependency: 'spinRotation'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/Users/iamabillionaire/Downloads/loccc/src/components/MediaViewer.tsx
+  65:6  warning  React Hook useEffect has a missing dependency: 'currentMedia?.type'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/Users/iamabillionaire/Downloads/loccc/src/components/MessageBubble.tsx
+  35:6  warning  React Hook useEffect has a missing dependency: 'reactionScale'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/Users/iamabillionaire/Downloads/loccc/src/components/OfflineBanner.tsx
+  12:10  warning  'isConnected' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/components/PremiumBadge.tsx
+  13:11  warning  'colors' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/components/PremiumThemeToggle.tsx
+  12:11  warning  'theme' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/components/ProfileCardSkeleton.tsx
+  24:6  warning  React Hook useEffect has a missing dependency: 'shimmerTranslate'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/Users/iamabillionaire/Downloads/loccc/src/components/ProgressIndicator.tsx
+  34:6  warning  React Hook useEffect has a missing dependency: 'progress'. Either include it or remove the dependency array               react-hooks/exhaustive-deps
+  96:6  warning  React Hook useEffect has missing dependencies: 'opacity' and 'scale'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+/Users/iamabillionaire/Downloads/loccc/src/components/ReportModal.tsx
+   5:3   warning  'useSharedValue' is defined but never used    @typescript-eslint/no-unused-vars
+   6:3   warning  'useAnimatedStyle' is defined but never used  @typescript-eslint/no-unused-vars
+   7:3   warning  'withSpring' is defined but never used        @typescript-eslint/no-unused-vars
+   8:3   warning  'withTiming' is defined but never used        @typescript-eslint/no-unused-vars
+   9:3   warning  'FadeIn' is defined but never used            @typescript-eslint/no-unused-vars
+  10:3   warning  'FadeOut' is defined but never used           @typescript-eslint/no-unused-vars
+  62:14  warning  'error' is defined but never used             @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/components/ReviewCard.tsx
+  21:11  warning  'theme' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  21:26  warning  'isDarkMode' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/components/ReviewGridCard.tsx
+  2:10  warning  'View' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/components/ReviewSkeleton.tsx
+  17:6  warning  React Hook useEffect has a missing dependency: 'shimmerTranslate'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/Users/iamabillionaire/Downloads/loccc/src/components/ScreenErrorBoundary.tsx
+  21:10  warning  Component definition is missing display name  react/display-name
+
+/Users/iamabillionaire/Downloads/loccc/src/components/SmartChatFeatures.tsx
+  34:10  warning  'searchQuery' is assigned a value but never used                                                                      @typescript-eslint/no-unused-vars
+  34:23  warning  'setSearchQuery' is assigned a value but never used                                                                   @typescript-eslint/no-unused-vars
+  43:6   warning  React Hook useEffect has a missing dependency: 'connectionOpacity'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  49:6   warning  React Hook useEffect has a missing dependency: 'typingOpacity'. Either include it or remove the dependency array      react-hooks/exhaustive-deps
+
+/Users/iamabillionaire/Downloads/loccc/src/components/TestMonetization.tsx
+  1:27  warning  'useEffect' is defined but never used  @typescript-eslint/no-unused-vars
+  2:45  warning  'Alert' is defined but never used      @typescript-eslint/no-unused-vars
+  4:10  warning  'Ionicons' is defined but never used   @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/components/VideoTestComponent.tsx
+  2:33  warning  'Alert' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/components/VoiceMessage.tsx
+  86:6  warning  React Hook useEffect has a missing dependency: 'recordingAnimation'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/Users/iamabillionaire/Downloads/loccc/src/components/iMessageBubble.tsx
+    3:10  warning  'Ionicons' is defined but never used                  @typescript-eslint/no-unused-vars
+   18:11  warning  'theme' is assigned a value but never used            @typescript-eslint/no-unused-vars
+   18:26  warning  'isDarkMode' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  129:7   warning  'formatTimeLocal' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/components/iMessageInput.tsx
+  27:11  warning  'theme' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  27:26  warning  'isDarkMode' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/components/subscription/PaywallAdaptive.tsx
+   90:6   warning  React Hook useEffect has a missing dependency: 'loadOfferings'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  130:14  warning  'error' is defined but never used                                                                                 @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/hooks/useInterstitialAd.ts
+  1:10  warning  'useEffect' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/navigation/AppNavigator.tsx
+   20:8   warning  'ComponentErrorBoundary' is defined but never used  @typescript-eslint/no-unused-vars
+  122:9   warning  'insets' is assigned a value but never used         @typescript-eslint/no-unused-vars
+  397:11  warning  'colors' is assigned a value but never used         @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/screens/AuthScreen.tsx
+  32:6  warning  React Hook useEffect has missing dependencies: 'buttonsOpacity', 'buttonsTranslateY', 'logoOpacity', 'logoScale', 'titleOpacity', and 'titleTranslateY'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+/Users/iamabillionaire/Downloads/loccc/src/screens/BrowseScreen.tsx
+   29:11  warning  'theme' is assigned a value but never used            @typescript-eslint/no-unused-vars
+   29:26  warning  'isDarkMode' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  142:9   warning  'loadWithFilters' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  232:26  warning  'error' is defined but never used                     @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/screens/CreateReviewScreen.tsx
+   12:3   warning  'validateSocialHandle' is defined but never used                                                             @typescript-eslint/no-unused-vars
+   23:10  warning  'imageCompressionService' is defined but never used                                                          @typescript-eslint/no-unused-vars
+  120:9   warning  'maxMediaCount' is assigned a value but never used                                                           @typescript-eslint/no-unused-vars
+  158:6   warning  React Hook useMemo has a missing dependency: 'mediaCount'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  238:9   warning  Expected an assignment or function call and instead saw an expression                                        no-unused-expressions
+  240:14  warning  'e' is defined but never used                                                                                @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/screens/NotificationsScreen.tsx
+  25:16  warning  'e' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/screens/ProfileScreen.tsx
+    2:52  warning  'Switch' is defined but never used                         @typescript-eslint/no-unused-vars
+   20:11  warning  'theme' is assigned a value but never used                 @typescript-eslint/no-unused-vars
+   20:18  warning  'isDarkMode' is assigned a value but never used            @typescript-eslint/no-unused-vars
+   20:30  warning  'setTheme' is assigned a value but never used              @typescript-eslint/no-unused-vars
+   28:10  warning  'notificationsEnabled' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  256:28  warning  'error' is defined but never used                          @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/screens/ReviewDetailScreen.backup.tsx
+   31:8  warning  'useAuthStore' is defined but never used                                                                         @typescript-eslint/no-unused-vars
+  168:6  warning  React Hook useEffect has a missing dependency: 'contentScale'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/Users/iamabillionaire/Downloads/loccc/src/screens/ReviewDetailScreen.tsx
+   34:8   warning  'useAuthStore' is defined but never used                                                                         @typescript-eslint/no-unused-vars
+   48:9   warning  'routeParams' is assigned a value but never used                                                                 @typescript-eslint/no-unused-vars
+   60:10  warning  'isLoading' is assigned a value but never used                                                                   @typescript-eslint/no-unused-vars
+  177:6   warning  React Hook useEffect has a missing dependency: 'contentScale'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/Users/iamabillionaire/Downloads/loccc/src/screens/SearchScreen.tsx
+   2:56  warning  'Image' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  46:10  warning  'filters' is assigned a value but never used                                                                @typescript-eslint/no-unused-vars
+  46:19  warning  'setFilters' is assigned a value but never used                                                             @typescript-eslint/no-unused-vars
+  93:31  warning  React Hook useCallback received a function whose dependencies are unknown. Pass an inline function instead  react-hooks/exhaustive-deps
+
+/Users/iamabillionaire/Downloads/loccc/src/screens/SignInScreen.tsx
+  32:29  warning  'error' is assigned a value but never used                                                                                                                                                               @typescript-eslint/no-unused-vars
+  55:6   warning  React Hook useEffect has missing dependencies: 'footerOpacity', 'footerTranslateY', 'formOpacity', 'formTranslateY', 'logoOpacity', and 'logoScale'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  95:14  warning  'err' is defined but never used                                                                                                                                                                          @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/screens/SignUpScreen.tsx
+   48:32  warning  'error' is assigned a value but never used                                                                                                                                                               @typescript-eslint/no-unused-vars
+   71:6   warning  React Hook useEffect has missing dependencies: 'footerOpacity', 'footerTranslateY', 'formOpacity', 'formTranslateY', 'logoOpacity', and 'logoScale'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  172:14  warning  'err' is defined but never used                                                                                                                                                                          @typescript-eslint/no-unused-vars
+  194:14  warning  'err' is defined but never used                                                                                                                                                                          @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/services/adMobService.ts
+  1:10  warning  'Platform' is defined but never used  @typescript-eslint/no-unused-vars
+  2:23  warning  'buildEnv' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/services/locationService.ts
+  136:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/services/notificationHelpers.ts
+  270:19  warning  Unreachable code  no-unreachable
+
+/Users/iamabillionaire/Downloads/loccc/src/services/notificationService.ts
+  124:15  warning  'appError' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  265:13  warning  'appError' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/services/storageService.ts
+  220:14  error  Replace `·data:·{·user·},·error:·authError` with `⏎········data:·{·user·},⏎········error:·authError,⏎·····`  prettier/prettier
+
+/Users/iamabillionaire/Downloads/loccc/src/services/supabase.ts
+  817:14  error  Replace `·data:·{·user·},·error:·authError` with `⏎········data:·{·user·},⏎········error:·authError,⏎·····`  prettier/prettier
+
+/Users/iamabillionaire/Downloads/loccc/src/services/utils/FileCompressor.ts
+  317:13  warning  'validate' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/services/utils/FileUploader.ts
+  714:13  warning  'options' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/services/utils/FileValidator.ts
+  456:20  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/services/utils/ImageProcessor.ts
+  2:10  warning  'FileValidator' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/services/videoThumbnailService.ts
+  115:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/state/commentsStore.ts
+  10:10  warning  'requireAuthentication' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/state/notificationStore.ts
+  79:19  warning  'notificationData' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/state/reviewsStore.ts
+  14:10  warning  'withMediaErrorHandling' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/state/subscriptionStore.ts
+  4:28  warning  'buildEnv' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/utils/authUtils.ts
+   44:11  warning  'appError' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  168:15  warning  'data' is assigned a value but never used      @typescript-eslint/no-unused-vars
+  206:11  warning  'appError' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/utils/buildEnvironment.ts
+   2:10  warning  'Platform' is defined but never used  @typescript-eslint/no-unused-vars
+  23:12  warning  'error' is defined but never used     @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/utils/errorHandling.ts
+  2:10  warning  'handleSupabaseError' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/utils/location.ts
+  380:16  warning  'reverseError' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/utils/mediaErrorHandling.ts
+  8:31  warning  'parseSupabaseError' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/utils/storageDebug.ts
+   10:12  error  Replace `·data:·{·user·},·error:·authError` with `⏎······data:·{·user·},⏎······error:·authError,⏎···`  prettier/prettier
+   14:32  error  Insert `,`                                                                                             prettier/prettier
+   23:32  error  Replace `'test'],·{·type:·'text/plain'` with `"test"],·{·type:·"text/plain"`                           prettier/prettier
+   26:51  error  Replace `⏎······.from('review-images')⏎······` with `.from("review-images")`                           prettier/prettier
+   36:33  error  Replace `'review-images'` with `"review-images"`                                                       prettier/prettier
+   38:62  error  Delete `⏎`                                                                                             prettier/prettier
+   48:1   error  Delete `··`                                                                                            prettier/prettier
+   51:12  error  Replace `·data:·{·user·},·error:·authError` with `⏎······data:·{·user·},⏎······error:·authError,⏎···`  prettier/prettier
+   56:32  error  Insert `,`                                                                                             prettier/prettier
+   67:29  error  Replace `b` with `(b)`                                                                                 prettier/prettier
+   68:35  error  Insert `,`                                                                                             prettier/prettier
+   72:32  error  Replace `'test·content'],·{·type:·'text/plain'` with `"test·content"],·{·type:·"text/plain"`           prettier/prettier
+   74:1   error  Delete `····`                                                                                          prettier/prettier
+   77:13  error  Replace `'review-images'` with `"review-images"`                                                       prettier/prettier
+   79:1   error  Delete `····`                                                                                          prettier/prettier
+   83:34  error  Insert `,`                                                                                             prettier/prettier
+   88:35  error  Replace `'review-images'` with `"review-images"`                                                       prettier/prettier
+   90:6   error  Delete `⏎`                                                                                             prettier/prettier
+   99:1   error  Delete `··`                                                                                            prettier/prettier
+  101:12  error  Replace `·data:·{·user·}` with `⏎······data:·{·user·},⏎···`                                            prettier/prettier
+  108:32  error  Replace `'permission·test'],·{·type:·'text/plain'` with `"permission·test"],·{·type:·"text/plain"`     prettier/prettier
+  112:51  error  Replace `⏎······.from(bucket)⏎······` with `.from(bucket)`                                             prettier/prettier
+  122:1   error  Delete `····`                                                                                          prettier/prettier
+  125:17  error  Delete `⏎`                                                                                             prettier/prettier
+
+/Users/iamabillionaire/Downloads/loccc/src/utils/supabaseTestSuite.ts
+   13:10  warning  'AppError' is defined but never used       @typescript-eslint/no-unused-vars
+   81:15  warning  'data' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  102:17  warning  'data' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+✖ 215 problems (54 errors, 161 warnings)
+  54 errors and 0 warnings potentially fixable with the `--fix` option.
+

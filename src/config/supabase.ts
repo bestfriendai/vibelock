@@ -7,9 +7,9 @@ const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
   const errorMessage = "Supabase configuration is missing. Please check your .env file and rebuild the app.";
-  console.error(`🚨 CRITICAL ERROR: ${errorMessage}`);
-  console.error(`URL: ${supabaseUrl ? "Present" : "Missing"}`);
-  console.error(`Anon Key: ${supabaseAnonKey ? "Present" : "Missing"}`);
+  console.warn(`🚨 CRITICAL ERROR: ${errorMessage}`);
+  console.warn(`URL: ${supabaseUrl ? "Present" : "Missing"}`);
+  console.warn(`Anon Key: ${supabaseAnonKey ? "Present" : "Missing"}`);
   throw new Error(errorMessage);
 }
 
@@ -54,7 +54,7 @@ export type { RealtimeChannel, RealtimePresenceState } from "@supabase/supabase-
 
 // Helper function to handle Supabase errors
 export const handleSupabaseError = (error: any): string => {
-  console.error("Supabase error:", error);
+  console.warn("Supabase error:", error);
 
   // Handle network/timeout errors
   if (error?.name === "AbortError" || error?.message?.includes("timeout")) {
@@ -137,6 +137,17 @@ export const handleSupabaseError = (error: any): string => {
     // Rate limiting
     if (message.includes("too many requests")) {
       return "Too many attempts. Please wait a moment and try again";
+    }
+
+    // Storage/RLS errors
+    if (message.includes("row-level security policy") || message.includes("rls policy")) {
+      return "Permission denied. Please make sure you're signed in and try again.";
+    }
+    if (message.includes("storage") && message.includes("policy")) {
+      return "Storage permission error. Please contact support if this persists.";
+    }
+    if (message.includes("bucket") && message.includes("not found")) {
+      return "Storage configuration error. Please try again later.";
     }
 
     // Server errors

@@ -1,5 +1,5 @@
 {
-  "name": "template-app-53",
+  "name": "locker-room-talk",
   "version": "1.0.0",
   "main": "index.ts",
   "scripts": {
@@ -40,6 +40,7 @@
     "@shopify/react-native-skia": "2.2.12",
     "@supabase/supabase-js": "^2.57.4",
     "@types/uuid": "^10.0.0",
+    "@vm-lib/patch-node-modules": "^1.0.0",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "dotenv": "^17.2.2",
@@ -49,6 +50,7 @@
     "expo-asset": "~12.0.8",
     "expo-audio": "~1.0.11",
     "expo-auth-session": "~7.0.8",
+    "expo-av": "~16.0.7",
     "expo-background-fetch": "~14.0.7",
     "expo-battery": "~10.0.7",
     "expo-blur": "~15.0.7",
@@ -63,7 +65,6 @@
     "expo-contacts": "~15.0.8",
     "expo-crypto": "~15.0.7",
     "expo-dev-client": "~6.0.12",
-    "expo-dev-menu": "^7.0.10",
     "expo-device": "~8.0.7",
     "expo-document-picker": "~14.0.7",
     "expo-file-system": "~19.0.11",
@@ -100,9 +101,9 @@
     "firebase": "^12.2.1",
     "fuse.js": "^7.1.0",
     "lottie-react-native": "~7.3.1",
+    "markdown-it": "13.0.1",
     "nativewind": "^4.1.23",
     "openai": "^4.89.0",
-    "patch-package": "^8.0.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-native": "0.81.4",
@@ -152,8 +153,12 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "jest": "~29.7.0",
     "jest-expo": "^54.0.10",
+    "npm-force-resolutions": "^0.0.10",
     "prettier": "^3.6.2",
     "typescript": "~5.9.2"
   },
-  "private": true
+  "private": true,
+  "resolutions": {
+    "markdown-it": "13.0.1"
+  }
 }

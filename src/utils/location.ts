@@ -195,7 +195,7 @@ export async function geocodeCityStateCached(city: string, state?: string): Prom
     // Fallback to device geocoding for worldwide support
     const query = state ? `${city}, ${state}` : city;
     const results = await ExpoLocation.geocodeAsync(query);
-    if (results && results.length > 0) {
+    if (results && results.length > 0 && results[0]) {
       coords = { latitude: results[0].latitude, longitude: results[0].longitude };
       geoCache.set(key, coords);
       return coords;
@@ -266,7 +266,7 @@ export async function filterReviewsByDistanceAsync<T extends { reviewedPersonLoc
   for (const key of Array.from(neededKeys)) {
     const [city, state] = key.split(",");
     // Avoid re-fetch if cached
-    if (!geoCache.has(key)) {
+    if (!geoCache.has(key) && city) {
       await geocodeCityStateCached(city, state);
     }
   }
@@ -320,7 +320,7 @@ export async function getCurrentLocation(): Promise<Coordinates | null> {
       longitude: location.coords.longitude,
     };
   } catch (error) {
-    console.error("Error getting location:", error);
+    console.warn("Error getting location:", error);
     return null;
   }
 }
@@ -333,15 +333,17 @@ export async function reverseGeocodeLocation(coordinates: Coordinates): Promise<
     const addresses = await ExpoLocation.reverseGeocodeAsync(coordinates);
     if (addresses.length > 0) {
       const address = addresses[0];
-      return {
-        city: address.city || "Unknown City",
-        state: address.region || "Unknown State",
-        coordinates,
-      };
+      if (address) {
+        return {
+          city: address.city || "Unknown City",
+          state: address.region || "Unknown State",
+          coordinates,
+        };
+      }
     }
     return null;
   } catch (error) {
-    console.error("Error reverse geocoding:", error);
+    console.warn("Error reverse geocoding:", error);
     return null;
   }
 }
@@ -364,14 +366,16 @@ export async function searchLocations(query: string): Promise<LocationData[]> {
 
         if (addresses.length > 0) {
           const address = addresses[0];
-          results.push({
-            city: address.city || "Unknown City",
-            state: address.region || "Unknown State",
-            coordinates: {
-              latitude: location.latitude,
-              longitude: location.longitude,
-            },
-          });
+          if (address) {
+            results.push({
+              city: address.city || "Unknown City",
+              state: address.region || "Unknown State",
+              coordinates: {
+                latitude: location.latitude,
+                longitude: location.longitude,
+              },
+            });
+          }
         }
       } catch (reverseError) {
         // Skip this location if reverse geocoding fails
@@ -381,7 +385,7 @@ export async function searchLocations(query: string): Promise<LocationData[]> {
 
     return results;
   } catch (error) {
-    console.error("Error searching locations:", error);
+    console.warn("Error searching locations:", error);
     return [];
   }
 }

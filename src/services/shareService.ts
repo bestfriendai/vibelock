@@ -35,7 +35,7 @@ export const shareService = {
         console.log("Review shared successfully");
       }
     } catch (error) {
-      console.error("Error sharing review:", error);
+      console.warn("Error sharing review:", error);
       Alert.alert("Error", "Failed to share review. Please try again.");
     }
   },
@@ -56,7 +56,7 @@ export const shareService = {
         console.log("Profile shared successfully");
       }
     } catch (error) {
-      console.error("Error sharing profile:", error);
+      console.warn("Error sharing profile:", error);
       Alert.alert("Error", "Failed to share profile. Please try again.");
     }
   },
@@ -68,7 +68,7 @@ export const shareService = {
       await Clipboard.setStringAsync(link);
       Alert.alert("Link Copied", "Review link has been copied to your clipboard.");
     } catch (error) {
-      console.error("Error copying link:", error);
+      console.warn("Error copying link:", error);
       Alert.alert("Error", "Failed to copy link. Please try again.");
     }
   },
@@ -80,7 +80,7 @@ export const shareService = {
       await Clipboard.setStringAsync(link);
       Alert.alert("Link Copied", "Profile link has been copied to your clipboard.");
     } catch (error) {
-      console.error("Error copying link:", error);
+      console.warn("Error copying link:", error);
       Alert.alert("Error", "Failed to copy link. Please try again.");
     }
   },

@@ -62,7 +62,7 @@ export default function SearchScreen({ navigation, route }: Props) {
         setSearchHistory(JSON.parse(history));
       }
     } catch (error) {
-      console.error("Failed to load search history:", error);
+      console.warn("Failed to load search history:", error);
     }
   };
 
@@ -76,7 +76,7 @@ export default function SearchScreen({ navigation, route }: Props) {
       setSearchHistory(updatedHistory);
       await AsyncStorage.setItem("search_history", JSON.stringify(updatedHistory));
     } catch (error) {
-      console.error("Failed to save search history:", error);
+      console.warn("Failed to save search history:", error);
     }
   };
 
@@ -85,7 +85,7 @@ export default function SearchScreen({ navigation, route }: Props) {
       setSearchHistory([]);
       await AsyncStorage.removeItem("search_history");
     } catch (error) {
-      console.error("Failed to clear search history:", error);
+      console.warn("Failed to clear search history:", error);
     }
   };
 
@@ -164,7 +164,7 @@ export default function SearchScreen({ navigation, route }: Props) {
         );
       }
     } catch (e) {
-      console.error("Search failed:", e);
+      console.warn("Search failed:", e);
       setSearchError("Search failed. Please check your connection and try again.");
       setContentResults({ reviews: [], comments: [], messages: [] });
     } finally {
@@ -184,7 +184,10 @@ export default function SearchScreen({ navigation, route }: Props) {
       <View className="px-6 py-6" style={{ backgroundColor: colors.surface[800] }}>
         <View className="flex-row items-center justify-between">
           <View className="flex-row items-center">
-            <Pressable onPress={() => navigation.canGoBack() ? navigation.goBack() : navigation.navigate("MainTabs")} className="mr-4">
+            <Pressable
+              onPress={() => (navigation.canGoBack() ? navigation.goBack() : navigation.navigate("MainTabs" as never))}
+              className="mr-4"
+            >
               <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
             </Pressable>
             <View>

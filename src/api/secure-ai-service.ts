@@ -75,7 +75,7 @@ class SecureAIService {
         throw error;
       }
 
-      console.error("AI Service Error:", error);
+      console.warn("AI Service Error:", error);
       throw new AppError("Failed to communicate with AI service", ErrorType.NETWORK, "AI_SERVICE_ERROR");
     }
   }

@@ -107,7 +107,7 @@ const useSubscriptionStore = create<SubscriptionState>()(
 
           console.log("RevenueCat initialized successfully");
         } catch (error) {
-          console.error("RevenueCat initialization failed:", error);
+          console.warn("RevenueCat initialization failed:", error);
           set({ isLoading: false });
         }
       },
@@ -124,7 +124,7 @@ const useSubscriptionStore = create<SubscriptionState>()(
           const customerInfo = await Purchases.getCustomerInfo();
           get().updateCustomerInfo(customerInfo);
         } catch (error) {
-          console.error("Failed to check subscription status:", error);
+          console.warn("Failed to check subscription status:", error);
           set({ isLoading: false });
         }
       },
@@ -180,9 +180,9 @@ const useSubscriptionStore = create<SubscriptionState>()(
         try {
           const Purchases = (await import("react-native-purchases")).default;
           const offerings = await Purchases.getOfferings();
-          set({ offerings: Object.values(offerings.all) });
+          set({ offerings: Object.values(offerings.all) as any });
         } catch (error) {
-          console.error("Failed to load offerings:", error);
+          console.warn("Failed to load offerings:", error);
         }
       },
 
@@ -204,13 +204,13 @@ const useSubscriptionStore = create<SubscriptionState>()(
         try {
           set({ isLoading: true });
           const Purchases = (await import("react-native-purchases")).default;
-          const { customerInfo } = await Purchases.purchasePackage(packageToPurchase);
+          const { customerInfo } = await Purchases.purchasePackage(packageToPurchase as any);
           get().updateCustomerInfo(customerInfo);
           return customerInfo;
         } catch (error: any) {
           set({ isLoading: false });
           if (!error.userCancelled) {
-            console.error("Purchase error:", error);
+            console.warn("Purchase error:", error);
             throw error;
           }
           return null;
@@ -234,7 +234,7 @@ const useSubscriptionStore = create<SubscriptionState>()(
           return customerInfo;
         } catch (error) {
           set({ isLoading: false });
-          console.error("Restore purchases error:", error);
+          console.warn("Restore purchases error:", error);
           throw error;
         }
       },

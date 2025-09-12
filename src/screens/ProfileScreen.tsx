@@ -331,8 +331,6 @@ export default function ProfileScreen() {
             </View>
           </View>
 
-
-
           {/* Account Actions */}
           <Pressable
             className="rounded-lg p-4 mb-3"

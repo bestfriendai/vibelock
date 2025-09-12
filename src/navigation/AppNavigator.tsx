@@ -7,6 +7,8 @@ import { useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets, SafeAreaView } from "react-native-safe-area-context";
 import CustomTabBar from "../components/CustomTabBar";
 import { useTheme } from "../providers/ThemeProvider";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import type { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 
 // Import screens
 import BrowseScreen from "../screens/BrowseScreen";
@@ -57,7 +59,7 @@ type SerializedReview = Omit<import("../types").Review, "createdAt" | "updatedAt
   updatedAt: string | Date;
 };
 
-// Navigation types
+// Navigation types for React Navigation v7
 export type RootStackParamList = {
   SignIn: undefined;
   SignUp: undefined;
@@ -109,6 +111,14 @@ export type SettingsStackParamList = {
   LocationSettings: undefined;
 };
 
+// Navigation prop types for React Navigation v7
+export type RootStackNavigationProp = NativeStackNavigationProp<RootStackParamList>;
+export type TabNavigationProp = BottomTabNavigationProp<TabParamList>;
+export type BrowseStackNavigationProp = NativeStackNavigationProp<BrowseStackParamList>;
+export type SearchStackNavigationProp = NativeStackNavigationProp<SearchStackParamList>;
+export type ChatroomsStackNavigationProp = NativeStackNavigationProp<ChatroomsStackParamList>;
+export type SettingsStackNavigationProp = NativeStackNavigationProp<SettingsStackParamList>;
+
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<TabParamList>();
 const BrowseStack = createNativeStackNavigator<BrowseStackParamList>();
@@ -117,7 +127,7 @@ const ChatroomsStack = createNativeStackNavigator<ChatroomsStackParamList>();
 const SettingsStack = createNativeStackNavigator<SettingsStackParamList>();
 
 function CreateTabButton() {
-  const navigation = useNavigation<any>();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { isGuestMode } = useAuthStore();
   const insets = useSafeAreaInsets();
 
@@ -292,13 +302,13 @@ function SettingsStackNavigator() {
 // Tab Navigator Component
 function TabNavigator() {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
 
   return (
     <View className="flex-1" style={{ backgroundColor: colors.background }}>
       <Tab.Navigator
         tabBar={(props) => <CustomTabBar {...props} />}
         screenOptions={({ route }) => {
-          const insets = useSafeAreaInsets();
           return {
             tabBarIcon: ({ focused, color, size }) => {
               let iconName: keyof typeof Ionicons.glyphMap;

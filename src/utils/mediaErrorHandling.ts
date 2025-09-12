@@ -54,7 +54,7 @@ export const createMediaError = (
  * Safely handle media upload errors without class construction issues
  */
 export const handleMediaUploadError = (error: any, context: string = "media upload"): MediaError => {
-  console.error(`Media upload error in ${context}:`, error);
+  console.warn(`Media upload error in ${context}:`, error);
 
   // Avoid complex error class construction that can fail in worklet contexts
   if (
@@ -98,7 +98,7 @@ export const withMediaErrorHandling = async <T>(
     return await operation();
   } catch (error) {
     const mediaError = handleMediaUploadError(error, context);
-    console.error(`${context} failed:`, mediaError);
+    console.warn(`${context} failed:`, mediaError);
 
     // Don't throw, return null to allow graceful degradation
     return null;
@@ -161,7 +161,7 @@ export const retryMediaOperation = async <T>(
   }
 
   if (lastError) {
-    console.error(`${context} failed after ${maxRetries} attempts:`, lastError);
+    console.warn(`${context} failed after ${maxRetries} attempts:`, lastError);
   }
 
   return null;

@@ -36,7 +36,7 @@ export const getAnthropicTextResponse = async (
       },
     };
   } catch (error) {
-    console.error("Anthropic API Error:", error);
+    console.warn("Anthropic API Error:", error);
     throw new Error(`Failed to get Anthropic response: ${error instanceof Error ? error.message : "Unknown error"}`);
   }
 };
@@ -77,7 +77,7 @@ export const getOpenAITextResponse = async (messages: AIMessage[], options?: AIR
       },
     };
   } catch (error) {
-    console.error("OpenAI API Error:", error);
+    console.warn("OpenAI API Error:", error);
     throw new Error(`Failed to get OpenAI response: ${error instanceof Error ? error.message : "Unknown error"}`);
   }
 };
@@ -118,7 +118,7 @@ export const getGrokTextResponse = async (messages: AIMessage[], options?: AIReq
       },
     };
   } catch (error) {
-    console.error("Grok API Error:", error);
+    console.warn("Grok API Error:", error);
     throw new Error(`Failed to get Grok response: ${error instanceof Error ? error.message : "Unknown error"}`);
   }
 };

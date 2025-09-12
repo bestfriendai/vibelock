@@ -52,7 +52,7 @@ class LocationService {
       // Strategy 4: Fallback to major cities
       return this.getFallbackLocation();
     } catch (error) {
-      console.error("Location detection failed:", error);
+      console.warn("Location detection failed:", error);
       return this.getFallbackLocation();
     }
   }

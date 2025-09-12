@@ -56,7 +56,7 @@ export default function LocationSettingsScreen() {
         [{ text: "OK" }],
       );
     } catch (error) {
-      console.error("Failed to update location:", error);
+      console.warn("Failed to update location:", error);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       Alert.alert("Update Failed", "Failed to update your location. Please try again.", [{ text: "OK" }]);
     } finally {
@@ -93,7 +93,7 @@ export default function LocationSettingsScreen() {
         ]);
       }
     } catch (error) {
-      console.error("GPS location error:", error);
+      console.warn("GPS location error:", error);
       Alert.alert("Location Error", "Failed to get your current location. Please try again or select manually.", [
         { text: "OK" },
       ]);
@@ -106,7 +106,10 @@ export default function LocationSettingsScreen() {
     <SafeAreaView className="flex-1 bg-surface-900">
       {/* Header */}
       <View className="bg-black px-6 py-4 flex-row items-center">
-        <Pressable onPress={() => navigation.canGoBack() ? navigation.goBack() : navigation.navigate("Settings")} className="mr-4">
+        <Pressable
+          onPress={() => (navigation.canGoBack() ? navigation.goBack() : navigation.navigate("Settings" as never))}
+          className="mr-4"
+        >
           <Ionicons name="arrow-back" size={24} color="#F3F4F6" />
         </Pressable>
         <Text className="text-xl font-bold text-text-primary">Location Settings</Text>

@@ -40,7 +40,7 @@ export const getAuthenticatedUser = async (): Promise<{ user: User | null; supab
       supabaseUser: isFullyAuthenticated ? supabaseUser : null,
     };
   } catch (error) {
-    console.error("Error checking authentication:", error);
+    console.warn("Error checking authentication:", error);
     const appError = error instanceof AppError ? error : parseSupabaseError(error);
     // Don't throw here as this is used for checking auth state
     return { user: null, supabaseUser: null };
@@ -168,7 +168,7 @@ export const refreshSessionIfNeeded = async (): Promise<boolean> => {
       const { data, error } = await supabase.auth.refreshSession();
 
       if (error) {
-        console.error("Failed to refresh session:", error);
+        console.warn("Failed to refresh session:", error);
         return false;
       }
 
@@ -178,7 +178,7 @@ export const refreshSessionIfNeeded = async (): Promise<boolean> => {
 
     return true;
   } catch (error) {
-    console.error("Error refreshing session:", error);
+    console.warn("Error refreshing session:", error);
     return false;
   }
 };
@@ -202,7 +202,7 @@ export const syncAuthState = async (): Promise<void> => {
       await refreshSessionIfNeeded();
     }
   } catch (error) {
-    console.error("Error syncing auth state:", error);
+    console.warn("Error syncing auth state:", error);
     const appError = error instanceof AppError ? error : parseSupabaseError(error);
     // Don't throw as this is a utility function
   }

@@ -11,28 +11,49 @@ interface Props {
 interface State {
   hasError: boolean;
   error: Error | null;
+  resetCount: number;
+  isResetting: boolean;
 }
 
 export default class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false, error: null, resetCount: 0, isResetting: false };
   }
 
-  static getDerivedStateFromError(error: Error): State {
+  static getDerivedStateFromError(error: Error): Partial<State> {
     return { hasError: true, error };
   }
 
   override componentDidCatch(error: Error, errorInfo: any) {
-    console.error("ErrorBoundary caught an error:", error, errorInfo);
+    // Only log errors in development mode
+    if (__DEV__) {
+      console.warn("ErrorBoundary caught an error:", error, errorInfo);
+    }
     this.props.onError?.(error, errorInfo);
   }
 
   handleRetry = () => {
-    this.setState({ hasError: false, error: null });
+    // First set resetting state to prevent immediate re-render
+    this.setState({ isResetting: true }, () => {
+      // After a short delay, reset the error state
+      setTimeout(() => {
+        this.setState({
+          hasError: false,
+          error: null,
+          resetCount: this.state.resetCount + 1,
+          isResetting: false
+        });
+      }, 100);
+    });
   };
 
   override render() {
+    if (this.state.isResetting) {
+      // Return null while resetting to prevent flickering
+      return null;
+    }
+
     if (this.state.hasError) {
       if (this.props.fallback) {
         return this.props.fallback;
@@ -77,6 +98,18 @@ export default class ErrorBoundary extends Component<Props, State> {
       );
     }
 
-    return this.props.children;
+    // Use resetCount as key to force remount of children when retrying
+    if (React.Children.count(this.props.children) === 1) {
+      return React.cloneElement(this.props.children as React.ReactElement, {
+        key: this.state.resetCount
+      });
+    }
+    
+    // Handle multiple children
+    return React.createElement(
+      React.Fragment,
+      { key: this.state.resetCount },
+      ...React.Children.toArray(this.props.children)
+    );
   }
 }

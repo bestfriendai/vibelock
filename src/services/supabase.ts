@@ -120,7 +120,7 @@ export const supabaseAuth = {
       const session = await supabaseAuth.getCurrentSession();
       return session?.user ?? null;
     } catch (error: any) {
-      console.error("Error getting current user:", error);
+      console.warn("Error getting current user:", error);
       return null;
     }
   },
@@ -164,7 +164,7 @@ export const supabaseAuth = {
 
       return session;
     } catch (error: any) {
-      console.error("Error getting current session:", error);
+      console.warn("Error getting current session:", error);
       return null;
     }
   },
@@ -311,7 +311,7 @@ export const supabaseUsers = {
 
       return !!data;
     } catch (error: any) {
-      console.error("Error checking if user exists:", error);
+      console.warn("Error checking if user exists:", error);
       return false;
     }
   },
@@ -813,6 +813,16 @@ export const supabaseStorage = {
     options?: { contentType?: string; upsert?: boolean },
   ): Promise<string> => {
     try {
+      // Check authentication first
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
+      if (authError || !user) {
+        console.warn("❌ Authentication required for storage upload:", authError);
+        throw new Error("Authentication required. Please sign in and try again.");
+      }
+
       const isBlob = typeof Blob !== "undefined" && file instanceof Blob;
       const size = isBlob ? (file as Blob).size : (file as ArrayBuffer).byteLength;
       const type = isBlob ? (file as Blob).type : options?.contentType;
@@ -823,6 +833,8 @@ export const supabaseStorage = {
         fileSize: size,
         fileType: type,
         upsert: options?.upsert ?? true,
+        userId: user.id,
+        userEmail: user.email,
       });
 
       const uploadOptions: any = { upsert: options?.upsert ?? true };
@@ -831,7 +843,7 @@ export const supabaseStorage = {
       const { data, error } = await supabase.storage.from(bucket).upload(path, file as any, uploadOptions);
 
       if (error) {
-        console.error(`❌ Supabase Storage upload error:`, error);
+        console.warn(`❌ Supabase Storage upload error:`, error);
         throw error;
       }
 
@@ -843,7 +855,7 @@ export const supabaseStorage = {
       console.log(`🔗 Public URL generated:`, urlData.publicUrl);
       return urlData.publicUrl;
     } catch (error: any) {
-      console.error(`💥 Upload failed:`, error);
+      console.warn(`💥 Upload failed:`, error);
       throw new Error(handleSupabaseError(error));
     }
   },
@@ -1010,7 +1022,7 @@ export const supabaseSearch = {
         .slice(0, limit)
         .map(([name]) => name);
     } catch (error: any) {
-      console.error("Error getting trending names:", error);
+      console.warn("Error getting trending names:", error);
       return [];
     }
   },

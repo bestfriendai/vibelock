@@ -1,5 +1,4 @@
 import React, { useEffect } from "react";
-import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { NavigationContainer } from "@react-navigation/native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -45,10 +44,21 @@ const linking = {
   prefixes: [Linking.createURL("/"), "locker-room-talk://", "https://lockerroom.app", "http://lockerroom.app"],
   config: {
     screens: {
-      MainTabs: "main",
+      MainTabs: {
+        path: "main",
+        screens: {
+          Browse: "main",
+          ReviewDetail: "review/:reviewId",
+          Search: "search",
+          Chatrooms: "chatrooms",
+          Settings: "settings",
+          Notifications: "notifications",
+          DeleteAccount: "delete-account",
+          LocationSettings: "location-settings",
+        },
+      },
       PersonProfile: "profile/:firstName/:city/:state",
       ChatRoom: "chat/:roomId",
-      ReviewDetail: "review/:reviewId",
       CreateReview: "create",
       SignIn: "signin",
       SignUp: "signup",

@@ -128,7 +128,7 @@ export const VoiceMessage: React.FC<VoiceMessageProps> = ({
 
       onStartRecording?.();
     } catch (err) {
-      console.error("Failed to start recording", err);
+      console.warn("Failed to start recording", err);
       Alert.alert("Error", "Failed to start recording. Please try again.");
     }
   };
@@ -152,7 +152,7 @@ export const VoiceMessage: React.FC<VoiceMessageProps> = ({
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       onStopRecording?.();
     } catch (error) {
-      console.error("Failed to stop recording", error);
+      console.warn("Failed to stop recording", error);
     }
   };
 
@@ -163,7 +163,7 @@ export const VoiceMessage: React.FC<VoiceMessageProps> = ({
       player.play();
       onPlay?.();
     } catch (error) {
-      console.error("Failed to play audio", error);
+      console.warn("Failed to play audio", error);
     }
   };
 
@@ -172,7 +172,7 @@ export const VoiceMessage: React.FC<VoiceMessageProps> = ({
       player.pause();
       onPause?.();
     } catch (error) {
-      console.error("Failed to pause audio", error);
+      console.warn("Failed to pause audio", error);
     }
   };
 

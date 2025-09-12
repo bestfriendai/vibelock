@@ -10,8 +10,8 @@ export interface BuildEnvironment {
 
 export const getBuildEnvironment = (): BuildEnvironment => {
   const isExpoGo = Constants.appOwnership === "expo";
-  const isDevelopmentBuild = Constants.appOwnership === "standalone" && __DEV__;
-  const isProduction = Constants.appOwnership === "standalone" && !__DEV__;
+  const isDevelopmentBuild = Constants.appOwnership !== "expo" && __DEV__;
+  const isProduction = Constants.appOwnership !== "expo" && !__DEV__;
 
   // Check if native modules are available
   let hasNativeModules = false;

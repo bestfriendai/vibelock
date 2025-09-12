@@ -69,7 +69,9 @@ export function extractMentions(content: string): string[] {
   let match;
 
   while ((match = mentionRegex.exec(content)) !== null) {
-    mentions.push(match[1]);
+    if (match[1]) {
+      mentions.push(match[1]);
+    }
   }
 
   return mentions;
@@ -79,7 +81,7 @@ export function extractMentions(content: string): string[] {
  * Generate optimistic message ID
  */
 export function generateOptimisticId(): string {
-  return `optimistic_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  return `optimistic_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
 }
 
 /**

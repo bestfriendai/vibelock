@@ -144,7 +144,7 @@ const useAuthStore = create<AuthStore>()(
             error: null,
           }));
         } catch (error) {
-          console.error("Login error:", error);
+          console.warn("Login error:", error);
 
           // Extract user-friendly error message
           let errorMessage = "Failed to sign in. Please try again.";
@@ -210,7 +210,7 @@ const useAuthStore = create<AuthStore>()(
             error: null,
           }));
         } catch (error) {
-          console.error("Registration error:", error);
+          console.warn("Registration error:", error);
 
           // Extract user-friendly error message
           let errorMessage = "Failed to create account. Please try again.";
@@ -291,7 +291,7 @@ const useAuthStore = create<AuthStore>()(
           });
           console.log("✅ Location saved to database successfully");
         } catch (error) {
-          console.error("❌ Failed to update user location in database:", error);
+          console.warn("❌ Failed to update user location in database:", error);
           // Could show a toast notification here if needed
         }
       },
@@ -380,7 +380,7 @@ const useAuthStore = create<AuthStore>()(
               }));
             }
           } catch (error) {
-            console.error("Error initializing session:", error);
+            console.warn("Error initializing session:", error);
             const appError = error instanceof AppError ? error : parseSupabaseError(error);
             set((state) => ({
               ...state,
@@ -463,7 +463,7 @@ const useAuthStore = create<AuthStore>()(
                 console.log("✅ Auth state synchronized: User signed out");
               }
             } catch (error) {
-              console.error("Error in auth state change:", error);
+              console.warn("Error in auth state change:", error);
               const appError = error instanceof AppError ? error : parseSupabaseError(error);
               set((state) => ({
                 ...state,

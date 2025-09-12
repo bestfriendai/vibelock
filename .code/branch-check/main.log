@@ -1,0 +1,597 @@
+\n=== Checking main ===
+Branch: main
+v22.14.0
+10.9.2
+-- typecheck --
+src/components/ImageCarousel.tsx(173,44): error TS2532: Object is possibly 'undefined'.
+src/providers/ThemeProvider.tsx(199,5): error TS2322: Type '{ background: string; surface: { 900: string; 800: string; 700: string; 600: string; 500: string; }; text: { primary: string; secondary: string; muted: string; accent: string; }; border: string; brand: { red: string; redLight: string; redDark: string; coral: string; warm: string; }; accent: { ...; }; status: { ...; ...' is not assignable to type 'ThemeColors'.
+  Type '{ background: string; surface: { 900: string; 800: string; 700: string; 600: string; 500: string; }; text: { primary: string; secondary: string; muted: string; accent: string; }; border: string; brand: { red: string; redLight: string; redDark: string; coral: string; warm: string; }; success: string; warning: string;...' is missing the following properties from type 'ThemeColors': accent, status
+src/screens/BrowseScreen.tsx(293,58): error TS2322: Type 'number | null' is not assignable to type 'number | undefined'.
+  Type 'null' is not assignable to type 'number | undefined'.
+src/screens/LocationSettingsScreen.tsx(109,102): error TS2769: No overload matches this call.
+  Argument of type '[string]' is not assignable to parameter of type 'never'.
+  Overload 2 of 2, '(options: never): void', gave the following error.
+    Argument of type '"Settings"' is not assignable to parameter of type 'never'.
+src/screens/ReviewDetailScreen.backup.tsx(162,9): error TS2353: Object literal may only specify known properties, and 'restDisplacementThreshold' does not exist in type '{ mass?: number | undefined; overshootClamping?: boolean | undefined; energyThreshold?: number | undefined; velocity?: number | undefined; reduceMotion?: ReduceMotion | undefined; } & { ...; }'.
+src/screens/ReviewDetailScreen.backup.tsx(367,14): error TS18047: 'reviewWithMedia' is possibly 'null'.
+src/screens/ReviewDetailScreen.backup.tsx(367,39): error TS18047: 'reviewWithMedia' is possibly 'null'.
+src/screens/ReviewDetailScreen.backup.tsx(370,26): error TS18047: 'reviewWithMedia' is possibly 'null'.
+src/screens/ReviewDetailScreen.backup.tsx(493,8): error TS18047: 'reviewWithMedia' is possibly 'null'.
+src/screens/ReviewDetailScreen.backup.tsx(496,18): error TS18047: 'reviewWithMedia' is possibly 'null'.
+src/screens/ReviewDetailScreen.tsx(163,9): error TS2353: Object literal may only specify known properties, and 'restDisplacementThreshold' does not exist in type '{ mass?: number | undefined; overshootClamping?: boolean | undefined; energyThreshold?: number | undefined; velocity?: number | undefined; reduceMotion?: ReduceMotion | undefined; } & { ...; }'.
+src/screens/SearchScreen.tsx(187,106): error TS2769: No overload matches this call.
+  Argument of type '["MainTabs"]' is not assignable to parameter of type '[screen: "ReviewDetail", params: { review?: SerializedReview | undefined; reviewId?: string | undefined; }, options?: { merge?: boolean | undefined; pop?: boolean | undefined; } | undefined] | [screen: ...]'.
+    Type '["MainTabs"]' is not assignable to type '[screen: "Search", params?: undefined, options?: { merge?: boolean | undefined; pop?: boolean | undefined; } | undefined]'.
+      Type at position 0 in source is not compatible with type at position 0 in target.
+        Type '"MainTabs"' is not assignable to type '"Search"'.
+  Overload 2 of 2, '(options: { name: "ReviewDetail"; params: { review?: SerializedReview | undefined; reviewId?: string | undefined; }; path?: string | undefined; merge?: boolean | undefined; pop?: boolean | undefined; } | { ...; }): void', gave the following error.
+    Argument of type 'string' is not assignable to parameter of type '{ name: "ReviewDetail"; params: { review?: SerializedReview | undefined; reviewId?: string | undefined; }; path?: string | undefined; merge?: boolean | undefined; pop?: boolean | undefined; } | { ...; }'.
+src/services/utils/FileDownloader.ts(15,52): error TS2345: Argument of type '"INVALID_URL"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/FileDownloader.ts(22,79): error TS2345: Argument of type '"DOWNLOAD_FAILED"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/FileDownloader.ts(33,61): error TS2345: Argument of type '"READER_ERROR"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/FileDownloader.ts(62,29): error TS2345: Argument of type 'Uint8Array<ArrayBufferLike>[]' is not assignable to parameter of type 'BlobPart[]'.
+  Type 'Uint8Array<ArrayBufferLike>' is not assignable to type 'BlobPart'.
+    Type 'Uint8Array<ArrayBufferLike>' is not assignable to type 'ArrayBufferView<ArrayBuffer>'.
+      Types of property 'buffer' are incompatible.
+        Type 'ArrayBufferLike' is not assignable to type 'ArrayBuffer'.
+          Type 'SharedArrayBuffer' is missing the following properties from type 'ArrayBuffer': resizable, resize, detached, transfer, transferToFixedLength
+src/services/utils/FileDownloader.ts(73,9): error TS2345: Argument of type '"DOWNLOAD_FAILED"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/FileDownloader.ts(87,47): error TS2345: Argument of type '"NO_FILES"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/FileDownloader.ts(101,46): error TS18048: 'file' is possibly 'undefined'.
+src/services/utils/FileDownloader.ts(106,33): error TS18048: 'file' is possibly 'undefined'.
+src/services/utils/FileDownloader.ts(106,43): error TS18048: 'file' is possibly 'undefined'.
+src/services/utils/FileDownloader.ts(108,50): error TS18048: 'file' is possibly 'undefined'.
+src/services/utils/FileDownloader.ts(108,67): error TS18048: 'file' is possibly 'undefined'.
+src/services/utils/FileDownloader.ts(120,52): error TS2345: Argument of type '"INVALID_URL"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/FileDownloader.ts(127,83): error TS2345: Argument of type '"METADATA_FAILED"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/FileDownloader.ts(147,9): error TS2353: Object literal may only specify known properties, and 'name' does not exist in type 'FileMetadata'.
+src/services/utils/FileDownloader.ts(160,9): error TS2345: Argument of type '"METADATA_FAILED"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/FileDownloader.ts(237,52): error TS2345: Argument of type '"INVALID_URL"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/FileDownloader.ts(244,79): error TS2345: Argument of type '"DOWNLOAD_FAILED"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/FileDownloader.ts(255,61): error TS2345: Argument of type '"READER_ERROR"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/FileDownloader.ts(283,29): error TS2345: Argument of type 'Uint8Array<ArrayBufferLike>[]' is not assignable to parameter of type 'BlobPart[]'.
+  Type 'Uint8Array<ArrayBufferLike>' is not assignable to type 'BlobPart'.
+    Type 'Uint8Array<ArrayBufferLike>' is not assignable to type 'ArrayBufferView<ArrayBuffer>'.
+      Types of property 'buffer' are incompatible.
+        Type 'ArrayBufferLike' is not assignable to type 'ArrayBuffer'.
+          Type 'SharedArrayBuffer' is missing the following properties from type 'ArrayBuffer': resizable, resize, detached, transfer, transferToFixedLength
+src/services/utils/FileDownloader.ts(294,69): error TS2345: Argument of type '"CONVERSION_ERROR"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/FileDownloader.ts(306,9): error TS2345: Argument of type '"DOWNLOAD_FAILED"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/FilePreviewer.ts(61,60): error TS2345: Argument of type '"FILE_TOO_LARGE"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/FilePreviewer.ts(65,69): error TS2345: Argument of type '"UNSUPPORTED_TYPE"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/FilePreviewer.ts(72,66): error TS2345: Argument of type '"MISSING_URL"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/FilePreviewer.ts(76,60): error TS2345: Argument of type '"FILE_TOO_LARGE"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/FilePreviewer.ts(79,38): error TS2339: Property 'type' does not exist on type 'FileMetadata'.
+src/services/utils/FilePreviewer.ts(80,69): error TS2345: Argument of type '"UNSUPPORTED_TYPE"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/FilePreviewer.ts(92,9): error TS2345: Argument of type '"PREVIEW_FAILED"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/FilePreviewer.ts(104,68): error TS2345: Argument of type '"UNSUPPORTED_TYPE"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/FilePreviewer.ts(131,65): error TS2345: Argument of type '"CANVAS_ERROR"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/FilePreviewer.ts(143,55): error TS2345: Argument of type '"IMAGE_LOAD_ERROR"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/FilePreviewer.ts(155,9): error TS2345: Argument of type '"THUMBNAIL_FAILED"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/FilePreviewer.ts(167,67): error TS2345: Argument of type '"UNSUPPORTED_TYPE"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/FilePreviewer.ts(171,58): error TS2345: Argument of type '"FILE_TOO_LARGE"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/FilePreviewer.ts(182,54): error TS2345: Argument of type '"FILE_READ_ERROR"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/FilePreviewer.ts(194,9): error TS2345: Argument of type '"TEXT_CONTENT_FAILED"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/FilePreviewer.ts(217,55): error TS2339: Property 'type' does not exist on type 'File | FileMetadata'.
+  Property 'type' does not exist on type 'FileMetadata'.
+src/services/utils/FilePreviewer.ts(224,54): error TS2339: Property 'type' does not exist on type 'File | FileMetadata'.
+  Property 'type' does not exist on type 'FileMetadata'.
+src/services/utils/FilePreviewer.ts(231,55): error TS2339: Property 'type' does not exist on type 'File | FileMetadata'.
+  Property 'type' does not exist on type 'FileMetadata'.
+src/services/utils/FilePreviewer.ts(238,55): error TS2339: Property 'type' does not exist on type 'File | FileMetadata'.
+  Property 'type' does not exist on type 'FileMetadata'.
+src/services/utils/FilePreviewer.ts(245,17): error TS2339: Property 'type' does not exist on type 'File | FileMetadata'.
+  Property 'type' does not exist on type 'FileMetadata'.
+src/services/utils/FilePreviewer.ts(288,38): error TS2352: Conversion of type '{ type: string; }' to type 'FileMetadata' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type '{ type: string; }' is missing the following properties from type 'FileMetadata': id, filename, url, size, and 4 more.
+src/services/utils/FilePreviewer.ts(310,38): error TS2352: Conversion of type '{ type: string; }' to type 'FileMetadata' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type '{ type: string; }' is missing the following properties from type 'FileMetadata': id, filename, url, size, and 4 more.
+src/services/utils/FilePreviewGenerator.ts(247,9): error TS2345: Argument of type '"PREVIEW_GENERATION_ERROR"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/FileUploader.ts(437,9): error TS2345: Argument of type '"UPLOAD_ERROR"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/FileUploader.ts(463,13): error TS2345: Argument of type '"VALIDATION_ERROR"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/FileUploader.ts(500,9): error TS2345: Argument of type '"UPLOAD_ERROR"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/FileUploader.ts(551,60): error TS18048: 'controller' is possibly 'undefined'.
+src/services/utils/FileUploader.ts(559,17): error TS18048: 'controller' is possibly 'undefined'.
+src/services/utils/FileUploader.ts(605,52): error TS2345: Argument of type '"UPLOAD_CANCELLED"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/FileUploader.ts(609,48): error TS2345: Argument of type '"UPLOAD_TIMEOUT"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/FileUploader.ts(696,52): error TS2345: Argument of type '"UPLOAD_CANCELLED"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/FileUploader.ts(727,11): error TS18048: 'chunk' is possibly 'undefined'.
+src/services/utils/FileUploader.ts(745,66): error TS2345: Argument of type 'UploadChunk | undefined' is not assignable to parameter of type 'UploadChunk'.
+  Type 'undefined' is not assignable to type 'UploadChunk'.
+src/services/utils/FileUploader.ts(892,7): error TS2722: Cannot invoke an object which is possibly 'undefined'.
+src/services/utils/FileValidator.ts(214,13): error TS2345: Argument of type '"FILE_TOO_LARGE"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/FileValidator.ts(225,13): error TS2345: Argument of type '"FILE_TOO_SMALL"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/FileValidator.ts(234,84): error TS2345: Argument of type '"INVALID_FILE_TYPE"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/FileValidator.ts(240,84): error TS2345: Argument of type '"BLOCKED_FILE_TYPE"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/FileValidator.ts(250,76): error TS2345: Argument of type '"INVALID_FILE_EXTENSION"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/FileValidator.ts(259,13): error TS2345: Argument of type '"BLOCKED_FILE_EXTENSION"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/FileValidator.ts(290,17): error TS2345: Argument of type '"MALWARE_DETECTED"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/FileValidator.ts(309,79): error TS2345: Argument of type '"CUSTOM_VALIDATION_FAILED"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/FileValidator.ts(330,9): error TS2345: Argument of type '"VALIDATION_ERROR"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/ImageProcessor.ts(26,24): error TS2339: Property 'isImageFile' does not exist on type 'typeof FileValidator'.
+src/services/utils/ImageProcessor.ts(27,50): error TS2345: Argument of type '"INVALID_FILE_TYPE"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/ImageProcessor.ts(54,63): error TS2345: Argument of type '"CANVAS_ERROR"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/ImageProcessor.ts(65,60): error TS2345: Argument of type '"BLOB_ERROR"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/ImageProcessor.ts(87,53): error TS2345: Argument of type '"IMAGE_LOAD_ERROR"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/ImageProcessor.ts(98,24): error TS2339: Property 'isImageFile' does not exist on type 'typeof FileValidator'.
+src/services/utils/ImageProcessor.ts(99,50): error TS2345: Argument of type '"INVALID_FILE_TYPE"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/ImageProcessor.ts(125,63): error TS2345: Argument of type '"CANVAS_ERROR"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/ImageProcessor.ts(136,60): error TS2345: Argument of type '"BLOB_ERROR"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/ImageProcessor.ts(157,53): error TS2345: Argument of type '"IMAGE_LOAD_ERROR"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/ImageProcessor.ts(168,24): error TS2339: Property 'isImageFile' does not exist on type 'typeof FileValidator'.
+src/services/utils/ImageProcessor.ts(169,50): error TS2345: Argument of type '"INVALID_FILE_TYPE"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/ImageProcessor.ts(186,53): error TS2345: Argument of type '"IMAGE_LOAD_ERROR"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/ImageProcessor.ts(197,24): error TS2339: Property 'isImageFile' does not exist on type 'typeof FileValidator'.
+src/services/utils/ImageProcessor.ts(198,50): error TS2345: Argument of type '"INVALID_FILE_TYPE"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/ImageProcessor.ts(215,63): error TS2345: Argument of type '"CANVAS_ERROR"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/ImageProcessor.ts(229,60): error TS2345: Argument of type '"BLOB_ERROR"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/ImageProcessor.ts(249,53): error TS2345: Argument of type '"IMAGE_LOAD_ERROR"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/ImageProcessor.ts(300,24): error TS2339: Property 'isImageFile' does not exist on type 'typeof FileValidator'.
+src/services/utils/ImageProcessor.ts(301,50): error TS2345: Argument of type '"INVALID_FILE_TYPE"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/ImageProcessor.ts(324,63): error TS2345: Argument of type '"CANVAS_ERROR"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/ImageProcessor.ts(339,60): error TS2345: Argument of type '"BLOB_ERROR"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/ImageProcessor.ts(359,53): error TS2345: Argument of type '"IMAGE_LOAD_ERROR"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/PathSanitizer.ts(32,42): error TS2345: Argument of type '"INVALID_PATH"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/PathSanitizer.ts(37,53): error TS2345: Argument of type '"PATH_TRAVERSAL"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/PathSanitizer.ts(55,43): error TS2345: Argument of type '"PATH_TOO_LONG"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/PathSanitizer.ts(66,48): error TS2345: Argument of type '"INVALID_PATH_SEGMENT"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/PathSanitizer.ts(71,56): error TS2345: Argument of type '"INVALID_PATH_CHARS"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/PathSanitizer.ts(76,48): error TS2345: Argument of type '"RESERVED_FILENAME"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/PathSanitizer.ts(84,50): error TS2345: Argument of type '"INVALID_PATH_SEGMENT"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/services/utils/PathSanitizer.ts(95,47): error TS2345: Argument of type '"INVALID_FILENAME"' is not assignable to parameter of type 'ErrorType | undefined'.
+src/state/subscriptionStore.ts(183,17): error TS2322: Type 'import("/Users/iamabillionaire/Downloads/loccc/node_modules/@revenuecat/purchases-typescript-internal/dist/offerings").PurchasesOffering[]' is not assignable to type 'PurchasesOffering[]'.
+  Type 'import("/Users/iamabillionaire/Downloads/loccc/node_modules/@revenuecat/purchases-typescript-internal/dist/offerings").PurchasesOffering' is not assignable to type 'PurchasesOffering'.
+    Types of property 'availablePackages' are incompatible.
+      Type 'import("/Users/iamabillionaire/Downloads/loccc/node_modules/@revenuecat/purchases-typescript-internal/dist/offerings").PurchasesPackage[]' is not assignable to type 'PurchasesPackage[]'.
+        Property 'storeProduct' is missing in type 'import("/Users/iamabillionaire/Downloads/loccc/node_modules/@revenuecat/purchases-typescript-internal/dist/offerings").PurchasesPackage' but required in type 'PurchasesPackage'.
+src/state/subscriptionStore.ts(207,68): error TS2345: Argument of type 'PurchasesPackage' is not assignable to parameter of type 'import("/Users/iamabillionaire/Downloads/loccc/node_modules/@revenuecat/purchases-typescript-internal/dist/offerings").PurchasesPackage'.
+  Type 'PurchasesPackage' is missing the following properties from type 'PurchasesPackage': product, offeringIdentifier, presentedOfferingContext
+src/utils/buildEnvironment.ts(13,30): error TS2367: This comparison appears to be unintentional because the types 'AppOwnership | null' and '"standalone"' have no overlap.
+src/utils/buildEnvironment.ts(14,24): error TS2367: This comparison appears to be unintentional because the types 'AppOwnership | null' and '"standalone"' have no overlap.
+src/utils/chatUtils.ts(72,19): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/utils/location.ts(199,28): error TS2532: Object is possibly 'undefined'.
+src/utils/location.ts(199,60): error TS2532: Object is possibly 'undefined'.
+src/utils/location.ts(270,36): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/utils/location.ts(337,15): error TS18048: 'address' is possibly 'undefined'.
+src/utils/location.ts(338,16): error TS18048: 'address' is possibly 'undefined'.
+src/utils/location.ts(368,19): error TS18048: 'address' is possibly 'undefined'.
+src/utils/location.ts(369,20): error TS18048: 'address' is possibly 'undefined'.
+TYPECHECK FAILED
+-- lint --
+
+/Users/iamabillionaire/Downloads/loccc/App.tsx
+  2:10  warning  'StatusBar' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/jest.setup.js
+   5:1  error  'jest' is not defined  no-undef
+  14:1  error  'jest' is not defined  no-undef
+
+/Users/iamabillionaire/Downloads/loccc/src/api/chatApi.ts
+  175:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+  195:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+  228:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+  265:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+  330:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+  349:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+  349:21  warning  Unreachable code                   no-unreachable
+  368:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+  368:21  warning  Unreachable code                   no-unreachable
+
+/Users/iamabillionaire/Downloads/loccc/src/components/AccessibilityTestScreen.tsx
+  9:19  warning  'isDarkMode' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/components/AdBanner.tsx
+    2:22  warning  'Platform' is defined but never used                                                                                                                                                         @typescript-eslint/no-unused-vars
+    3:10  warning  'useSafeAreaInsets' is defined but never used                                                                                                                                                @typescript-eslint/no-unused-vars
+   96:5   error    React Hook "useEffect" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?  react-hooks/rules-of-hooks
+  120:3   error    React Hook "useEffect" is called conditionally. React Hooks must be called in the exact same order in every component render                                                                 react-hooks/rules-of-hooks
+
+/Users/iamabillionaire/Downloads/loccc/src/components/AnimatedButton.tsx
+  57:8  warning  React Hook useEffect has a missing dependency: 'rotation'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/Users/iamabillionaire/Downloads/loccc/src/components/AnimatedInput.tsx
+  71:8  warning  React Hook React.useEffect has a missing dependency: 'errorAnimation'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/Users/iamabillionaire/Downloads/loccc/src/components/AuthErrorTestScreen.tsx
+   2:45  warning  'Alert' is defined but never used  @typescript-eslint/no-unused-vars
+  21:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+  31:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+  41:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+  51:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+  61:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/components/ChatInput.tsx
+    2:51  warning  'Platform' is defined but never used  @typescript-eslint/no-unused-vars
+  146:14  warning  'error' is defined but never used     @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/components/ChatRoomCard.tsx
+  3:10  warning  'Ionicons' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/components/CommentInput.tsx
+  36:16  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/components/ConfirmationModal.tsx
+  42:6  warning  React Hook React.useEffect has missing dependencies: 'opacity' and 'scale'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+/Users/iamabillionaire/Downloads/loccc/src/components/DistanceFilter.tsx
+  22:9  warning  'getCurrentLabel' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/components/EmojiPicker.tsx
+  7:16  warning  'screenWidth' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  7:37  warning  'screenHeight' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/components/EnhancedChatRoomCard.tsx
+  13:10  warning  'formatTime' is defined but never used                                                                                         @typescript-eslint/no-unused-vars
+  24:16  warning  'screenWidth' is assigned a value but never used                                                                               @typescript-eslint/no-unused-vars
+  56:10  warning  'isPressed' is assigned a value but never used                                                                                 @typescript-eslint/no-unused-vars
+  70:6   warning  React Hook useEffect has missing dependencies: 'opacity' and 'translateY'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  79:6   warning  React Hook useEffect has a missing dependency: 'typingDots'. Either include it or remove the dependency array                  react-hooks/exhaustive-deps
+
+/Users/iamabillionaire/Downloads/loccc/src/components/EnhancedMessageBubble.tsx
+   8:3   warning  'runOnJS' is defined but never used                                                                                            @typescript-eslint/no-unused-vars
+   9:3   warning  'interpolate' is defined but never used                                                                                        @typescript-eslint/no-unused-vars
+  11:13  warning  'Haptics' is defined but never used                                                                                            @typescript-eslint/no-unused-vars
+  38:16  warning  'screenWidth' is assigned a value but never used                                                                               @typescript-eslint/no-unused-vars
+  78:8   warning  React Hook useEffect has missing dependencies: 'opacity' and 'translateY'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+/Users/iamabillionaire/Downloads/loccc/src/components/EnhancedMessageInput.tsx
+   7:3   warning  'withTiming' is defined but never used                                                                              @typescript-eslint/no-unused-vars
+  40:16  warning  'screenWidth' is assigned a value but never used                                                                    @typescript-eslint/no-unused-vars
+  53:19  warning  'isDarkMode' is assigned a value but never used                                                                     @typescript-eslint/no-unused-vars
+  79:6   warning  React Hook useEffect has a missing dependency: 'sendButtonScale'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  87:6   warning  React Hook useEffect has a missing dependency: 'replyHeight'. Either include it or remove the dependency array      react-hooks/exhaustive-deps
+  95:6   warning  React Hook useEffect has a missing dependency: 'focusedScale'. Either include it or remove the dependency array     react-hooks/exhaustive-deps
+
+/Users/iamabillionaire/Downloads/loccc/src/components/ImageCarousel.tsx
+  67:25  warning  The ref value 'prefetchedUrisRef.current' will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by React, copy 'prefetchedUrisRef.current' to a variable inside the effect, and use that variable in the cleanup function  react-hooks/exhaustive-deps
+
+/Users/iamabillionaire/Downloads/loccc/src/components/LazyImage.tsx
+  26:7   warning  'SCREEN_WIDTH' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  44:10  warning  'isLoaded' is assigned a value but never used      @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/components/LoadingSpinner.tsx
+  39:8  warning  React Hook useEffect has a missing dependency: 'rotation'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/Users/iamabillionaire/Downloads/loccc/src/components/LocationSelector.tsx
+    2:9   error    Replace `·View,·Text,·Pressable,·Modal,·TextInput,·FlatList,·Keyboard,·ActivityIndicator,·KeyboardAvoidingView,·Platform·` with `⏎··View,⏎··Text,⏎··Pressable,⏎··Modal,⏎··TextInput,⏎··FlatList,⏎··Keyboard,⏎··ActivityIndicator,⏎··KeyboardAvoidingView,⏎··Platform,⏎`  prettier/prettier
+    7:26  warning  'CollegeSearchResult' is defined but never used                                                                                                                                                                                                                          @typescript-eslint/no-unused-vars
+  261:14  warning  'error' is defined but never used                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+  335:30  error    Replace `⏎··········behavior={Platform.OS·===·"ios"·?·"padding"·:·"height"}⏎··········style={{·flex:·1·}}⏎········` with `·behavior={Platform.OS·===·"ios"·?·"padding"·:·"height"}·style={{·flex:·1·}}`                                                                  prettier/prettier
+  360:11  error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  361:1   error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  362:1   error    Replace `············` with `··············`                                                                                                                                                                                                                             prettier/prettier
+  363:1   error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  364:1   error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  365:13  error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  366:1   error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  367:15  error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  368:1   error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  369:1   error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  370:17  error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  371:17  error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  372:1   error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  373:17  error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  374:1   error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  375:1   error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  376:17  error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  377:1   error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  378:1   error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  379:15  error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  380:17  error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  381:1   error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  382:19  error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  383:1   error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  384:1   error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  385:19  error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  386:17  error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  387:1   error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  388:17  error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  389:15  error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  390:1   error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  391:11  error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  393:1   error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  394:1   error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  395:13  error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  396:1   error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  397:1   error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  398:15  error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  399:15  error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  400:1   error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  401:15  error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  402:15  error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  403:1   error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  404:19  error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  405:19  error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  406:1   error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  407:13  error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  408:1   error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  409:1   error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  410:15  error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  411:1   error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  412:1   error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  413:15  error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  414:1   error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  415:1   error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  416:13  error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  417:1   error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  418:1   error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  419:17  error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  420:15  error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  421:1   error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  422:11  error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  424:1   error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  425:1   error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  426:13  error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  427:1   error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  428:1   error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  429:13  error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  430:1   error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  431:1   error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  432:11  error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  434:1   error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  435:1   error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  436:15  error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  437:1   error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  438:1   error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  439:15  error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  440:1   error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  441:17  error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  442:15  error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  443:1   error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+  444:1   error    Insert `··`                                                                                                                                                                                                                                                              prettier/prettier
+
+/Users/iamabillionaire/Downloads/loccc/src/components/MediaGallery.tsx
+  15:12  warning  'loadedImages' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/components/MediaPicker.tsx
+   5:13  warning  'MediaLibrary' is defined but never used                  @typescript-eslint/no-unused-vars
+  37:9   warning  'ALLOWED_AUDIO_TYPES' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/components/MediaThumbnail.tsx
+  3:10  warning  'Image' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/components/MediaUploadGrid.tsx
+    7:10  warning  'videoThumbnailService' is defined but never used                                                                                               @typescript-eslint/no-unused-vars
+   18:3   warning  'runOnJS' is defined but never used                                                                                                             @typescript-eslint/no-unused-vars
+  271:39  error    Replace `⏎········withTiming(360,·{·duration:·1000·}),⏎········-1,⏎········false⏎······` with `withTiming(360,·{·duration:·1000·}),·-1,·false`  prettier/prettier
+  279:6   warning  React Hook useEffect has a missing dependency: 'spinRotation'. Either include it or remove the dependency array                                 react-hooks/exhaustive-deps
+  358:38  error    Replace `'#DC2626'` with `"#DC2626"`                                                                                                            prettier/prettier
+  359:41  error    Replace `'transparent'` with `"transparent"`                                                                                                    prettier/prettier
+  361:40  error    Insert `,`                                                                                                                                      prettier/prettier
+  362:24  error    Insert `,`                                                                                                                                      prettier/prettier
+
+/Users/iamabillionaire/Downloads/loccc/src/components/MediaViewer.tsx
+  65:6  warning  React Hook useEffect has a missing dependency: 'currentMedia?.type'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/Users/iamabillionaire/Downloads/loccc/src/components/MessageBubble.tsx
+  35:6  warning  React Hook useEffect has a missing dependency: 'reactionScale'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/Users/iamabillionaire/Downloads/loccc/src/components/OfflineBanner.tsx
+  12:10  warning  'isConnected' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/components/PremiumBadge.tsx
+  13:11  warning  'colors' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/components/PremiumThemeToggle.tsx
+  12:11  warning  'theme' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/components/ProfileCardSkeleton.tsx
+  24:6  warning  React Hook useEffect has a missing dependency: 'shimmerTranslate'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/Users/iamabillionaire/Downloads/loccc/src/components/ProgressIndicator.tsx
+  34:6  warning  React Hook useEffect has a missing dependency: 'progress'. Either include it or remove the dependency array               react-hooks/exhaustive-deps
+  96:6  warning  React Hook useEffect has missing dependencies: 'opacity' and 'scale'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+/Users/iamabillionaire/Downloads/loccc/src/components/ReportModal.tsx
+   5:3   warning  'useSharedValue' is defined but never used    @typescript-eslint/no-unused-vars
+   6:3   warning  'useAnimatedStyle' is defined but never used  @typescript-eslint/no-unused-vars
+   7:3   warning  'withSpring' is defined but never used        @typescript-eslint/no-unused-vars
+   8:3   warning  'withTiming' is defined but never used        @typescript-eslint/no-unused-vars
+   9:3   warning  'FadeIn' is defined but never used            @typescript-eslint/no-unused-vars
+  10:3   warning  'FadeOut' is defined but never used           @typescript-eslint/no-unused-vars
+  62:14  warning  'error' is defined but never used             @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/components/ReviewCard.tsx
+  21:11  warning  'theme' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  21:26  warning  'isDarkMode' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/components/ReviewGridCard.tsx
+  2:10  warning  'View' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/components/ReviewSkeleton.tsx
+  17:6  warning  React Hook useEffect has a missing dependency: 'shimmerTranslate'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/Users/iamabillionaire/Downloads/loccc/src/components/ScreenErrorBoundary.tsx
+  21:10  warning  Component definition is missing display name  react/display-name
+
+/Users/iamabillionaire/Downloads/loccc/src/components/SmartChatFeatures.tsx
+  34:10  warning  'searchQuery' is assigned a value but never used                                                                      @typescript-eslint/no-unused-vars
+  34:23  warning  'setSearchQuery' is assigned a value but never used                                                                   @typescript-eslint/no-unused-vars
+  43:6   warning  React Hook useEffect has a missing dependency: 'connectionOpacity'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  49:6   warning  React Hook useEffect has a missing dependency: 'typingOpacity'. Either include it or remove the dependency array      react-hooks/exhaustive-deps
+
+/Users/iamabillionaire/Downloads/loccc/src/components/TestMonetization.tsx
+  1:27  warning  'useEffect' is defined but never used  @typescript-eslint/no-unused-vars
+  2:45  warning  'Alert' is defined but never used      @typescript-eslint/no-unused-vars
+  4:10  warning  'Ionicons' is defined but never used   @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/components/VideoTestComponent.tsx
+  2:33  warning  'Alert' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/components/VoiceMessage.tsx
+  86:6  warning  React Hook useEffect has a missing dependency: 'recordingAnimation'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/Users/iamabillionaire/Downloads/loccc/src/components/iMessageBubble.tsx
+    3:10  warning  'Ionicons' is defined but never used                  @typescript-eslint/no-unused-vars
+   18:11  warning  'theme' is assigned a value but never used            @typescript-eslint/no-unused-vars
+   18:26  warning  'isDarkMode' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  129:7   warning  'formatTimeLocal' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/components/iMessageInput.tsx
+  27:11  warning  'theme' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  27:26  warning  'isDarkMode' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/components/subscription/PaywallAdaptive.tsx
+   90:6   warning  React Hook useEffect has a missing dependency: 'loadOfferings'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  130:14  warning  'error' is defined but never used                                                                                 @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/hooks/useInterstitialAd.ts
+  1:10  warning  'useEffect' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/navigation/AppNavigator.tsx
+   20:8   warning  'ComponentErrorBoundary' is defined but never used                                                                                                           @typescript-eslint/no-unused-vars
+  122:9   warning  'insets' is assigned a value but never used                                                                                                                  @typescript-eslint/no-unused-vars
+  301:26  error    React Hook "useSafeAreaInsets" cannot be called inside a callback. React Hooks must be called in a React function component or a custom React Hook function  react-hooks/rules-of-hooks
+  397:11  warning  'colors' is assigned a value but never used                                                                                                                  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/screens/AuthScreen.tsx
+  32:6  warning  React Hook useEffect has missing dependencies: 'buttonsOpacity', 'buttonsTranslateY', 'logoOpacity', 'logoScale', 'titleOpacity', and 'titleTranslateY'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+/Users/iamabillionaire/Downloads/loccc/src/screens/BrowseScreen.tsx
+   29:11  warning  'theme' is assigned a value but never used            @typescript-eslint/no-unused-vars
+   29:26  warning  'isDarkMode' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  142:9   warning  'loadWithFilters' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  232:26  warning  'error' is defined but never used                     @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/screens/ChatRoomScreen.tsx
+  114:21  error  Replace `·onPress={()·=>·navigation.canGoBack()·?·navigation.goBack()·:·navigation.navigate("MainTabs")}·className="mt-4"` with `⏎············onPress={()·=>·(navigation.canGoBack()·?·navigation.goBack()·:·navigation.navigate("MainTabs"))}⏎············className="mt-4"⏎··········`        prettier/prettier
+  206:23  error  Replace `·onPress={()·=>·navigation.canGoBack()·?·navigation.goBack()·:·navigation.navigate("MainTabs")}·className="mr-3"` with `⏎··············onPress={()·=>·(navigation.canGoBack()·?·navigation.goBack()·:·navigation.navigate("MainTabs"))}⏎··············className="mr-3"⏎············`  prettier/prettier
+
+/Users/iamabillionaire/Downloads/loccc/src/screens/CreateReviewScreen.tsx
+   12:3   warning  'validateSocialHandle' is defined but never used                                                             @typescript-eslint/no-unused-vars
+   23:10  warning  'imageCompressionService' is defined but never used                                                          @typescript-eslint/no-unused-vars
+  120:9   warning  'maxMediaCount' is assigned a value but never used                                                           @typescript-eslint/no-unused-vars
+  158:6   warning  React Hook useMemo has a missing dependency: 'mediaCount'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  238:9   warning  Expected an assignment or function call and instead saw an expression                                        no-unused-expressions
+  240:14  warning  'e' is defined but never used                                                                                @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/screens/LocationSettingsScreen.tsx
+  109:19  error  Replace `·onPress={()·=>·navigation.canGoBack()·?·navigation.goBack()·:·navigation.navigate("Settings")}·className="mr-4"` with `⏎··········onPress={()·=>·(navigation.canGoBack()·?·navigation.goBack()·:·navigation.navigate("Settings"))}⏎··········className="mr-4"⏎········`  prettier/prettier
+
+/Users/iamabillionaire/Downloads/loccc/src/screens/NotificationsScreen.tsx
+  25:16  warning  'e' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/screens/ProfileScreen.tsx
+    2:52  warning  'Switch' is defined but never used                         @typescript-eslint/no-unused-vars
+   20:11  warning  'theme' is assigned a value but never used                 @typescript-eslint/no-unused-vars
+   20:18  warning  'isDarkMode' is assigned a value but never used            @typescript-eslint/no-unused-vars
+   20:30  warning  'setTheme' is assigned a value but never used              @typescript-eslint/no-unused-vars
+   28:10  warning  'notificationsEnabled' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  256:28  warning  'error' is defined but never used                          @typescript-eslint/no-unused-vars
+  334:1   error    Delete `⏎⏎`                                                prettier/prettier
+
+/Users/iamabillionaire/Downloads/loccc/src/screens/ReviewDetailScreen.backup.tsx
+   31:8  warning  'useAuthStore' is defined but never used                                                                         @typescript-eslint/no-unused-vars
+  170:6  warning  React Hook useEffect has a missing dependency: 'contentScale'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/Users/iamabillionaire/Downloads/loccc/src/screens/ReviewDetailScreen.tsx
+   34:8   warning  'useAuthStore' is defined but never used                                                                                                                                                                                                                                                                @typescript-eslint/no-unused-vars
+   48:9   warning  'routeParams' is assigned a value but never used                                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+   60:10  warning  'isLoading' is assigned a value but never used                                                                                                                                                                                                                                                          @typescript-eslint/no-unused-vars
+  105:14  error    Replace `·text:·"OK",·onPress:·()·=>·navigation.canGoBack()·?·navigation.goBack()·:·navigation.navigate("MainTabs")` with `⏎··············text:·"OK",⏎··············onPress:·()·=>·(navigation.canGoBack()·?·navigation.goBack()·:·navigation.navigate("MainTabs")),⏎···········`                       prettier/prettier
+  110:57  error    Replace `{·text:·"OK",·onPress:·()·=>·navigation.canGoBack()·?·navigation.goBack()·:·navigation.navigate("MainTabs")·}` with `⏎··········{⏎············text:·"OK",⏎············onPress:·()·=>·(navigation.canGoBack()·?·navigation.goBack()·:·navigation.navigate("MainTabs")),⏎··········},⏎········`  prettier/prettier
+  171:6   warning  React Hook useEffect has a missing dependency: 'contentScale'. Either include it or remove the dependency array                                                                                                                                                                                         react-hooks/exhaustive-deps
+
+/Users/iamabillionaire/Downloads/loccc/src/screens/SearchScreen.tsx
+    2:56  warning  'Image' is defined but never used                                                                                                                                                                                                                                                              @typescript-eslint/no-unused-vars
+   46:10  warning  'filters' is assigned a value but never used                                                                                                                                                                                                                                                   @typescript-eslint/no-unused-vars
+   46:19  warning  'setFilters' is assigned a value but never used                                                                                                                                                                                                                                                @typescript-eslint/no-unused-vars
+   93:31  warning  React Hook useCallback received a function whose dependencies are unknown. Pass an inline function instead                                                                                                                                                                                     react-hooks/exhaustive-deps
+  187:23  error    Replace `·onPress={()·=>·navigation.canGoBack()·?·navigation.goBack()·:·navigation.navigate("MainTabs")}·className="mr-4"` with `⏎··············onPress={()·=>·(navigation.canGoBack()·?·navigation.goBack()·:·navigation.navigate("MainTabs"))}⏎··············className="mr-4"⏎············`  prettier/prettier
+
+/Users/iamabillionaire/Downloads/loccc/src/screens/SignInScreen.tsx
+  32:29  warning  'error' is assigned a value but never used                                                                                                                                                               @typescript-eslint/no-unused-vars
+  55:6   warning  React Hook useEffect has missing dependencies: 'footerOpacity', 'footerTranslateY', 'formOpacity', 'formTranslateY', 'logoOpacity', and 'logoScale'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  95:14  warning  'err' is defined but never used                                                                                                                                                                          @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/screens/SignUpScreen.tsx
+   48:32  warning  'error' is assigned a value but never used                                                                                                                                                               @typescript-eslint/no-unused-vars
+   71:6   warning  React Hook useEffect has missing dependencies: 'footerOpacity', 'footerTranslateY', 'formOpacity', 'formTranslateY', 'logoOpacity', and 'logoScale'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  172:14  warning  'err' is defined but never used                                                                                                                                                                          @typescript-eslint/no-unused-vars
+  194:14  warning  'err' is defined but never used                                                                                                                                                                          @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/services/adMobService.ts
+  1:10  warning  'Platform' is defined but never used  @typescript-eslint/no-unused-vars
+  2:23  warning  'buildEnv' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/services/locationService.ts
+  136:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/services/notificationHelpers.ts
+  270:19  warning  Unreachable code  no-unreachable
+
+/Users/iamabillionaire/Downloads/loccc/src/services/notificationService.ts
+  124:15  warning  'appError' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  265:13  warning  'appError' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/services/utils/FileCompressor.ts
+  317:13  warning  'validate' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/services/utils/FileUploader.ts
+  711:13  warning  'options' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/services/utils/FileValidator.ts
+  434:20  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/services/videoThumbnailService.ts
+  115:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/state/commentsStore.ts
+  10:10  warning  'requireAuthentication' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/state/notificationStore.ts
+  79:19  warning  'notificationData' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/state/reviewsStore.ts
+  14:10  warning  'withMediaErrorHandling' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/state/subscriptionStore.ts
+  4:28  warning  'buildEnv' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/utils/authUtils.ts
+   44:11  warning  'appError' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  168:15  warning  'data' is assigned a value but never used      @typescript-eslint/no-unused-vars
+  206:11  warning  'appError' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/utils/buildEnvironment.ts
+   2:10  warning  'Platform' is defined but never used  @typescript-eslint/no-unused-vars
+  23:12  warning  'error' is defined but never used     @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/utils/errorHandling.ts
+  2:10  warning  'handleSupabaseError' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/utils/location.ts
+  376:16  warning  'reverseError' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/utils/mediaErrorHandling.ts
+  8:31  warning  'parseSupabaseError' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/src/utils/supabaseTestSuite.ts
+   13:10  warning  'AppError' is defined but never used       @typescript-eslint/no-unused-vars
+   81:15  warning  'data' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  102:17  warning  'data' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/iamabillionaire/Downloads/loccc/supabase/functions/ai-proxy/index.ts
+  4:23  error  Unable to resolve path to module 'https://deno.land/std@0.224.0/http/server.ts'  import/no-unresolved
+  5:30  error  Unable to resolve path to module 'https://esm.sh/@supabase/supabase-js@2'        import/no-unresolved
+
+✖ 262 problems (103 errors, 159 warnings)
+  96 errors and 0 warnings potentially fixable with the `--fix` option.
+
+LINT FAILED
+-- expo-doctor --
+env: load .env
+env: export EXPO_PUBLIC_VIBECODE_OPENAI_API_KEY EXPO_PUBLIC_VIBECODE_ANTHROPIC_API_KEY EXPO_PUBLIC_VIBECODE_GROK_API_KEY EXPO_PUBLIC_VIBECODE_GOOGLE_API_KEY EXPO_PUBLIC_VIBECODE_ELEVENLABS_API_KEY EXPO_PUBLIC_FIREBASE_API_KEY EXPO_PUBLIC_SUPABASE_ANON_KEY EXPO_PUBLIC_REVENUECAT_IOS_API_KEY EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY
+Running 17 checks on your project...
+16/17 checks passed. 1 checks failed. Possible issues detected:
+Use the --verbose flag to see more details about passed checks.
+
+✖ Check dependencies for packages that should not be installed directly
+The package "expo-dev-menu" should not be installed directly in your project. It is a dependency of other Expo packages, which will install it automatically as needed.
+Advice:
+Remove these packages from your package.json.
+
+1 check failed, indicating possible issues with the project.
+EXPO-DOCTOR FAILED

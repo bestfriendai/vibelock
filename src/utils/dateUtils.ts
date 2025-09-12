@@ -28,7 +28,7 @@ export function toDateSafe(value: any): Date {
     console.warn(`Unknown date format: ${typeof value}`, value);
     return new Date();
   } catch (error) {
-    console.error(`Error parsing date: ${value}`, error);
+    console.warn(`Error parsing date: ${value}`, error);
     return new Date();
   }
 }

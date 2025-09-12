@@ -34,7 +34,7 @@ class SocialSharingService {
         return true;
       }
     } catch (error) {
-      console.error("Share failed:", error);
+      console.warn("Share failed:", error);
       Alert.alert("Share Failed", "Unable to share at this time. Please try again later.", [{ text: "OK" }]);
       return false;
     }
@@ -59,7 +59,7 @@ class SocialSharingService {
         return false;
       }
     } catch (error) {
-      console.error("Twitter share failed:", error);
+      console.warn("Twitter share failed:", error);
       return false;
     }
   }
@@ -93,7 +93,7 @@ class SocialSharingService {
         return false;
       }
     } catch (error) {
-      console.error("Instagram share failed:", error);
+      console.warn("Instagram share failed:", error);
       return false;
     }
   }
@@ -114,7 +114,7 @@ class SocialSharingService {
         return false;
       }
     } catch (error) {
-      console.error("WhatsApp share failed:", error);
+      console.warn("WhatsApp share failed:", error);
       return false;
     }
   }
@@ -127,7 +127,7 @@ class SocialSharingService {
       await Clipboard.setStringAsync(text);
       return true;
     } catch (error) {
-      console.error("Clipboard copy failed:", error);
+      console.warn("Clipboard copy failed:", error);
       return false;
     }
   }
@@ -234,7 +234,7 @@ Download now: ${this.getAppDownloadLink()}
         return true;
       }
     } catch (error) {
-      console.error("App invitation share failed:", error);
+      console.warn("App invitation share failed:", error);
       return false;
     }
   }

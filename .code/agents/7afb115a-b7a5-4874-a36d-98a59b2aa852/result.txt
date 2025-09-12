@@ -1,0 +1,117 @@
+Loaded cached credentials.
+Here is a comprehensive plan to validate and stabilize the application on Expo SDK 54.
+
+### 1. Compatibility Audit
+
+This audit cross-references `package.json` dependencies with Expo SDK 54, React Native 0.81, and React 19 requirements.
+
+| Dependency | Version (from user) | Expo 54 / RN 0.81 Status | Notes & Recommendations |
+| :--- | :--- | :--- | :--- |
+| `expo` | `54.0.2` | ✅ **Compatible** | Base SDK, no issues expected. |
+| `react` | `19.1.0` | ✅ **Compatible** | React 19 is supported by Expo 54. |
+| `react-native` | `0.81.4` | ✅ **Compatible** | Expo 54 is built on RN 0.81. |
+| `react-native-web` | `0.21.0` | ✅ **Compatible** | Aligned with Expo 54. |
+| `react-navigation/*` | `v7` | ✅ **Compatible** | Generally compatible, but requires careful checking of all v7 packages. |
+| `react-native-reanimated` | `^4.1.0` | ⚠️ **High Risk** | Reanimated 4.x is a major change. Requires `react-native-reanimated/plugin` in `babel.config.js`. Thorough testing is critical. |
+| `react-native-gesture-handler` | `~2.28.0` | ✅ **Compatible** | Version is aligned with Expo 54. |
+| `react-native-screens` | `~4.16.0` | ✅ **Compatible** | Version is aligned with Expo 54. |
+| `@shopify/react-native-skia` | `2.2.12` | ✅ **Compatible** | Check for breaking changes in this version. |
+| `react-native-vision-camera` | `^4.7.2` | ⚠️ **High Risk** | Requires dev client. Permissions (camera, microphone) must be correctly configured in `app.json` and usage descriptions provided. |
+| `react-native-purchases` | `^9.4.0` | ✅ **Compatible** | RevenueCat SDK v9 is compatible. Requires dev client. |
+| `react-native-google-mobile-ads` | `^15.7.0` | ✅ **Compatible** | Requires dev client and `app.json` configuration for AdMob app ID. |
+| `nativewind` | `4.1.23` | ✅ **Compatible** | NativeWind v4 is the standard for new Expo apps. |
+| `rn-mmkv` | `3.3.1` | ✅ **Compatible** | Should work with dev client. |
+| `jest-expo` | `^54.0.10` | ✅ **Compatible** | Aligned with Expo 54. |
+
+### 2. Risk Register
+
+| Risk ID | Risk Area | Description | Impact | Mitigation |
+| :--- | :--- | :--- | :--- | :--- |
+| R01 | **Reanimated v4** | The new architecture in Reanimated v4 can cause unexpected UI behavior or crashes if not configured correctly. | High | App-wide UI/animation failures. | Verify `babel.config.js` includes the Reanimated plugin. Test all animations and gestures. |
+| R02 | **Vision Camera** | `react-native-vision-camera` is a powerful but complex native module. Incorrect setup, permissions, or usage can lead to crashes. | High | Camera features will fail. | Use a dev client. Verify permissions in `app.json`. Test on physical devices. |
+| R03 | **Monetization** | RevenueCat and AdMob are critical for revenue. Both require native setup and are sensitive to build configurations. | High | In-app purchases and ads will fail, impacting revenue. | Test on physical devices with sandbox accounts. Verify `app.json` and native project configurations. |
+| R04 | **Web Compatibility** | Native modules like Vision Camera, Purchases, and AdMob are not supported on web. | Medium | App may crash on web if native modules are not properly guarded. | Use `Platform.OS` or a custom hook to guard native module usage. Ensure mock implementations for web. |
+| R05 | **Expo Notifications** | Setup requires correct APNs/FCM configuration, and handling tokens and permissions can be complex. | Medium | Push notifications will not work. | Test on physical devices. Use the Expo Push Notification Tool for debugging. |
+| R06 | **Deep Linking** | Incorrectly configured deep links can fail to open the app to the correct screen. | Medium | Poor user experience, broken external links. | Test all deep link paths defined in `App.tsx`. |
+
+### 3. Verification Plan
+
+#### Phase 1: Static & Configuration Checks
+
+1.  **Verify Environment**:
+    *   **Command**: `npm run verify:env`
+    *   **Purpose**: Ensure all required `EXPO_PUBLIC_*` environment variables are defined.
+2.  **Lint & Type Check**:
+    *   **Command**: `npm run check`
+    *   **Purpose**: Catch static errors and ensure code quality.
+3.  **Review `package.json`**:
+    *   **Action**: Manually audit all dependencies against the compatibility matrix above.
+    *   **Purpose**: Confirm all versions are aligned with Expo 54.
+4.  **Inspect Native Configurations**:
+    *   **File**: `app.json`
+    *   **Action**:
+        *   Verify `expo.android.permissions` and `expo.ios.infoPlist` for camera, location, and notifications.
+        *   Check for AdMob app ID.
+        *   Ensure `expo.plugins` includes `react-native-purchases` and any other required plugins.
+    *   **File**: `eas.json`
+    *   **Action**: Review build profiles, especially for `development` and `production`.
+
+#### Phase 2: Build-Time Checks
+
+1.  **Install Dependencies**:
+    *   **Command**: `rm -rf node_modules && npm install`
+    *   **Purpose**: Ensure a clean install of all dependencies.
+2.  **Prebuild & Compile (Dev Client)**:
+    *   **Commands**:
+        *   `npx expo prebuild --clean`
+        *   `npx expo run:ios`
+        *   `npx expo run:android`
+    *   **Purpose**: Generate native projects and confirm they compile successfully with the dev client. This is the most critical step for validating native module integrations.
+
+#### Phase 3: Runtime & Integration Tests
+
+1.  **Run Unit Tests**:
+    *   **Command**: `npm test`
+    *   **Purpose**: Verify business logic and component rendering in a test environment.
+2.  **Manual E2E Testing**:
+    *   **Action**: Launch the app on iOS, Android, and web. Follow the test matrix below.
+    *   **Purpose**: Perform a full smoke test of all critical user flows.
+
+#### Phase 4: Release Checks
+
+1.  **EAS Build**:
+    *   **Commands**:
+        *   `eas build --profile production --platform ios`
+        *   `eas build --profile production --platform android`
+    *   **Purpose**: Create production builds to submit to app stores.
+2.  **TestFlight & Internal Testing**:
+    *   **Action**: Deploy the production build to TestFlight (iOS) and Google Play Internal Testing (Android).
+    *   **Purpose**: Final validation of the production app, including push notifications and in-app purchases in their sandbox environments.
+
+### 4. Test Matrix
+
+| Flow | iOS (Device) | Android (Device) | Web (Chrome) | Key Checks |
+| :--- | :--- | :--- | :--- | :--- |
+| **Authentication** | ✅ | ✅ | ✅ | Sign up, sign in, sign out, gated routes. |
+| **Chat** | ✅ | ✅ | ✅ | Send/receive messages, view chat rooms. |
+| **Reviews** | ✅ | ✅ | ✅ | Create, view, and delete reviews. |
+| **Profile** | ✅ | ✅ | ✅ | View own and other profiles. |
+| **Monetization** | ✅ | ✅ | ❌ | View ads, initiate IAP (sandbox). |
+| **Camera** | ✅ | ✅ | ❌ | Open camera, take a picture. |
+| **Notifications** | ✅ | ✅ | ❌ | Receive a push notification. |
+| **Deep Linking** | ✅ | ✅ | ✅ | Open app from a URL to a specific screen. |
+| **Offline Mode** | ✅ | ✅ | ✅ | App remains usable without a network connection. |
+
+### 5. Prioritized Fix Plan
+
+1.  **High Priority - Mitigate Core Risks**:
+    *   **Action**: Thoroughly test all features using `react-native-reanimated` and `react-native-vision-camera` on physical devices using the dev client.
+    *   **Justification**: These are the highest-risk dependencies and are likely to cause issues.
+2.  **Medium Priority - Verify Native Integrations**:
+    *   **Action**: Test the full monetization flow (AdMob and RevenueCat) in a sandbox environment.
+    *   **Justification**: These are critical for business success and require native configurations that can easily break.
+3.  **Low Priority - Web and Expo Go Fallbacks**:
+    *   **Action**: Review all code that uses native modules and ensure there are proper fallbacks for web and Expo Go.
+    *   **Justification**: While important for a good developer experience and web support, this is less critical than core app functionality on native devices.
+
+This plan provides a structured approach to validating your application. By following these steps, you can systematically identify and address issues, leading to a stable and production-ready app on Expo SDK 54.

@@ -105,7 +105,7 @@ export default function ReviewDetailScreen() {
             navigation.goBack();
           }
         } catch (error) {
-          console.error("Error loading review:", error);
+          console.warn("Error loading review:", error);
           navigation.goBack();
         } finally {
           setReviewLoading(false);
@@ -158,9 +158,7 @@ export default function ReviewDetailScreen() {
         damping: 20,
         stiffness: 200,
         mass: 0.8,
-        overshootClamping: false,
-        restDisplacementThreshold: 0.01,
-        restSpeedThreshold: 0.01,
+        // clamp: false, // Removed as it's not supported in this version
       });
 
       // Load comments from Firebase
@@ -227,7 +225,7 @@ export default function ReviewDetailScreen() {
     try {
       await loadComments(review.id);
     } catch (error) {
-      console.error("Error refreshing comments:", error);
+      console.warn("Error refreshing comments:", error);
     } finally {
       setRefreshing(false);
     }
@@ -241,7 +239,7 @@ export default function ReviewDetailScreen() {
       // Clear reply state after successful comment
       setReplyToComment(null);
     } catch (error) {
-      console.error("Error posting comment:", error);
+      console.warn("Error posting comment:", error);
     }
   };
 
@@ -251,7 +249,7 @@ export default function ReviewDetailScreen() {
     try {
       await likeComment(review.id, commentId);
     } catch (error) {
-      console.error("Error liking comment:", error);
+      console.warn("Error liking comment:", error);
     }
   };
 
@@ -261,7 +259,7 @@ export default function ReviewDetailScreen() {
     try {
       await dislikeComment(review.id, commentId);
     } catch (error) {
-      console.error("Error disliking comment:", error);
+      console.warn("Error disliking comment:", error);
     }
   };
 
@@ -364,7 +362,7 @@ export default function ReviewDetailScreen() {
             </View>
 
             {/* Image Carousel */}
-            {reviewWithMedia.media && reviewWithMedia.media.length > 0 && (
+            {reviewWithMedia?.media && reviewWithMedia.media.length > 0 && (
               <View className="mb-8">
                 <ImageCarousel
                   media={reviewWithMedia.media}
@@ -490,7 +488,7 @@ export default function ReviewDetailScreen() {
       </KeyboardAvoidingView>
 
       {/* Media Viewer Modal */}
-      {reviewWithMedia.media && (
+      {reviewWithMedia?.media && (
         <MediaViewer
           visible={showMediaViewer}
           media={reviewWithMedia.media}

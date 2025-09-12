@@ -1,3 +1,4 @@
+/* global jest */
 // Gesture Handler setup to silence warnings in tests
 import "react-native-gesture-handler/jestSetup";
 

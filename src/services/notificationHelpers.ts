@@ -25,7 +25,7 @@ export async function notifyNewReview(reviewId: string, reviewedPersonName: stri
     // This could be enhanced to notify users in the same location or with matching preferences
     await sendNotificationToAllUsers(notification);
   } catch (error) {
-    console.error("Failed to send new review notification:", error);
+    console.warn("Failed to send new review notification:", error);
   }
 }
 
@@ -46,7 +46,7 @@ export async function notifyReviewApproved(authorId: string, reviewId: string, r
 
     await notificationService.createNotification(authorId, notification);
   } catch (error) {
-    console.error("Failed to send review approved notification:", error);
+    console.warn("Failed to send review approved notification:", error);
   }
 }
 
@@ -73,7 +73,7 @@ export async function notifyReviewRejected(
 
     await notificationService.createNotification(authorId, notification);
   } catch (error) {
-    console.error("Failed to send review rejected notification:", error);
+    console.warn("Failed to send review rejected notification:", error);
   }
 }
 
@@ -90,7 +90,7 @@ export async function notifyNewComment(reviewId: string, commentAuthorName: stri
       .single();
 
     if (error || !review) {
-      console.error("Failed to get review for comment notification:", error);
+      console.warn("Failed to get review for comment notification:", error);
       return;
     }
 
@@ -107,7 +107,7 @@ export async function notifyNewComment(reviewId: string, commentAuthorName: stri
 
     await notificationService.createNotification(review.author_id, notification);
   } catch (error) {
-    console.error("Failed to send new comment notification:", error);
+    console.warn("Failed to send new comment notification:", error);
   }
 }
 
@@ -141,7 +141,7 @@ export async function notifyNewMessage(
       await sendNotificationToChatRoomMembers(chatRoomId, notification);
     }
   } catch (error) {
-    console.error("Failed to send new message notification:", error);
+    console.warn("Failed to send new message notification:", error);
   }
 }
 
@@ -170,7 +170,7 @@ export async function notifySafetyAlert(title: string, message: string, targetUs
       await sendNotificationToAllUsers(notification);
     }
   } catch (error) {
-    console.error("Failed to send safety alert notification:", error);
+    console.warn("Failed to send safety alert notification:", error);
   }
 }
 
@@ -184,7 +184,7 @@ async function sendNotificationToAllUsers(notification: NotificationData) {
     const { data: users, error } = await supabase.from("users").select("id").limit(1000); // Limit to prevent overwhelming the system
 
     if (error) {
-      console.error("Failed to get users for notification:", error);
+      console.warn("Failed to get users for notification:", error);
       return;
     }
 
@@ -193,7 +193,7 @@ async function sendNotificationToAllUsers(notification: NotificationData) {
       await notificationService.createNotification(user.id, notification);
     }
   } catch (error) {
-    console.error("Failed to send notification to all users:", error);
+    console.warn("Failed to send notification to all users:", error);
   }
 }
 
@@ -215,7 +215,7 @@ async function sendNotificationToChatRoomMembers(chatRoomId: string, notificatio
       .eq('is_active', true);
 
     if (error) {
-      console.error('Failed to get chat room members:', error);
+      console.warn('Failed to get chat room members:', error);
       return;
     }
 
@@ -224,7 +224,7 @@ async function sendNotificationToChatRoomMembers(chatRoomId: string, notificatio
     }
     */
   } catch (error) {
-    console.error("Failed to send notification to chat room members:", error);
+    console.warn("Failed to send notification to chat room members:", error);
   }
 }
 
@@ -246,10 +246,10 @@ export async function scheduleNotification(userId: string, notification: Notific
     });
 
     if (error) {
-      console.error("Failed to schedule notification:", error);
+      console.warn("Failed to schedule notification:", error);
     }
   } catch (error) {
-    console.error("Error scheduling notification:", error);
+    console.warn("Error scheduling notification:", error);
   }
 }
 
@@ -268,7 +268,7 @@ export async function getUserNotificationPreferences(userId: string) {
       reviewApproval: true,
     };
   } catch (error) {
-    console.error("Failed to get notification preferences:", error);
+    console.warn("Failed to get notification preferences:", error);
     return null;
   }
 }
@@ -282,6 +282,6 @@ export async function updateUserNotificationPreferences(userId: string, preferen
     // For now, just log the preferences
     console.log(`Would update notification preferences for user ${userId}:`, preferences);
   } catch (error) {
-    console.error("Failed to update notification preferences:", error);
+    console.warn("Failed to update notification preferences:", error);
   }
 }

@@ -202,7 +202,7 @@ const useNotificationStore = create<NotificationStore>()(
           const unreadCount = await notificationService.getUnreadCount(userId);
           set({ unreadCount });
         } catch (error) {
-          console.error("Failed to update unread count:", error);
+          console.warn("Failed to update unread count:", error);
         }
       },
 

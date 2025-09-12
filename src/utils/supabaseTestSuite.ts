@@ -273,7 +273,7 @@ class SupabaseTestSuite {
         error,
       });
 
-      console.error(`❌ ${name}: ${errorMessage} (${duration}ms)`);
+      console.warn(`❌ ${name}: ${errorMessage} (${duration}ms)`);
     }
   }
 
@@ -319,7 +319,7 @@ class SupabaseTestSuite {
       console.log("✅ Quick health check passed");
       return true;
     } catch (error) {
-      console.error("❌ Quick health check failed:", error);
+      console.warn("❌ Quick health check failed:", error);
       return false;
     }
   }

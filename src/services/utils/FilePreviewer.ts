@@ -1,4 +1,4 @@
-import { AppError } from "../../types/error";
+import { AppError, ErrorType } from "../../types/error";
 import { FileMetadata } from "../../types/storage";
 
 /**
@@ -58,26 +58,27 @@ export class FilePreviewer {
       if (file instanceof File) {
         // For File objects, create an object URL
         if (file.size > this.MAX_PREVIEW_SIZE) {
-          throw new AppError("File too large for preview", "FILE_TOO_LARGE", 400);
+          throw new AppError("File too large for preview", ErrorType.VALIDATION, "FILE_TOO_LARGE", 400);
         }
 
         if (!this.isPreviewable(file.type)) {
-          throw new AppError("File type not supported for preview", "UNSUPPORTED_TYPE", 400);
+          throw new AppError("File type not supported for preview", ErrorType.VALIDATION, "UNSUPPORTED_TYPE", 400);
         }
 
         return URL.createObjectURL(file);
       } else {
         // For FileMetadata objects, use the provided URL
         if (!url) {
-          throw new AppError("URL is required for FileMetadata", "MISSING_URL", 400);
+          throw new AppError("URL is required for FileMetadata", ErrorType.VALIDATION, "MISSING_URL", 400);
         }
 
         if (file.size > this.MAX_PREVIEW_SIZE) {
-          throw new AppError("File too large for preview", "FILE_TOO_LARGE", 400);
+          throw new AppError("File too large for preview", ErrorType.VALIDATION, "FILE_TOO_LARGE", 400);
         }
 
-        if (!this.isPreviewable(file.type)) {
-          throw new AppError("File type not supported for preview", "UNSUPPORTED_TYPE", 400);
+        const fileType = "type" in file ? file.type : file.contentType;
+        if (!this.isPreviewable(fileType as string)) {
+          throw new AppError("File type not supported for preview", ErrorType.VALIDATION, "UNSUPPORTED_TYPE", 400);
         }
 
         return url;
@@ -89,6 +90,7 @@ export class FilePreviewer {
 
       throw new AppError(
         `Failed to generate preview URL: ${error instanceof Error ? error.message : "Unknown error"}`,
+        ErrorType.SERVER,
         "PREVIEW_FAILED",
         500,
       );
@@ -101,7 +103,7 @@ export class FilePreviewer {
   static async generateThumbnail(file: File, maxWidth: number = 200, maxHeight: number = 200): Promise<string> {
     try {
       if (!this.isImageFile(file)) {
-        throw new AppError("File is not a supported image format", "UNSUPPORTED_TYPE", 400);
+        throw new AppError("File is not a supported image format", ErrorType.VALIDATION, "UNSUPPORTED_TYPE", 400);
       }
 
       return new Promise((resolve, reject) => {
@@ -128,7 +130,7 @@ export class FilePreviewer {
 
           const ctx = canvas.getContext("2d");
           if (!ctx) {
-            reject(new AppError("Failed to get canvas context", "CANVAS_ERROR", 500));
+            reject(new AppError("Failed to get canvas context", ErrorType.SERVER, "CANVAS_ERROR", 500));
             return;
           }
 
@@ -140,7 +142,7 @@ export class FilePreviewer {
 
         img.onerror = () => {
           URL.revokeObjectURL(url);
-          reject(new AppError("Failed to load image", "IMAGE_LOAD_ERROR", 500));
+          reject(new AppError("Failed to load image", ErrorType.SERVER, "IMAGE_LOAD_ERROR", 500));
         };
 
         img.src = url;
@@ -152,6 +154,7 @@ export class FilePreviewer {
 
       throw new AppError(
         `Failed to generate thumbnail: ${error instanceof Error ? error.message : "Unknown error"}`,
+        ErrorType.SERVER,
         "THUMBNAIL_FAILED",
         500,
       );
@@ -164,11 +167,11 @@ export class FilePreviewer {
   static async getTextContent(file: File): Promise<string> {
     try {
       if (!this.isTextFile(file)) {
-        throw new AppError("File is not a supported text format", "UNSUPPORTED_TYPE", 400);
+        throw new AppError("File is not a supported text format", ErrorType.VALIDATION, "UNSUPPORTED_TYPE", 400);
       }
 
       if (file.size > this.MAX_PREVIEW_SIZE) {
-        throw new AppError("File too large for preview", "FILE_TOO_LARGE", 400);
+        throw new AppError("File too large for preview", ErrorType.VALIDATION, "FILE_TOO_LARGE", 400);
       }
 
       return new Promise((resolve, reject) => {
@@ -179,7 +182,7 @@ export class FilePreviewer {
         };
 
         reader.onerror = () => {
-          reject(new AppError("Failed to read file", "FILE_READ_ERROR", 500));
+          reject(new AppError("Failed to read file", ErrorType.SERVER, "FILE_READ_ERROR", 500));
         };
 
         reader.readAsText(file);
@@ -191,6 +194,7 @@ export class FilePreviewer {
 
       throw new AppError(
         `Failed to get text content: ${error instanceof Error ? error.message : "Unknown error"}`,
+        ErrorType.SERVER,
         "TEXT_CONTENT_FAILED",
         500,
       );
@@ -214,35 +218,40 @@ export class FilePreviewer {
    * Check if a file is an image
    */
   static isImageFile(file: File | FileMetadata): boolean {
-    return this.SUPPORTED_IMAGE_FORMATS.includes(file.type);
+    const fileType = "type" in file ? file.type : file.contentType;
+    return this.SUPPORTED_IMAGE_FORMATS.includes(fileType);
   }
 
   /**
    * Check if a file is a text file
    */
   static isTextFile(file: File | FileMetadata): boolean {
-    return this.SUPPORTED_TEXT_FORMATS.includes(file.type);
+    const fileType = "type" in file ? file.type : file.contentType;
+    return this.SUPPORTED_TEXT_FORMATS.includes(fileType);
   }
 
   /**
    * Check if a file is a video file
    */
   static isVideoFile(file: File | FileMetadata): boolean {
-    return this.SUPPORTED_VIDEO_FORMATS.includes(file.type);
+    const fileType = "type" in file ? file.type : file.contentType;
+    return this.SUPPORTED_VIDEO_FORMATS.includes(fileType);
   }
 
   /**
    * Check if a file is an audio file
    */
   static isAudioFile(file: File | FileMetadata): boolean {
-    return this.SUPPORTED_AUDIO_FORMATS.includes(file.type);
+    const fileType = "type" in file ? file.type : file.contentType;
+    return this.SUPPORTED_AUDIO_FORMATS.includes(fileType);
   }
 
   /**
    * Check if a file is a PDF file
    */
   static isPdfFile(file: File | FileMetadata): boolean {
-    return file.type === this.SUPPORTED_PDF_FORMAT;
+    const fileType = "type" in file ? file.type : file.contentType;
+    return fileType === this.SUPPORTED_PDF_FORMAT;
   }
 
   /**
@@ -285,7 +294,7 @@ export class FilePreviewer {
    * Get a generic icon for a file type
    */
   static getGenericIcon(mimeType: string): string {
-    const type = this.getPreviewType({ type: mimeType } as FileMetadata);
+    const type = this.getPreviewType({ contentType: mimeType } as FileMetadata);
 
     switch (type) {
       case "image":
@@ -307,7 +316,7 @@ export class FilePreviewer {
    * Get a color for a file type
    */
   static getFileTypeColor(mimeType: string): string {
-    const type = this.getPreviewType({ type: mimeType } as FileMetadata);
+    const type = this.getPreviewType({ contentType: mimeType } as FileMetadata);
 
     switch (type) {
       case "image":

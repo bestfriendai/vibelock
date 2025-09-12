@@ -115,7 +115,7 @@ export type RedFlag =
 
 export interface FilterOptions {
   category: ReviewCategory;
-  radius?: number; // in miles, undefined means show all
+  radius?: number | null; // in miles, undefined or null means show all
   sortBy: "recent" | "most_reviewed" | "highest_rated";
 }
 

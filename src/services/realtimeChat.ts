@@ -51,7 +51,7 @@ class EnhancedRealtimeChatService {
       this.connectionStatus = "connected";
       console.log("✅ Enhanced Realtime Chat Service initialized");
     } catch (error) {
-      console.error("Failed to initialize real-time service:", error);
+      console.warn("Failed to initialize real-time service:", error);
       throw new AppError("Failed to initialize chat service", ErrorType.NETWORK);
     }
   }
@@ -134,10 +134,10 @@ class EnhancedRealtimeChatService {
 
             this.retryAttempts.delete(roomId);
           } else if (status === "CHANNEL_ERROR") {
-            console.error(`❌ Channel error for room ${roomId}:`, error);
+            console.warn(`❌ Channel error for room ${roomId}:`, error);
             this.handleChannelError(roomId, error);
           } else if (status === "TIMED_OUT") {
-            console.error(`⏰ Channel timeout for room ${roomId}`);
+            console.warn(`⏰ Channel timeout for room ${roomId}`);
             this.handleChannelTimeout(roomId);
           }
         });
@@ -145,7 +145,7 @@ class EnhancedRealtimeChatService {
       this.channels.set(roomId, channel);
       return channel;
     } catch (error: any) {
-      console.error(`Failed to join room ${roomId}:`, error);
+      console.warn(`Failed to join room ${roomId}:`, error);
       throw new AppError(`Failed to join chat room: ${error?.message || "Unknown error"}`, ErrorType.NETWORK);
     }
   }
@@ -177,7 +177,7 @@ class EnhancedRealtimeChatService {
         .limit(limit);
 
       if (error) {
-        console.error(`❌ Error loading messages for room ${roomId}:`, error);
+        console.warn(`❌ Error loading messages for room ${roomId}:`, error);
         throw error;
       }
 
@@ -199,7 +199,7 @@ class EnhancedRealtimeChatService {
         }
       }
     } catch (error) {
-      console.error(`Failed to load messages for room ${roomId}:`, error);
+      console.warn(`Failed to load messages for room ${roomId}:`, error);
       throw new AppError("Failed to load chat messages", ErrorType.SERVER);
     }
   }
@@ -220,7 +220,7 @@ class EnhancedRealtimeChatService {
 
       return messages ? messages.reverse().map(this.formatMessage) : [];
     } catch (error) {
-      console.error(`Failed to load older messages for room ${roomId}:`, error);
+      console.warn(`Failed to load older messages for room ${roomId}:`, error);
       return [];
     }
   }
@@ -247,7 +247,7 @@ class EnhancedRealtimeChatService {
       // Batch updates for better performance
       this.batchMessageUpdate(roomId, newMessage);
     } catch (error) {
-      console.error("Error handling new message:", error);
+      console.warn("Error handling new message:", error);
     }
   }
 
@@ -294,7 +294,7 @@ class EnhancedRealtimeChatService {
         callback([updatedMessage], false); // false indicates this is an update, not initial load
       }
     } catch (error) {
-      console.error("Error handling message update:", error);
+      console.warn("Error handling message update:", error);
     }
   }
 
@@ -325,7 +325,7 @@ class EnhancedRealtimeChatService {
         callback(members);
       }
     } catch (error) {
-      console.error("Error handling presence sync:", error);
+      console.warn("Error handling presence sync:", error);
     }
   }
 
@@ -362,7 +362,7 @@ class EnhancedRealtimeChatService {
         callback([{ userId, userName, timestamp: 0 }]);
       }
     } catch (error) {
-      console.error("Error handling typing broadcast:", error);
+      console.warn("Error handling typing broadcast:", error);
     }
   }
 
@@ -383,7 +383,7 @@ class EnhancedRealtimeChatService {
         },
       });
     } catch (error) {
-      console.error("Failed to send typing indicator:", error);
+      console.warn("Failed to send typing indicator:", error);
     }
   }
 
@@ -421,7 +421,7 @@ class EnhancedRealtimeChatService {
       const { error } = await supabase.from("chat_messages_firebase").insert(messageData);
 
       if (error) {
-        console.error("❌ Error sending message:", error);
+        console.warn("❌ Error sending message:", error);
         throw error;
       }
 
@@ -435,7 +435,7 @@ class EnhancedRealtimeChatService {
 
       console.log("✅ Message sent successfully");
     } catch (error: any) {
-      console.error("💥 Failed to send message:", error);
+      console.warn("💥 Failed to send message:", error);
       throw new AppError(`Failed to send message: ${error?.message || "Unknown error"}`, ErrorType.NETWORK);
     }
   }
@@ -474,7 +474,7 @@ class EnhancedRealtimeChatService {
 
       if (updateError) throw updateError;
     } catch (error: any) {
-      console.error("Failed to send reaction:", error);
+      console.warn("Failed to send reaction:", error);
       throw new AppError(`Failed to send reaction: ${error?.message || "Unknown error"}`, ErrorType.NETWORK);
     }
   }
@@ -507,7 +507,7 @@ class EnhancedRealtimeChatService {
 
       this.reconnectTimeouts.set(roomId, timeout);
     } else {
-      console.error(`❌ Max retries exceeded for room ${roomId}`);
+      console.warn(`❌ Max retries exceeded for room ${roomId}`);
       throw new AppError("Failed to connect to chat room", ErrorType.NETWORK);
     }
   }
@@ -527,7 +527,7 @@ class EnhancedRealtimeChatService {
 
       console.log(`🔄 Reconnecting to room ${roomId}`);
     } catch (error) {
-      console.error(`Failed to reconnect to room ${roomId}:`, error);
+      console.warn(`Failed to reconnect to room ${roomId}:`, error);
     }
   }
 
@@ -582,7 +582,7 @@ class EnhancedRealtimeChatService {
 
       console.log(`👋 Left room ${roomId}`);
     } catch (error) {
-      console.error(`Failed to leave room ${roomId}:`, error);
+      console.warn(`Failed to leave room ${roomId}:`, error);
     }
   }
 
@@ -616,7 +616,7 @@ class EnhancedRealtimeChatService {
       this.connectionStatus = "disconnected";
       console.log("🧹 Real-time chat service cleaned up");
     } catch (error) {
-      console.error("Failed to cleanup real-time service:", error);
+      console.warn("Failed to cleanup real-time service:", error);
     }
   }
 

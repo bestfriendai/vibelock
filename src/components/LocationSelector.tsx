@@ -1,5 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, Pressable, Modal, TextInput, FlatList, Keyboard, ActivityIndicator, KeyboardAvoidingView, Platform } from "react-native";
+import {
+  View,
+  Text,
+  Pressable,
+  Modal,
+  TextInput,
+  FlatList,
+  Keyboard,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { getCurrentLocation, reverseGeocodeLocation, searchLocations, geocodeCityStateCached } from "../utils/location";
@@ -332,10 +343,7 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
         presentationStyle="pageSheet"
         onRequestClose={() => setModalVisible(false)}
       >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={{ flex: 1 }}
-        >
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
           <View className="flex-1" style={{ backgroundColor: colors.background }}>
             {/* Header */}
             <View
@@ -357,91 +365,91 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
               </Pressable>
             </View>
 
-          {/* Search Input */}
-          <View className="px-4 py-3 border-b border-surface-700">
-            <View
-              className="flex-row items-center rounded-lg px-3 py-2"
-              style={{ backgroundColor: colors.surface[800] }}
-            >
-              <Ionicons name="search" size={20} color={colors.text.muted} />
-              <TextInput
-                value={searchText}
-                onChangeText={setSearchText}
-                placeholder="Search cities or schools..."
-                placeholderTextColor={colors.text.muted}
-                className="flex-1 ml-2"
-                style={{
-                  color: colors.text.primary,
-                  fontSize: 16,
-                }}
-                autoFocus
-              />
-              {searchText.length > 0 && (
-                <Pressable
-                  onPress={() => setSearchText("")}
-                  accessible={true}
-                  accessibilityRole="button"
-                  accessibilityLabel="Clear search"
-                  accessibilityHint="Double tap to clear the search text"
-                >
-                  <Ionicons name="close-circle" size={20} color={colors.text.muted} />
-                </Pressable>
+            {/* Search Input */}
+            <View className="px-4 py-3 border-b border-surface-700">
+              <View
+                className="flex-row items-center rounded-lg px-3 py-2"
+                style={{ backgroundColor: colors.surface[800] }}
+              >
+                <Ionicons name="search" size={20} color={colors.text.muted} />
+                <TextInput
+                  value={searchText}
+                  onChangeText={setSearchText}
+                  placeholder="Search cities or schools..."
+                  placeholderTextColor={colors.text.muted}
+                  className="flex-1 ml-2"
+                  style={{
+                    color: colors.text.primary,
+                    fontSize: 16,
+                  }}
+                  autoFocus
+                />
+                {searchText.length > 0 && (
+                  <Pressable
+                    onPress={() => setSearchText("")}
+                    accessible={true}
+                    accessibilityRole="button"
+                    accessibilityLabel="Clear search"
+                    accessibilityHint="Double tap to clear the search text"
+                  >
+                    <Ionicons name="close-circle" size={20} color={colors.text.muted} />
+                  </Pressable>
+                )}
+              </View>
+            </View>
+
+            {/* Current Location Button */}
+            <View className="px-4 py-3 border-b border-surface-700">
+              <Pressable
+                onPress={handleCurrentLocation}
+                disabled={isLoadingCurrentLocation}
+                className="flex-row items-center bg-brand-red/20 border border-brand-red/30 rounded-lg px-4 py-3"
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityLabel={isLoadingCurrentLocation ? "Getting your current location" : "Use current location"}
+                accessibilityHint={
+                  isLoadingCurrentLocation
+                    ? "Please wait while we detect your location"
+                    : "Double tap to set your current location"
+                }
+              >
+                {isLoadingCurrentLocation ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Ionicons name="location" size={20} color="#FFFFFF" />
+                )}
+                <Text className="font-medium ml-3" style={{ color: colors.brand.red }}>
+                  {isLoadingCurrentLocation ? "Getting your location..." : "Use Current Location"}
+                </Text>
+              </Pressable>
+              {locationError && (
+                <Text className="text-sm mt-2 px-1" style={{ color: "#EF4444" }}>
+                  {locationError}
+                </Text>
               )}
             </View>
-          </View>
 
-          {/* Current Location Button */}
-          <View className="px-4 py-3 border-b border-surface-700">
-            <Pressable
-              onPress={handleCurrentLocation}
-              disabled={isLoadingCurrentLocation}
-              className="flex-row items-center bg-brand-red/20 border border-brand-red/30 rounded-lg px-4 py-3"
-              accessible={true}
-              accessibilityRole="button"
-              accessibilityLabel={isLoadingCurrentLocation ? "Getting your current location" : "Use current location"}
-              accessibilityHint={
-                isLoadingCurrentLocation
-                  ? "Please wait while we detect your location"
-                  : "Double tap to set your current location"
-              }
-            >
-              {isLoadingCurrentLocation ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
-              ) : (
-                <Ionicons name="location" size={20} color="#FFFFFF" />
-              )}
-              <Text className="font-medium ml-3" style={{ color: colors.brand.red }}>
-                {isLoadingCurrentLocation ? "Getting your location..." : "Use Current Location"}
-              </Text>
-            </Pressable>
-            {locationError && (
-              <Text className="text-sm mt-2 px-1" style={{ color: "#EF4444" }}>
-                {locationError}
-              </Text>
+            {/* Location List */}
+            <FlatList
+              data={filteredLocations}
+              renderItem={renderLocationItem}
+              keyExtractor={(item) => item.fullName}
+              className="flex-1"
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            />
+
+            {filteredLocations.length === 0 && (
+              <View className="flex-1 items-center justify-center">
+                <Ionicons name="location-outline" size={48} color={colors.text.muted} />
+                <Text className="text-lg font-medium mt-4" style={{ color: colors.text.secondary }}>
+                  No locations found
+                </Text>
+                <Text className="text-center mt-2 px-8" style={{ color: colors.text.muted }}>
+                  Try searching for a different city or state
+                </Text>
+              </View>
             )}
-          </View>
-
-          {/* Location List */}
-          <FlatList
-            data={filteredLocations}
-            renderItem={renderLocationItem}
-            keyExtractor={(item) => item.fullName}
-            className="flex-1"
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-          />
-
-          {filteredLocations.length === 0 && (
-            <View className="flex-1 items-center justify-center">
-              <Ionicons name="location-outline" size={48} color={colors.text.muted} />
-              <Text className="text-lg font-medium mt-4" style={{ color: colors.text.secondary }}>
-                No locations found
-              </Text>
-              <Text className="text-center mt-2 px-8" style={{ color: colors.text.muted }}>
-                Try searching for a different city or state
-              </Text>
-            </View>
-          )}
           </View>
         </KeyboardAvoidingView>
       </Modal>

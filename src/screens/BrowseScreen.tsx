@@ -86,7 +86,7 @@ export default function BrowseScreen({ navigation, route }: Props) {
           setLocationError(result.error || "Location detection failed");
         }
       } catch (error) {
-        console.error("Location initialization failed:", error);
+        console.warn("Location initialization failed:", error);
         setLocationError("Failed to detect location");
       } finally {
         setLocationLoading(false);
@@ -108,7 +108,7 @@ export default function BrowseScreen({ navigation, route }: Props) {
       await loadReviews(true);
     } catch (error: any) {
       if (error.name !== "AbortError") {
-        console.error("Error loading reviews:", error);
+        console.warn("Error loading reviews:", error);
       }
     } finally {
       done();
@@ -130,7 +130,7 @@ export default function BrowseScreen({ navigation, route }: Props) {
         try {
           await loadReviews(true);
         } catch (error) {
-          console.error("Error loading reviews on focus:", error);
+          console.warn("Error loading reviews on focus:", error);
         }
       }, 500);
 
@@ -143,7 +143,7 @@ export default function BrowseScreen({ navigation, route }: Props) {
     try {
       await loadReviews(true);
     } catch (error) {
-      console.error("Error loading reviews with filters:", error);
+      console.warn("Error loading reviews with filters:", error);
     }
   }, [loadReviews]);
 
@@ -278,12 +278,12 @@ export default function BrowseScreen({ navigation, route }: Props) {
                     fullName: location.fullName,
                     institutionType: location.institutionType,
                   }).catch((error) => {
-                    console.error("❌ Failed to update user location in auth store:", error);
+                    console.warn("❌ Failed to update user location in auth store:", error);
                   });
 
                   console.log("✅ Location updated and reviews reloaded");
                 } catch (error) {
-                  console.error("❌ Failed to update location:", error);
+                  console.warn("❌ Failed to update location:", error);
                 }
               }}
             />

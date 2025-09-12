@@ -1,4 +1,4 @@
-import { AppError } from "../../types/error";
+import { AppError, ErrorType } from "../../types/error";
 import { FileMetadata } from "../../types/storage";
 
 /**
@@ -12,14 +12,19 @@ export class FileDownloader {
     try {
       // Validate the URL
       if (!this.isValidUrl(url)) {
-        throw new AppError("Invalid URL provided", "INVALID_URL", 400);
+        throw new AppError("Invalid URL provided", ErrorType.VALIDATION, "INVALID_URL", 400);
       }
 
       // Fetch the file
       const response = await fetch(url);
 
       if (!response.ok) {
-        throw new AppError(`Failed to download file: ${response.statusText}`, "DOWNLOAD_FAILED", response.status);
+        throw new AppError(
+          `Failed to download file: ${response.statusText}`,
+          ErrorType.NETWORK,
+          "DOWNLOAD_FAILED",
+          response.status,
+        );
       }
 
       // Get the content length to track progress
@@ -30,7 +35,7 @@ export class FileDownloader {
       const reader = response.body?.getReader();
 
       if (!reader) {
-        throw new AppError("Failed to get response reader", "READER_ERROR", 500);
+        throw new AppError("Failed to get response reader", ErrorType.SERVER, "READER_ERROR", 500);
       }
 
       // Get the filename from the response headers if not provided
@@ -59,7 +64,7 @@ export class FileDownloader {
       }
 
       // Create a blob from the chunks
-      const blob = new Blob(chunks);
+      const blob = new Blob(chunks as BlobPart[]);
 
       // Create a download link and trigger the download
       this.triggerDownload(blob, finalFilename);
@@ -70,6 +75,7 @@ export class FileDownloader {
 
       throw new AppError(
         `Failed to download file: ${error instanceof Error ? error.message : "Unknown error"}`,
+        ErrorType.NETWORK,
         "DOWNLOAD_FAILED",
         500,
       );
@@ -84,13 +90,18 @@ export class FileDownloader {
     onProgress?: (progress: number, fileIndex: number, fileName: string) => void,
   ): Promise<void> {
     if (!files || files.length === 0) {
-      throw new AppError("No files provided", "NO_FILES", 400);
+      throw new AppError("No files provided", ErrorType.VALIDATION, "NO_FILES", 400);
     }
 
     const totalFiles = files.length;
 
     for (let i = 0; i < totalFiles; i++) {
       const file = files[i];
+
+      if (!file) {
+        console.warn(`File at index ${i} is undefined`);
+        continue;
+      }
 
       try {
         // Create a progress callback for this specific file
@@ -105,7 +116,7 @@ export class FileDownloader {
         // Download the file
         await this.downloadFile(file.url, file.filename, fileProgressCallback);
       } catch (error) {
-        console.error(`Failed to download file ${file.filename || file.url}:`, error);
+        console.warn(`Failed to download file ${file.filename || file.url}:`, error);
         // Continue with other files even if one fails
       }
     }
@@ -117,14 +128,19 @@ export class FileDownloader {
   static async getFileMetadata(url: string): Promise<FileMetadata> {
     try {
       if (!this.isValidUrl(url)) {
-        throw new AppError("Invalid URL provided", "INVALID_URL", 400);
+        throw new AppError("Invalid URL provided", ErrorType.VALIDATION, "INVALID_URL", 400);
       }
 
       // Use a HEAD request to get the metadata without downloading the file
       const response = await fetch(url, { method: "HEAD" });
 
       if (!response.ok) {
-        throw new AppError(`Failed to get file metadata: ${response.statusText}`, "METADATA_FAILED", response.status);
+        throw new AppError(
+          `Failed to get file metadata: ${response.statusText}`,
+          ErrorType.NETWORK,
+          "METADATA_FAILED",
+          response.status,
+        );
       }
 
       // Extract metadata from headers
@@ -144,11 +160,14 @@ export class FileDownloader {
       }
 
       return {
-        name: filename || "unknown",
-        size,
-        type,
-        lastModified: lastModifiedDate || Date.now(),
+        id: url, // Use URL as ID for downloaded files
+        filename: filename || "unknown",
         url,
+        size,
+        contentType: type,
+        uploadedAt: new Date(lastModifiedDate || Date.now()),
+        bucket: "downloads", // Default bucket for downloads
+        path: filename || "unknown",
       };
     } catch (error) {
       if (error instanceof AppError) {
@@ -157,6 +176,7 @@ export class FileDownloader {
 
       throw new AppError(
         `Failed to get file metadata: ${error instanceof Error ? error.message : "Unknown error"}`,
+        ErrorType.NETWORK,
         "METADATA_FAILED",
         500,
       );
@@ -234,14 +254,19 @@ export class FileDownloader {
   static async downloadAsDataUrl(url: string, onProgress?: (progress: number) => void): Promise<string> {
     try {
       if (!this.isValidUrl(url)) {
-        throw new AppError("Invalid URL provided", "INVALID_URL", 400);
+        throw new AppError("Invalid URL provided", ErrorType.VALIDATION, "INVALID_URL", 400);
       }
 
       // Fetch the file
       const response = await fetch(url);
 
       if (!response.ok) {
-        throw new AppError(`Failed to download file: ${response.statusText}`, "DOWNLOAD_FAILED", response.status);
+        throw new AppError(
+          `Failed to download file: ${response.statusText}`,
+          ErrorType.NETWORK,
+          "DOWNLOAD_FAILED",
+          response.status,
+        );
       }
 
       // Get the content length to track progress
@@ -252,7 +277,7 @@ export class FileDownloader {
       const reader = response.body?.getReader();
 
       if (!reader) {
-        throw new AppError("Failed to get response reader", "READER_ERROR", 500);
+        throw new AppError("Failed to get response reader", ErrorType.SERVER, "READER_ERROR", 500);
       }
 
       // Get the content type
@@ -280,7 +305,7 @@ export class FileDownloader {
       }
 
       // Create a blob from the chunks
-      const blob = new Blob(chunks, { type: contentType });
+      const blob = new Blob(chunks as BlobPart[], { type: contentType });
 
       // Convert the blob to a data URL
       return new Promise((resolve, reject) => {
@@ -291,7 +316,7 @@ export class FileDownloader {
         };
 
         reader.onerror = () => {
-          reject(new AppError("Failed to convert blob to data URL", "CONVERSION_ERROR", 500));
+          reject(new AppError("Failed to convert blob to data URL", ErrorType.SERVER, "CONVERSION_ERROR", 500));
         };
 
         reader.readAsDataURL(blob);
@@ -303,6 +328,7 @@ export class FileDownloader {
 
       throw new AppError(
         `Failed to download file as data URL: ${error instanceof Error ? error.message : "Unknown error"}`,
+        ErrorType.NETWORK,
         "DOWNLOAD_FAILED",
         500,
       );

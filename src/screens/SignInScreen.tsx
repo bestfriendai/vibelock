@@ -133,11 +133,11 @@ export default function SignInScreen() {
         >
           <ScrollView
             className="flex-1"
-            contentContainerStyle={{ flexGrow: 1 }}
+            contentContainerStyle={{ paddingBottom: 20 }}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-            <View className="flex-1 justify-center px-6 py-12">
+            <View className="px-6 pt-12 pb-6">
               {/* Logo Section */}
               <Animated.View style={logoAnimatedStyle} className="items-center mb-12">
                 <View className="w-20 h-20 mb-4 shadow-lg">
@@ -213,21 +213,21 @@ export default function SignInScreen() {
                   />
                 </View>
               </Animated.View>
-            </View>
 
-            {/* Footer */}
-            <Animated.View style={footerAnimatedStyle} className="px-6 pb-8">
-              <View className="flex-row justify-center items-center">
-                <Text className="text-text-secondary">Don't have an account? </Text>
-                <AnimatedButton
-                  title="Sign Up"
-                  variant="ghost"
-                  size="small"
-                  onPress={handleSignUpPress}
-                  textClassName="text-brand-red font-semibold"
-                />
-              </View>
-            </Animated.View>
+              {/* Footer */}
+              <Animated.View style={footerAnimatedStyle} className="mt-8 pt-6">
+                <View className="flex-row justify-center items-center">
+                  <Text className="text-text-secondary">Don't have an account? </Text>
+                  <AnimatedButton
+                    title="Sign Up"
+                    variant="ghost"
+                    size="small"
+                    onPress={handleSignUpPress}
+                    textClassName="text-brand-red font-semibold"
+                  />
+                </View>
+              </Animated.View>
+            </View>
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
