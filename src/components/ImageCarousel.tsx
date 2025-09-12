@@ -3,6 +3,7 @@ import { View, ScrollView, Dimensions, NativeScrollEvent, NativeSyntheticEvent, 
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { MediaItem } from "../types";
+import { useTheme } from "../providers/ThemeProvider";
 
 const { width: screenWidth } = Dimensions.get("window");
 
@@ -31,6 +32,7 @@ export default function ImageCarousel({
   onCommentPress,
   commentCounts = {},
 }: Props) {
+  const { colors } = useTheme();
   const [currentIndex, setCurrentIndex] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
   const prefetchedUrisRef = useRef<Set<string>>(new Set());
@@ -199,8 +201,14 @@ export default function ImageCarousel({
 
       {/* Image Counter */}
       {showCounter && media.length > 1 && (
-        <View className="absolute top-4 right-4 bg-surface-900/80 backdrop-blur-sm px-3 py-1.5 rounded-full border border-surface-700/50">
-          <Text className="text-text-primary text-sm font-medium">
+        <View
+          className="absolute top-4 right-4 px-3 py-1.5 rounded-full border"
+          style={{
+            backgroundColor: `${colors.surface[900]}CC`,
+            borderColor: `${colors.surface[700]}80`
+          }}
+        >
+          <Text className="text-sm font-medium" style={{ color: colors.text.primary }}>
             {currentIndex + 1} of {media.length}
           </Text>
         </View>
@@ -210,13 +218,17 @@ export default function ImageCarousel({
       {showFullScreenButton && (
         <Pressable
           onPress={handleImagePress}
-          className="absolute top-4 left-4 bg-surface-900/80 backdrop-blur-sm rounded-full p-2.5 border border-surface-700/50"
+          className="absolute top-4 left-4 rounded-full p-2.5 border"
+          style={{
+            backgroundColor: `${colors.surface[900]}CC`,
+            borderColor: `${colors.surface[700]}80`
+          }}
           accessible={true}
           accessibilityRole="button"
           accessibilityLabel="View media full screen"
           accessibilityHint="Double tap to open full screen viewer"
         >
-          <Ionicons name="expand" size={16} color="#F3F4F6" />
+          <Ionicons name="expand" size={16} color={colors.text.primary} />
         </Pressable>
       )}
 
@@ -227,9 +239,11 @@ export default function ImageCarousel({
             <Pressable
               key={index}
               onPress={() => scrollToIndex(index)}
-              className={`w-2 h-2 rounded-full transition-all duration-200 ${
-                index === currentIndex ? "bg-brand-red w-6" : "bg-surface-600"
-              }`}
+              className="h-2 rounded-full transition-all duration-200"
+              style={{
+                width: index === currentIndex ? 24 : 8,
+                backgroundColor: index === currentIndex ? colors.brand.red : colors.surface[600]
+              }}
             />
           ))}
         </View>
@@ -242,14 +256,18 @@ export default function ImageCarousel({
           {currentIndex > 0 && (
             <Pressable
               onPress={() => scrollToIndex(currentIndex - 1)}
-              className="absolute left-3 top-1/2 -translate-y-4 bg-surface-900/80 backdrop-blur-sm rounded-full p-4 border border-surface-700/50"
+              className="absolute left-3 top-1/2 -translate-y-4 rounded-full p-4 border"
+              style={{
+                backgroundColor: `${colors.surface[900]}CC`,
+                borderColor: `${colors.surface[700]}80`
+              }}
               accessible={true}
               accessibilityRole="button"
               accessibilityLabel={`Go to previous image, ${currentIndex} of ${media.length}`}
               accessibilityHint="Double tap to view previous image"
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <Ionicons name="chevron-back" size={20} color="#F3F4F6" />
+              <Ionicons name="chevron-back" size={20} color={colors.text.primary} />
             </Pressable>
           )}
 
@@ -257,14 +275,18 @@ export default function ImageCarousel({
           {currentIndex < media.length - 1 && (
             <Pressable
               onPress={() => scrollToIndex(currentIndex + 1)}
-              className="absolute right-3 top-1/2 -translate-y-4 bg-surface-900/80 backdrop-blur-sm rounded-full p-4 border border-surface-700/50"
+              className="absolute right-3 top-1/2 -translate-y-4 rounded-full p-4 border"
+              style={{
+                backgroundColor: `${colors.surface[900]}CC`,
+                borderColor: `${colors.surface[700]}80`
+              }}
               accessible={true}
               accessibilityRole="button"
               accessibilityLabel={`Go to next image, ${currentIndex + 2} of ${media.length}`}
               accessibilityHint="Double tap to view next image"
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <Ionicons name="chevron-forward" size={20} color="#F3F4F6" />
+              <Ionicons name="chevron-forward" size={20} color={colors.text.primary} />
             </Pressable>
           )}
         </>

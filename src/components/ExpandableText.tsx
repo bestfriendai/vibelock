@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { View, Text, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from "react-native-reanimated";
+import { useTheme } from "../providers/ThemeProvider";
 
 interface Props {
   text: string;
@@ -20,6 +21,7 @@ export default function ExpandableText({
   expandText = "Read full story",
   collapseText = "Show less",
 }: Props) {
+  const { colors } = useTheme();
   const [isExpanded, setIsExpanded] = useState(false);
   const [shouldShowReadMore, setShouldShowReadMore] = useState(false);
   const [fullTextHeight, setFullTextHeight] = useState(0);
@@ -59,12 +61,14 @@ export default function ExpandableText({
     <View>
       {/* Hidden full text for measurement */}
       <Text
-        className={textStyle}
         onLayout={handleFullTextLayout}
         style={{
           position: "absolute",
           opacity: 0,
           zIndex: -1,
+          color: colors.text.primary,
+          fontSize: 16,
+          lineHeight: 28,
         }}
       >
         {text}
@@ -72,7 +76,15 @@ export default function ExpandableText({
 
       {/* Animated container */}
       <Animated.View style={animatedStyle}>
-        <Text className={textStyle} numberOfLines={isExpanded ? undefined : numberOfLines} onLayout={handleTextLayout}>
+        <Text
+          numberOfLines={isExpanded ? undefined : numberOfLines}
+          onLayout={handleTextLayout}
+          style={{
+            color: colors.text.primary,
+            fontSize: 16,
+            lineHeight: 28,
+          }}
+        >
           {text}
         </Text>
       </Animated.View>
@@ -81,13 +93,14 @@ export default function ExpandableText({
       {shouldShowReadMore && (
         <Pressable
           onPress={toggleExpanded}
-          className="flex-row items-center mt-3 bg-brand-red/10 px-3 py-2 rounded-lg self-start"
+          className="flex-row items-center mt-3 px-3 py-2 rounded-lg self-start"
+          style={{ backgroundColor: colors.brand.red + '10' }}
         >
-          <Text className={linkStyle}>{isExpanded ? collapseText : expandText}</Text>
+          <Text className="font-medium" style={{ color: colors.brand.red }}>{isExpanded ? collapseText : expandText}</Text>
           <Ionicons
             name={isExpanded ? "chevron-up" : "chevron-down"}
             size={16}
-            color="#FFFFFF"
+            color={colors.brand.red}
             style={{ marginLeft: 4 }}
           />
         </Pressable>

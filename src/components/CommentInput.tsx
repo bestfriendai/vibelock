@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { View, Text, TextInput, Pressable, ActivityIndicator, Keyboard } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuthState } from "../utils/authUtils";
+import { useTheme } from "../providers/ThemeProvider";
 
 interface CommentInputProps {
   onSubmit: (content: string) => Promise<void>;
@@ -20,6 +21,7 @@ export default function CommentInput({
   onCancelReply,
   onSignInPress,
 }: CommentInputProps) {
+  const { colors } = useTheme();
   const [comment, setComment] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const { canComment, needsSignIn } = useAuthState();
@@ -44,14 +46,14 @@ export default function CommentInput({
   // Show sign-in prompt for guests
   if (needsSignIn) {
     return (
-      <View className="bg-surface-800 border-t border-surface-700">
+      <View style={{ backgroundColor: colors.surface[800], borderTopColor: colors.border, borderTopWidth: 1 }}>
         <View className="flex-row items-center justify-between px-6 py-6">
           <View className="flex-1">
-            <Text className="text-text-secondary text-base">Sign in to join the conversation</Text>
-            <Text className="text-text-muted text-sm mt-1">Share your thoughts and connect with others</Text>
+            <Text className="text-base" style={{ color: colors.text.secondary }}>Sign in to join the conversation</Text>
+            <Text className="text-sm mt-1" style={{ color: colors.text.muted }}>Share your thoughts and connect with others</Text>
           </View>
-          <Pressable onPress={onSignInPress} className="bg-brand-red rounded-lg px-4 py-2 ml-3">
-            <Text className="text-black font-semibold text-sm">Sign In</Text>
+          <Pressable onPress={onSignInPress} className="rounded-lg px-4 py-2 ml-3" style={{ backgroundColor: colors.brand.red }}>
+            <Text className="font-semibold text-sm" style={{ color: colors.text.primary }}>Sign In</Text>
           </Pressable>
         </View>
       </View>
@@ -59,16 +61,16 @@ export default function CommentInput({
   }
 
   return (
-    <View className="bg-surface-800 border-t border-surface-700">
+    <View style={{ backgroundColor: colors.surface[800], borderTopColor: colors.border, borderTopWidth: 1 }}>
       {/* Reply indicator */}
       {replyToComment && (
-        <View className="flex-row items-center justify-between px-4 py-2 bg-surface-700/50">
+        <View className="flex-row items-center justify-between px-4 py-2" style={{ backgroundColor: `${colors.surface[700]}80` }}>
           <View className="flex-row items-center">
-            <Ionicons name="return-down-forward" size={16} color="#9CA3AF" />
-            <Text className="text-text-secondary text-sm ml-2">Replying to {replyToComment}</Text>
+            <Ionicons name="return-down-forward" size={16} color={colors.text.muted} />
+            <Text className="text-sm ml-2" style={{ color: colors.text.secondary }}>Replying to {replyToComment}</Text>
           </View>
           <Pressable onPress={onCancelReply} className="p-1">
-            <Ionicons name="close" size={16} color="#9CA3AF" />
+            <Ionicons name="close" size={16} color={colors.text.muted} />
           </Pressable>
         </View>
       )}
@@ -80,18 +82,21 @@ export default function CommentInput({
             value={comment}
             onChangeText={setComment}
             placeholder={placeholder}
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor={colors.text.muted}
             multiline
             maxLength={500}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
-            className={`bg-surface-700 rounded-2xl px-4 py-3 text-text-primary max-h-24 ${
-              isFocused ? "border border-brand-red/30" : ""
-            }`}
-            style={{ textAlignVertical: "top" }}
+            className="rounded-2xl px-4 py-3 max-h-24"
+            style={{
+              backgroundColor: colors.surface[700],
+              color: colors.text.primary,
+              textAlignVertical: "top",
+              ...(isFocused && { borderWidth: 1, borderColor: `${colors.brand.red}50` })
+            }}
           />
           {comment.length > 400 && (
-            <Text className="text-text-muted text-xs mt-1 text-right">{comment.length}/500</Text>
+            <Text className="text-xs mt-1 text-right" style={{ color: colors.text.muted }}>{comment.length}/500</Text>
           )}
         </View>
 
@@ -99,14 +104,13 @@ export default function CommentInput({
         <Pressable
           onPress={handleSubmit}
           disabled={!canSubmit}
-          className={`w-10 h-10 rounded-full items-center justify-center ${
-            canSubmit ? "bg-brand-red" : "bg-surface-600"
-          }`}
+          className="w-10 h-10 rounded-full items-center justify-center"
+          style={{ backgroundColor: canSubmit ? colors.brand.red : colors.surface[600] }}
         >
           {isLoading ? (
             <ActivityIndicator size="small" color="#FFFFFF" />
           ) : (
-            <Ionicons name="send" size={18} color={canSubmit ? "#FFFFFF" : "#6B7280"} />
+            <Ionicons name="send" size={18} color={canSubmit ? "#FFFFFF" : colors.text.muted} />
           )}
         </Pressable>
       </View>

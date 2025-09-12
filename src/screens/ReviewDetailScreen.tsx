@@ -11,6 +11,7 @@ import {
   TouchableWithoutFeedback,
   Alert,
   ActivityIndicator,
+  StyleSheet,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { RouteProp, useRoute, useNavigation } from "@react-navigation/native";
@@ -34,6 +35,7 @@ import useCommentsStore from "../state/commentsStore";
 import useAuthStore from "../state/authStore";
 import { supabaseReviews } from "../services/supabase";
 import { Review } from "../types";
+import { useTheme } from "../providers/ThemeProvider";
 
 type ReviewDetailRouteProp =
   | RouteProp<BrowseStackParamList, "ReviewDetail">
@@ -43,6 +45,7 @@ type ReviewDetailRouteProp =
 export default function ReviewDetailScreen() {
   const route = useRoute<ReviewDetailRouteProp>();
   const navigation = useNavigation<any>();
+  const { colors, isDarkMode } = useTheme();
 
   // Get route params
   const routeParams = route.params as any;
@@ -167,7 +170,6 @@ export default function ReviewDetailScreen() {
         damping: 20,
         stiffness: 200,
         mass: 0.8,
-        // clamp: false, // Removed as it's not supported in this version
       });
 
       // Load comments from Firebase
@@ -320,8 +322,8 @@ export default function ReviewDetailScreen() {
   };
 
   return (
-    <View className="flex-1 bg-surface-900">
-      <StatusBar barStyle="light-content" backgroundColor="#000000" />
+    <View className={`flex-1 ${isDarkMode ? "dark" : ""}`} style={{ backgroundColor: colors.surface[900] }}>
+      <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} backgroundColor={colors.surface[900]} />
 
       {/* Main Content */}
       <Animated.ScrollView
@@ -335,22 +337,27 @@ export default function ReviewDetailScreen() {
         bounces={true}
         alwaysBounceVertical={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="#FFFFFF" colors={["#FFFFFF"]} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor={colors.text.primary}
+            colors={[colors.text.primary]}
+          />
         }
         contentContainerStyle={{ paddingBottom: 120, flexGrow: 1 }}
       >
         {/* Loading State */}
         {reviewLoading && (
-          <View className="flex-1 bg-surface-900 items-center justify-center">
-            <ActivityIndicator size="large" color="#EF4444" />
-            <Text className="text-text-primary mt-4">Loading Review...</Text>
+          <View className="flex-1 items-center justify-center" style={{ backgroundColor: colors.surface[900] }}>
+            <ActivityIndicator size="large" color={colors.brand.red} />
+            <Text className="mt-4" style={{ color: colors.text.primary }}>Loading Review...</Text>
           </View>
         )}
 
         {/* Review not available state */}
         {!reviewLoading && !review && (
-          <View className="flex-1 bg-surface-900 items-center justify-center">
-            <Text className="text-text-secondary">Review not available.</Text>
+          <View className="flex-1 items-center justify-center" style={{ backgroundColor: colors.surface[900] }}>
+            <Text style={{ color: colors.text.secondary }}>Review not available.</Text>
           </View>
         )}
 
@@ -359,25 +366,25 @@ export default function ReviewDetailScreen() {
             {/* Hero Section */}
             <View className="px-6 mb-8">
               {/* Person Name */}
-              <Text className="text-4xl font-bold text-text-primary mb-3">{review.reviewedPersonName}</Text>
+              <Text className="text-4xl font-bold mb-3" style={{ color: colors.text.primary }}>{review.reviewedPersonName}</Text>
 
               {/* Location & Time */}
               <View className="flex-row items-center justify-between mb-4">
                 <View className="flex-row items-center">
-                  <Ionicons name="location" size={16} color="#9CA3AF" />
-                  <Text className="text-text-secondary ml-2 font-medium">
+                  <Ionicons name="location" size={16} color={colors.text.secondary} />
+                  <Text className="ml-2 font-medium" style={{ color: colors.text.secondary }}>
                     {review.reviewedPersonLocation.city}, {review.reviewedPersonLocation.state}
                   </Text>
                 </View>
-                <Text className="text-text-muted text-sm">{formatTimeAgo(review.createdAt)}</Text>
+                <Text className="text-sm" style={{ color: colors.text.muted }}>{formatTimeAgo(review.createdAt)}</Text>
               </View>
 
               {/* Posted by */}
               <View className="flex-row items-center mb-6">
-                <View className="w-6 h-6 rounded-full bg-surface-700 items-center justify-center mr-2">
-                  <Ionicons name="person" size={12} color="#9CA3AF" />
+                <View className="w-6 h-6 rounded-full items-center justify-center mr-2" style={{ backgroundColor: colors.surface[700] }}>
+                  <Ionicons name="person" size={12} color={colors.text.secondary} />
                 </View>
-                <Text className="text-text-muted text-sm">Posted by Anonymous User</Text>
+                <Text className="text-sm" style={{ color: colors.text.muted }}>Posted by Anonymous User</Text>
               </View>
             </View>
 
@@ -395,15 +402,13 @@ export default function ReviewDetailScreen() {
             )}
 
             {/* Review Content Card */}
-            <View className="mx-4 bg-surface-800 rounded-2xl p-6 mb-6">
+            <View className="mx-4 rounded-2xl p-6 mb-6" style={{ backgroundColor: colors.surface[800] }}>
               {/* Review Text */}
               <View className="mb-6">
-                <Text className="text-text-secondary text-sm font-medium mb-3 uppercase tracking-wide">Review</Text>
+                <Text className="text-sm font-medium mb-3 uppercase tracking-wide" style={{ color: colors.text.secondary }}>Review</Text>
                 <ExpandableText
                   text={review.reviewText}
                   numberOfLines={4}
-                  textStyle="text-text-primary text-base leading-7"
-                  linkStyle="text-brand-red font-medium"
                   expandText="Read full story"
                   collapseText="Show less"
                 />
@@ -412,26 +417,36 @@ export default function ReviewDetailScreen() {
               {/* Flags Section */}
               {(review.greenFlags.length > 0 || review.redFlags.length > 0) && (
                 <View className="mb-6">
-                  <Text className="text-text-secondary text-sm font-medium mb-3 uppercase tracking-wide">
+                  <Text className="text-sm font-medium mb-3 uppercase tracking-wide" style={{ color: colors.text.secondary }}>
                     Highlights
                   </Text>
                   <View className="flex-row flex-wrap gap-2">
                     {review.greenFlags.map((flag: string) => (
                       <View
                         key={flag}
-                        className="bg-green-500/20 border border-green-500/30 px-3 py-2 rounded-full flex-row items-center"
+                        className="px-3 py-2 rounded-full flex-row items-center"
+                        style={{
+                          backgroundColor: colors.accent.green + '20',
+                          borderWidth: 1,
+                          borderColor: colors.accent.green + '30'
+                        }}
                       >
-                        <Ionicons name="checkmark-circle" size={14} color="#22C55E" />
-                        <Text className="text-green-400 text-sm font-medium ml-1">{flag.replace("_", " ")}</Text>
+                        <Ionicons name="checkmark-circle" size={14} color={colors.accent.green} />
+                        <Text className="text-sm font-medium ml-1" style={{ color: colors.accent.green }}>{flag.replace("_", " ")}</Text>
                       </View>
                     ))}
                     {review.redFlags.map((flag: string) => (
                       <View
                         key={flag}
-                        className="bg-brand-red/20 border border-brand-red/30 px-3 py-2 rounded-full flex-row items-center"
+                        className="px-3 py-2 rounded-full flex-row items-center"
+                        style={{
+                          backgroundColor: colors.brand.red + '20',
+                          borderWidth: 1,
+                          borderColor: colors.brand.red + '30'
+                        }}
                       >
-                        <Ionicons name="warning" size={14} color="#FFFFFF" />
-                        <Text className="text-brand-red text-sm font-medium ml-1">{flag.replace("_", " ")}</Text>
+                        <Ionicons name="warning" size={14} color={colors.brand.red} />
+                        <Text className="text-sm font-medium ml-1" style={{ color: colors.brand.red }}>{flag.replace("_", " ")}</Text>
                       </View>
                     ))}
                   </View>
@@ -439,7 +454,7 @@ export default function ReviewDetailScreen() {
               )}
 
               {/* Divider */}
-              <View className="h-px bg-surface-600 mb-6" />
+              <View className="h-px mb-6" style={{ backgroundColor: colors.surface[600] }} />
 
               {/* Like/Dislike Buttons */}
               <View className="mb-4">
@@ -455,27 +470,39 @@ export default function ReviewDetailScreen() {
 
               {/* Review Date */}
               <View className="items-center">
-                <Text className="text-text-muted text-xs">Posted on {formatDate(review.createdAt)}</Text>
+                <Text className="text-xs" style={{ color: colors.text.muted }}>Posted on {formatDate(review.createdAt)}</Text>
               </View>
             </View>
 
             {/* Additional Actions */}
             <View className="px-6 mb-8">
-              <View className="bg-surface-800 rounded-xl p-4">
-                <Text className="text-text-secondary text-sm font-medium mb-3">Found this review helpful?</Text>
+              <View className="rounded-xl p-4" style={{ backgroundColor: colors.surface[800] }}>
+                <Text className="text-sm font-medium mb-3" style={{ color: colors.text.secondary }}>Found this review helpful?</Text>
                 <View className="flex-row space-x-3">
-                  <Pressable className="flex-1 bg-brand-red/20 border border-brand-red/30 rounded-lg py-3 items-center">
-                    <Text className="text-brand-red font-medium">Share Review</Text>
+                  <Pressable
+                    className="flex-1 rounded-lg py-3 items-center"
+                    style={{
+                      backgroundColor: colors.brand.red + '20',
+                      borderWidth: 1,
+                      borderColor: colors.brand.red + '30'
+                    }}
+                  >
+                    <Text className="font-medium" style={{ color: colors.brand.red }}>Share Review</Text>
                   </Pressable>
                   <Pressable
-                    className="flex-1 bg-surface-700 border border-surface-600 rounded-lg py-3 items-center"
+                    className="flex-1 rounded-lg py-3 items-center"
+                    style={{
+                      backgroundColor: colors.surface[700],
+                      borderWidth: 1,
+                      borderColor: colors.surface[600]
+                    }}
                     onPress={handleReportReview}
                     accessible={true}
                     accessibilityRole="button"
                     accessibilityLabel="Report this review"
                     accessibilityHint="Double tap to report"
                   >
-                    <Text className="text-text-secondary font-medium">Report</Text>
+                    <Text className="font-medium" style={{ color: colors.text.secondary }}>Report</Text>
                   </Pressable>
                 </View>
               </View>

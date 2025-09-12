@@ -304,7 +304,7 @@ export default function CreateReviewScreen() {
         {/* Header */}
         <View
           className="px-6 py-6 border-b"
-          style={{ borderBottomColor: colors.border, backgroundColor: colors.surface[800] }}
+          style={{ borderBottomColor: colors.border, backgroundColor: colors.background }}
         >
           <Text className="text-2xl font-bold" style={{ color: colors.text.primary }}>
             Write Review

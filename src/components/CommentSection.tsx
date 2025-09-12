@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { View, Text, Pressable, ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Comment } from "../types";
+import { useTheme } from "../providers/ThemeProvider";
 
 interface CommentSectionProps {
   comments: Comment[];
@@ -22,6 +23,7 @@ interface CommentItemProps {
 }
 
 function CommentItem({ comment, onLike, onDislike, onReply, onReport, isReply = false }: CommentItemProps) {
+  const { colors } = useTheme();
   const [showReplies, setShowReplies] = useState(false);
 
   const formatTimeAgo = (dateLike: Date | string | null | undefined) => {
@@ -45,30 +47,36 @@ function CommentItem({ comment, onLike, onDislike, onReply, onReport, isReply = 
   if (comment.isDeleted) {
     return (
       <View className={`py-3 ${isReply ? "ml-8" : ""}`}>
-        <Text className="text-text-muted italic">This comment has been deleted</Text>
+        <Text className="italic" style={{ color: colors.text.muted }}>This comment has been deleted</Text>
       </View>
     );
   }
 
   return (
-    <View className={`py-3 ${isReply ? "ml-8 border-l border-surface-600 pl-4" : ""}`}>
+    <View
+      className={`py-3 ${isReply ? "ml-8 pl-4" : ""}`}
+      style={isReply ? { borderLeftWidth: 1, borderLeftColor: colors.surface[600] } : {}}
+    >
       {/* Comment Header */}
       <View className="flex-row items-center justify-between mb-2">
         <View className="flex-row items-center">
-          <View className="w-6 h-6 rounded-full bg-surface-600 items-center justify-center mr-2">
-            <Ionicons name="person" size={12} color="#9CA3AF" />
+          <View
+            className="w-6 h-6 rounded-full items-center justify-center mr-2"
+            style={{ backgroundColor: colors.surface[600] }}
+          >
+            <Ionicons name="person" size={12} color={colors.text.muted} />
           </View>
-          <Text className="text-text-primary font-medium text-sm">{comment.authorName}</Text>
-          <Text className="text-text-muted text-xs ml-2">{formatTimeAgo(comment.createdAt)}</Text>
+          <Text className="font-medium text-sm" style={{ color: colors.text.primary }}>{comment.authorName}</Text>
+          <Text className="text-xs ml-2" style={{ color: colors.text.muted }}>{formatTimeAgo(comment.createdAt)}</Text>
         </View>
 
         <Pressable onPress={() => onReport(comment.id)} className="p-1">
-          <Ionicons name="ellipsis-horizontal" size={16} color="#6B7280" />
+          <Ionicons name="ellipsis-horizontal" size={16} color={colors.text.muted} />
         </Pressable>
       </View>
 
       {/* Comment Content */}
-      <Text className="text-text-primary text-sm leading-5 mb-3">{comment.content}</Text>
+      <Text className="text-sm leading-5 mb-3" style={{ color: colors.text.primary }}>{comment.content}</Text>
 
       {/* Comment Actions */}
       <View className="flex-row items-center space-x-4">
@@ -77,9 +85,9 @@ function CommentItem({ comment, onLike, onDislike, onReply, onReport, isReply = 
           <Ionicons
             name={comment.isLiked ? "heart" : "heart-outline"}
             size={16}
-            color={comment.isLiked ? "#FFFFFF" : "#9CA3AF"}
+            color={comment.isLiked ? colors.brand.red : colors.text.muted}
           />
-          {comment.likeCount > 0 && <Text className="text-text-muted text-xs ml-1">{comment.likeCount}</Text>}
+          {comment.likeCount > 0 && <Text className="text-xs ml-1" style={{ color: colors.text.muted }}>{comment.likeCount}</Text>}
         </Pressable>
 
         {/* Dislike Button */}
@@ -87,16 +95,16 @@ function CommentItem({ comment, onLike, onDislike, onReply, onReport, isReply = 
           <Ionicons
             name={comment.isDisliked ? "thumbs-down" : "thumbs-down-outline"}
             size={16}
-            color={comment.isDisliked ? "#FFFFFF" : "#9CA3AF"}
+            color={comment.isDisliked ? colors.brand.red : colors.text.muted}
           />
-          {comment.dislikeCount > 0 && <Text className="text-text-muted text-xs ml-1">{comment.dislikeCount}</Text>}
+          {comment.dislikeCount > 0 && <Text className="text-xs ml-1" style={{ color: colors.text.muted }}>{comment.dislikeCount}</Text>}
         </Pressable>
 
         {/* Reply Button */}
         {!isReply && (
           <Pressable onPress={() => onReply(comment)} className="flex-row items-center">
-            <Ionicons name="chatbubble-outline" size={16} color="#9CA3AF" />
-            <Text className="text-text-muted text-xs ml-1">Reply</Text>
+            <Ionicons name="chatbubble-outline" size={16} color={colors.text.muted} />
+            <Text className="text-xs ml-1" style={{ color: colors.text.muted }}>Reply</Text>
           </Pressable>
         )}
       </View>
@@ -106,16 +114,16 @@ function CommentItem({ comment, onLike, onDislike, onReply, onReport, isReply = 
         <View className="mt-3">
           {!showReplies ? (
             <Pressable onPress={() => setShowReplies(true)} className="flex-row items-center">
-              <Ionicons name="chevron-down" size={16} color="#9CA3AF" />
-              <Text className="text-brand-red text-sm ml-1">
+              <Ionicons name="chevron-down" size={16} color={colors.text.muted} />
+              <Text className="text-sm ml-1" style={{ color: colors.brand.red }}>
                 View {comment.replies.length} {comment.replies.length === 1 ? "reply" : "replies"}
               </Text>
             </Pressable>
           ) : (
             <>
               <Pressable onPress={() => setShowReplies(false)} className="flex-row items-center mb-2">
-                <Ionicons name="chevron-up" size={16} color="#9CA3AF" />
-                <Text className="text-brand-red text-sm ml-1">Hide replies</Text>
+                <Ionicons name="chevron-up" size={16} color={colors.text.muted} />
+                <Text className="text-sm ml-1" style={{ color: colors.brand.red }}>Hide replies</Text>
               </Pressable>
               {comment.replies.map((reply) => (
                 <CommentItem
@@ -144,6 +152,8 @@ export default function CommentSection({
   onReplyToComment,
   onReportComment,
 }: CommentSectionProps) {
+  const { colors } = useTheme();
+
   const renderComment = (comment: Comment, index: number) => (
     <View key={comment.id}>
       <CommentItem
@@ -153,40 +163,40 @@ export default function CommentSection({
         onReply={onReplyToComment}
         onReport={onReportComment}
       />
-      {index < comments.length - 1 && <View className="h-px bg-surface-700 mx-4" />}
+      {index < comments.length - 1 && <View className="h-px mx-4" style={{ backgroundColor: colors.surface[700] }} />}
     </View>
   );
 
   const renderCommentSkeleton = () => (
     <View className="py-3">
       <View className="flex-row items-center mb-2">
-        <View className="w-6 h-6 rounded-full bg-surface-600 mr-2" />
-        <View className="h-3 bg-surface-600 rounded w-20 mr-2" />
-        <View className="h-2 bg-surface-700 rounded w-12" />
+        <View className="w-6 h-6 rounded-full mr-2" style={{ backgroundColor: colors.surface[600] }} />
+        <View className="h-3 rounded w-20 mr-2" style={{ backgroundColor: colors.surface[600] }} />
+        <View className="h-2 rounded w-12" style={{ backgroundColor: colors.surface[700] }} />
       </View>
       <View className="space-y-2 mb-3">
-        <View className="h-3 bg-surface-600 rounded w-full" />
-        <View className="h-3 bg-surface-600 rounded w-3/4" />
+        <View className="h-3 rounded w-full" style={{ backgroundColor: colors.surface[600] }} />
+        <View className="h-3 rounded w-3/4" style={{ backgroundColor: colors.surface[600] }} />
       </View>
       <View className="flex-row space-x-4">
-        <View className="h-4 bg-surface-700 rounded w-8" />
-        <View className="h-4 bg-surface-700 rounded w-8" />
-        <View className="h-4 bg-surface-700 rounded w-12" />
+        <View className="h-4 rounded w-8" style={{ backgroundColor: colors.surface[700] }} />
+        <View className="h-4 rounded w-8" style={{ backgroundColor: colors.surface[700] }} />
+        <View className="h-4 rounded w-12" style={{ backgroundColor: colors.surface[700] }} />
       </View>
     </View>
   );
 
   if (isLoading) {
     return (
-      <View className="bg-surface-800">
-        <View className="px-4 py-3 border-b border-surface-700">
-          <View className="h-5 bg-surface-600 rounded w-24" />
+      <View style={{ backgroundColor: colors.surface[800] }}>
+        <View className="px-4 py-3 border-b" style={{ borderBottomColor: colors.surface[700] }}>
+          <View className="h-5 rounded w-24" style={{ backgroundColor: colors.surface[600] }} />
         </View>
         <View className="px-4">
           {[1, 2, 3].map((i) => (
             <View key={i}>
               {renderCommentSkeleton()}
-              {i < 3 && <View className="h-px bg-surface-700 mx-4" />}
+              {i < 3 && <View className="h-px mx-4" style={{ backgroundColor: colors.surface[700] }} />}
             </View>
           ))}
         </View>
@@ -197,9 +207,9 @@ export default function CommentSection({
   if (comments.length === 0) {
     return (
       <View className="py-8 items-center">
-        <Ionicons name="chatbubbles-outline" size={48} color="#6B7280" />
-        <Text className="text-text-secondary text-lg font-medium mt-4">No comments yet</Text>
-        <Text className="text-text-muted text-center mt-2 px-8">
+        <Ionicons name="chatbubbles-outline" size={48} color={colors.text.muted} />
+        <Text className="text-lg font-medium mt-4" style={{ color: colors.text.secondary }}>No comments yet</Text>
+        <Text className="text-center mt-2 px-8" style={{ color: colors.text.muted }}>
           Be the first to share your thoughts on this review
         </Text>
       </View>
@@ -207,9 +217,9 @@ export default function CommentSection({
   }
 
   return (
-    <View className="bg-surface-800">
-      <View className="px-4 py-3 border-b border-surface-700">
-        <Text className="text-text-primary font-semibold">Comments ({comments.length})</Text>
+    <View style={{ backgroundColor: colors.surface[800] }}>
+      <View className="px-4 py-3 border-b" style={{ borderBottomColor: colors.surface[700] }}>
+        <Text className="font-semibold" style={{ color: colors.text.primary }}>Comments ({comments.length})</Text>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} className="px-4" nestedScrollEnabled={true}>
