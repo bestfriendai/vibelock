@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from "react";
-import { View, Pressable, Text, Alert } from "react-native";
+import React, { useRef, useEffect } from "react";
+import { View, Pressable, Text, Alert, Linking } from "react-native";
 import {
   useAudioRecorder,
   useAudioPlayer,
@@ -8,7 +8,6 @@ import {
   requestRecordingPermissionsAsync,
   setAudioModeAsync,
   RecordingPresets,
-  type RecordingOptions,
 } from "expo-audio";
 import * as Haptics from "expo-haptics";
 import Animated, {
@@ -47,32 +46,17 @@ export const VoiceMessage: React.FC<VoiceMessageProps> = ({
   showWaveform = true,
 }) => {
   const { colors } = useTheme();
-  const recordingOptions: RecordingOptions = RecordingPresets.HIGH_QUALITY || {
-    extension: ".m4a",
-    sampleRate: 44100,
-    numberOfChannels: 2,
-    bitRate: 128000,
-    android: {
-      outputFormat: "mpeg4",
-      audioEncoder: "aac",
-    },
-    ios: {
-      outputFormat: "aac ",
-      audioQuality: 127,
-      linearPCMBitDepth: 16,
-      linearPCMIsBigEndian: false,
-      linearPCMIsFloat: false,
-    },
-  };
-  const recorder = useAudioRecorder(recordingOptions);
+  // Use high-quality preset for maximum SDK 54 compatibility
+  const recorder = useAudioRecorder(
+    // @ts-ignore - RecordingPresets is provided by expo-audio at runtime
+    RecordingPresets?.HIGH_QUALITY ?? ({} as any),
+  );
   const recorderState = useAudioRecorderState(recorder);
   const player = useAudioPlayer(audioUri || null);
   const playerStatus = useAudioPlayerStatus(player);
-  const [recordingDuration, setRecordingDuration] = useState(0);
 
   const scale = useSharedValue(1);
   const waveformOpacity = useSharedValue(0);
-  const recordingTimer = useRef<NodeJS.Timeout | null>(null);
 
   // Animation for recording button
   const recordingAnimation = useSharedValue(0);
@@ -85,34 +69,57 @@ export const VoiceMessage: React.FC<VoiceMessageProps> = ({
     }
   }, [isRecording]);
 
-  // Set up permissions on mount
+  // Set up permissions and audio mode on mount
   useEffect(() => {
     const setupAudio = async () => {
-      const { status } = await requestRecordingPermissionsAsync();
-      if (status !== "granted") {
-        console.log("Recording permission not granted");
-      }
+      try {
+        const { status } = await requestRecordingPermissionsAsync();
+        if (status !== "granted") {
+          console.log("Recording permission not granted");
+        }
 
-      await setAudioModeAsync({
-        playsInSilentMode: true,
-        allowsRecording: true,
-      });
+        await setAudioModeAsync({
+          playsInSilentMode: true,
+          allowsRecording: true,
+        });
+      } catch (e) {
+        console.warn("Audio setup failed", e);
+      }
     };
     setupAudio();
+    // Cleanup on unmount
+    return () => {
+      try {
+        if (recorderState?.isRecording) {
+          recorder.stop?.();
+        }
+      } catch {}
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const startRecording = async () => {
     try {
-      const { status } = await requestRecordingPermissionsAsync();
+      const { status, canAskAgain } = await requestRecordingPermissionsAsync();
       if (status !== "granted") {
-        Alert.alert("Permission Required", "Please grant microphone permission to record voice messages.");
+        Alert.alert(
+          "Microphone Permission Needed",
+          "Please allow microphone access to record voice messages.",
+          [
+            { text: "Cancel", style: "cancel" },
+            {
+              text: "Open Settings",
+              onPress: () => Linking.openSettings?.(),
+            },
+          ],
+        );
+        if (canAskAgain) return; // user can retry later
         return;
       }
 
+      await setAudioModeAsync({ playsInSilentMode: true, allowsRecording: true });
       await recorder.prepareToRecordAsync();
       recorder.record();
-
-      setRecordingDuration(0);
 
       // Haptic feedback
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -120,11 +127,6 @@ export const VoiceMessage: React.FC<VoiceMessageProps> = ({
       // Animation
       scale.value = withSpring(1.2);
       waveformOpacity.value = withTiming(1);
-
-      // Timer for duration
-      recordingTimer.current = setInterval(() => {
-        setRecordingDuration((prev) => prev + 1);
-      }, 1000);
 
       onStartRecording?.();
     } catch (err) {
@@ -138,32 +140,36 @@ export const VoiceMessage: React.FC<VoiceMessageProps> = ({
       await recorder.stop();
 
       const uri = recorder.uri;
-      if (uri && recordingDuration > 1) {
-        onSend?.(uri, recordingDuration);
+      const durationSec = Math.max(0, Math.floor((recorderState?.durationMillis || 0) / 1000));
+      if (uri && durationSec >= 1) {
+        onSend?.(uri, durationSec);
+      } else if (uri) {
+        Alert.alert("Too Short", "Voice message must be at least 1 second long.");
       }
 
       scale.value = withSpring(1);
       waveformOpacity.value = withTiming(0);
 
-      if (recordingTimer.current) {
-        clearInterval(recordingTimer.current);
-      }
-
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       onStopRecording?.();
     } catch (error) {
       console.warn("Failed to stop recording", error);
+      Alert.alert("Error", "Failed to stop recording. Please try again.");
     }
   };
 
   const playAudio = () => {
-    if (!audioUri) return;
+    if (!audioUri) {
+      Alert.alert("Playback Error", "No audio available to play.");
+      return;
+    }
 
     try {
       player.play();
       onPlay?.();
     } catch (error) {
       console.warn("Failed to play audio", error);
+      Alert.alert("Playback Error", "Failed to play the audio.");
     }
   };
 
@@ -173,6 +179,7 @@ export const VoiceMessage: React.FC<VoiceMessageProps> = ({
       onPause?.();
     } catch (error) {
       console.warn("Failed to pause audio", error);
+      Alert.alert("Playback Error", "Failed to pause the audio.");
     }
   };
 

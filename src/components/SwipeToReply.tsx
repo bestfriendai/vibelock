@@ -31,6 +31,7 @@ export const SwipeToReply: React.FC<SwipeToReplyProps> = ({
   const opacity = useSharedValue(0);
   const scale = useSharedValue(1);
   const iconRotation = useSharedValue(0);
+  const triggered = useSharedValue(0); // 0 = not yet, 1 = triggered
 
   const triggerReply = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -59,7 +60,8 @@ export const SwipeToReply: React.FC<SwipeToReplyProps> = ({
       iconRotation.value = interpolate(clampedTranslation, [0, threshold], [0, 360]);
 
       // Haptic feedback at threshold
-      if (clampedTranslation >= threshold && Math.abs(translateX.value) < threshold) {
+      if (clampedTranslation >= threshold && triggered.value === 0) {
+        triggered.value = 1;
         runOnJS(triggerHapticFeedback)();
       }
     })
@@ -75,6 +77,7 @@ export const SwipeToReply: React.FC<SwipeToReplyProps> = ({
       opacity.value = withSpring(0);
       scale.value = withSpring(1);
       iconRotation.value = withSpring(0);
+      triggered.value = 0;
     });
 
   const messageStyle = useAnimatedStyle(() => ({
@@ -128,6 +131,9 @@ export const SwipeToReply: React.FC<SwipeToReplyProps> = ({
             justifyContent: "center",
           },
         ]}
+        accessibilityRole="button"
+        accessibilityLabel="Swipe to reply"
+        accessible
       >
         <Ionicons name={isOwnMessage ? "arrow-redo" : "arrow-undo"} size={18} color="white" />
       </Animated.View>

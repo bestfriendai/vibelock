@@ -22,6 +22,14 @@ interface TypingCallback {
   (typingUsers: TypingUser[]): void;
 }
 
+interface MessageCacheEntry {
+  message: ChatMessage;
+  timestamp: number;
+  isOptimistic: boolean;
+  fingerprint: string;
+  state: 'optimistic' | 'pending' | 'sent' | 'confirmed';
+}
+
 class EnhancedRealtimeChatService {
   private channels: Map<string, RealtimeChannel> = new Map();
   private messageCallbacks: Map<string, MessageCallback> = new Map();
@@ -34,13 +42,18 @@ class EnhancedRealtimeChatService {
   private maxRetries = 5;
   private reconnectTimeouts: Map<string, NodeJS.Timeout> = new Map();
 
-  // Message deduplication
-  private messageCache: Map<string, Set<string>> = new Map();
+  // Enhanced message deduplication
+  private messageCache: Map<string, Map<string, MessageCacheEntry>> = new Map();
+  private optimisticMessages: Map<string, Map<string, ChatMessage>> = new Map();
+  private messageFingerprints: Map<string, Set<string>> = new Map();
   private typingTimeouts: Map<string, NodeJS.Timeout> = new Map();
+  private typingDebounceTimeouts: Map<string, NodeJS.Timeout> = new Map();
 
   // Performance optimization
   private batchedUpdates: Map<string, ChatMessage[]> = new Map();
   private updateTimeouts: Map<string, NodeJS.Timeout> = new Map();
+  private maxCacheSize = 500; // Maximum messages to cache per room
+  private batchWindowMs = 300; // Increased from 100ms for better performance
 
   async initialize() {
     console.log("🚀 Initializing Enhanced Supabase Real-time Chat Service");
@@ -63,9 +76,15 @@ class EnhancedRealtimeChatService {
       // Clean up existing channel if any
       await this.leaveRoom(roomId);
 
-      // Initialize message cache for this room
+      // Initialize enhanced message caches for this room
       if (!this.messageCache.has(roomId)) {
-        this.messageCache.set(roomId, new Set());
+        this.messageCache.set(roomId, new Map());
+      }
+      if (!this.optimisticMessages.has(roomId)) {
+        this.optimisticMessages.set(roomId, new Map());
+      }
+      if (!this.messageFingerprints.has(roomId)) {
+        this.messageFingerprints.set(roomId, new Set());
       }
 
       // Create enhanced channel with all features
@@ -182,14 +201,29 @@ class EnhancedRealtimeChatService {
       }
 
       if (messages && messages.length > 0) {
-        const formattedMessages = messages
-          .reverse() // Reverse for chronological order in UI
-          .map(this.formatMessage);
+        // Keep messages in newest-first order (no reverse needed)
+        // This maintains consistency with the store's sorting logic
+        const formattedMessages = messages.map(this.formatMessage);
 
-        // Update cache
-        const cache = this.messageCache.get(roomId) || new Set();
-        formattedMessages.forEach((msg) => cache.add(msg.id));
+        // Update enhanced cache with metadata
+        const cache = this.messageCache.get(roomId) || new Map();
+        const fingerprints = this.messageFingerprints.get(roomId) || new Set();
+
+        formattedMessages.forEach((msg) => {
+          const fingerprint = this.generateMessageFingerprint(msg);
+          cache.set(msg.id, {
+            message: msg,
+            timestamp: Date.now(),
+            isOptimistic: false,
+            fingerprint,
+            state: 'confirmed'
+          });
+          fingerprints.add(fingerprint);
+        });
+
         this.messageCache.set(roomId, cache);
+        this.messageFingerprints.set(roomId, fingerprints);
+        this.cleanupOldMessages(roomId);
 
         // Notify callback with initial messages (this replaces all messages)
         const callback = this.messageCallbacks.get(roomId);
@@ -218,34 +252,76 @@ class EnhancedRealtimeChatService {
 
       if (error) throw error;
 
-      return messages ? messages.reverse().map(this.formatMessage) : [];
+      // Return messages in newest-first order for consistency
+      return messages ? messages.map(this.formatMessage) : [];
     } catch (error) {
       console.warn(`Failed to load older messages for room ${roomId}:`, error);
       return [];
     }
   }
 
-  // Enhanced message handling with deduplication
+  // Enhanced message handling with advanced deduplication and optimistic replacement
   private handleNewMessage(roomId: string, payload: any): void {
     try {
       if (!payload.new) return;
 
       const messageId = payload.new.id;
-      const cache = this.messageCache.get(roomId) || new Set();
+      const cache = this.messageCache.get(roomId) || new Map();
+      const fingerprints = this.messageFingerprints.get(roomId) || new Set();
+      const optimisticMessages = this.optimisticMessages.get(roomId) || new Map();
 
-      // Prevent duplicate messages
+      // Check if message already exists by ID
       if (cache.has(messageId)) {
-        console.log(`🔄 Duplicate message ignored: ${messageId}`);
+        console.log(`🔄 Duplicate message ignored by ID: ${messageId}`);
         return;
       }
 
-      cache.add(messageId);
-      this.messageCache.set(roomId, cache);
-
       const newMessage = this.formatMessage(payload.new);
+      const fingerprint = this.generateMessageFingerprint(newMessage);
+
+      // Check for duplicate by fingerprint
+      if (fingerprints.has(fingerprint)) {
+        console.log(`🔄 Duplicate message ignored by fingerprint`);
+        return;
+      }
+
+      // Check if this is a real message replacing an optimistic one
+      let isReplacement = false;
+      for (const [optimisticId, optimisticMsg] of optimisticMessages.entries()) {
+        const optimisticFingerprint = this.generateMessageFingerprint(optimisticMsg);
+        if (optimisticFingerprint === fingerprint ||
+            (optimisticMsg.senderId === newMessage.senderId &&
+             optimisticMsg.content === newMessage.content &&
+             Math.abs(optimisticMsg.timestamp.getTime() - newMessage.timestamp.getTime()) < 5000)) {
+          // Replace optimistic message with real one
+          this.replaceOptimisticMessage(roomId, optimisticId, newMessage);
+          isReplacement = true;
+          break;
+        }
+      }
+
+      // Add to cache with metadata
+      cache.set(messageId, {
+        message: newMessage,
+        timestamp: Date.now(),
+        isOptimistic: false,
+        fingerprint,
+        state: 'confirmed'
+      });
+      fingerprints.add(fingerprint);
+
+      this.messageCache.set(roomId, cache);
+      this.messageFingerprints.set(roomId, fingerprints);
 
       // Batch updates for better performance
-      this.batchMessageUpdate(roomId, newMessage);
+      if (!isReplacement) {
+        this.batchMessageUpdate(roomId, newMessage);
+      }
+
+      // Cleanup old messages periodically
+      if (cache.size > this.maxCacheSize) {
+        this.cleanupOldMessages(roomId);
+      }
     } catch (error) {
       console.warn("Error handling new message:", error);
     }
@@ -276,7 +352,7 @@ class EnhancedRealtimeChatService {
         this.batchedUpdates.set(roomId, []);
       }
       this.updateTimeouts.delete(roomId);
-    }, 100); // 100ms batch window
+    }, this.batchWindowMs); // 300ms batch window for better performance
 
     this.updateTimeouts.set(roomId, timeout);
   }
@@ -286,7 +362,7 @@ class EnhancedRealtimeChatService {
     try {
       if (!payload.new) return;
 
-      const updatedMessage = this.formatMessage(payload.new);
+      const updatedMessage = { ...this.formatMessage(payload.new), isUpdate: true } as any;
 
       // Notify about message update
       const callback = this.messageCallbacks.get(roomId);
@@ -329,7 +405,7 @@ class EnhancedRealtimeChatService {
     }
   }
 
-  // Typing indicator handling
+  // Enhanced typing indicator handling with better state management
   private handleTypingBroadcast(roomId: string, payload: any): void {
     try {
       const { userId, userName, isTyping, timestamp } = payload.payload;
@@ -340,11 +416,15 @@ class EnhancedRealtimeChatService {
       if (!callback) return;
 
       if (isTyping) {
-        // Add to typing users
+        // Add to typing users with improved state management
         const typingUser: TypingUser = { userId, userName, timestamp };
-        callback([typingUser]);
 
-        // Auto-remove after 3 seconds
+        // Throttle typing updates to prevent UI thrashing
+        this.throttleTypingUpdate(roomId, () => {
+          callback([typingUser]);
+        });
+
+        // Auto-remove after 3 seconds with cleanup
         const timeoutKey = `${roomId}_${userId}`;
         const existingTimeout = this.typingTimeouts.get(timeoutKey);
         if (existingTimeout) {
@@ -358,30 +438,65 @@ class EnhancedRealtimeChatService {
 
         this.typingTimeouts.set(timeoutKey, timeout);
       } else {
-        // Remove from typing users
+        // Remove from typing users with proper cleanup
         callback([{ userId, userName, timestamp: 0 }]);
+        const timeoutKey = `${roomId}_${userId}`;
+        const existingTimeout = this.typingTimeouts.get(timeoutKey);
+        if (existingTimeout) {
+          clearTimeout(existingTimeout);
+          this.typingTimeouts.delete(timeoutKey);
+        }
       }
     } catch (error) {
       console.warn("Error handling typing broadcast:", error);
     }
   }
 
-  // Send typing indicator
+  // Send typing indicator with debouncing
   async setTyping(roomId: string, userId: string, userName: string, isTyping: boolean): Promise<void> {
     try {
       const channel = this.channels.get(roomId);
       if (!channel) return;
 
-      await channel.send({
-        type: "broadcast",
-        event: "typing",
-        payload: {
-          userId,
-          userName,
-          isTyping,
-          timestamp: Date.now(),
-        },
-      });
+      // Debounce typing events to prevent spam
+      const debounceKey = `${roomId}_${userId}_typing`;
+      const existingTimeout = this.typingDebounceTimeouts.get(debounceKey);
+
+      if (existingTimeout) {
+        clearTimeout(existingTimeout);
+      }
+
+      if (isTyping) {
+        // Debounce typing start events
+        const timeout = setTimeout(async () => {
+          await channel.send({
+            type: "broadcast",
+            event: "typing",
+            payload: {
+              userId,
+              userName,
+              isTyping,
+              timestamp: Date.now(),
+            },
+          });
+          this.typingDebounceTimeouts.delete(debounceKey);
+        }, 500); // 500ms debounce
+
+        this.typingDebounceTimeouts.set(debounceKey, timeout);
+      } else {
+        // Send stop typing immediately
+        await channel.send({
+          type: "broadcast",
+          event: "typing",
+          payload: {
+            userId,
+            userName,
+            isTyping,
+            timestamp: Date.now(),
+          },
+        });
+        this.typingDebounceTimeouts.delete(debounceKey);
+      }
     } catch (error) {
       console.warn("Failed to send typing indicator:", error);
     }
@@ -560,11 +675,13 @@ class EnhancedRealtimeChatService {
         this.channels.delete(roomId);
       }
 
-      // Cleanup callbacks and caches
+      // Cleanup callbacks and enhanced caches
       this.messageCallbacks.delete(roomId);
       this.presenceCallbacks.delete(roomId);
       this.typingCallbacks.delete(roomId);
       this.messageCache.delete(roomId);
+      this.optimisticMessages.delete(roomId);
+      this.messageFingerprints.delete(roomId);
       this.batchedUpdates.delete(roomId);
 
       // Clear timeouts
@@ -600,6 +717,8 @@ class EnhancedRealtimeChatService {
       this.presenceCallbacks.clear();
       this.typingCallbacks.clear();
       this.messageCache.clear();
+      this.optimisticMessages.clear();
+      this.messageFingerprints.clear();
       this.batchedUpdates.clear();
       this.retryAttempts.clear();
 
@@ -612,6 +731,9 @@ class EnhancedRealtimeChatService {
 
       this.typingTimeouts.forEach((timeout) => clearTimeout(timeout));
       this.typingTimeouts.clear();
+
+      this.typingDebounceTimeouts.forEach((timeout) => clearTimeout(timeout));
+      this.typingDebounceTimeouts.clear();
 
       this.connectionStatus = "disconnected";
       console.log("🧹 Real-time chat service cleaned up");
@@ -637,6 +759,78 @@ class EnhancedRealtimeChatService {
       audioUri: rawMessage.audio_uri,
       audioDuration: rawMessage.audio_duration,
     };
+  }
+
+  // Generate unique fingerprint for message deduplication
+  private generateMessageFingerprint(message: ChatMessage): string {
+    return `${message.senderId}_${message.content}_${message.messageType}_${Math.floor(message.timestamp.getTime() / 1000)}`;
+  }
+
+  // Replace optimistic message with real message
+  private replaceOptimisticMessage(roomId: string, optimisticId: string, realMessage: ChatMessage): void {
+    const optimisticMessages = this.optimisticMessages.get(roomId);
+    if (optimisticMessages) {
+      optimisticMessages.delete(optimisticId);
+      console.log(`✅ Replaced optimistic message ${optimisticId} with real message ${realMessage.id}`);
+    }
+
+    // Notify callback about the replacement
+    const callback = this.messageCallbacks.get(roomId);
+    if (callback) {
+      callback([{ ...realMessage, isReplacement: true } as any], false);
+    }
+  }
+
+  // Cleanup old messages to manage memory
+  private cleanupOldMessages(roomId: string): void {
+    const cache = this.messageCache.get(roomId);
+    if (!cache || cache.size <= this.maxCacheSize) return;
+
+    // Sort by timestamp and keep only recent messages
+    const entries = Array.from(cache.entries())
+      .sort((a, b) => b[1].timestamp - a[1].timestamp)
+      .slice(0, this.maxCacheSize);
+
+    const newCache = new Map(entries);
+    this.messageCache.set(roomId, newCache);
+
+    // Cleanup fingerprints for removed messages
+    const fingerprints = this.messageFingerprints.get(roomId);
+    if (fingerprints) {
+      const validFingerprints = new Set(entries.map(([, entry]) => entry.fingerprint));
+      this.messageFingerprints.set(roomId, validFingerprints);
+    }
+  }
+
+  // Throttle typing updates to prevent UI thrashing
+  private throttleTypingUpdate(roomId: string, callback: () => void): void {
+    const throttleKey = `${roomId}_typing_throttle`;
+    const now = Date.now();
+    const lastUpdate = (this as any)[throttleKey] || 0;
+
+    if (now - lastUpdate > 100) { // Throttle to max 10 updates per second
+      callback();
+      (this as any)[throttleKey] = now;
+    }
+  }
+
+  // Track optimistic message for future replacement
+  trackOptimisticMessage(roomId: string, optimisticMessage: ChatMessage): void {
+    const optimisticMessages = this.optimisticMessages.get(roomId) || new Map();
+    optimisticMessages.set(optimisticMessage.id, optimisticMessage);
+    this.optimisticMessages.set(roomId, optimisticMessages);
+
+    // Add to cache as optimistic
+    const cache = this.messageCache.get(roomId) || new Map();
+    const fingerprint = this.generateMessageFingerprint(optimisticMessage);
+    cache.set(optimisticMessage.id, {
+      message: optimisticMessage,
+      timestamp: Date.now(),
+      isOptimistic: true,
+      fingerprint,
+      state: 'optimistic'
+    });
+    this.messageCache.set(roomId, cache);
   }
 
   // Get connection status

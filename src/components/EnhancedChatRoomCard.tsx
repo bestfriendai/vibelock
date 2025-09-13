@@ -126,7 +126,7 @@ export default function EnhancedChatRoomCard({
         style={{
           backgroundColor: colors.surface[800],
           borderWidth: 1,
-          borderColor: unreadCount > 0 ? colors.brand.red + "40" : colors.border,
+          borderColor: unreadCount > 0 ? colors.brand.red + "40" : colors.border.default,
           shadowColor: "#000",
           shadowOffset: { width: 0, height: 2 },
           shadowOpacity: isDarkMode ? 0.3 : 0.1,
@@ -228,7 +228,7 @@ export default function EnhancedChatRoomCard({
         {room.category && room.category !== "all" && (
           <View
             className="flex-row justify-end mt-3 pt-3 border-t border-opacity-20"
-            style={{ borderColor: colors.border }}
+            style={{ borderColor: colors.border.default }}
           >
             <View className="px-2 py-0.5 rounded-full" style={{ backgroundColor: colors.surface[700] }}>
               <Text className="text-xs capitalize" style={{ color: colors.text.muted }}>

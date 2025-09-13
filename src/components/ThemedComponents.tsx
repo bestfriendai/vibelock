@@ -141,7 +141,7 @@ export const ThemedButton: React.FC<ThemedButtonProps> = ({
           ...sizeStyles[size],
           backgroundColor: colors.surface[700],
           borderWidth: 1,
-          borderColor: colors.border,
+          borderColor: colors.border.default,
         };
       case "outline":
         return {
@@ -207,7 +207,7 @@ export const ThemedCard: React.FC<ThemedCardProps> = ({
     borderRadius: 16,
     ...(border && {
       borderWidth: 1,
-      borderColor: colors.border,
+      borderColor: colors.border.default,
     }),
     ...paddingStyles[padding],
   };

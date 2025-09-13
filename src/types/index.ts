@@ -198,6 +198,7 @@ export interface ChatMessage {
   messageType: MessageType;
   timestamp: Date;
   isRead: boolean;
+  status?: "pending" | "sent" | "delivered" | "read" | "failed";
   isOwn?: boolean;
   replyTo?: string;
   reactions?: {

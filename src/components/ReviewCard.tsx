@@ -52,7 +52,7 @@ export default function ReviewCard({ review }: ReviewCardProps) {
       className="rounded-2xl p-6 mb-4 border"
       style={{
         backgroundColor: colors.surface[800],
-        borderColor: colors.border,
+        borderColor: colors.border.default,
       }}
     >
       {/* Header */}
@@ -91,7 +91,7 @@ export default function ReviewCard({ review }: ReviewCardProps) {
       </Text>
 
       {/* Footer */}
-      <View className="flex-row items-center justify-between pt-4 border-t" style={{ borderColor: colors.border }}>
+      <View className="flex-row items-center justify-between pt-4 border-t" style={{ borderColor: colors.border.default }}>
         <Pressable
           onPress={handleShare}
           className="flex-row items-center px-3 py-2 rounded-full"

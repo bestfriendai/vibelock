@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { View, Text, Pressable, Modal, Dimensions } from "react-native";
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import { useTheme } from "../providers/ThemeProvider";
+import useAuthStore from "../state/authStore";
 
 const { width: screenWidth } = Dimensions.get("window");
 
@@ -29,6 +30,7 @@ export const MessageReactions: React.FC<MessageReactionsProps> = ({
   onShowReactionPicker,
 }) => {
   const { colors } = useTheme();
+  const { user } = useAuthStore();
   const [showQuickReactions, setShowQuickReactions] = useState(false);
 
   const scale = useSharedValue(1);
@@ -58,12 +60,21 @@ export const MessageReactions: React.FC<MessageReactionsProps> = ({
     transform: [{ scale: scale.value }],
   }));
 
+  // Derive hasReacted for current user if not provided by parent
+  const enrichedReactions = useMemo(() => {
+    const userId = user?.id;
+    return reactions.map((r) => ({
+      ...r,
+      hasReacted: r.hasReacted ?? (userId ? r.users.includes(userId) : false),
+    }));
+  }, [reactions, user?.id]);
+
   return (
     <View>
       {/* Existing Reactions */}
-      {reactions.length > 0 && (
+      {enrichedReactions.length > 0 && (
         <View className="flex-row flex-wrap mt-1">
-          {reactions.map((reaction, index) => (
+          {enrichedReactions.map((reaction, index) => (
             <Pressable
               key={`${reaction.emoji}-${index}`}
               onPress={() => handleReaction(reaction.emoji)}

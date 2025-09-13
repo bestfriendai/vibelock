@@ -65,7 +65,6 @@ export default function NotificationsScreen() {
 
       <FlashList
         data={notifications}
-        estimatedItemSize={80}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <Pressable

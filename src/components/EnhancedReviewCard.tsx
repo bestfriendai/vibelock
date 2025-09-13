@@ -29,7 +29,7 @@ const EnhancedReviewCard = memo(
         className="rounded-2xl p-6 mb-6 border"
         style={{
           backgroundColor: colors.surface[800],
-          borderColor: colors.border,
+          borderColor: colors.border.default,
         }}
       >
         {/* Header with reviewer info */}
@@ -77,7 +77,7 @@ const EnhancedReviewCard = memo(
         )}
 
         {/* Footer Actions */}
-        <View className="flex-row items-center justify-between pt-4 border-t" style={{ borderColor: colors.border }}>
+        <View className="flex-row items-center justify-between pt-4 border-t" style={{ borderColor: colors.border.default }}>
           <View className="flex-row items-center space-x-4">
             <Pressable onPress={onLike} className="flex-row items-center">
               <Ionicons

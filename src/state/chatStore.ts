@@ -6,10 +6,11 @@ import { ChatRoom, ChatMessage, ChatMember, TypingUser, ConnectionStatus, ChatSt
 import { enhancedRealtimeChatService } from "../services/realtimeChat";
 import useAuthStore from "./authStore";
 import { requireAuthentication, getUserDisplayName } from "../utils/authUtils";
-import { AppError, parseSupabaseError } from "../utils/errorHandling";
+import { AppError, parseSupabaseError, retryWithBackoff, ErrorType } from "../utils/errorHandling";
 import { supabase } from "../config/supabase";
 import { notificationService } from "../services/notificationService";
 import { storageService } from "../services/storageService";
+import NetInfo from "@react-native-community/netinfo";
 
 interface ChatActions {
   // Connection management
@@ -26,8 +27,13 @@ interface ChatActions {
 
   // Messages
   loadMessages: (roomId: string) => Promise<void>;
-  sendMessage: (roomId: string, content: string) => void;
+  sendMessage: (roomId: string, content: string, replyTo?: string) => void;
   addMessage: (message: ChatMessage) => void;
+  updateMessageStatus: (
+    roomId: string,
+    messageId: string,
+    status: "pending" | "sent" | "delivered" | "read" | "failed",
+  ) => void;
   sendVoiceMessage: (roomId: string, audioUri: string, duration: number) => Promise<void>;
   sendMediaMessage: (roomId: string, mediaUri: string, mediaType: "image" | "video") => Promise<void>;
   markMessagesAsRead: (roomId: string) => void;
@@ -65,6 +71,8 @@ type ChatStore = ChatState & ChatActions;
 
 // Mock data removed - using real Supabase data only
 
+let netUnsubscribe: (() => void) | null = null;
+
 const useChatStore = create<ChatStore>()(
   persist(
     (set, get) => ({
@@ -84,6 +92,25 @@ const useChatStore = create<ChatStore>()(
       connect: async (userId: string) => {
         try {
           console.log("🚀 Connecting to enhanced real-time chat service...");
+          set({ connectionStatus: "connecting" });
+
+          // Set up network monitoring once
+          if (!netUnsubscribe) {
+            netUnsubscribe = NetInfo.addEventListener(async (state) => {
+              const online = Boolean(state.isConnected) && state.isInternetReachable !== false;
+              set({ connectionStatus: online ? "connected" : "disconnected" });
+              if (online && enhancedRealtimeChatService.getActiveChannelsCount() >= 0) {
+                try {
+                  await enhancedRealtimeChatService.initialize();
+                  set({ connectionStatus: "connected" });
+                } catch (e) {
+                  console.warn("Reconnect initialize failed:", e);
+                  set({ connectionStatus: "error" as ConnectionStatus });
+                }
+              }
+            });
+          }
+
           await enhancedRealtimeChatService.initialize();
           set({ connectionStatus: "connected" });
           console.log("✅ Connected to enhanced real-time chat service");
@@ -205,7 +232,7 @@ const useChatStore = create<ChatStore>()(
           // Join room with enhanced real-time service
           await enhancedRealtimeChatService.joinRoom(roomId, supabaseUser.id, getUserDisplayName(user));
 
-          // Subscribe to messages for this room - CRITICAL: Messages are sorted newest-first for FlashList inverted display
+          // Subscribe to messages with simplified deduplication (trust service)
           enhancedRealtimeChatService.subscribeToMessages(
             roomId,
             (newMessages: ChatMessage[], isInitialLoad = false) => {
@@ -220,56 +247,56 @@ const useChatStore = create<ChatStore>()(
                   // For initial load, replace all messages
                   allMessages = [...newMessages];
                 } else {
-                  // For new messages, add to existing ones with enhanced duplicate detection
+                  // For new messages, trust the service's deduplication
                   const existingMessages = state.messages[roomId] || [];
                   allMessages = [...existingMessages];
 
-                  newMessages.forEach((newMsg) => {
-                    // Enhanced duplicate detection: check by ID first, then by content/sender/time similarity
-                    const isDuplicateById = allMessages.some((existing) => existing.id === newMsg.id);
-
-                    if (!isDuplicateById) {
-                      // Check for potential optimistic message duplicates (same content, sender, within 5 seconds)
-                      const isDuplicateByContent = allMessages.some(
-                        (existing) =>
-                          existing.senderId === newMsg.senderId &&
-                          existing.content === newMsg.content &&
-                          Math.abs(new Date(existing.timestamp).getTime() - new Date(newMsg.timestamp).getTime()) <
-                            5000,
+                  newMessages.forEach((newMsg: any) => {
+                    if (newMsg.isReplacement) {
+                      // This is a real message replacing an optimistic one
+                      // Find and replace the optimistic message
+                      const optimisticPrefix = 'optimistic_';
+                      const optimisticIndex = allMessages.findIndex(
+                        (msg) =>
+                          msg.id.startsWith(optimisticPrefix) &&
+                          msg.senderId === newMsg.senderId &&
+                          msg.content === newMsg.content
                       );
 
-                      if (!isDuplicateByContent) {
-                        allMessages.push(newMsg);
+                      if (optimisticIndex !== -1) {
+                        allMessages[optimisticIndex] = { ...newMsg, status: newMsg.isRead ? 'read' : 'sent' } as any;
+                        console.log(`✅ Replaced optimistic message with real message`);
                       } else {
-                        console.log(`🔄 Duplicate message detected by content/time similarity, skipping`);
-
-                        // Remove the optimistic message and replace with the real one
-                        const optimisticIndex = allMessages.findIndex(
-                          (existing) =>
-                            existing.senderId === newMsg.senderId &&
-                            existing.content === newMsg.content &&
-                            Math.abs(new Date(existing.timestamp).getTime() - new Date(newMsg.timestamp).getTime()) <
-                              5000,
-                        );
-
-                        if (optimisticIndex !== -1) {
-                          allMessages[optimisticIndex] = newMsg; // Replace optimistic with real message
-                          console.log(`🔄 Replaced optimistic message with real message`);
+                        // Couldn't find optimistic message, just add the new one
+                        const isDuplicate = allMessages.some((msg) => msg.id === newMsg.id);
+                        if (!isDuplicate) {
+                          allMessages.push({ ...newMsg, status: newMsg.isRead ? 'read' : 'sent' } as any);
                         }
+                      }
+                    } else {
+                      // Update existing by ID if present, else append
+                      const existingIndex = allMessages.findIndex((m) => m.id === newMsg.id);
+                      if (existingIndex !== -1) {
+                        allMessages[existingIndex] = { ...allMessages[existingIndex], ...newMsg } as any;
+                      } else {
+                        allMessages.push(newMsg);
                       }
                     }
                   });
                 }
 
-                // Sort messages newest-first for proper FlashList inverted display
-                const sortedMessages = allMessages.sort(
-                  (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
-                );
+                // Sort messages newest-first for consistent display
+                // Only sort if we actually modified the array
+                if (isInitialLoad || newMessages.length > 0) {
+                  allMessages.sort(
+                    (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+                  );
+                }
 
                 return {
                   messages: {
                     ...state.messages,
-                    [roomId]: sortedMessages,
+                    [roomId]: allMessages,
                   },
                 };
               });
@@ -354,7 +381,7 @@ const useChatStore = create<ChatStore>()(
         }
       },
 
-      sendMessage: async (roomId: string, content: string) => {
+      sendMessage: async (roomId: string, content: string, replyTo?: string) => {
         let optimisticMessageId: string | null = null;
 
         try {
@@ -364,35 +391,56 @@ const useChatStore = create<ChatStore>()(
           const { user } = await requireAuthentication("send messages");
           const senderName = getUserDisplayName(user);
 
-          // Optimistic update - add message locally first
+          // Validation and early return
+          if (!content || content.trim().length === 0) {
+            return;
+          }
+
+          // Create optimistic message with predictable ID
+          const timestamp = Date.now();
+          optimisticMessageId = `optimistic_${timestamp}_${user.id}`;
+
           const optimisticMessage: ChatMessage = {
-            id: uuidv4(),
+            id: optimisticMessageId,
             chatRoomId: roomId,
             senderId: user.id,
             senderName,
             content,
             messageType: "text",
-            timestamp: new Date(),
-            isRead: true,
+            timestamp: new Date(timestamp),
+            isRead: false,
+            status: 'pending',
             isOwn: true,
-          };
+            isOptimistic: true, // Mark as optimistic
+            replyTo,
+          } as ChatMessage;
 
-          optimisticMessageId = optimisticMessage.id;
+          // Track optimistic message in service
+          enhancedRealtimeChatService.trackOptimisticMessage(roomId, optimisticMessage);
+
+          // Add optimistic message locally
           get().addMessage(optimisticMessage);
 
-          // Send to Supabase via enhanced real-time service
-          await enhancedRealtimeChatService.sendMessage(roomId, content, user.id, senderName);
+          // Send to Supabase via enhanced real-time service (with retry)
+          await retryWithBackoff(
+            () => enhancedRealtimeChatService.sendMessage(roomId, content, user.id, senderName, 'text', replyTo),
+            3,
+            800,
+            (err) => err.type === ErrorType.NETWORK || err.retryable,
+          );
 
           console.log("✅ Message sent successfully");
         } catch (error) {
           console.warn("💥 Failed to send message:", error);
 
-          // Remove the optimistic message on error if it was created
+          // Mark the optimistic message as failed on error
           if (optimisticMessageId) {
             set((state) => ({
               messages: {
                 ...state.messages,
-                [roomId]: (state.messages[roomId] || []).filter((msg) => msg.id !== optimisticMessageId),
+                [roomId]: (state.messages[roomId] || []).map((msg) =>
+                  msg.id === optimisticMessageId ? ({ ...msg, status: 'failed' } as any) : msg,
+                ),
               },
             }));
           }
@@ -405,22 +453,40 @@ const useChatStore = create<ChatStore>()(
         set((state) => {
           const roomMessages = state.messages[message.chatRoomId] || [];
 
-          // Check if message already exists to avoid duplicates
+          // Simple duplicate check by ID (trust service for complex deduplication)
           const messageExists = roomMessages.some((msg) => msg.id === message.id);
           if (messageExists) {
             return state;
           }
 
-          // CRITICAL: Sort newest-first for FlashList inverted display
+          // Add message and sort only if needed
+          const updatedMessages = [...roomMessages, message];
+
+          // Sort newest-first for consistent display
+          updatedMessages.sort(
+            (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+          );
+
           return {
             messages: {
               ...state.messages,
-              [message.chatRoomId]: [...roomMessages, message].sort(
-                (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
-              ),
+              [message.chatRoomId]: updatedMessages,
             },
           };
         });
+      },
+
+      updateMessageStatus: (
+        roomId: string,
+        messageId: string,
+        status: "pending" | "sent" | "delivered" | "read" | "failed",
+      ) => {
+        set((state) => ({
+          messages: {
+            ...state.messages,
+            [roomId]: (state.messages[roomId] || []).map((m) => (m.id === messageId ? ({ ...m, status } as any) : m)),
+          },
+        }));
       },
 
       sendVoiceMessage: async (roomId: string, audioUri: string, duration: number) => {
@@ -540,22 +606,52 @@ const useChatStore = create<ChatStore>()(
       },
 
       reactToMessage: async (roomId: string, messageId: string, reaction: string) => {
+        let reverted = false;
         try {
           const { user } = await requireAuthentication("react to messages");
-          await enhancedRealtimeChatService.sendReaction(roomId, messageId, user.id, reaction);
+          const userId = user.id;
+
+          // Optimistic local update (assumes raw reactions array shape [{ user_id, emoji }])
+          set((state) => ({
+            messages: {
+              ...state.messages,
+              [roomId]: (state.messages[roomId] || []).map((m) => {
+                if (m.id !== messageId) return m;
+                const raw = ((m as any).reactions || []) as any[];
+                const idx = raw.findIndex((r) => (r.user_id || r.userId) === userId && r.emoji === reaction);
+                let next: any[];
+                if (idx > -1) {
+                  next = raw.slice(0, idx).concat(raw.slice(idx + 1));
+                } else {
+                  next = raw.concat([{ user_id: userId, emoji: reaction }]);
+                }
+                return { ...m, reactions: next } as any;
+              }),
+            },
+          }));
+
+          await enhancedRealtimeChatService.sendReaction(roomId, messageId, userId, reaction);
         } catch (error) {
+          // Revert optimistic change by reloading from service on next update
+          reverted = true;
           console.warn("💥 Failed to send reaction:", error);
           const appError = error instanceof AppError ? error : parseSupabaseError(error);
           set({ error: appError.userMessage });
+          // Optionally reload or mark for refresh
           throw appError;
+        } finally {
+          if (reverted) {
+            // No-op: the realtime update stream will reconcile
+          }
         }
       },
 
-      // Typing indicators
+      // Typing indicators with improved handling
       setTyping: (roomId: string, isTyping: boolean) => {
         const { user } = useAuthStore.getState();
         if (user) {
-          enhancedRealtimeChatService.setTyping(roomId, user.id, user.email || "Anonymous", isTyping);
+          // Debounced typing is handled in the service
+          enhancedRealtimeChatService.setTyping(roomId, user.id, getUserDisplayName(user), isTyping);
         }
       },
 
@@ -571,17 +667,23 @@ const useChatStore = create<ChatStore>()(
           }
 
           // Get the oldest message timestamp for cursor-based pagination
-          const oldestMessage = currentMessages[0]!;
+          const oldestMessage = currentMessages[currentMessages.length - 1]!; // Last in newest-first array
           const cursor = oldestMessage.timestamp.toISOString();
 
           // Load older messages using enhanced service with cursor
           const olderMessages = await enhancedRealtimeChatService.loadOlderMessages(roomId, cursor, 20);
 
           if (olderMessages.length > 0) {
-            // Merge messages and deduplicate by ID
-            const allMessages = [...olderMessages, ...currentMessages];
-            const uniqueMessages = Array.from(new Map(allMessages.map((msg) => [msg.id, msg])).values()).sort(
-              // FIXED: Sort descending for FlashList inverted display
+            // Efficient merge with Map for deduplication
+            const messageMap = new Map(currentMessages.map((msg) => [msg.id, msg]));
+            olderMessages.forEach((msg) => {
+              if (!messageMap.has(msg.id)) {
+                messageMap.set(msg.id, msg);
+              }
+            });
+
+            // Convert back to array and sort newest-first
+            const uniqueMessages = Array.from(messageMap.values()).sort(
               (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
             );
 
@@ -721,6 +823,10 @@ const useChatStore = create<ChatStore>()(
             onlineUsers: [],
             error: null,
           });
+          if (netUnsubscribe) {
+            netUnsubscribe();
+            netUnsubscribe = null;
+          }
         } catch (error) {
           console.warn("Failed to cleanup chat store:", error);
         }

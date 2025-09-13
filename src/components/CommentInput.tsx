@@ -46,7 +46,7 @@ export default function CommentInput({
   // Show sign-in prompt for guests
   if (needsSignIn) {
     return (
-      <View style={{ backgroundColor: colors.surface[800], borderTopColor: colors.border, borderTopWidth: 1 }}>
+      <View style={{ backgroundColor: colors.surface[800], borderTopColor: colors.border.default, borderTopWidth: 1 }}>
         <View className="flex-row items-center justify-between px-6 py-6">
           <View className="flex-1">
             <Text className="text-base" style={{ color: colors.text.secondary }}>
@@ -71,7 +71,7 @@ export default function CommentInput({
   }
 
   return (
-    <View style={{ backgroundColor: colors.surface[800], borderTopColor: colors.border, borderTopWidth: 1 }}>
+    <View style={{ backgroundColor: colors.surface[800], borderTopColor: colors.border.default, borderTopWidth: 1 }}>
       {/* Reply indicator */}
       {replyToComment && (
         <View

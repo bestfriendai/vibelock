@@ -12,42 +12,52 @@ import { STRINGS } from "../constants/strings";
 import { ChatRoom } from "../types";
 import { useNavigation } from "@react-navigation/native";
 import { startTimer } from "../utils/performance";
+import OfflineBanner from "../components/OfflineBanner";
+import { useOffline } from "../hooks/useOffline";
 
 export default function ChatroomsScreen() {
   const navigation = useNavigation<any>();
   const { colors } = useTheme();
-  const { chatRooms, loadChatRooms, isLoading, onlineUsers, setRoomCategoryFilter, typingUsers } = useChatStore();
+  const { chatRooms, loadChatRooms, isLoading, onlineUsers, setRoomCategoryFilter, typingUsers, error, connectionStatus } = useChatStore();
   const { user, canAccessChat, needsSignIn } = useAuthState();
   const [category, setCategory] = useState<"all" | "men" | "women" | "lgbtq+">(user?.genderPreference || "all");
   const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  const { isOnline, retryWithBackoff } = useOffline();
 
   useEffect(() => {
     const done = startTimer("chatrooms:initialLoad");
-    Promise.resolve(loadChatRooms()).finally(done);
+    retryWithBackoff(loadChatRooms).finally(done);
   }, [loadChatRooms]);
 
   useEffect(() => {
     setRoomCategoryFilter(category);
     const done = startTimer(`chatrooms:category:${category}`);
-    Promise.resolve(loadChatRooms()).finally(done);
+    retryWithBackoff(loadChatRooms).finally(done);
   }, [category, setRoomCategoryFilter, loadChatRooms]);
 
+  // Debounce search input for performance
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQuery(query.trim()), 300);
+    return () => clearTimeout(t);
+  }, [query]);
+
   const filtered = useMemo(() => {
-    const q = query.toLowerCase();
+    const q = debouncedQuery.toLowerCase();
     const rooms = Array.isArray(chatRooms) ? chatRooms : [];
     if (!q) return rooms;
     return rooms.filter(
       (r) =>
         r && r.name && r.description && (r.name.toLowerCase().includes(q) || r.description.toLowerCase().includes(q)),
     );
-  }, [query, chatRooms]);
+  }, [debouncedQuery, chatRooms]);
 
   const onRefresh = async () => {
     setRefreshing(true);
     const done = startTimer("chatrooms:pullToRefresh");
     try {
-      await loadChatRooms();
+      await retryWithBackoff(loadChatRooms);
     } finally {
       done();
     }
@@ -112,12 +122,13 @@ export default function ChatroomsScreen() {
 
   return (
     <SafeAreaView className="flex-1" style={{ backgroundColor: colors.background }}>
+      <OfflineBanner onRetry={loadChatRooms} />
       {/* Header */}
       <View
         className="px-6 py-6"
         style={{
           borderBottomWidth: 1,
-          borderBottomColor: colors.border,
+          borderBottomColor: colors.border.default,
           backgroundColor: colors.background,
         }}
       >
@@ -125,6 +136,16 @@ export default function ChatroomsScreen() {
           <Text className="text-2xl font-bold" style={{ color: colors.text.primary }}>
             Chat Rooms
           </Text>
+          <View className="flex-row items-center">
+            <View
+              className="w-2 h-2 rounded-full mr-2"
+              style={{ backgroundColor: connectionStatus === "connected" && isOnline ? "#22c55e" : connectionStatus === "connecting" ? "#f59e0b" : "#ef4444" }}
+              accessibilityLabel={`Connection status: ${connectionStatus}`}
+            />
+            <Text className="text-xs" style={{ color: colors.text.muted }}>
+              {connectionStatus}
+            </Text>
+          </View>
         </View>
         <View
           className="mt-6 rounded-xl px-4 py-3 flex-row items-center"
@@ -155,6 +176,19 @@ export default function ChatroomsScreen() {
         </View>
       </View>
 
+      {/* Error bar */}
+      {!!error && (
+        <View className="mx-6 mt-3 bg-surface-800 border border-surface-700 rounded-xl p-3">
+          <Text className="text-text-primary text-sm font-medium">Something went wrong</Text>
+          <Text className="text-text-secondary text-xs mt-1">{error}</Text>
+          <View className="flex-row justify-end mt-2">
+            <Pressable onPress={loadChatRooms} className="px-3 py-1 rounded-lg" style={{ backgroundColor: colors.brand.red }}>
+              <Text className="text-black text-xs font-semibold">Retry</Text>
+            </Pressable>
+          </View>
+        </View>
+      )}
+
       <FlatList
         data={filtered}
         keyExtractor={(item) => item.id}
@@ -172,13 +206,21 @@ export default function ChatroomsScreen() {
         )}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         ListEmptyComponent={
-          !isLoading ? (
+          isLoading ? (
+            <View className="px-6 py-8">
+              {[...Array(6)].map((_, i) => (
+                <View key={i} className="mb-4">
+                  <View className="h-16 rounded-xl" style={{ backgroundColor: colors.surface[800] }} />
+                </View>
+              ))}
+            </View>
+          ) : (
             <EmptyState
               icon={STRINGS.EMPTY_STATES.CHATROOMS.icon}
               title={STRINGS.EMPTY_STATES.CHATROOMS.title}
               description={STRINGS.EMPTY_STATES.CHATROOMS.description}
             />
-          ) : null
+          )
         }
       />
     </SafeAreaView>

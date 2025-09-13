@@ -6,7 +6,7 @@ import { canUseRevenueCat, buildEnv } from "../utils/buildEnvironment";
 // Environment-configurable premium entitlements
 const PREMIUM_ENTITLEMENTS = (process.env.EXPO_PUBLIC_REVENUECAT_PREMIUM_ENTITLEMENTS || "premium,pro")
   .split(",")
-  .map((s) => s.trim())
+  .map((s: string) => s.trim())
   .filter(Boolean);
 
 // Types (always available)
@@ -39,7 +39,7 @@ interface PurchasesOffering {
 // Type for dynamic RevenueCat import
 type RevenueCatModule = {
   default: {
-    configure: (config: { apiKey: string; appUserID?: string }) => Promise<void>;
+    configure: (config: { apiKey: string; appUserID?: string }) => void | Promise<void>;
     setDebugLogsEnabled: (enabled: boolean) => void;
     getCustomerInfo: () => Promise<CustomerInfo>;
     getOfferings: () => Promise<{ all: Record<string, any> }>;

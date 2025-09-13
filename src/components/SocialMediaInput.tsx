@@ -141,7 +141,7 @@ export default function SocialMediaInput({ socialMedia, onSocialMediaChange }: P
               className="flex-row items-center border rounded-xl px-4 py-3"
               style={{
                 backgroundColor: colors.surface[800],
-                borderColor: isFocused ? colors.brand.red : error ? "#EF4444" : colors.border,
+                borderColor: isFocused ? colors.brand.red : error ? "#EF4444" : colors.border.default,
               }}
             >
               {/* Prefix */}

@@ -1,8 +1,7 @@
-import React, { useState } from "react";
-import { View, Pressable, Text, Alert, Modal, Image, Dimensions } from "react-native";
+import React, { useMemo, useState } from "react";
+import { View, Pressable, Text, Alert, Modal, Image, Dimensions, ActivityIndicator, Linking } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import * as DocumentPicker from "expo-document-picker";
-import * as MediaLibrary from "expo-media-library";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from "react-native-reanimated";
@@ -29,12 +28,17 @@ export const MediaPicker: React.FC<MediaPickerProps> = ({ onMediaSelect, onClose
   const { colors } = useTheme();
   const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null);
   const [showPreview, setShowPreview] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Modern permission hooks (SDK 54)
+  const [cameraPermission, requestCameraPermission] = ImagePicker.useCameraPermissions();
+  const [libraryPermission, requestLibraryPermission] = ImagePicker.useMediaLibraryPermissions();
 
   // File validation constants (matching StorageService)
   const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
-  const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
-  const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/quicktime"];
-  const ALLOWED_AUDIO_TYPES = ["audio/mp4", "audio/mpeg", "audio/wav"];
+  const ALLOWED_IMAGE_TYPES = useMemo(() => ["image/jpeg", "image/png", "image/webp"], []);
+  const ALLOWED_VIDEO_TYPES = useMemo(() => ["video/mp4", "video/quicktime"], []);
+  const ALLOWED_AUDIO_TYPES = useMemo(() => ["audio/mp4", "audio/mpeg", "audio/wav"], []);
 
   /**
    * Validate selected media file
@@ -45,53 +49,90 @@ export const MediaPicker: React.FC<MediaPickerProps> = ({ onMediaSelect, onClose
       throw new AppError("File too large (max 50MB)", ErrorType.VALIDATION, "FILE_TOO_LARGE");
     }
 
-    // Check file type for images and videos
-    if (type === "image") {
-      const extension = asset.fileName?.toLowerCase().split(".").pop();
-      const mimeType =
-        extension === "jpg" || extension === "jpeg"
-          ? "image/jpeg"
-          : extension === "png"
-            ? "image/png"
-            : extension === "webp"
-              ? "image/webp"
-              : "unknown";
+    const name: string = asset.fileName || asset.name || "";
+    const extension = name?.toLowerCase().split(".").pop();
+    const detectedMime =
+      asset.mimeType ||
+      (extension === "jpg" || extension === "jpeg"
+        ? "image/jpeg"
+        : extension === "png"
+          ? "image/png"
+          : extension === "webp"
+            ? "image/webp"
+            : extension === "mp4"
+              ? "video/mp4"
+              : extension === "mov"
+                ? "video/quicktime"
+                : undefined);
 
-      if (!ALLOWED_IMAGE_TYPES.includes(mimeType)) {
-        throw new AppError(`Invalid image type: ${extension}`, ErrorType.VALIDATION, "INVALID_FILE_TYPE");
+    if (type === "image") {
+      if (!detectedMime || !ALLOWED_IMAGE_TYPES.includes(detectedMime)) {
+        throw new AppError(
+          `Invalid image type${extension ? `: .${extension}` : ""}`,
+          ErrorType.VALIDATION,
+          "INVALID_FILE_TYPE",
+        );
       }
     } else if (type === "video") {
-      const extension = asset.fileName?.toLowerCase().split(".").pop();
-      const mimeType = extension === "mp4" ? "video/mp4" : extension === "mov" ? "video/quicktime" : "unknown";
-
-      if (!ALLOWED_VIDEO_TYPES.includes(mimeType)) {
-        throw new AppError(`Invalid video type: ${extension}`, ErrorType.VALIDATION, "INVALID_FILE_TYPE");
+      if (!detectedMime || !ALLOWED_VIDEO_TYPES.includes(detectedMime)) {
+        throw new AppError(
+          `Invalid video type${extension ? `: .${extension}` : ""}`,
+          ErrorType.VALIDATION,
+          "INVALID_FILE_TYPE",
+        );
+      }
+    } else if (type === "document") {
+      const blocked = ["exe", "bat", "cmd", "sh", "apk", "ipa"];
+      if (extension && blocked.includes(extension)) {
+        throw new AppError("Blocked file type for security reasons", ErrorType.VALIDATION, "BLOCKED_FILE_TYPE");
       }
     }
   };
 
   const scale = useSharedValue(1);
 
-  const requestPermissions = async () => {
-    const { status: cameraStatus } = await ImagePicker.requestCameraPermissionsAsync();
-    const { status: mediaLibraryStatus } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-    if (cameraStatus !== "granted" || mediaLibraryStatus !== "granted") {
-      Alert.alert(
-        "Permissions Required",
-        "Please grant camera and media library permissions to share photos and videos.",
-        [{ text: "OK" }],
-      );
+  const ensurePermission = async (which: "camera" | "library"): Promise<boolean> => {
+    try {
+      if (which === "camera") {
+        if (cameraPermission?.granted) return true;
+        const res = await requestCameraPermission();
+        if (res?.granted) return true;
+        Alert.alert(
+          "Camera Permission Needed",
+          "Grant camera access to take photos or videos.",
+          [
+            { text: "Cancel", style: "cancel" },
+            { text: "Open Settings", onPress: () => Linking.openSettings?.() },
+          ],
+        );
+        return false;
+      } else {
+        if (libraryPermission?.granted) return true;
+        const res = await requestLibraryPermission();
+        if (res?.granted) return true;
+        Alert.alert(
+          "Library Permission Needed",
+          "Grant media library access to choose photos or videos.",
+          [
+            { text: "Cancel", style: "cancel" },
+            { text: "Open Settings", onPress: () => Linking.openSettings?.() },
+          ],
+        );
+        return false;
+      }
+    } catch (e) {
+      console.warn("Permission request failed", e);
+      Alert.alert("Error", "Failed to request permissions. Please try again.");
       return false;
     }
-    return true;
   };
 
   const pickImageFromCamera = async () => {
-    const hasPermission = await requestPermissions();
+    const hasPermission = (await ensurePermission("camera")) && (await ensurePermission("library"));
     if (!hasPermission) return;
 
     try {
+      setIsLoading(true);
       const result = await ImagePicker.launchCameraAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
@@ -111,6 +152,7 @@ export const MediaPicker: React.FC<MediaPickerProps> = ({ onMediaSelect, onClose
             type: "image",
             name: asset.fileName || "camera_image.jpg",
             size: asset.fileSize,
+            mimeType: asset.mimeType,
           };
 
           setSelectedMedia(media);
@@ -127,14 +169,17 @@ export const MediaPicker: React.FC<MediaPickerProps> = ({ onMediaSelect, onClose
     } catch (error) {
       console.warn("Camera error:", error);
       Alert.alert("Error", "Failed to take photo. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const pickImageFromGallery = async () => {
-    const hasPermission = await requestPermissions();
+    const hasPermission = await ensurePermission("library");
     if (!hasPermission) return;
 
     try {
+      setIsLoading(true);
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.All,
         allowsEditing: true,
@@ -156,6 +201,7 @@ export const MediaPicker: React.FC<MediaPickerProps> = ({ onMediaSelect, onClose
             type: mediaType,
             name: asset.fileName || `media_${Date.now()}.${asset.type === "video" ? "mp4" : "jpg"}`,
             size: asset.fileSize,
+            mimeType: asset.mimeType,
           };
 
           setSelectedMedia(media);
@@ -172,11 +218,14 @@ export const MediaPicker: React.FC<MediaPickerProps> = ({ onMediaSelect, onClose
     } catch (error) {
       console.warn("Gallery error:", error);
       Alert.alert("Error", "Failed to pick media. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const pickDocument = async () => {
     try {
+      setIsLoading(true);
       const result = await DocumentPicker.getDocumentAsync({
         type: "*/*",
         copyToCacheDirectory: true,
@@ -185,6 +234,13 @@ export const MediaPicker: React.FC<MediaPickerProps> = ({ onMediaSelect, onClose
 
       if (!result.canceled && result.assets[0]) {
         const asset = result.assets[0];
+        try {
+          validateMediaFile(asset, "document");
+        } catch (error) {
+          const message = error instanceof AppError ? error.message : "Invalid document";
+          Alert.alert("Invalid File", message);
+          return;
+        }
         const media: MediaItem = {
           uri: asset.uri,
           type: "document",
@@ -200,6 +256,8 @@ export const MediaPicker: React.FC<MediaPickerProps> = ({ onMediaSelect, onClose
     } catch (error) {
       console.warn("Document picker error:", error);
       Alert.alert("Error", "Failed to pick document. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -249,7 +307,7 @@ export const MediaPicker: React.FC<MediaPickerProps> = ({ onMediaSelect, onClose
           {/* Header */}
           <View
             className="flex-row items-center justify-between p-4 border-b"
-            style={{ borderBottomColor: colors.border }}
+            style={{ borderBottomColor: colors.border.default }}
           >
             <Text className="text-lg font-semibold" style={{ color: colors.text.primary }}>
               Share Media
@@ -262,6 +320,14 @@ export const MediaPicker: React.FC<MediaPickerProps> = ({ onMediaSelect, onClose
           {/* Media Options */}
           <View className="flex-1 p-6">
             <View className="space-y-4">
+              {isLoading && (
+                <View className="items-center mb-2">
+                  <ActivityIndicator size="small" color={colors.brand.red} />
+                  <Text className="text-xs mt-2" style={{ color: colors.text.muted }}>
+                    Preparing media picker...
+                  </Text>
+                </View>
+              )}
               {/* Camera */}
               <Animated.View style={animatedStyle}>
                 <Pressable
@@ -269,7 +335,8 @@ export const MediaPicker: React.FC<MediaPickerProps> = ({ onMediaSelect, onClose
                   onPressIn={handlePressIn}
                   onPressOut={handlePressOut}
                   className="flex-row items-center p-4 rounded-xl"
-                  style={{ backgroundColor: colors.surface[700] }}
+                  style={{ backgroundColor: colors.surface[700], opacity: isLoading ? 0.6 : 1 }}
+                  disabled={isLoading}
                 >
                   <View
                     className="w-12 h-12 rounded-full items-center justify-center mr-4"
@@ -295,7 +362,8 @@ export const MediaPicker: React.FC<MediaPickerProps> = ({ onMediaSelect, onClose
                   onPressIn={handlePressIn}
                   onPressOut={handlePressOut}
                   className="flex-row items-center p-4 rounded-xl"
-                  style={{ backgroundColor: colors.surface[700] }}
+                  style={{ backgroundColor: colors.surface[700], opacity: isLoading ? 0.6 : 1 }}
+                  disabled={isLoading}
                 >
                   <View
                     className="w-12 h-12 rounded-full items-center justify-center mr-4"
@@ -321,7 +389,8 @@ export const MediaPicker: React.FC<MediaPickerProps> = ({ onMediaSelect, onClose
                   onPressIn={handlePressIn}
                   onPressOut={handlePressOut}
                   className="flex-row items-center p-4 rounded-xl"
-                  style={{ backgroundColor: colors.surface[700] }}
+                  style={{ backgroundColor: colors.surface[700], opacity: isLoading ? 0.6 : 1 }}
+                  disabled={isLoading}
                 >
                   <View
                     className="w-12 h-12 rounded-full items-center justify-center mr-4"
@@ -355,7 +424,7 @@ export const MediaPicker: React.FC<MediaPickerProps> = ({ onMediaSelect, onClose
           {/* Header */}
           <View
             className="flex-row items-center justify-between p-4 border-b"
-            style={{ borderBottomColor: colors.border }}
+            style={{ borderBottomColor: colors.border.default }}
           >
             <Pressable onPress={handleCancelPreview}>
               <Ionicons name="close" size={24} color={colors.text.primary} />

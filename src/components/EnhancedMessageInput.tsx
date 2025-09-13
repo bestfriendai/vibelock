@@ -50,6 +50,8 @@ export default function EnhancedMessageInput({
   const [isRecording, setIsRecording] = useState(false);
   const [showMediaPicker, setShowMediaPicker] = useState(false);
   const [inputMode, setInputMode] = useState<"text" | "voice">("text");
+  const [isVoiceBusy, setIsVoiceBusy] = useState(false);
+  const [isMediaBusy, setIsMediaBusy] = useState(false);
 
   const textInputRef = useRef<TextInput>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -137,27 +139,104 @@ export default function EnhancedMessageInput({
 
   const handleVoiceStart = () => {
     setIsRecording(true);
+    setIsVoiceBusy(true);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
   };
 
   const handleVoiceStop = () => {
     setIsRecording(false);
+    setIsVoiceBusy(false);
   };
 
   const handleVoiceSend = (audioUri: string, duration: number) => {
-    onSendVoice?.(audioUri, duration);
-    setInputMode("text");
+    try {
+      if (!audioUri || duration < 1) {
+        Alert.alert("Too Short", "Voice message must be at least 1 second long.");
+        return;
+      }
+      onSendVoice?.(audioUri, duration);
+      setInputMode("text");
+    } catch (e) {
+      Alert.alert("Error", "Failed to send voice message. Please try again.");
+    } finally {
+      setIsVoiceBusy(false);
+    }
   };
 
   const handleMediaSelect = (media: MediaItem) => {
-    onSendMedia?.(media);
-    setShowMediaPicker(false);
+    try {
+      setIsMediaBusy(true);
+      // Final validation pipeline before sending
+      const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+      if (media.size && media.size > MAX_FILE_SIZE) {
+        Alert.alert("File Too Large", "Please choose a file under 50MB.");
+        return;
+      }
+
+      const inferMime = (m?: string, n?: string): string | undefined => {
+        if (m) return m;
+        const ext = n?.toLowerCase().split(".").pop();
+        switch (ext) {
+          case "jpg":
+          case "jpeg":
+            return "image/jpeg";
+          case "png":
+            return "image/png";
+          case "webp":
+            return "image/webp";
+          case "mp4":
+            return "video/mp4";
+          case "mov":
+            return "video/quicktime";
+          case "m4a":
+            return "audio/mp4";
+          case "mp3":
+            return "audio/mpeg";
+          case "wav":
+            return "audio/wav";
+          default:
+            return undefined;
+        }
+      };
+
+      const mime = inferMime(media.mimeType, media.name);
+      if (media.type === "image") {
+        const allowed = ["image/jpeg", "image/png", "image/webp"];
+        if (!mime || !allowed.includes(mime)) {
+          Alert.alert("Unsupported Image", "Please choose a JPEG, PNG, or WEBP image.");
+          return;
+        }
+      } else if (media.type === "video") {
+        const allowed = ["video/mp4", "video/quicktime"];
+        if (!mime || !allowed.includes(mime)) {
+          Alert.alert("Unsupported Video", "Please choose an MP4 or MOV video.");
+          return;
+        }
+      }
+
+      onSendMedia?.(media);
+      setShowMediaPicker(false);
+    } catch (e) {
+      Alert.alert("Error", "Failed to attach media. Please try again.");
+    } finally {
+      setIsMediaBusy(false);
+    }
   };
 
   const toggleInputMode = () => {
     const newMode = inputMode === "text" ? "voice" : "text";
     setInputMode(newMode);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    // Cleanup and UX improvements when switching modes
+    if (newMode === "voice") {
+      textInputRef.current?.blur();
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+      onTyping?.(false);
+    } else {
+      setIsRecording(false);
+    }
   };
 
   // Cleanup
@@ -316,12 +395,20 @@ export default function EnhancedMessageInput({
               onPress={() => setShowMediaPicker(true)}
               className="p-2"
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              disabled={isMediaBusy}
+              style={{ opacity: isMediaBusy ? 0.6 : 1 }}
             >
               <Ionicons name="attach" size={20} color={colors.text.muted} />
             </Pressable>
 
             {/* Voice/Text mode toggle */}
-            <Pressable onPress={toggleInputMode} className="p-2" hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <Pressable
+              onPress={toggleInputMode}
+              className="p-2"
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              disabled={isVoiceBusy}
+              style={{ opacity: isVoiceBusy ? 0.6 : 1 }}
+            >
               <Ionicons
                 name={inputMode === "voice" ? "chatbox" : "mic"}
                 size={20}

@@ -63,13 +63,22 @@ const EnhancedMessageBubble = React.forwardRef<View, Props>(
     const translateY = useSharedValue(20);
     const reactionScale = useSharedValue(0);
 
-    // Message grouping logic
-    const isFirstInGroup = !previousMessage || previousMessage.senderId !== message.senderId;
-    const isLastInGroup = !nextMessage || nextMessage.senderId !== message.senderId;
-    const timeDiff = previousMessage
-      ? new Date(message.timestamp).getTime() - new Date(previousMessage.timestamp).getTime()
-      : 0;
-    const showSenderName = !isOwn && (isFirstInGroup || timeDiff > 300000); // 5 minutes
+    // Enhanced grouping logic: 1min tight, 5min loose
+    const prevTime = previousMessage ? new Date(previousMessage.timestamp).getTime() : 0;
+    const nextTime = nextMessage ? new Date(nextMessage.timestamp).getTime() : 0;
+    const thisTime = new Date(message.timestamp).getTime();
+    const tightThreshold = 60 * 1000; // 1 minute
+    const looseThreshold = 5 * 60 * 1000; // 5 minutes
+
+    const sameSenderAsPrev = !!previousMessage && previousMessage.senderId === message.senderId;
+    const sameSenderAsNext = !!nextMessage && nextMessage.senderId === message.senderId;
+    const closeToPrev = sameSenderAsPrev && thisTime - prevTime <= looseThreshold;
+    const closeToNext = sameSenderAsNext && nextTime - thisTime <= looseThreshold;
+
+    const isFirstInGroup = !sameSenderAsPrev || !closeToPrev;
+    const isLastInGroup = !sameSenderAsNext || !closeToNext;
+
+    const showSenderName = !isOwn && (isFirstInGroup || (!sameSenderAsPrev && !!previousMessage));
 
     // Entry animation
     useEffect(() => {
@@ -77,10 +86,11 @@ const EnhancedMessageBubble = React.forwardRef<View, Props>(
       translateY.value = withSpring(0, { damping: 15, stiffness: 150 });
     }, []);
 
-    // Bubble styling with improved grouping
+    // Bubble styling with improved grouping and tails
     const getBubbleStyle = () => {
       const baseRadius = 20;
       const tightRadius = 8;
+      const connectorRadius = 6;
 
       if (isOwn) {
         if (isFirstInGroup && isLastInGroup) {
@@ -90,21 +100,21 @@ const EnhancedMessageBubble = React.forwardRef<View, Props>(
             borderTopLeftRadius: baseRadius,
             borderTopRightRadius: baseRadius,
             borderBottomLeftRadius: baseRadius,
-            borderBottomRightRadius: tightRadius,
+            borderBottomRightRadius: connectorRadius,
           };
         } else if (isLastInGroup) {
           return {
             borderTopLeftRadius: baseRadius,
-            borderTopRightRadius: tightRadius,
+            borderTopRightRadius: connectorRadius,
             borderBottomLeftRadius: baseRadius,
             borderBottomRightRadius: baseRadius,
           };
         } else {
           return {
             borderTopLeftRadius: baseRadius,
-            borderTopRightRadius: tightRadius,
+            borderTopRightRadius: connectorRadius,
             borderBottomLeftRadius: baseRadius,
-            borderBottomRightRadius: tightRadius,
+            borderBottomRightRadius: connectorRadius,
           };
         }
       } else {
@@ -114,21 +124,21 @@ const EnhancedMessageBubble = React.forwardRef<View, Props>(
           return {
             borderTopLeftRadius: baseRadius,
             borderTopRightRadius: baseRadius,
-            borderBottomLeftRadius: tightRadius,
+            borderBottomLeftRadius: connectorRadius,
             borderBottomRightRadius: baseRadius,
           };
         } else if (isLastInGroup) {
           return {
-            borderTopLeftRadius: tightRadius,
+            borderTopLeftRadius: connectorRadius,
             borderTopRightRadius: baseRadius,
             borderBottomLeftRadius: baseRadius,
             borderBottomRightRadius: baseRadius,
           };
         } else {
           return {
-            borderTopLeftRadius: tightRadius,
+            borderTopLeftRadius: connectorRadius,
             borderTopRightRadius: baseRadius,
-            borderBottomLeftRadius: tightRadius,
+            borderBottomLeftRadius: connectorRadius,
             borderBottomRightRadius: baseRadius,
           };
         }
@@ -256,6 +266,20 @@ const EnhancedMessageBubble = React.forwardRef<View, Props>(
       }
     };
 
+    // Aggregate reactions by emoji and compute hasReacted for current user from raw entries
+    const aggregateReactions = (): Reaction[] => {
+      const raw = (message as any).reactions || [];
+      const map = new Map<string, { emoji: string; users: string[] }>();
+      raw.forEach((r: any) => {
+        const emoji = r.emoji;
+        const userId = r.user_id || r.userId;
+        if (!emoji || !userId) return;
+        if (!map.has(emoji)) map.set(emoji, { emoji, users: [] });
+        map.get(emoji)!.users.push(userId);
+      });
+      return Array.from(map.values()).map((v) => ({ emoji: v.emoji, count: v.users.length, users: v.users }));
+    };
+
     return (
       <SwipeToReply onReply={handleReply} isOwnMessage={isOwn}>
         <View className={`mb-1 ${isOwn ? "items-end" : "items-start"}`}>
@@ -264,6 +288,13 @@ const EnhancedMessageBubble = React.forwardRef<View, Props>(
             <Text className="text-xs mb-1 mx-3 font-medium" style={{ color: colors.text.secondary }}>
               {message.senderName}
             </Text>
+          )}
+          {/* Avatar for first in group (group chats) */}
+          {!isOwn && isFirstInGroup && message.senderAvatar && (
+            <Image
+              source={{ uri: message.senderAvatar }}
+              style={{ width: 26, height: 26, borderRadius: 13, marginLeft: 6, marginBottom: 4 }}
+            />
           )}
 
           <Animated.View style={animatedStyle}>
@@ -276,7 +307,7 @@ const EnhancedMessageBubble = React.forwardRef<View, Props>(
                 getBubbleStyle(),
                 {
                   backgroundColor: isOwn ? colors.brand.red : colors.surface[700],
-                  marginBottom: isLastInGroup ? 8 : 2,
+                  marginBottom: isLastInGroup ? 10 : 2,
                   shadowColor: "#000",
                   shadowOffset: { width: 0, height: 1 },
                   shadowOpacity: 0.1,
@@ -294,11 +325,26 @@ const EnhancedMessageBubble = React.forwardRef<View, Props>(
                   <Text className="text-xs mr-1" style={{ color: "rgba(255,255,255,0.7)" }}>
                     {formatTime(message.timestamp)}
                   </Text>
-                  <Ionicons
-                    name={message.isRead ? "checkmark-done" : "checkmark"}
-                    size={12}
-                    color="rgba(255,255,255,0.7)"
-                  />
+                  {(() => {
+                    const status = message.status || (message.isRead ? "read" : undefined);
+                    const icon =
+                      status === "read"
+                        ? "checkmark-done"
+                        : status === "delivered" || status === "sent"
+                          ? "checkmark"
+                          : status === "pending"
+                            ? "time"
+                            : status === "failed"
+                              ? "alert"
+                              : message.isRead
+                                ? "checkmark-done"
+                                : "checkmark";
+                    const color =
+                      status === "failed"
+                        ? colors.status.error
+                        : "rgba(255,255,255,0.7)";
+                    return <Ionicons name={icon as any} size={12} color={color} />;
+                  })()}
                 </View>
               )}
             </Pressable>
@@ -311,13 +357,10 @@ const EnhancedMessageBubble = React.forwardRef<View, Props>(
             )}
 
             {/* Existing reactions */}
-            {message.reactions && message.reactions.length > 0 && (
+            {((message as any).reactions && (message as any).reactions.length > 0) && (
               <MessageReactions
                 messageId={message.id}
-                reactions={message.reactions.map((r) => ({
-                  ...r,
-                  hasReacted: false, // TODO: Implement proper user reaction tracking
-                }))}
+                reactions={aggregateReactions().map((r) => ({ ...r, hasReacted: false }))}
                 onReact={onReact || (() => {})}
                 onShowReactionPicker={onShowReactionPicker || (() => {})}
               />

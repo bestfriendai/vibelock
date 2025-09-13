@@ -114,7 +114,7 @@ export default function IMessageInput({
           className="px-4 py-2 border-t"
           style={{
             backgroundColor: colors.surface[800],
-            borderColor: colors.border,
+            borderColor: colors.border.default,
           }}
         >
           <View className="flex-row items-center justify-between">
@@ -138,7 +138,7 @@ export default function IMessageInput({
         className="px-4 py-2 border-t"
         style={{
           backgroundColor: colors.surface[800],
-          borderColor: colors.border,
+          borderColor: colors.border.default,
         }}
       >
         <View className="flex-row items-end space-x-2">
@@ -147,7 +147,7 @@ export default function IMessageInput({
             className="flex-1 rounded-3xl border px-4 py-2"
             style={{
               backgroundColor: colors.surface[700],
-              borderColor: colors.border,
+              borderColor: colors.border.default,
               minHeight: 36,
               height: inputHeight,
             }}

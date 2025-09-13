@@ -301,7 +301,7 @@ export default function CreateReviewScreen() {
         {/* Header */}
         <View
           className="px-6 py-6 border-b"
-          style={{ borderBottomColor: colors.border, backgroundColor: colors.background }}
+          style={{ borderBottomColor: colors.border.default, backgroundColor: colors.background }}
         >
           <Text className="text-2xl font-bold" style={{ color: colors.text.primary }}>
             Write Review
@@ -342,7 +342,7 @@ export default function CreateReviewScreen() {
                     className="border rounded-xl px-4 py-3"
                     style={{
                       backgroundColor: colors.surface[800],
-                      borderColor: colors.border,
+                      borderColor: colors.border.default,
                       color: colors.text.primary,
                     }}
                     placeholder="Enter name"
@@ -372,7 +372,7 @@ export default function CreateReviewScreen() {
                   className="flex-1 items-center justify-center rounded-xl border px-3 py-4"
                   style={{
                     backgroundColor: category === "men" ? "#3B82F615" : colors.surface[800],
-                    borderColor: category === "men" ? "#3B82F6" : colors.border,
+                    borderColor: category === "men" ? "#3B82F6" : colors.border.default,
                   }}
                   onPress={() => setCategory("men")}
                   accessible={true}
@@ -389,7 +389,7 @@ export default function CreateReviewScreen() {
                   className="flex-1 items-center justify-center rounded-xl border px-3 py-4"
                   style={{
                     backgroundColor: category === "women" ? "#EC489815" : colors.surface[800],
-                    borderColor: category === "women" ? "#EC4899" : colors.border,
+                    borderColor: category === "women" ? "#EC4899" : colors.border.default,
                   }}
                   onPress={() => setCategory("women")}
                 >
@@ -404,7 +404,7 @@ export default function CreateReviewScreen() {
                   className="flex-1 items-center justify-center rounded-xl border px-3 py-4"
                   style={{
                     backgroundColor: category === "lgbtq+" ? "#8B5CF615" : colors.surface[800],
-                    borderColor: category === "lgbtq+" ? "#8B5CF6" : colors.border,
+                    borderColor: category === "lgbtq+" ? "#8B5CF6" : colors.border.default,
                   }}
                   onPress={() => setCategory("lgbtq+")}
                 >
@@ -434,7 +434,7 @@ export default function CreateReviewScreen() {
                   className="flex-1 flex-row items-center justify-center rounded-xl border px-3 py-4"
                   style={{
                     backgroundColor: sentiment === "green" ? "#22C55E20" : colors.surface[800],
-                    borderColor: sentiment === "green" ? "#22C55E" : colors.border,
+                    borderColor: sentiment === "green" ? "#22C55E" : colors.border.default,
                   }}
                   onPress={() => setSentiment(sentiment === "green" ? null : "green")}
                 >
@@ -446,7 +446,7 @@ export default function CreateReviewScreen() {
                   className="flex-1 flex-row items-center justify-center rounded-xl border px-3 py-4"
                   style={{
                     backgroundColor: sentiment === "red" ? `${colors.brand.red}20` : colors.surface[800],
-                    borderColor: sentiment === "red" ? colors.brand.red : colors.border,
+                    borderColor: sentiment === "red" ? colors.brand.red : colors.border.default,
                   }}
                   onPress={() => setSentiment(sentiment === "red" ? null : "red")}
                 >
@@ -464,7 +464,7 @@ export default function CreateReviewScreen() {
                   className="border rounded-xl px-4 py-3 h-32"
                   style={{
                     backgroundColor: colors.surface[800],
-                    borderColor: colors.border,
+                    borderColor: colors.border.default,
                     color: colors.text.primary,
                   }}
                   placeholder="Write your review here..."

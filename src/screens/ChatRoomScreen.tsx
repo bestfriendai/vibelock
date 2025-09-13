@@ -15,6 +15,9 @@ import MessageActionsModal from "../components/MessageActionsModal";
 import { ChatMessage } from "../types";
 import { useTheme } from "../providers/ThemeProvider";
 import { notificationService } from "../services/notificationService";
+import OfflineBanner from "../components/OfflineBanner";
+import LoadingSpinner from "../components/LoadingSpinner";
+import { useOffline } from "../hooks/useOffline";
 
 export type ChatRoomRouteProp = RouteProp<RootStackParamList, "ChatRoom">;
 
@@ -56,13 +59,18 @@ export default function ChatRoomScreen() {
     setTyping,
     typingUsers,
     loadOlderMessages,
+    isLoading,
+    error,
+    connectionStatus,
   } = useChatStore();
 
-  const listRef = useRef<FlashList<any>>(null);
+  const listRef = useRef<any>(null);
+  const FlashListAny: any = FlashList;
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
   const [selectedMessage, setSelectedMessage] = useState<ChatMessage | null>(null);
   const [isActionsModalVisible, setIsActionsModalVisible] = useState(false);
+  const { isOnline } = useOffline();
 
   useEffect(() => {
     if (canAccessChat && !needsSignIn && user) {
@@ -126,7 +134,7 @@ export default function ChatRoomScreen() {
   const roomMembers = members[roomId] || [];
 
   const onSend = (text: string) => {
-    sendMessage(roomId, text);
+    sendMessage(roomId, text, replyingTo?.id);
     setReplyingTo(null);
 
     // Clear any existing scroll timeout
@@ -134,10 +142,15 @@ export default function ChatRoomScreen() {
       clearTimeout(scrollTimeoutRef.current);
     }
 
-    // FIXED: For inverted FlashList, scroll to index 0 (newest message at bottom)
+    // Scroll to bottom for newest message with inverted list
     scrollTimeoutRef.current = setTimeout(() => {
-      if (mountedRef.current && listRef.current && roomMessages.length > 0) {
-        listRef.current.scrollToIndex({ index: 0, animated: true });
+      if (mountedRef.current && listRef.current) {
+        try {
+          listRef.current.scrollToOffset({ offset: 0, animated: true });
+        } catch (e) {
+          // Fallback if needed
+          (listRef.current as any)?.scrollToEnd?.({ animated: true });
+        }
       }
       scrollTimeoutRef.current = null;
     }, 100);
@@ -223,7 +236,7 @@ export default function ChatRoomScreen() {
           members={members[roomId] || []}
           onlineUsers={members[roomId]?.filter((member: any) => member.isOnline) || []}
           typingUsers={typingUsers || []}
-          connectionStatus="connected"
+          connectionStatus={connectionStatus === 'error' ? 'disconnected' : connectionStatus}
           onToggleNotifications={() => {
             useChatStore.getState().toggleNotifications(roomId);
             setIsSubscribed(!isSubscribed);
@@ -231,13 +244,12 @@ export default function ChatRoomScreen() {
           isNotificationsEnabled={isSubscribed}
         />
 
-        <FlashList<ChatMessage>
+        <FlashListAny
           ref={listRef}
+          // Keep newest-first ordering from store and rely on inverted list for UI
           data={roomMessages}
-          estimatedItemSize={60 as unknown as never}
-          keyExtractor={(item: any) => item.id}
-          inverted
-          renderItem={({ item, index }) => {
+          keyExtractor={(item: ChatMessage) => item.id}
+          renderItem={({ item, index }: { item: ChatMessage; index: number }) => {
             if (!item || !item.id || !user) {
               return null;
             }
@@ -245,8 +257,9 @@ export default function ChatRoomScreen() {
               <EnhancedMessageBubble
                 message={item}
                 isOwn={item.senderId === user.id}
-                previousMessage={roomMessages[index - 1]}
-                nextMessage={roomMessages[index + 1]}
+                // With newest-first data and inverted list, chronological previous = index + 1
+                previousMessage={index < roomMessages.length - 1 ? roomMessages[index + 1] : undefined}
+                nextMessage={index > 0 ? roomMessages[index - 1] : undefined}
                 reactions={item.reactions}
                 onReply={handleReply}
                 onReact={handleReact}
@@ -257,18 +270,23 @@ export default function ChatRoomScreen() {
           }}
           contentContainerStyle={{
             paddingHorizontal: 16,
-            paddingTop: 4, // Further reduced top padding for compact header
-            paddingBottom: 16,
+            paddingTop: 4, // Reduced top padding
+            paddingBottom: 16, // Bottom padding for messages
             backgroundColor: colors.background,
           }}
+          inverted
+          estimatedItemSize={72}
           showsVerticalScrollIndicator={false}
-          ListHeaderComponent={
+          // For inverted lists, use ListFooterComponent to render at visual top
+          ListFooterComponent={
             roomMessages.length > 0 ? (
               <View className="items-center py-1">
                 <Pressable
                   onPress={handleLoadOlderMessages}
                   disabled={isLoadingOlderMessages}
                   className={`bg-surface-700 rounded-full px-2.5 py-1 ${isLoadingOlderMessages ? "opacity-50" : ""}`}
+                  accessibilityRole="button"
+                  accessibilityLabel={isLoadingOlderMessages ? "Loading older messages" : "Load older messages"}
                 >
                   <Text className="text-text-secondary text-xs font-medium">
                     {isLoadingOlderMessages ? "Loading..." : "Load older messages"}
@@ -319,6 +337,41 @@ export default function ChatRoomScreen() {
         />
       </View>
 
+      {/* Global overlays: offline + loading + error */}
+      <OfflineBanner onRetry={() => useChatStore.getState().loadMessages?.(roomId)} />
+
+      {isLoading && (
+        <View className="absolute inset-0 items-center justify-center" pointerEvents="none">
+          <LoadingSpinner size="large" color={colors.brand.red} text="Loading messages" />
+        </View>
+      )}
+
+      {!!error && (
+        <View className="absolute bottom-24 left-4 right-4 bg-surface-800 border border-surface-700 rounded-xl p-3">
+          <Text className="text-text-primary text-sm font-medium">Unable to complete action</Text>
+          <Text className="text-text-secondary text-xs mt-1">{error}</Text>
+          <View className="flex-row justify-end mt-2">
+            <Pressable
+              onPress={() => useChatStore.getState().clearError?.()}
+              className="px-3 py-1 rounded-lg bg-surface-700 mr-2"
+              accessibilityRole="button"
+              accessibilityLabel="Dismiss error"
+            >
+              <Text className="text-text-primary text-xs">Dismiss</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => useChatStore.getState().loadMessages?.(roomId)}
+              className="px-3 py-1 rounded-lg"
+              style={{ backgroundColor: colors.brand.red }}
+              accessibilityRole="button"
+              accessibilityLabel="Retry"
+            >
+              <Text className="text-black text-xs font-semibold">Retry</Text>
+            </Pressable>
+          </View>
+        </View>
+      )}
+
       {/* Member List Modal */}
       <Modal
         visible={showMemberList}
@@ -336,7 +389,6 @@ export default function ChatRoomScreen() {
 
           <FlashList<any>
             data={roomMembers}
-            estimatedItemSize={50 as unknown as never}
             keyExtractor={(item: any) => item.id}
             renderItem={({ item }) => (
               <View className="flex-row items-center px-4 py-3 border-b border-surface-700 sm:px-6 sm:py-4">

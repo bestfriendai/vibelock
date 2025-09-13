@@ -225,7 +225,7 @@ export default function SmartChatFeatures({
             {/* Header */}
             <View
               className="flex-row items-center justify-between p-4 border-b"
-              style={{ borderBottomColor: colors.border }}
+              style={{ borderBottomColor: colors.border.default }}
             >
               <Text className="text-lg font-bold" style={{ color: colors.text.primary }}>
                 Members
@@ -245,7 +245,7 @@ export default function SmartChatFeatures({
                     closeMemberList();
                   }}
                   className="flex-row items-center p-4 border-b"
-                  style={{ borderBottomColor: colors.border + "40" }}
+                  style={{ borderBottomColor: colors.border.default + "40" }}
                 >
                   {/* Avatar */}
                   <View

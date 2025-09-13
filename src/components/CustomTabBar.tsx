@@ -17,7 +17,7 @@ export default function CustomTabBar(props: BottomTabBarProps) {
         {...props}
         style={{
           backgroundColor: colors.surface[900],
-          borderTopColor: colors.border,
+          borderTopColor: colors.border.default,
           borderTopWidth: 1,
         }}
       />

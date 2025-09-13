@@ -196,7 +196,7 @@ export const EmojiPicker: React.FC<EmojiPickerProps> = ({ visible, onClose, onEm
         {/* Header */}
         <View
           className="flex-row items-center justify-between p-4 border-b"
-          style={{ borderBottomColor: colors.border }}
+          style={{ borderBottomColor: colors.border.default }}
         >
           <Text className="text-lg font-semibold" style={{ color: colors.text.primary }}>
             Choose Reaction
@@ -222,7 +222,7 @@ export const EmojiPicker: React.FC<EmojiPickerProps> = ({ visible, onClose, onEm
         </View>
 
         {/* Category Tabs */}
-        <View className="flex-row px-4 pb-2 border-b" style={{ borderBottomColor: colors.border }}>
+        <View className="flex-row px-4 pb-2 border-b" style={{ borderBottomColor: colors.border.default }}>
           {Object.keys(EMOJI_CATEGORIES).map((category) => (
             <Pressable
               key={category}

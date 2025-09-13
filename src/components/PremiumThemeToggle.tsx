@@ -41,7 +41,7 @@ export default function PremiumThemeToggle({ onShowPaywall }: PremiumThemeToggle
 
   return (
     <View className="rounded-lg mb-6" style={{ backgroundColor: colors.surface[800] }}>
-      <View className="p-5 border-b" style={{ borderColor: colors.border }}>
+      <View className="p-5 border-b" style={{ borderColor: colors.border.default }}>
         <Text className="font-semibold" style={{ color: colors.text.primary }}>
           Appearance
         </Text>

@@ -252,13 +252,13 @@ export default function SearchScreen({ navigation, route }: Props) {
                 className="mt-2 rounded-lg border"
                 style={{
                   backgroundColor: colors.surface[800],
-                  borderColor: colors.border,
+                  borderColor: colors.border.default,
                 }}
               >
                 {/* Recent Searches */}
                 {searchQuery.length === 0 && searchHistory.length > 0 && (
                   <>
-                    <View className="px-4 py-2 border-b" style={{ borderColor: colors.border }}>
+                    <View className="px-4 py-2 border-b" style={{ borderColor: colors.border.default }}>
                       <Text className="text-sm font-medium" style={{ color: colors.text.secondary }}>
                         Recent Searches
                       </Text>
@@ -286,7 +286,7 @@ export default function SearchScreen({ navigation, route }: Props) {
                 {suggestions.length > 0 && (
                   <>
                     {searchQuery.length === 0 && searchHistory.length > 0 && (
-                      <View className="h-px" style={{ backgroundColor: colors.border }} />
+                      <View className="h-px" style={{ backgroundColor: colors.border.default }} />
                     )}
                     {suggestions.map((suggestion, index) => (
                       <Pressable
