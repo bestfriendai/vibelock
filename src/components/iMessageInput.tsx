@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
 import { View, TextInput, Pressable, Text, Platform } from "react-native";
-import { KeyboardStickyView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../providers/ThemeProvider";
@@ -108,7 +107,7 @@ export default function IMessageInput({
   };
 
   return (
-    <KeyboardStickyView offset={{ closed: insets.bottom, opened: 0 }}>
+    <View style={{ paddingBottom: insets.bottom }}>
       {/* Reply indicator */}
       {replyingTo && (
         <View
@@ -200,6 +199,6 @@ export default function IMessageInput({
           </Text>
         )}
       </View>
-    </KeyboardStickyView>
+    </View>
   );
 }

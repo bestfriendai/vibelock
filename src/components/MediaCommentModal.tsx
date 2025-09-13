@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { View, Text, Modal, Pressable, ScrollView } from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -219,7 +218,7 @@ export default function MediaCommentModal({
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
       <SafeAreaView className="flex-1 bg-surface-900">
-        <KeyboardAwareScrollView className="flex-1" enableOnAndroid keyboardShouldPersistTaps="handled">
+        <ScrollView className="flex-1" keyboardShouldPersistTaps="handled">
           {/* Header */}
           <View className="flex-row items-center justify-between px-4 py-3 border-b border-surface-700">
             <Text className="text-text-primary text-lg font-semibold">Image Comments</Text>
@@ -293,7 +292,7 @@ export default function MediaCommentModal({
             replyToComment={replyToComment?.authorName}
             onCancelReply={onCancelReply}
           />
-        </KeyboardAwareScrollView>
+        </ScrollView>
       </SafeAreaView>
     </Modal>
   );

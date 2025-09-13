@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { View, Text, TextInput, Pressable } from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
+import { ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { v4 as uuidv4 } from "uuid";
@@ -297,7 +297,7 @@ export default function CreateReviewScreen() {
 
   return (
     <SafeAreaView className="flex-1" style={{ backgroundColor: colors.background }}>
-      <KeyboardAwareScrollView className="flex-1" enableOnAndroid keyboardShouldPersistTaps="handled">
+      <ScrollView className="flex-1" keyboardShouldPersistTaps="handled">
         {/* Header */}
         <View
           className="px-6 py-6 border-b"
@@ -539,7 +539,7 @@ export default function CreateReviewScreen() {
             </Text>
           </View>
         </View>
-      </KeyboardAwareScrollView>
+      </ScrollView>
     </SafeAreaView>
   );
 }

@@ -7,7 +7,7 @@
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": false,
-    "icon": "./assets/app-icon.png",
+    "icon": "./assets/LockerRoomLogo.png",
     "splash": {
       "image": "./assets/splash-screen.png",
       "resizeMode": "contain",
@@ -16,7 +16,7 @@
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
-      "icon": "./assets/app-icon.png",
+      "icon": "./assets/LockerRoomLogo.png",
       "bundleIdentifier": "com.lockerroom.app",
       "buildNumber": "1",
       "googleMobileAdsAppId": "ca-app-pub-9512493666273460~7181904608",
@@ -59,9 +59,9 @@
     },
     "android": {
       "edgeToEdgeEnabled": true,
-      "icon": "./assets/app-icon.png",
+      "icon": "./assets/LockerRoomLogo.png",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/app-icon.png",
+        "foregroundImage": "./assets/LockerRoomLogo.png",
         "backgroundColor": "#000000"
       },
       "package": "com.lockerroom.app",

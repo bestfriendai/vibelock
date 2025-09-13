@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, Pressable, ScrollView, Alert, Switch, Image, ActivityIndicator } from "react-native";
+import { View, Text, Pressable, ScrollView, Alert, Switch, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
@@ -8,6 +8,7 @@ import useThemeStore from "../state/themeStore";
 import useSubscriptionStore from "../state/subscriptionStore";
 import ConfirmationModal from "../components/ConfirmationModal";
 import PremiumThemeToggle from "../components/PremiumThemeToggle";
+import ThemeAwareLogo from "../components/ThemeAwareLogo";
 
 import { useTheme } from "../providers/ThemeProvider";
 import { PaywallAdaptive } from "../components/subscription/PaywallAdaptive";
@@ -70,10 +71,9 @@ export default function ProfileScreen() {
       <View className="px-6 py-6" style={{ backgroundColor: colors.surface[800] }}>
         <View className="flex-row items-center">
           <View className="w-10 h-10 mr-3">
-            <Image
-              source={require("../../assets/logo-circular.png")}
-              style={{ width: 40, height: 40 }}
-              resizeMode="contain"
+            <ThemeAwareLogo
+              width={40}
+              height={40}
             />
           </View>
           <Text className="text-2xl font-bold" style={{ color: colors.text.primary }}>

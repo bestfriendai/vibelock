@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
-import { View, Text, TextInput, Keyboard, TouchableWithoutFeedback, Image } from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
+import { View, Text, TextInput, Keyboard, TouchableWithoutFeedback, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming, withDelay } from "react-native-reanimated";
 import AnimatedButton from "../components/AnimatedButton";
 import AnimatedInput from "../components/AnimatedInput";
+import ThemeAwareLogo from "../components/ThemeAwareLogo";
 
 import useAuthStore from "../state/authStore";
 
@@ -117,9 +117,8 @@ export default function SignInScreen() {
       <SafeAreaView className="flex-1 bg-surface-900">
         <LinearGradient colors={["#141418", "#1A1A20", "#141418"]} className="absolute inset-0" />
 
-        <KeyboardAwareScrollView
+        <ScrollView
           className="flex-1"
-          enableOnAndroid
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 20 }}
@@ -128,10 +127,9 @@ export default function SignInScreen() {
             {/* Logo Section */}
             <Animated.View style={logoAnimatedStyle} className="items-center mb-12">
               <View className="w-20 h-20 mb-4 shadow-lg">
-                <Image
-                  source={require("../../assets/logo-circular.png")}
-                  style={{ width: 80, height: 80 }}
-                  resizeMode="contain"
+                <ThemeAwareLogo
+                  width={80}
+                  height={80}
                 />
               </View>
               <Text className="text-4xl font-bold text-text-primary mb-3 text-center">Welcome Back</Text>
@@ -215,7 +213,7 @@ export default function SignInScreen() {
               </View>
             </Animated.View>
           </View>
-        </KeyboardAwareScrollView>
+        </ScrollView>
       </SafeAreaView>
     </TouchableWithoutFeedback>
   );

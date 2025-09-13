@@ -1,9 +1,10 @@
 import React, { useEffect } from "react";
-import { View, Text, Image } from "react-native";
+import { View, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming, withDelay } from "react-native-reanimated";
 import AnimatedButton from "../components/AnimatedButton";
+import ThemeAwareLogo from "../components/ThemeAwareLogo";
 
 export default function AuthScreen() {
   const navigation = useNavigation<any>();
@@ -61,10 +62,9 @@ export default function AuthScreen() {
         {/* Logo Section */}
         <Animated.View style={logoAnimatedStyle} className="items-center mb-16">
           <View className="w-32 h-32 mb-8 shadow-2xl">
-            <Image
-              source={require("../../assets/logo-circular.png")}
-              style={{ width: 128, height: 128 }}
-              resizeMode="contain"
+            <ThemeAwareLogo
+              width={128}
+              height={128}
             />
           </View>
         </Animated.View>

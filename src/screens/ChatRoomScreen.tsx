@@ -1,10 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
 import { View, Text, Pressable, Modal } from "react-native";
-import { KeyboardToolbar } from "react-native-keyboard-controller";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRoute, RouteProp, useNavigation } from "@react-navigation/native";
-import { FlashList, type FlashListRef } from "@shopify/flash-list";
+import { FlashList } from "@shopify/flash-list";
 import useChatStore from "../state/chatStore";
 import { useAuthState } from "../utils/authUtils";
 import { RootStackParamList, RootStackNavigationProp } from "../navigation/AppNavigator";
@@ -59,7 +58,7 @@ export default function ChatRoomScreen() {
     loadOlderMessages,
   } = useChatStore();
 
-  const listRef = useRef<FlashListRef<any>>(null);
+  const listRef = useRef<FlashList<any>>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
   const [selectedMessage, setSelectedMessage] = useState<ChatMessage | null>(null);
@@ -319,40 +318,6 @@ export default function ChatRoomScreen() {
           maxLength={1000}
         />
       </View>
-
-      <KeyboardToolbar
-        content={
-          <View
-            className="flex-row items-center justify-around px-4 py-2"
-            style={{ backgroundColor: colors.surface[700] }}
-          >
-            <Pressable className="flex-1 items-center py-2">
-              <Ionicons name="camera" size={24} color={colors.text.muted} />
-              <Text className="text-xs mt-1" style={{ color: colors.text.muted }}>
-                Camera
-              </Text>
-            </Pressable>
-            <Pressable className="flex-1 items-center py-2">
-              <Ionicons name="images" size={24} color={colors.text.muted} />
-              <Text className="text-xs mt-1" style={{ color: colors.text.muted }}>
-                Gallery
-              </Text>
-            </Pressable>
-            <Pressable className="flex-1 items-center py-2">
-              <Ionicons name="happy" size={24} color={colors.text.muted} />
-              <Text className="text-xs mt-1" style={{ color: colors.text.muted }}>
-                Emoji
-              </Text>
-            </Pressable>
-            <Pressable className="flex-1 items-center py-2">
-              <Ionicons name="mic" size={24} color={colors.text.muted} />
-              <Text className="text-xs mt-1" style={{ color: colors.text.muted }}>
-                Voice
-              </Text>
-            </Pressable>
-          </View>
-        }
-      />
 
       {/* Member List Modal */}
       <Modal

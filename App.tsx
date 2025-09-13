@@ -2,7 +2,6 @@ import React, { useEffect } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { NavigationContainer } from "@react-navigation/native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { KeyboardProvider } from "react-native-keyboard-controller";
 import { AppState } from "react-native";
 import * as Linking from "expo-linking";
 import AppNavigator from "./src/navigation/AppNavigator";
@@ -150,21 +149,19 @@ export default function App() {
   return (
     <ErrorBoundary>
       {buildEnv.hasNativeModules ? (
-        <KeyboardProvider>
-          <GestureHandlerRootView className="flex-1">
-            <SafeAreaProvider>
-              <ThemeProvider>
-                <AdProvider>
-                  <NavigationContainer linking={linking}>
-                    <AppNavigator />
-                    <OfflineBanner />
-                    <AppOpenAdHandler />
-                  </NavigationContainer>
-                </AdProvider>
-              </ThemeProvider>
-            </SafeAreaProvider>
-          </GestureHandlerRootView>
-        </KeyboardProvider>
+        <GestureHandlerRootView className="flex-1">
+          <SafeAreaProvider>
+            <ThemeProvider>
+              <AdProvider>
+                <NavigationContainer linking={linking}>
+                  <AppNavigator />
+                  <OfflineBanner />
+                  <AppOpenAdHandler />
+                </NavigationContainer>
+              </AdProvider>
+            </ThemeProvider>
+          </SafeAreaProvider>
+        </GestureHandlerRootView>
       ) : (
         <GestureHandlerRootView className="flex-1">
           <SafeAreaProvider>
