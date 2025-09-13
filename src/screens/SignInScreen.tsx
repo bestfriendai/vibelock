@@ -127,10 +127,7 @@ export default function SignInScreen() {
             {/* Logo Section */}
             <Animated.View style={logoAnimatedStyle} className="items-center mb-12">
               <View className="w-20 h-20 mb-4 shadow-lg">
-                <ThemeAwareLogo
-                  width={80}
-                  height={80}
-                />
+                <ThemeAwareLogo width={80} height={80} />
               </View>
               <Text className="text-4xl font-bold text-text-primary mb-3 text-center">Welcome Back</Text>
               <Text className="text-lg text-text-secondary text-center leading-7">

@@ -1,5 +1,6 @@
 import * as Location from "expo-location";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { locationCache } from "./cacheService";
 
 export interface LocationData {
   city: string;

@@ -77,34 +77,37 @@ function StaggeredGrid({
   }, [data]);
 
   // Render item function for FlatList with responsive width
-  const renderItem = useCallback(({ item, index }: { item: { review: Review; height: number }; index: number }) => {
-    const { review, height } = item;
-    const { responsive } = screenData;
-    const { cardWidth, cardGap, columns } = responsive;
-    const screenWidth = Dimensions.get('window').width;
-    const padding = responsive.basePadding;
-    const availableWidth = screenWidth - (padding * 2);
-    const itemWidth = (availableWidth - cardGap * (columns - 1)) / columns;
+  const renderItem = useCallback(
+    ({ item, index }: { item: { review: Review; height: number }; index: number }) => {
+      const { review, height } = item;
+      const { responsive } = screenData;
+      const { cardWidth, cardGap, columns } = responsive;
+      const screenWidth = Dimensions.get("window").width;
+      const padding = responsive.basePadding;
+      const availableWidth = screenWidth - padding * 2;
+      const itemWidth = (availableWidth - cardGap * (columns - 1)) / columns;
 
-    return (
-      <View
-        style={{
-          width: itemWidth,
-          marginBottom: cardGap,
-          marginRight: cardGap / 2,
-          marginLeft: cardGap / 2,
-        }}
-      >
-        <MemoizedProfileCard
-          review={review}
-          cardHeight={height}
-          onReport={() => onReport?.(review)}
-          onLike={() => onLike?.(review)}
-          isLiked={likedReviews.has(review.id)}
-        />
-      </View>
-    );
-  }, [screenData, onReport, onLike, likedReviews]);
+      return (
+        <View
+          style={{
+            width: itemWidth,
+            marginBottom: cardGap,
+            marginRight: cardGap / 2,
+            marginLeft: cardGap / 2,
+          }}
+        >
+          <MemoizedProfileCard
+            review={review}
+            cardHeight={height}
+            onReport={() => onReport?.(review)}
+            onLike={() => onLike?.(review)}
+            isLiked={likedReviews.has(review.id)}
+          />
+        </View>
+      );
+    },
+    [screenData, onReport, onLike, likedReviews],
+  );
 
   // Key extractor for FlatList optimization
   const keyExtractor = useCallback((item: { review: Review; height: number }) => item.review.id, []);

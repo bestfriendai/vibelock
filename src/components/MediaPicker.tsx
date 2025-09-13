@@ -97,27 +97,19 @@ export const MediaPicker: React.FC<MediaPickerProps> = ({ onMediaSelect, onClose
         if (cameraPermission?.granted) return true;
         const res = await requestCameraPermission();
         if (res?.granted) return true;
-        Alert.alert(
-          "Camera Permission Needed",
-          "Grant camera access to take photos or videos.",
-          [
-            { text: "Cancel", style: "cancel" },
-            { text: "Open Settings", onPress: () => Linking.openSettings?.() },
-          ],
-        );
+        Alert.alert("Camera Permission Needed", "Grant camera access to take photos or videos.", [
+          { text: "Cancel", style: "cancel" },
+          { text: "Open Settings", onPress: () => Linking.openSettings?.() },
+        ]);
         return false;
       } else {
         if (libraryPermission?.granted) return true;
         const res = await requestLibraryPermission();
         if (res?.granted) return true;
-        Alert.alert(
-          "Library Permission Needed",
-          "Grant media library access to choose photos or videos.",
-          [
-            { text: "Cancel", style: "cancel" },
-            { text: "Open Settings", onPress: () => Linking.openSettings?.() },
-          ],
-        );
+        Alert.alert("Library Permission Needed", "Grant media library access to choose photos or videos.", [
+          { text: "Cancel", style: "cancel" },
+          { text: "Open Settings", onPress: () => Linking.openSettings?.() },
+        ]);
         return false;
       }
     } catch (e) {

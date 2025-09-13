@@ -13,7 +13,7 @@ interface State {
   error: Error | null;
   resetCount: number;
   isResetting: boolean;
-  errorType: 'general' | 'component_registration' | 'view_config' | null;
+  errorType: "general" | "component_registration" | "view_config" | null;
 }
 
 export default class ErrorBoundary extends Component<Props, State> {
@@ -25,14 +25,14 @@ export default class ErrorBoundary extends Component<Props, State> {
   static getDerivedStateFromError(error: Error): Partial<State> {
     // Detect specific error types
     const errorMessage = error.message || error.toString();
-    let errorType: 'general' | 'component_registration' | 'view_config' = 'general';
-    
-    if (errorMessage.includes('View config not found') || errorMessage.includes('AutoLayoutView')) {
-      errorType = 'view_config';
-    } else if (errorMessage.includes('component') && errorMessage.includes('not found')) {
-      errorType = 'component_registration';
+    let errorType: "general" | "component_registration" | "view_config" = "general";
+
+    if (errorMessage.includes("View config not found") || errorMessage.includes("AutoLayoutView")) {
+      errorType = "view_config";
+    } else if (errorMessage.includes("component") && errorMessage.includes("not found")) {
+      errorType = "component_registration";
     }
-    
+
     return { hasError: true, error, errorType };
   }
 
@@ -40,15 +40,17 @@ export default class ErrorBoundary extends Component<Props, State> {
     // Enhanced logging for component registration errors
     if (__DEV__) {
       console.warn("ErrorBoundary caught an error:", error, errorInfo);
-      
+
       // Special handling for view config errors
-      if (this.state.errorType === 'view_config') {
-        console.warn('View config error detected. This is likely due to React Native new architecture compatibility issues.');
-        console.warn('Consider disabling newArchEnabled in app.json or updating incompatible dependencies.');
+      if (this.state.errorType === "view_config") {
+        console.warn(
+          "View config error detected. This is likely due to React Native new architecture compatibility issues.",
+        );
+        console.warn("Consider disabling newArchEnabled in app.json or updating incompatible dependencies.");
       }
-      
-      if (this.state.errorType === 'component_registration') {
-        console.warn('Component registration error detected. Check for missing or incompatible native dependencies.');
+
+      if (this.state.errorType === "component_registration") {
+        console.warn("Component registration error detected. Check for missing or incompatible native dependencies.");
       }
     }
     this.props.onError?.(error, errorInfo);
@@ -58,8 +60,9 @@ export default class ErrorBoundary extends Component<Props, State> {
     // First set resetting state to prevent immediate re-render
     this.setState({ isResetting: true }, () => {
       // Longer delay for component registration errors to allow recovery
-      const delay = this.state.errorType === 'view_config' || this.state.errorType === 'component_registration' ? 500 : 100;
-      
+      const delay =
+        this.state.errorType === "view_config" || this.state.errorType === "component_registration" ? 500 : 100;
+
       setTimeout(() => {
         this.setState({
           hasError: false,
@@ -91,15 +94,15 @@ export default class ErrorBoundary extends Component<Props, State> {
             </View>
 
             <Text className="text-text-primary text-xl font-bold mb-2 text-center">
-              {this.state.errorType === 'view_config' ? 'Component Error' : 'Something went wrong'}
+              {this.state.errorType === "view_config" ? "Component Error" : "Something went wrong"}
             </Text>
 
             <Text className="text-text-secondary text-center mb-8 leading-6">
-              {this.state.errorType === 'view_config' 
-                ? 'A component failed to load due to compatibility issues. This may resolve automatically.'
-                : this.state.errorType === 'component_registration'
-                ? 'A component registration error occurred. Try restarting the app.'
-                : 'We encountered an unexpected error. Please try again or restart the app.'}
+              {this.state.errorType === "view_config"
+                ? "A component failed to load due to compatibility issues. This may resolve automatically."
+                : this.state.errorType === "component_registration"
+                  ? "A component registration error occurred. Try restarting the app."
+                  : "We encountered an unexpected error. Please try again or restart the app."}
             </Text>
 
             <View className="space-y-3 w-full max-w-xs">

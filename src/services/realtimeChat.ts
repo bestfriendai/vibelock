@@ -27,7 +27,7 @@ interface MessageCacheEntry {
   timestamp: number;
   isOptimistic: boolean;
   fingerprint: string;
-  state: 'optimistic' | 'pending' | 'sent' | 'confirmed';
+  state: "optimistic" | "pending" | "sent" | "confirmed";
 }
 
 class EnhancedRealtimeChatService {
@@ -216,7 +216,7 @@ class EnhancedRealtimeChatService {
             timestamp: Date.now(),
             isOptimistic: false,
             fingerprint,
-            state: 'confirmed'
+            state: "confirmed",
           });
           fingerprints.add(fingerprint);
         });
@@ -289,10 +289,12 @@ class EnhancedRealtimeChatService {
       let isReplacement = false;
       for (const [optimisticId, optimisticMsg] of optimisticMessages.entries()) {
         const optimisticFingerprint = this.generateMessageFingerprint(optimisticMsg);
-        if (optimisticFingerprint === fingerprint ||
-            (optimisticMsg.senderId === newMessage.senderId &&
-             optimisticMsg.content === newMessage.content &&
-             Math.abs(optimisticMsg.timestamp.getTime() - newMessage.timestamp.getTime()) < 5000)) {
+        if (
+          optimisticFingerprint === fingerprint ||
+          (optimisticMsg.senderId === newMessage.senderId &&
+            optimisticMsg.content === newMessage.content &&
+            Math.abs(optimisticMsg.timestamp.getTime() - newMessage.timestamp.getTime()) < 5000)
+        ) {
           // Replace optimistic message with real one
           this.replaceOptimisticMessage(roomId, optimisticId, newMessage);
           isReplacement = true;
@@ -306,7 +308,7 @@ class EnhancedRealtimeChatService {
         timestamp: Date.now(),
         isOptimistic: false,
         fingerprint,
-        state: 'confirmed'
+        state: "confirmed",
       });
       fingerprints.add(fingerprint);
 
@@ -808,7 +810,8 @@ class EnhancedRealtimeChatService {
     const now = Date.now();
     const lastUpdate = (this as any)[throttleKey] || 0;
 
-    if (now - lastUpdate > 100) { // Throttle to max 10 updates per second
+    if (now - lastUpdate > 100) {
+      // Throttle to max 10 updates per second
       callback();
       (this as any)[throttleKey] = now;
     }
@@ -828,7 +831,7 @@ class EnhancedRealtimeChatService {
       timestamp: Date.now(),
       isOptimistic: true,
       fingerprint,
-      state: 'optimistic'
+      state: "optimistic",
     });
     this.messageCache.set(roomId, cache);
   }

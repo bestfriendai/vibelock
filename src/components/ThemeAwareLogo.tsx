@@ -11,7 +11,7 @@ interface ThemeAwareLogoProps {
 
 /**
  * ThemeAwareLogo Component
- * 
+ *
  * A logo component that automatically switches between different logo versions
  * based on the current theme:
  * - Dark theme: Uses LockerRoomLogo.png (black background version)
@@ -30,11 +30,5 @@ export default function ThemeAwareLogo({
     ? require("../../assets/LockerRoomLogo.png") // Black background for dark theme
     : require("../../assets/LockerRoomTransparent1.png"); // Transparent for light theme
 
-  return (
-    <Image
-      source={logoSource}
-      style={[{ width, height }, style]}
-      resizeMode={resizeMode}
-    />
-  );
+  return <Image source={logoSource} style={[{ width, height }, style]} resizeMode={resizeMode} />;
 }

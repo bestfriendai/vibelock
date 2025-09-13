@@ -18,7 +18,16 @@ import { useOffline } from "../hooks/useOffline";
 export default function ChatroomsScreen() {
   const navigation = useNavigation<any>();
   const { colors } = useTheme();
-  const { chatRooms, loadChatRooms, isLoading, onlineUsers, setRoomCategoryFilter, typingUsers, error, connectionStatus } = useChatStore();
+  const {
+    chatRooms,
+    loadChatRooms,
+    isLoading,
+    onlineUsers,
+    setRoomCategoryFilter,
+    typingUsers,
+    error,
+    connectionStatus,
+  } = useChatStore();
   const { user, canAccessChat, needsSignIn } = useAuthState();
   const [category, setCategory] = useState<"all" | "men" | "women" | "lgbtq+">(user?.genderPreference || "all");
   const [query, setQuery] = useState("");
@@ -139,7 +148,14 @@ export default function ChatroomsScreen() {
           <View className="flex-row items-center">
             <View
               className="w-2 h-2 rounded-full mr-2"
-              style={{ backgroundColor: connectionStatus === "connected" && isOnline ? "#22c55e" : connectionStatus === "connecting" ? "#f59e0b" : "#ef4444" }}
+              style={{
+                backgroundColor:
+                  connectionStatus === "connected" && isOnline
+                    ? "#22c55e"
+                    : connectionStatus === "connecting"
+                      ? "#f59e0b"
+                      : "#ef4444",
+              }}
               accessibilityLabel={`Connection status: ${connectionStatus}`}
             />
             <Text className="text-xs" style={{ color: colors.text.muted }}>
@@ -182,7 +198,11 @@ export default function ChatroomsScreen() {
           <Text className="text-text-primary text-sm font-medium">Something went wrong</Text>
           <Text className="text-text-secondary text-xs mt-1">{error}</Text>
           <View className="flex-row justify-end mt-2">
-            <Pressable onPress={loadChatRooms} className="px-3 py-1 rounded-lg" style={{ backgroundColor: colors.brand.red }}>
+            <Pressable
+              onPress={loadChatRooms}
+              className="px-3 py-1 rounded-lg"
+              style={{ backgroundColor: colors.brand.red }}
+            >
               <Text className="text-black text-xs font-semibold">Retry</Text>
             </Pressable>
           </View>

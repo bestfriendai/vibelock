@@ -255,22 +255,22 @@ const useChatStore = create<ChatStore>()(
                     if (newMsg.isReplacement) {
                       // This is a real message replacing an optimistic one
                       // Find and replace the optimistic message
-                      const optimisticPrefix = 'optimistic_';
+                      const optimisticPrefix = "optimistic_";
                       const optimisticIndex = allMessages.findIndex(
                         (msg) =>
                           msg.id.startsWith(optimisticPrefix) &&
                           msg.senderId === newMsg.senderId &&
-                          msg.content === newMsg.content
+                          msg.content === newMsg.content,
                       );
 
                       if (optimisticIndex !== -1) {
-                        allMessages[optimisticIndex] = { ...newMsg, status: newMsg.isRead ? 'read' : 'sent' } as any;
+                        allMessages[optimisticIndex] = { ...newMsg, status: newMsg.isRead ? "read" : "sent" } as any;
                         console.log(`✅ Replaced optimistic message with real message`);
                       } else {
                         // Couldn't find optimistic message, just add the new one
                         const isDuplicate = allMessages.some((msg) => msg.id === newMsg.id);
                         if (!isDuplicate) {
-                          allMessages.push({ ...newMsg, status: newMsg.isRead ? 'read' : 'sent' } as any);
+                          allMessages.push({ ...newMsg, status: newMsg.isRead ? "read" : "sent" } as any);
                         }
                       }
                     } else {
@@ -288,9 +288,7 @@ const useChatStore = create<ChatStore>()(
                 // Sort messages newest-first for consistent display
                 // Only sort if we actually modified the array
                 if (isInitialLoad || newMessages.length > 0) {
-                  allMessages.sort(
-                    (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
-                  );
+                  allMessages.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
                 }
 
                 return {
@@ -409,7 +407,7 @@ const useChatStore = create<ChatStore>()(
             messageType: "text",
             timestamp: new Date(timestamp),
             isRead: false,
-            status: 'pending',
+            status: "pending",
             isOwn: true,
             isOptimistic: true, // Mark as optimistic
             replyTo,
@@ -423,7 +421,7 @@ const useChatStore = create<ChatStore>()(
 
           // Send to Supabase via enhanced real-time service (with retry)
           await retryWithBackoff(
-            () => enhancedRealtimeChatService.sendMessage(roomId, content, user.id, senderName, 'text', replyTo),
+            () => enhancedRealtimeChatService.sendMessage(roomId, content, user.id, senderName, "text", replyTo),
             3,
             800,
             (err) => err.type === ErrorType.NETWORK || err.retryable,
@@ -439,7 +437,7 @@ const useChatStore = create<ChatStore>()(
               messages: {
                 ...state.messages,
                 [roomId]: (state.messages[roomId] || []).map((msg) =>
-                  msg.id === optimisticMessageId ? ({ ...msg, status: 'failed' } as any) : msg,
+                  msg.id === optimisticMessageId ? ({ ...msg, status: "failed" } as any) : msg,
                 ),
               },
             }));
@@ -463,9 +461,7 @@ const useChatStore = create<ChatStore>()(
           const updatedMessages = [...roomMessages, message];
 
           // Sort newest-first for consistent display
-          updatedMessages.sort(
-            (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
-          );
+          updatedMessages.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
           return {
             messages: {

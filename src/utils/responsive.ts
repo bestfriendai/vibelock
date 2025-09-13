@@ -168,7 +168,7 @@ export function getResponsiveDimensions(screenWidth: number) {
   // Account for FlatList's different rendering behavior compared to FlashList
   const totalGaps = cardGap * (columns - 1);
   const cardWidth = Math.floor((availableWidth - totalGaps) / columns);
-  
+
   // Ensure minimum card width for better FlatList performance
   const minCardWidth = deviceInfo.isTablet ? 180 : 140;
   const adjustedCardWidth = Math.max(cardWidth, minCardWidth);

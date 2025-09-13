@@ -250,12 +250,14 @@ The app automatically detects and adapts to different environments:
 This error occurs due to React Native new architecture compatibility issues with certain dependencies. If you encounter this error:
 
 **Immediate Fix:**
+
 1. The app has been configured to disable the new architecture (`newArchEnabled: false` in `app.json`)
 2. FlashList has been replaced with FlatList for better compatibility
 3. React has been downgraded from 19.1.0 to 18.2.0 for React Native 0.81.4 compatibility
 4. React Compiler has been disabled in babel configuration
 
 **Manual Recovery Steps:**
+
 ```bash
 # Run the automated fix script
 bash scripts/fix-architecture-issues.sh
@@ -268,12 +270,14 @@ npm start -- --clear
 ```
 
 **Common Causes:**
+
 - React Native new architecture enabled with incompatible dependencies
 - Version mismatches between React, React Native, and related packages
 - FlashList compatibility issues with Fabric renderer
 - React Compiler incompatibility with older React Native versions
 
 **When to Re-enable New Architecture:**
+
 - All dependencies support the new architecture
 - React Native is updated to 0.74+ with proper Fabric support
 - FlashList or alternative has full new architecture compatibility
@@ -283,12 +287,14 @@ npm start -- --clear
 If you see errors about missing native modules or component registration:
 
 1. **Clear caches:**
+
    ```bash
    npx expo prebuild --clean
    npm run clean:install
    ```
 
 2. **Verify environment:**
+
    ```bash
    npm run verify:env
    npm run verify:setup

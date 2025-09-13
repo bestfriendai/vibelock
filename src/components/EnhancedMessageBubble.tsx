@@ -339,10 +339,7 @@ const EnhancedMessageBubble = React.forwardRef<View, Props>(
                               : message.isRead
                                 ? "checkmark-done"
                                 : "checkmark";
-                    const color =
-                      status === "failed"
-                        ? colors.status.error
-                        : "rgba(255,255,255,0.7)";
+                    const color = status === "failed" ? colors.status.error : "rgba(255,255,255,0.7)";
                     return <Ionicons name={icon as any} size={12} color={color} />;
                   })()}
                 </View>
@@ -357,7 +354,7 @@ const EnhancedMessageBubble = React.forwardRef<View, Props>(
             )}
 
             {/* Existing reactions */}
-            {((message as any).reactions && (message as any).reactions.length > 0) && (
+            {(message as any).reactions && (message as any).reactions.length > 0 && (
               <MessageReactions
                 messageId={message.id}
                 reactions={aggregateReactions().map((r) => ({ ...r, hasReacted: false }))}

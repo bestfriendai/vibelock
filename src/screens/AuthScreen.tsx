@@ -62,10 +62,7 @@ export default function AuthScreen() {
         {/* Logo Section */}
         <Animated.View style={logoAnimatedStyle} className="items-center mb-16">
           <View className="w-32 h-32 mb-8 shadow-2xl">
-            <ThemeAwareLogo
-              width={128}
-              height={128}
-            />
+            <ThemeAwareLogo width={128} height={128} />
           </View>
         </Animated.View>
 

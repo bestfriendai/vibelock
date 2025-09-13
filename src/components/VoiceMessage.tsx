@@ -102,17 +102,13 @@ export const VoiceMessage: React.FC<VoiceMessageProps> = ({
     try {
       const { status, canAskAgain } = await requestRecordingPermissionsAsync();
       if (status !== "granted") {
-        Alert.alert(
-          "Microphone Permission Needed",
-          "Please allow microphone access to record voice messages.",
-          [
-            { text: "Cancel", style: "cancel" },
-            {
-              text: "Open Settings",
-              onPress: () => Linking.openSettings?.(),
-            },
-          ],
-        );
+        Alert.alert("Microphone Permission Needed", "Please allow microphone access to record voice messages.", [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Open Settings",
+            onPress: () => Linking.openSettings?.(),
+          },
+        ]);
         if (canAskAgain) return; // user can retry later
         return;
       }

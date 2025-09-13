@@ -236,7 +236,7 @@ export default function ChatRoomScreen() {
           members={members[roomId] || []}
           onlineUsers={members[roomId]?.filter((member: any) => member.isOnline) || []}
           typingUsers={typingUsers || []}
-          connectionStatus={connectionStatus === 'error' ? 'disconnected' : connectionStatus}
+          connectionStatus={connectionStatus === "error" ? "disconnected" : connectionStatus}
           onToggleNotifications={() => {
             useChatStore.getState().toggleNotifications(roomId);
             setIsSubscribed(!isSubscribed);
@@ -246,7 +246,8 @@ export default function ChatRoomScreen() {
 
         <FlashListAny
           ref={listRef}
-          // Keep newest-first ordering from store and rely on inverted list for UI
+          // Invert the list so newest messages appear at bottom (like modern chat apps)
+          inverted={true}
           data={roomMessages}
           keyExtractor={(item: ChatMessage) => item.id}
           renderItem={({ item, index }: { item: ChatMessage; index: number }) => {
@@ -274,7 +275,6 @@ export default function ChatRoomScreen() {
             paddingBottom: 16, // Bottom padding for messages
             backgroundColor: colors.background,
           }}
-          inverted
           estimatedItemSize={72}
           showsVerticalScrollIndicator={false}
           // For inverted lists, use ListFooterComponent to render at visual top

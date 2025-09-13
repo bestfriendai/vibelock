@@ -3,6 +3,7 @@ import { supabase, handleSupabaseError } from "../config/supabase";
 import { requireAuthentication, getUserDisplayName } from "../utils/authUtils";
 import type { User as SupabaseUser, Session } from "@supabase/supabase-js";
 import { User, Review, ChatRoom, ChatMessage, Comment, Profile } from "../types";
+import { searchCache, userCache } from "./cacheService";
 
 // Helper function for retry logic
 const retryWithBackoff = async <T>(
@@ -892,6 +893,15 @@ export const supabaseSearch = {
         return [];
       }
 
+      // Generate cache key
+      const cacheKey = `profiles:${query}:${JSON.stringify(filters || {})}`;
+
+      // Try to get from cache first
+      const cached = await searchCache.get<Profile[]>(cacheKey);
+      if (cached) {
+        return cached;
+      }
+
       // Sanitize search query to prevent SQL injection
       const sanitizedQuery = query
         .trim()
@@ -991,7 +1001,15 @@ export const supabaseSearch = {
       }));
 
       // Sort by total reviews (most reviewed first)
-      return profiles.sort((a, b) => b.totalReviews - a.totalReviews);
+      const sortedProfiles = profiles.sort((a, b) => b.totalReviews - a.totalReviews);
+
+      // Cache the results
+      await searchCache.set(cacheKey, sortedProfiles, {
+        ttl: 2 * 60 * 1000, // 2 minutes for search results
+        tags: ["profiles", "search"],
+      });
+
+      return sortedProfiles;
     } catch (error: any) {
       throw new Error(handleSupabaseError(error));
     }
@@ -1037,6 +1055,15 @@ export const supabaseSearch = {
     },
   ): Promise<any[]> => {
     try {
+      // Generate cache key
+      const cacheKey = `reviews:${query}:${JSON.stringify(filters || {})}`;
+
+      // Try to get from cache first
+      const cached = await searchCache.get<any[]>(cacheKey);
+      if (cached) {
+        return cached;
+      }
+
       const sanitized = sanitizeLikeQuery(query);
       let queryBuilder = supabase
         .from("reviews_firebase")
@@ -1062,7 +1089,16 @@ export const supabaseSearch = {
       const { data, error } = await queryBuilder;
 
       if (error) throw error;
-      return data || [];
+
+      const results = data || [];
+
+      // Cache the results
+      await searchCache.set(cacheKey, results, {
+        ttl: 2 * 60 * 1000, // 2 minutes for search results
+        tags: ["reviews", "search"],
+      });
+
+      return results;
     } catch (error: any) {
       throw new Error(handleSupabaseError(error));
     }
