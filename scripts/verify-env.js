@@ -2,9 +2,10 @@
 // scripts/verify-env.js
 const fs = require("fs");
 const path = require("path");
+const { execSync } = require("child_process");
 require("dotenv").config();
 
-console.log("Verifying environment variables...");
+console.log("🔍 Verifying environment and package setup...");
 
 const exampleEnvPath = path.resolve(process.cwd(), ".env.example");
 if (!fs.existsSync(exampleEnvPath)) {

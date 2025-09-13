@@ -1,0 +1,25 @@
+{
+  "expo": {
+    "name": "TestApp",
+    "statusBarStyle": "dark",
+    "ios": {
+      "statusBarStyle": "light",
+      "nested": {
+        "statusBarStyle": "auto",
+        "otherProp": "keep"
+      }
+    },
+    "android": {
+      "someArray": [
+        {
+          "statusBarStyle": "hidden",
+          "keepThis": true
+        },
+        {
+          "noStatusBar": true
+        }
+      ]
+    },
+    "keepThisProperty": "important"
+  }
+}

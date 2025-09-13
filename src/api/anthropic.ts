@@ -18,16 +18,9 @@ import { generateAnthropicResponse } from "./secure-ai-service";
 export const getAnthropicClient = () => {
   console.warn("getAnthropicClient is deprecated. Use generateAnthropicResponse from secure-ai-service instead.");
 
-  // Return a mock client that throws an error to prevent direct usage
-  return {
-    messages: {
-      create: () => {
-        throw new Error(
-          "Direct Anthropic client usage is disabled for security. Use generateAnthropicResponse from secure-ai-service instead.",
-        );
-      },
-    },
-  };
+  throw new Error(
+    "Direct Anthropic client usage is disabled for security. Use generateAnthropicResponse from secure-ai-service instead.",
+  );
 };
 
 // Export secure functions for backward compatibility

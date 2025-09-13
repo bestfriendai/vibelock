@@ -54,7 +54,7 @@ const AnimatedButton = React.forwardRef<View, AnimatedButtonProps>(
       } else {
         rotation.value = 0;
       }
-    }, [loading]);
+    }, [loading, rotation]);
 
     const handlePressIn = () => {
       scale.value = withSpring(0.95, {

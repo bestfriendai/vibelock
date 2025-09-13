@@ -25,7 +25,7 @@ export class ImageProcessor {
     maxHeight: number = this.MAX_DIMENSION,
   ): Promise<File> {
     if (!FilePreviewer.isImageFile(file)) {
-      throw new AppError("File is not an image", ErrorType.VALIDATION, "INVALID_FILE_TYPE", 400);
+      throw new AppError("File is not an image", ErrorType.INVALID_FILE_TYPE, undefined, 400);
     }
 
     return new Promise((resolve, reject) => {
@@ -52,7 +52,7 @@ export class ImageProcessor {
 
         const ctx = canvas.getContext("2d");
         if (!ctx) {
-          reject(new AppError("Failed to get canvas context", ErrorType.SERVER, "CANVAS_ERROR", 500));
+          reject(new AppError("Failed to get canvas context", ErrorType.CANVAS_ERROR, undefined, 500));
           return;
         }
 
@@ -63,7 +63,7 @@ export class ImageProcessor {
         canvas.toBlob(
           (blob) => {
             if (!blob) {
-              reject(new AppError("Failed to create blob", ErrorType.SERVER, "BLOB_ERROR", 500));
+              reject(new AppError("Failed to create blob", ErrorType.BLOB_ERROR, undefined, 500));
               return;
             }
 
@@ -85,7 +85,7 @@ export class ImageProcessor {
 
       img.onerror = () => {
         URL.revokeObjectURL(url);
-        reject(new AppError("Failed to load image", ErrorType.SERVER, "IMAGE_LOAD_ERROR", 500));
+        reject(new AppError("Failed to load image", ErrorType.IMAGE_LOAD_ERROR, undefined, 500));
       };
 
       img.src = url;
@@ -97,7 +97,7 @@ export class ImageProcessor {
    */
   static async generateThumbnail(file: File, size: number = 200): Promise<File> {
     if (!FilePreviewer.isImageFile(file)) {
-      throw new AppError("File is not an image", ErrorType.VALIDATION, "INVALID_FILE_TYPE", 400);
+      throw new AppError("File is not an image", ErrorType.INVALID_FILE_TYPE, undefined, 400);
     }
 
     return new Promise((resolve, reject) => {
@@ -123,7 +123,7 @@ export class ImageProcessor {
 
         const ctx = canvas.getContext("2d");
         if (!ctx) {
-          reject(new AppError("Failed to get canvas context", ErrorType.SERVER, "CANVAS_ERROR", 500));
+          reject(new AppError("Failed to get canvas context", ErrorType.CANVAS_ERROR, undefined, 500));
           return;
         }
 
@@ -134,7 +134,7 @@ export class ImageProcessor {
         canvas.toBlob(
           (blob) => {
             if (!blob) {
-              reject(new AppError("Failed to create blob", ErrorType.SERVER, "BLOB_ERROR", 500));
+              reject(new AppError("Failed to create blob", ErrorType.BLOB_ERROR, undefined, 500));
               return;
             }
 
@@ -155,7 +155,7 @@ export class ImageProcessor {
 
       img.onerror = () => {
         URL.revokeObjectURL(url);
-        reject(new AppError("Failed to load image", ErrorType.SERVER, "IMAGE_LOAD_ERROR", 500));
+        reject(new AppError("Failed to load image", ErrorType.IMAGE_LOAD_ERROR, undefined, 500));
       };
 
       img.src = url;
@@ -167,7 +167,7 @@ export class ImageProcessor {
    */
   static async getImageDimensions(file: File): Promise<{ width: number; height: number }> {
     if (!FilePreviewer.isImageFile(file)) {
-      throw new AppError("File is not an image", ErrorType.VALIDATION, "INVALID_FILE_TYPE", 400);
+      throw new AppError("File is not an image", ErrorType.INVALID_FILE_TYPE, undefined, 400);
     }
 
     return new Promise((resolve, reject) => {
@@ -184,7 +184,7 @@ export class ImageProcessor {
 
       img.onerror = () => {
         URL.revokeObjectURL(url);
-        reject(new AppError("Failed to load image", ErrorType.SERVER, "IMAGE_LOAD_ERROR", 500));
+        reject(new AppError("Failed to load image", ErrorType.IMAGE_LOAD_ERROR, undefined, 500));
       };
 
       img.src = url;
@@ -196,7 +196,7 @@ export class ImageProcessor {
    */
   static async convertImageFormat(file: File, targetFormat: "jpeg" | "png" | "webp"): Promise<File> {
     if (!FilePreviewer.isImageFile(file)) {
-      throw new AppError("File is not an image", ErrorType.VALIDATION, "INVALID_FILE_TYPE", 400);
+      throw new AppError("File is not an image", ErrorType.INVALID_FILE_TYPE, undefined, 400);
     }
 
     return new Promise((resolve, reject) => {
@@ -213,7 +213,7 @@ export class ImageProcessor {
 
         const ctx = canvas.getContext("2d");
         if (!ctx) {
-          reject(new AppError("Failed to get canvas context", ErrorType.SERVER, "CANVAS_ERROR", 500));
+          reject(new AppError("Failed to get canvas context", ErrorType.CANVAS_ERROR, undefined, 500));
           return;
         }
 
@@ -227,7 +227,7 @@ export class ImageProcessor {
         canvas.toBlob(
           (blob) => {
             if (!blob) {
-              reject(new AppError("Failed to create blob", ErrorType.SERVER, "BLOB_ERROR", 500));
+              reject(new AppError("Failed to create blob", ErrorType.BLOB_ERROR, undefined, 500));
               return;
             }
 
@@ -247,7 +247,7 @@ export class ImageProcessor {
 
       img.onerror = () => {
         URL.revokeObjectURL(url);
-        reject(new AppError("Failed to load image", ErrorType.SERVER, "IMAGE_LOAD_ERROR", 500));
+        reject(new AppError("Failed to load image", ErrorType.IMAGE_LOAD_ERROR, undefined, 500));
       };
 
       img.src = url;
@@ -299,7 +299,7 @@ export class ImageProcessor {
     maxHeight?: number,
   ): Promise<File> {
     if (!FilePreviewer.isImageFile(file)) {
-      throw new AppError("File is not an image", ErrorType.VALIDATION, "INVALID_FILE_TYPE", 400);
+      throw new AppError("File is not an image", ErrorType.INVALID_FILE_TYPE, undefined, 400);
     }
 
     // If dimensions are specified, resize first
@@ -322,7 +322,7 @@ export class ImageProcessor {
 
         const ctx = canvas.getContext("2d");
         if (!ctx) {
-          reject(new AppError("Failed to get canvas context", ErrorType.SERVER, "CANVAS_ERROR", 500));
+          reject(new AppError("Failed to get canvas context", ErrorType.CANVAS_ERROR, undefined, 500));
           return;
         }
 
@@ -337,7 +337,7 @@ export class ImageProcessor {
         canvas.toBlob(
           (blob) => {
             if (!blob) {
-              reject(new AppError("Failed to create blob", ErrorType.SERVER, "BLOB_ERROR", 500));
+              reject(new AppError("Failed to create blob", ErrorType.BLOB_ERROR, undefined, 500));
               return;
             }
 
@@ -357,7 +357,7 @@ export class ImageProcessor {
 
       img.onerror = () => {
         URL.revokeObjectURL(url);
-        reject(new AppError("Failed to load image", ErrorType.SERVER, "IMAGE_LOAD_ERROR", 500));
+        reject(new AppError("Failed to load image", ErrorType.IMAGE_LOAD_ERROR, undefined, 500));
       };
 
       img.src = url;

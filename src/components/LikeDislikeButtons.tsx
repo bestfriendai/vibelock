@@ -76,9 +76,9 @@ const LikeDislikeButtons = React.forwardRef<View, Props>(
             accessibilityHint={isLiked ? "Double tap to remove your like" : "Double tap to like this review"}
             className="flex-row items-center justify-center px-4 py-3 rounded-xl"
             style={{
-              backgroundColor: isLiked ? colors.accent.green : colors.accent.green + '10',
+              backgroundColor: isLiked ? colors.accent.green : colors.accent.green + "10",
               borderWidth: 1,
-              borderColor: isLiked ? colors.accent.green : colors.accent.green + '30',
+              borderColor: isLiked ? colors.accent.green : colors.accent.green + "30",
               opacity: disabled ? 0.5 : 1,
             }}
           >
@@ -87,21 +87,15 @@ const LikeDislikeButtons = React.forwardRef<View, Props>(
               size={18}
               color={isLiked ? "#FFFFFF" : colors.accent.green}
             />
-            <Text
-              className="ml-2 font-semibold"
-              style={{ color: isLiked ? "#FFFFFF" : colors.accent.green }}
-            >
+            <Text className="ml-2 font-semibold" style={{ color: isLiked ? "#FFFFFF" : colors.accent.green }}>
               Like
             </Text>
             {likeCount > 0 && (
               <View
                 className="ml-2 px-2 py-1 rounded-full"
-                style={{ backgroundColor: isLiked ? "#FFFFFF20" : colors.accent.green + '20' }}
+                style={{ backgroundColor: isLiked ? "#FFFFFF20" : colors.accent.green + "20" }}
               >
-                <Text
-                  className="text-xs font-bold"
-                  style={{ color: isLiked ? "#FFFFFF" : colors.accent.green }}
-                >
+                <Text className="text-xs font-bold" style={{ color: isLiked ? "#FFFFFF" : colors.accent.green }}>
                   {likeCount}
                 </Text>
               </View>
@@ -123,9 +117,9 @@ const LikeDislikeButtons = React.forwardRef<View, Props>(
             accessibilityHint={isDisliked ? "Double tap to remove your dislike" : "Double tap to dislike this review"}
             className="flex-row items-center justify-center px-4 py-3 rounded-xl"
             style={{
-              backgroundColor: isDisliked ? colors.text.primary : colors.text.primary + '10',
+              backgroundColor: isDisliked ? colors.text.primary : colors.text.primary + "10",
               borderWidth: 1,
-              borderColor: isDisliked ? colors.text.primary : colors.text.primary + '30',
+              borderColor: isDisliked ? colors.text.primary : colors.text.primary + "30",
               opacity: disabled ? 0.5 : 1,
             }}
           >
@@ -143,7 +137,7 @@ const LikeDislikeButtons = React.forwardRef<View, Props>(
             {dislikeCount > 0 && (
               <View
                 className="ml-2 px-2 py-1 rounded-full"
-                style={{ backgroundColor: isDisliked ? colors.surface[900] + '20' : colors.text.primary + '20' }}
+                style={{ backgroundColor: isDisliked ? colors.surface[900] + "20" : colors.text.primary + "20" }}
               >
                 <Text
                   className="text-xs font-bold"

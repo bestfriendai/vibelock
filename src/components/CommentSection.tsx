@@ -47,7 +47,9 @@ function CommentItem({ comment, onLike, onDislike, onReply, onReport, isReply = 
   if (comment.isDeleted) {
     return (
       <View className={`py-3 ${isReply ? "ml-8" : ""}`}>
-        <Text className="italic" style={{ color: colors.text.muted }}>This comment has been deleted</Text>
+        <Text className="italic" style={{ color: colors.text.muted }}>
+          This comment has been deleted
+        </Text>
       </View>
     );
   }
@@ -66,8 +68,12 @@ function CommentItem({ comment, onLike, onDislike, onReply, onReport, isReply = 
           >
             <Ionicons name="person" size={12} color={colors.text.muted} />
           </View>
-          <Text className="font-medium text-sm" style={{ color: colors.text.primary }}>{comment.authorName}</Text>
-          <Text className="text-xs ml-2" style={{ color: colors.text.muted }}>{formatTimeAgo(comment.createdAt)}</Text>
+          <Text className="font-medium text-sm" style={{ color: colors.text.primary }}>
+            {comment.authorName}
+          </Text>
+          <Text className="text-xs ml-2" style={{ color: colors.text.muted }}>
+            {formatTimeAgo(comment.createdAt)}
+          </Text>
         </View>
 
         <Pressable onPress={() => onReport(comment.id)} className="p-1">
@@ -76,7 +82,9 @@ function CommentItem({ comment, onLike, onDislike, onReply, onReport, isReply = 
       </View>
 
       {/* Comment Content */}
-      <Text className="text-sm leading-5 mb-3" style={{ color: colors.text.primary }}>{comment.content}</Text>
+      <Text className="text-sm leading-5 mb-3" style={{ color: colors.text.primary }}>
+        {comment.content}
+      </Text>
 
       {/* Comment Actions */}
       <View className="flex-row items-center space-x-4">
@@ -87,7 +95,11 @@ function CommentItem({ comment, onLike, onDislike, onReply, onReport, isReply = 
             size={16}
             color={comment.isLiked ? colors.brand.red : colors.text.muted}
           />
-          {comment.likeCount > 0 && <Text className="text-xs ml-1" style={{ color: colors.text.muted }}>{comment.likeCount}</Text>}
+          {comment.likeCount > 0 && (
+            <Text className="text-xs ml-1" style={{ color: colors.text.muted }}>
+              {comment.likeCount}
+            </Text>
+          )}
         </Pressable>
 
         {/* Dislike Button */}
@@ -97,14 +109,20 @@ function CommentItem({ comment, onLike, onDislike, onReply, onReport, isReply = 
             size={16}
             color={comment.isDisliked ? colors.brand.red : colors.text.muted}
           />
-          {comment.dislikeCount > 0 && <Text className="text-xs ml-1" style={{ color: colors.text.muted }}>{comment.dislikeCount}</Text>}
+          {comment.dislikeCount > 0 && (
+            <Text className="text-xs ml-1" style={{ color: colors.text.muted }}>
+              {comment.dislikeCount}
+            </Text>
+          )}
         </Pressable>
 
         {/* Reply Button */}
         {!isReply && (
           <Pressable onPress={() => onReply(comment)} className="flex-row items-center">
             <Ionicons name="chatbubble-outline" size={16} color={colors.text.muted} />
-            <Text className="text-xs ml-1" style={{ color: colors.text.muted }}>Reply</Text>
+            <Text className="text-xs ml-1" style={{ color: colors.text.muted }}>
+              Reply
+            </Text>
           </Pressable>
         )}
       </View>
@@ -123,7 +141,9 @@ function CommentItem({ comment, onLike, onDislike, onReply, onReport, isReply = 
             <>
               <Pressable onPress={() => setShowReplies(false)} className="flex-row items-center mb-2">
                 <Ionicons name="chevron-up" size={16} color={colors.text.muted} />
-                <Text className="text-sm ml-1" style={{ color: colors.brand.red }}>Hide replies</Text>
+                <Text className="text-sm ml-1" style={{ color: colors.brand.red }}>
+                  Hide replies
+                </Text>
               </Pressable>
               {comment.replies.map((reply) => (
                 <CommentItem
@@ -208,7 +228,9 @@ export default function CommentSection({
     return (
       <View className="py-8 items-center">
         <Ionicons name="chatbubbles-outline" size={48} color={colors.text.muted} />
-        <Text className="text-lg font-medium mt-4" style={{ color: colors.text.secondary }}>No comments yet</Text>
+        <Text className="text-lg font-medium mt-4" style={{ color: colors.text.secondary }}>
+          No comments yet
+        </Text>
         <Text className="text-center mt-2 px-8" style={{ color: colors.text.muted }}>
           Be the first to share your thoughts on this review
         </Text>
@@ -219,7 +241,9 @@ export default function CommentSection({
   return (
     <View style={{ backgroundColor: colors.surface[800] }}>
       <View className="px-4 py-3 border-b" style={{ borderBottomColor: colors.surface[700] }}>
-        <Text className="font-semibold" style={{ color: colors.text.primary }}>Comments ({comments.length})</Text>
+        <Text className="font-semibold" style={{ color: colors.text.primary }}>
+          Comments ({comments.length})
+        </Text>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} className="px-4" nestedScrollEnabled={true}>

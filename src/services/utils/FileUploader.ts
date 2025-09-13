@@ -434,9 +434,10 @@ export class FileUploader {
 
       throw new AppError(
         `Failed to upload file: ${error instanceof Error ? error.message : "Unknown error"}`,
-        ErrorType.SERVER,
-        "UPLOAD_ERROR",
+        ErrorType.UPLOAD_ERROR,
+        undefined,
         500,
+        true,
       );
     }
   }
@@ -499,9 +500,10 @@ export class FileUploader {
 
       const appError = new AppError(
         `Failed to upload file: ${error instanceof Error ? error.message : "Unknown error"}`,
-        ErrorType.SERVER,
-        "UPLOAD_ERROR",
+        ErrorType.UPLOAD_ERROR,
+        undefined,
         500,
+        true,
       );
 
       // Call error callback
@@ -605,11 +607,11 @@ export class FileUploader {
       this.clearProgressReporting(uploadRequest);
 
       if (error instanceof Error && error.name === "AbortError") {
-        throw new AppError("Upload was cancelled", ErrorType.UNKNOWN, "UPLOAD_CANCELLED", 499);
+        throw new AppError("Upload was cancelled", ErrorType.UPLOAD_CANCELLED, undefined, 499);
       }
 
       if (error instanceof Error && error.name === "TimeoutError") {
-        throw new AppError("Upload timed out", ErrorType.NETWORK, "UPLOAD_TIMEOUT", 408);
+        throw new AppError("Upload timed out", ErrorType.UPLOAD_TIMEOUT, undefined, 408, true);
       }
 
       throw error;
@@ -696,7 +698,7 @@ export class FileUploader {
       this.clearProgressReporting(uploadRequest);
 
       if (error instanceof Error && error.name === "AbortError") {
-        throw new AppError("Upload was cancelled", ErrorType.UNKNOWN, "UPLOAD_CANCELLED", 499);
+        throw new AppError("Upload was cancelled", ErrorType.UPLOAD_CANCELLED, undefined, 499);
       }
 
       throw error;

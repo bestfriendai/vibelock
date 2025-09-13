@@ -26,7 +26,7 @@ type Props = NativeStackScreenProps<BrowseStackParamList, "Browse">;
 export default function BrowseScreen({ navigation, route }: Props) {
   const insets = useSafeAreaInsets();
   const { user, updateUserLocation } = useAuthStore();
-  const { theme, colors, isDarkMode } = useTheme();
+  const { colors } = useTheme();
   const [currentLocation, setCurrentLocation] = useState<LocationData | null>(null);
   const [locationLoading, setLocationLoading] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
@@ -55,9 +55,9 @@ export default function BrowseScreen({ navigation, route }: Props) {
           city: user.location.city,
           state: user.location.state,
           fullName: user.location.fullName || `${user.location.city}, ${user.location.state}`,
-          coordinates: user.location.coordinates,
-          type: user.location.type,
-          institutionType: user.location.institutionType,
+          coordinates: user.location.coordinates || undefined,
+          type: user.location.type || undefined,
+          institutionType: user.location.institutionType || undefined,
         });
         return;
       }
@@ -68,17 +68,17 @@ export default function BrowseScreen({ navigation, route }: Props) {
 
       try {
         const result = await locationService.detectLocation();
-        if (result.success && result.location) {
+        if (result?.success && result?.location) {
           setCurrentLocation(result.location);
 
           // Update user location in auth store
           await updateUserLocation({
             city: result.location.city,
             state: result.location.state,
-            coordinates: result.location.coordinates,
-            type: result.location.type,
-            fullName: result.location.fullName,
-            institutionType: result.location.institutionType,
+            coordinates: result.location.coordinates || undefined,
+            type: result.location.type || undefined,
+            fullName: result.location.fullName || `${result.location.city}, ${result.location.state}`,
+            institutionType: result.location.institutionType || undefined,
           });
 
           console.log(`📍 Location detected via ${result.source}:`, result.location.fullName);
@@ -138,15 +138,6 @@ export default function BrowseScreen({ navigation, route }: Props) {
     }, [loadReviews]),
   );
 
-  // Memoize the filter-based load function
-  const loadWithFilters = useCallback(async () => {
-    try {
-      await loadReviews(true);
-    } catch (error) {
-      console.warn("Error loading reviews with filters:", error);
-    }
-  }, [loadReviews]);
-
   // Reload when filters change (category, radius) or user location changes
   useEffect(() => {
     loadInitialData();
@@ -155,7 +146,7 @@ export default function BrowseScreen({ navigation, route }: Props) {
         abortControllerRef.current.abort();
       }
     };
-  }, [filters.category, filters.radius, user?.location.city, user?.location.state, loadInitialData]);
+  }, [filters?.category, filters?.radius, user?.location?.city, user?.location?.state, loadInitialData]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -216,15 +207,15 @@ export default function BrowseScreen({ navigation, route }: Props) {
                 setLocationError(null);
                 try {
                   const result = await locationService.detectLocation();
-                  if (result.success && result.location) {
+                  if (result?.success && result?.location) {
                     setCurrentLocation(result.location);
                     await updateUserLocation({
                       city: result.location.city,
                       state: result.location.state,
-                      coordinates: result.location.coordinates,
-                      type: result.location.type,
-                      fullName: result.location.fullName,
-                      institutionType: result.location.institutionType,
+                      coordinates: result.location.coordinates || undefined,
+                      type: result.location.type || undefined,
+                      fullName: result.location.fullName || `${result.location.city}, ${result.location.state}`,
+                      institutionType: result.location.institutionType || undefined,
                     });
                   } else {
                     setLocationError(result.error || "Location detection failed");
@@ -264,19 +255,19 @@ export default function BrowseScreen({ navigation, route }: Props) {
 
                   // Immediately reload reviews with new location (no waiting for auth store update)
                   await loadReviews(true, {
-                    city: location.city,
-                    state: location.state,
-                    coordinates: location.coordinates,
+                    city: location?.city || "Unknown",
+                    state: location?.state || "",
+                    coordinates: location?.coordinates || undefined,
                   });
 
                   // Update user location in auth store (async, for persistence)
                   updateUserLocation({
-                    city: location.city,
-                    state: location.state,
-                    coordinates: location.coordinates,
-                    type: location.type,
-                    fullName: location.fullName,
-                    institutionType: location.institutionType,
+                    city: location?.city || "Unknown",
+                    state: location?.state || "",
+                    coordinates: location?.coordinates || undefined,
+                    type: location?.type || undefined,
+                    fullName: location?.fullName || `${location?.city}, ${location?.state}`,
+                    institutionType: location?.institutionType || undefined,
                   }).catch((error) => {
                     console.warn("❌ Failed to update user location in auth store:", error);
                   });
@@ -289,7 +280,7 @@ export default function BrowseScreen({ navigation, route }: Props) {
             />
           )}
           <DistanceFilter
-            currentDistance={filters.radius === undefined || filters.radius === null ? -1 : filters.radius}
+            currentDistance={filters?.radius === undefined || filters?.radius === null ? -1 : filters.radius}
             onDistanceChange={(distance) => setFilters({ radius: distance === -1 ? null : distance })}
           />
         </View>
@@ -303,7 +294,7 @@ export default function BrowseScreen({ navigation, route }: Props) {
               { key: "women", label: "Women" },
               { key: "lgbtq+", label: "LGBTQ+" },
             ]}
-            value={filters.category}
+            value={filters?.category || "all"}
             onChange={(category) => setFilters({ category: category as "all" | "men" | "women" | "lgbtq+" })}
           />
         </View>

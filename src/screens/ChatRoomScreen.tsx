@@ -1,12 +1,13 @@
 import React, { useEffect, useRef, useState } from "react";
-import { View, Text, Pressable, Modal, KeyboardAvoidingView, Platform } from "react-native";
+import { View, Text, Pressable, Modal } from "react-native";
+import { KeyboardToolbar } from "react-native-keyboard-controller";
+import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRoute, RouteProp, useNavigation } from "@react-navigation/native";
 import { FlashList, type FlashListRef } from "@shopify/flash-list";
-import { Ionicons } from "@expo/vector-icons";
 import useChatStore from "../state/chatStore";
 import { useAuthState } from "../utils/authUtils";
-import { RootStackParamList } from "../navigation/AppNavigator";
+import { RootStackParamList, RootStackNavigationProp } from "../navigation/AppNavigator";
 import EnhancedMessageBubble from "../components/EnhancedMessageBubble";
 import EnhancedMessageInput from "../components/EnhancedMessageInput";
 import SmartChatFeatures from "../components/SmartChatFeatures";
@@ -33,7 +34,7 @@ function toDateSafe(value: any): Date {
 
 export default function ChatRoomScreen() {
   const { params } = useRoute<ChatRoomRouteProp>();
-  const navigation = useNavigation<any>();
+  const navigation = useNavigation<RootStackNavigationProp>();
   const { canAccessChat, needsSignIn, user } = useAuthState();
   const { colors } = useTheme();
 
@@ -192,17 +193,13 @@ export default function ChatRoomScreen() {
 
   return (
     <SafeAreaView className="flex-1" style={{ backgroundColor: colors.background }}>
-      <KeyboardAvoidingView
-        className="flex-1"
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 120 : 0}
-      >
+      <View className="flex-1">
         {/* Simple iMessage-style header */}
         <View
           className="px-4 py-2 border-b"
           style={{
             backgroundColor: colors.surface[800],
-            borderColor: colors.border,
+            borderColor: colors.border.default,
           }}
         >
           <View className="flex-row items-center justify-between">
@@ -235,10 +232,12 @@ export default function ChatRoomScreen() {
           isNotificationsEnabled={isSubscribed}
         />
 
-        <FlashList
+        <FlashList<ChatMessage>
           ref={listRef}
           data={roomMessages}
+          estimatedItemSize={60 as unknown as never}
           keyExtractor={(item: any) => item.id}
+          inverted
           renderItem={({ item, index }) => {
             if (!item || !item.id || !user) {
               return null;
@@ -319,7 +318,41 @@ export default function ChatRoomScreen() {
           placeholder="Message..."
           maxLength={1000}
         />
-      </KeyboardAvoidingView>
+      </View>
+
+      <KeyboardToolbar
+        content={
+          <View
+            className="flex-row items-center justify-around px-4 py-2"
+            style={{ backgroundColor: colors.surface[700] }}
+          >
+            <Pressable className="flex-1 items-center py-2">
+              <Ionicons name="camera" size={24} color={colors.text.muted} />
+              <Text className="text-xs mt-1" style={{ color: colors.text.muted }}>
+                Camera
+              </Text>
+            </Pressable>
+            <Pressable className="flex-1 items-center py-2">
+              <Ionicons name="images" size={24} color={colors.text.muted} />
+              <Text className="text-xs mt-1" style={{ color: colors.text.muted }}>
+                Gallery
+              </Text>
+            </Pressable>
+            <Pressable className="flex-1 items-center py-2">
+              <Ionicons name="happy" size={24} color={colors.text.muted} />
+              <Text className="text-xs mt-1" style={{ color: colors.text.muted }}>
+                Emoji
+              </Text>
+            </Pressable>
+            <Pressable className="flex-1 items-center py-2">
+              <Ionicons name="mic" size={24} color={colors.text.muted} />
+              <Text className="text-xs mt-1" style={{ color: colors.text.muted }}>
+                Voice
+              </Text>
+            </Pressable>
+          </View>
+        }
+      />
 
       {/* Member List Modal */}
       <Modal
@@ -336,8 +369,9 @@ export default function ChatRoomScreen() {
             </Pressable>
           </View>
 
-          <FlashList
+          <FlashList<any>
             data={roomMembers}
+            estimatedItemSize={50 as unknown as never}
             keyExtractor={(item: any) => item.id}
             renderItem={({ item }) => (
               <View className="flex-row items-center px-4 py-3 border-b border-surface-700 sm:px-6 sm:py-4">

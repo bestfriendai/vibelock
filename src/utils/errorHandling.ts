@@ -9,6 +9,57 @@ export enum ErrorType {
   VALIDATION = "VALIDATION",
   SERVER = "SERVER",
   UNKNOWN = "UNKNOWN",
+
+  // File Download Errors
+  INVALID_URL = "INVALID_URL",
+  DOWNLOAD_FAILED = "DOWNLOAD_FAILED",
+  READER_ERROR = "READER_ERROR",
+  METADATA_FAILED = "METADATA_FAILED",
+  CONVERSION_ERROR = "CONVERSION_ERROR",
+
+  // File Upload Errors
+  UPLOAD_ERROR = "UPLOAD_ERROR",
+  UPLOAD_CANCELLED = "UPLOAD_CANCELLED",
+  UPLOAD_TIMEOUT = "UPLOAD_TIMEOUT",
+
+  // File Validation Errors
+  FILE_TOO_LARGE = "FILE_TOO_LARGE",
+  FILE_TOO_SMALL = "FILE_TOO_SMALL",
+  INVALID_FILE_TYPE = "INVALID_FILE_TYPE",
+  BLOCKED_FILE_TYPE = "BLOCKED_FILE_TYPE",
+  INVALID_FILE_EXTENSION = "INVALID_FILE_EXTENSION",
+  BLOCKED_FILE_EXTENSION = "BLOCKED_FILE_EXTENSION",
+  MALWARE_DETECTED = "MALWARE_DETECTED",
+  CUSTOM_VALIDATION_FAILED = "CUSTOM_VALIDATION_FAILED",
+
+  // File Preview Errors
+  UNSUPPORTED_TYPE = "UNSUPPORTED_TYPE",
+  MISSING_URL = "MISSING_URL",
+  PREVIEW_FAILED = "PREVIEW_FAILED",
+  THUMBNAIL_FAILED = "THUMBNAIL_FAILED",
+  TEXT_CONTENT_FAILED = "TEXT_CONTENT_FAILED",
+  FILE_READ_ERROR = "FILE_READ_ERROR",
+
+  // Image Processing Errors
+  IMAGE_LOAD_ERROR = "IMAGE_LOAD_ERROR",
+  CANVAS_ERROR = "CANVAS_ERROR",
+  BLOB_ERROR = "BLOB_ERROR",
+
+  // File Compression Errors
+  COMPRESSION_ERROR = "COMPRESSION_ERROR",
+  DECOMPRESSION_ERROR = "DECOMPRESSION_ERROR",
+
+  // Path Sanitization Errors
+  INVALID_PATH = "INVALID_PATH",
+  PATH_TRAVERSAL = "PATH_TRAVERSAL",
+  PATH_TOO_LONG = "PATH_TOO_LONG",
+  INVALID_PATH_SEGMENT = "INVALID_PATH_SEGMENT",
+  INVALID_PATH_CHARS = "INVALID_PATH_CHARS",
+  RESERVED_FILENAME = "RESERVED_FILENAME",
+  INVALID_FILENAME = "INVALID_FILENAME",
+
+  // Preview Generation Errors
+  PREVIEW_GENERATION_ERROR = "PREVIEW_GENERATION_ERROR",
 }
 
 // Enhanced error class with more context
@@ -47,6 +98,71 @@ export class AppError extends Error {
         return "Please check your input and try again.";
       case ErrorType.SERVER:
         return "Server error. Please try again in a few moments.";
+
+      // File operation error messages
+      case ErrorType.FILE_TOO_LARGE:
+        return "The file is too large. Please select a smaller file.";
+      case ErrorType.FILE_TOO_SMALL:
+        return "The file is too small. Please select a larger file.";
+      case ErrorType.INVALID_FILE_TYPE:
+        return "This file type is not supported. Please select a different file.";
+      case ErrorType.BLOCKED_FILE_TYPE:
+        return "This file type is not allowed for security reasons.";
+      case ErrorType.INVALID_FILE_EXTENSION:
+        return "This file extension is not supported.";
+      case ErrorType.BLOCKED_FILE_EXTENSION:
+        return "This file extension is not allowed for security reasons.";
+      case ErrorType.MALWARE_DETECTED:
+        return "This file contains malware and cannot be uploaded.";
+      case ErrorType.UPLOAD_ERROR:
+        return "Failed to upload file. Please try again.";
+      case ErrorType.UPLOAD_CANCELLED:
+        return "File upload was cancelled.";
+      case ErrorType.UPLOAD_TIMEOUT:
+        return "File upload timed out. Please try again.";
+      case ErrorType.DOWNLOAD_FAILED:
+        return "Failed to download file. Please try again.";
+      case ErrorType.PREVIEW_FAILED:
+        return "Cannot generate preview for this file.";
+      case ErrorType.COMPRESSION_ERROR:
+        return "Failed to compress file. Please try again.";
+      case ErrorType.DECOMPRESSION_ERROR:
+        return "Failed to decompress file. Please try again.";
+      case ErrorType.INVALID_PATH:
+        return "Invalid file path specified.";
+      case ErrorType.PATH_TRAVERSAL:
+        return "Invalid file path for security reasons.";
+      case ErrorType.INVALID_FILENAME:
+        return "Invalid filename. Please use a different name.";
+      case ErrorType.RESERVED_FILENAME:
+        return "This filename is reserved. Please use a different name.";
+      case ErrorType.INVALID_URL:
+        return "The provided URL is invalid. Please check and try again.";
+      case ErrorType.UNSUPPORTED_TYPE:
+        return "This file type can't be previewed or processed.";
+      case ErrorType.READER_ERROR:
+        return "A problem occurred reading the response. Please try again.";
+      case ErrorType.METADATA_FAILED:
+        return "Couldn't fetch file metadata. Please try again.";
+      case ErrorType.CONVERSION_ERROR:
+        return "Failed to convert data. Please try again.";
+      case ErrorType.FILE_READ_ERROR:
+        return "Failed to read the file. Please try again.";
+      case ErrorType.IMAGE_LOAD_ERROR:
+        return "Failed to load the image. Please try a different file.";
+      case ErrorType.CANVAS_ERROR:
+        return "Graphics processing failed. Please try again.";
+      case ErrorType.BLOB_ERROR:
+        return "Failed to create file data. Please try again.";
+      case ErrorType.PATH_TOO_LONG:
+        return "The file path is too long. Please shorten it.";
+      case ErrorType.INVALID_PATH_SEGMENT:
+        return "A path segment is invalid. Please update the path.";
+      case ErrorType.INVALID_PATH_CHARS:
+        return "The path contains invalid characters.";
+      case ErrorType.PREVIEW_GENERATION_ERROR:
+        return "Failed to generate a preview for this file.";
+
       default:
         return "An unexpected error occurred. Please try again.";
     }
@@ -208,6 +324,60 @@ export const createWorkletSafeError = (
       break;
     case ErrorType.SERVER:
       userMessage = "Server error. Please try again in a few moments.";
+      break;
+    case ErrorType.FILE_TOO_LARGE:
+      userMessage = "The file is too large. Please select a smaller file.";
+      break;
+    case ErrorType.FILE_TOO_SMALL:
+      userMessage = "The file is too small. Please select a larger file.";
+      break;
+    case ErrorType.INVALID_FILE_TYPE:
+      userMessage = "This file type is not supported. Please select a different file.";
+      break;
+    case ErrorType.BLOCKED_FILE_TYPE:
+      userMessage = "This file type is not allowed for security reasons.";
+      break;
+    case ErrorType.UPLOAD_ERROR:
+      userMessage = "Failed to upload file. Please try again.";
+      break;
+    case ErrorType.DOWNLOAD_FAILED:
+      userMessage = "Failed to download file. Please try again.";
+      break;
+    case ErrorType.PREVIEW_FAILED:
+      userMessage = "Cannot generate preview for this file.";
+      break;
+    case ErrorType.INVALID_PATH:
+      userMessage = "Invalid file path specified.";
+      break;
+    case ErrorType.INVALID_FILENAME:
+      userMessage = "Invalid filename. Please use a different name.";
+      break;
+    case ErrorType.INVALID_URL:
+      userMessage = "The provided URL is invalid. Please check and try again.";
+      break;
+    case ErrorType.UNSUPPORTED_TYPE:
+      userMessage = "This file type can't be previewed or processed.";
+      break;
+    case ErrorType.FILE_READ_ERROR:
+      userMessage = "Failed to read the file. Please try again.";
+      break;
+    case ErrorType.IMAGE_LOAD_ERROR:
+      userMessage = "Failed to load the image. Please try again.";
+      break;
+    case ErrorType.CANVAS_ERROR:
+      userMessage = "Graphics processing failed. Please try again.";
+      break;
+    case ErrorType.BLOB_ERROR:
+      userMessage = "Failed to create file data. Please try again.";
+      break;
+    case ErrorType.COMPRESSION_ERROR:
+      userMessage = "Failed to compress file. Please try again.";
+      break;
+    case ErrorType.DECOMPRESSION_ERROR:
+      userMessage = "Failed to decompress file. Please try again.";
+      break;
+    case ErrorType.PREVIEW_GENERATION_ERROR:
+      userMessage = "Failed to generate a preview for this file.";
       break;
     default:
       userMessage = "An unexpected error occurred. Please try again.";

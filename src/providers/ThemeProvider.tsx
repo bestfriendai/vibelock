@@ -13,14 +13,24 @@ export const lightTheme = {
       700: "#E9ECEF", // Secondary surface - light gray
       600: "#DEE2E6", // Tertiary surface - medium gray
       500: "#CED4DA", // Border/divider color
+      400: "#ADB5BD", // Intermediate surface level
+      300: "#868E96", // Lighter surface level
+      200: "#495057", // Very light surface level
+      100: "#343A40", // Lightest surface level
     },
     text: {
       primary: "#000000", // Pure black for main text (AAA)
       secondary: "#374151", // Darker gray for secondary text (AAA)
       muted: "#6B7280", // Medium gray for muted text (AA)
+      tertiary: "#9CA3AF", // Very muted text (lighter than muted)
       accent: "#DC2626", // Red accent for highlights
+      error: "#DC3545", // Error text states
     },
-    border: "#DEE2E6", // Consistent border color
+    border: {
+      default: "#DEE2E6", // Consistent border color
+      light: "#F1F3F4", // Lighter border variant
+      dark: "#ADB5BD", // Darker border variant
+    },
     brand: {
       red: "#DC3545", // Primary brand red (accessible)
       redLight: "#F8D7DA", // Light red background
@@ -41,6 +51,10 @@ export const lightTheme = {
       warning: "#FFC107", // Yellow for warnings
       error: "#DC3545", // Red for errors
       info: "#0DCAF0", // Cyan for info
+      successLight: "#D4EDDA", // Light success background
+      warningLight: "#FFF3CD", // Light warning background
+      errorLight: "#F8D7DA", // Light error background
+      infoLight: "#CCF2FF", // Light info background
     },
   },
 };
@@ -55,14 +69,24 @@ export const highContrastTheme = {
       700: "#333333", // Dark gray for secondary surfaces
       600: "#4D4D4D", // Medium gray for tertiary surfaces
       500: "#666666", // Light gray for borders
+      400: "#808080", // Intermediate surface level
+      300: "#999999", // Lighter surface level
+      200: "#B3B3B3", // Very light surface level
+      100: "#CCCCCC", // Lightest surface level
     },
     text: {
       primary: "#FFFFFF", // Pure white for main text (AAA)
       secondary: "#E0E0E0", // Very light gray for secondary text (AAA)
       muted: "#B0B0B0", // Light gray for muted text (AA)
+      tertiary: "#808080", // Very muted text (lighter than muted)
       accent: "#FFFF00", // Yellow accent for maximum contrast
+      error: "#FF0000", // Error text states
     },
-    border: "#666666", // High contrast border
+    border: {
+      default: "#666666", // High contrast border
+      light: "#808080", // Lighter border variant
+      dark: "#4D4D4D", // Darker border variant
+    },
     brand: {
       red: "#FF0000", // Pure red for maximum contrast
       redLight: "#330000", // Dark red background
@@ -83,6 +107,10 @@ export const highContrastTheme = {
       warning: "#FFFF00", // Pure yellow
       error: "#FF0000", // Pure red
       info: "#00FFFF", // Pure cyan
+      successLight: "#003300", // Light success background
+      warningLight: "#333300", // Light warning background
+      errorLight: "#330000", // Light error background
+      infoLight: "#003333", // Light info background
     },
   },
 };
@@ -97,14 +125,24 @@ export const darkTheme = {
       700: "#1D1D22", // Secondary surface - medium dark
       600: "#26262C", // Tertiary surface - lighter dark
       500: "#2F2F35", // Border/divider color
+      400: "#38383E", // Intermediate surface level
+      300: "#414147", // Lighter surface level
+      200: "#4A4A50", // Very light surface level
+      100: "#535359", // Lightest surface level
     },
     text: {
       primary: "#F8F9FA", // High contrast white for main text
       secondary: "#ADB5BD", // Light gray for secondary text
       muted: "#6C757D", // Medium gray for muted text
+      tertiary: "#495057", // Very muted text (lighter than muted)
       accent: "#FFB74D", // Amber accent for highlights
+      error: "#EF4444", // Error text states
     },
-    border: "#2A2A2F", // Consistent border color
+    border: {
+      default: "#2A2A2F", // Consistent border color
+      light: "#38383E", // Lighter border variant
+      dark: "#1C1C21", // Darker border variant
+    },
     brand: {
       red: "#EF4444", // Primary brand red
       redLight: "#FEE2E2", // Light red background (for dark theme)
@@ -125,6 +163,10 @@ export const darkTheme = {
       warning: "#F59E0B", // Yellow for warnings
       error: "#EF4444", // Red for errors
       info: "#06B6D4", // Cyan for info
+      successLight: "#064E3B", // Light success background
+      warningLight: "#78350F", // Light warning background
+      errorLight: "#7F1D1D", // Light error background
+      infoLight: "#164E63", // Light info background
     },
   },
 };
@@ -138,14 +180,24 @@ type ThemeColors = {
     700: string;
     600: string;
     500: string;
+    400: string;
+    300: string;
+    200: string;
+    100: string;
   };
   text: {
     primary: string;
     secondary: string;
     muted: string;
+    tertiary: string;
     accent: string;
+    error: string;
   };
-  border: string;
+  border: {
+    default: string;
+    light: string;
+    dark: string;
+  };
   brand: {
     red: string;
     redLight: string;
@@ -166,6 +218,10 @@ type ThemeColors = {
     warning: string;
     error: string;
     info: string;
+    successLight: string;
+    warningLight: string;
+    errorLight: string;
+    infoLight: string;
   };
 };
 
@@ -233,8 +289,9 @@ export const useTheme = (): ThemeContextType => {
 };
 
 // Utility functions for theme-aware styling
-export const getThemeColor = (colorPath: string, theme: "light" | "dark"): string => {
-  const themeColors = theme === "light" ? lightTheme.colors : darkTheme.colors;
+export const getThemeColor = (colorPath: string, theme: "light" | "dark" | "high-contrast"): string => {
+  const themeColors =
+    theme === "high-contrast" ? highContrastTheme.colors : theme === "light" ? lightTheme.colors : darkTheme.colors;
   const keys = colorPath.split(".");
   let color: any = themeColors;
 

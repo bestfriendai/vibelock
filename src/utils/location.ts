@@ -20,7 +20,22 @@ export interface LocationData {
  * @param coord2 Second coordinate
  * @returns Distance in miles
  */
-export function calculateDistance(coord1: Coordinates, coord2: Coordinates): number {
+export function calculateDistance(
+  coord1: Coordinates | null | undefined,
+  coord2: Coordinates | null | undefined,
+): number {
+  // Null safety checks
+  if (
+    !coord1 ||
+    !coord2 ||
+    typeof coord1.latitude !== "number" ||
+    typeof coord1.longitude !== "number" ||
+    typeof coord2.latitude !== "number" ||
+    typeof coord2.longitude !== "number"
+  ) {
+    return Infinity; // Return large distance for invalid coordinates
+  }
+
   const R = 3959; // Earth's radius in miles
   const dLat = toRadians(coord2.latitude - coord1.latitude);
   const dLon = toRadians(coord2.longitude - coord1.longitude);
@@ -46,7 +61,12 @@ function toRadians(degrees: number): number {
  * @param state State abbreviation
  * @returns Approximate coordinates
  */
-export function geocodeLocation(city: string, state: string): Coordinates {
+export function geocodeLocation(city: string | null | undefined, state: string | null | undefined): Coordinates {
+  // Null safety checks
+  if (!city || !state) {
+    return { latitude: 38.9072, longitude: -77.0369 }; // Default to DC
+  }
+
   // Comprehensive coordinates database for cities worldwide
   const mockCoordinates: Record<string, Coordinates> = {
     // DMV Area (Washington DC Metro)
@@ -395,7 +415,16 @@ export async function searchLocations(query: string): Promise<LocationData[]> {
  * @param miles Distance in miles
  * @returns Formatted string
  */
-export function formatDistance(miles: number): string {
+export function formatDistance(miles: number | null | undefined): string {
+  // Null safety checks
+  if (typeof miles !== "number" || isNaN(miles) || miles < 0) {
+    return "Unknown";
+  }
+
+  if (miles === Infinity) {
+    return "N/A";
+  }
+
   if (miles < 1) {
     return "< 1 mi";
   } else if (miles < 10) {

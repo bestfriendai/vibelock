@@ -298,8 +298,8 @@ export class FileCompressor {
 
       throw new AppError(
         `Failed to compress file: ${error instanceof Error ? error.message : "Unknown error"}`,
-        ErrorType.SERVER,
-        "COMPRESSION_ERROR",
+        ErrorType.COMPRESSION_ERROR,
+        undefined,
         500,
       );
     }
@@ -389,8 +389,8 @@ export class FileCompressor {
 
       throw new AppError(
         `Failed to decompress file: ${error instanceof Error ? error.message : "Unknown error"}`,
-        ErrorType.SERVER,
-        "DECOMPRESSION_ERROR",
+        ErrorType.DECOMPRESSION_ERROR,
+        undefined,
         500,
       );
     }

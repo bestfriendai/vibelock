@@ -94,9 +94,11 @@ export default function ExpandableText({
         <Pressable
           onPress={toggleExpanded}
           className="flex-row items-center mt-3 px-3 py-2 rounded-lg self-start"
-          style={{ backgroundColor: colors.brand.red + '10' }}
+          style={{ backgroundColor: colors.brand.red + "10" }}
         >
-          <Text className="font-medium" style={{ color: colors.brand.red }}>{isExpanded ? collapseText : expandText}</Text>
+          <Text className="font-medium" style={{ color: colors.brand.red }}>
+            {isExpanded ? collapseText : expandText}
+          </Text>
           <Ionicons
             name={isExpanded ? "chevron-up" : "chevron-down"}
             size={16}

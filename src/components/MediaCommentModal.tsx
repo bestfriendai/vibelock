@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { View, Text, Modal, Pressable, ScrollView, KeyboardAvoidingView, Platform } from "react-native";
+import { View, Text, Modal, Pressable, ScrollView } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -218,7 +219,7 @@ export default function MediaCommentModal({
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
       <SafeAreaView className="flex-1 bg-surface-900">
-        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
+        <KeyboardAwareScrollView className="flex-1" enableOnAndroid keyboardShouldPersistTaps="handled">
           {/* Header */}
           <View className="flex-row items-center justify-between px-4 py-3 border-b border-surface-700">
             <Text className="text-text-primary text-lg font-semibold">Image Comments</Text>
@@ -248,18 +249,18 @@ export default function MediaCommentModal({
           </View>
 
           {/* Comments Section */}
-          <View className="flex-1">
+          <View className="flex-1 px-4">
             {isLoading ? (
-              <ScrollView className="px-4">
+              <>
                 {[1, 2, 3].map((i) => (
                   <View key={i}>
                     {renderCommentSkeleton()}
                     {i < 3 && <View className="h-px bg-surface-700" />}
                   </View>
                 ))}
-              </ScrollView>
+              </>
             ) : comments.length === 0 ? (
-              <View className="flex-1 items-center justify-center px-8">
+              <View className="flex-1 items-center justify-center">
                 <Ionicons name="chatbubbles-outline" size={48} color="#6B7280" />
                 <Text className="text-text-secondary text-lg font-medium mt-4 text-center">
                   No comments on this image yet
@@ -267,7 +268,7 @@ export default function MediaCommentModal({
                 <Text className="text-text-muted text-center mt-2">Be the first to share your thoughts</Text>
               </View>
             ) : (
-              <ScrollView className="px-4" showsVerticalScrollIndicator={false}>
+              <>
                 {comments.map((comment, index) => (
                   <View key={comment.id}>
                     <CommentItem
@@ -280,7 +281,7 @@ export default function MediaCommentModal({
                     {index < comments.length - 1 && <View className="h-px bg-surface-700" />}
                   </View>
                 ))}
-              </ScrollView>
+              </>
             )}
           </View>
 
@@ -292,7 +293,7 @@ export default function MediaCommentModal({
             replyToComment={replyToComment?.authorName}
             onCancelReply={onCancelReply}
           />
-        </KeyboardAvoidingView>
+        </KeyboardAwareScrollView>
       </SafeAreaView>
     </Modal>
   );

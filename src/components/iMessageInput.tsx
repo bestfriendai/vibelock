@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
-import { View, TextInput, Pressable, KeyboardAvoidingView, Platform, Text } from "react-native";
+import { View, TextInput, Pressable, Text, Platform } from "react-native";
+import { KeyboardStickyView } from "react-native-keyboard-controller";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../providers/ThemeProvider";
 
@@ -25,6 +27,7 @@ export default function IMessageInput({
   onCancelReply,
 }: Props) {
   const { theme, colors, isDarkMode } = useTheme();
+  const insets = useSafeAreaInsets();
   const [text, setText] = useState("");
   const [inputHeight, setInputHeight] = useState(36);
   const [isTyping, setIsTyping] = useState(false);
@@ -105,7 +108,7 @@ export default function IMessageInput({
   };
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"}>
+    <KeyboardStickyView offset={{ closed: insets.bottom, opened: 0 }}>
       {/* Reply indicator */}
       {replyingTo && (
         <View
@@ -197,6 +200,6 @@ export default function IMessageInput({
           </Text>
         )}
       </View>
-    </KeyboardAvoidingView>
+    </KeyboardStickyView>
   );
 }

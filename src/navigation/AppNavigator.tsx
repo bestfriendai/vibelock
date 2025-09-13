@@ -340,7 +340,7 @@ function TabNavigator() {
             tabBarStyle: {
               backgroundColor: colors.surface[900],
               borderTopWidth: 1,
-              borderTopColor: colors.border,
+              borderTopColor: colors.border.default,
               paddingBottom: Math.max(insets.bottom, 6),
               paddingTop: 4,
               height: 52 + (insets.bottom || 0),

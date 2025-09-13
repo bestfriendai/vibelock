@@ -49,11 +49,21 @@ export default function CommentInput({
       <View style={{ backgroundColor: colors.surface[800], borderTopColor: colors.border, borderTopWidth: 1 }}>
         <View className="flex-row items-center justify-between px-6 py-6">
           <View className="flex-1">
-            <Text className="text-base" style={{ color: colors.text.secondary }}>Sign in to join the conversation</Text>
-            <Text className="text-sm mt-1" style={{ color: colors.text.muted }}>Share your thoughts and connect with others</Text>
+            <Text className="text-base" style={{ color: colors.text.secondary }}>
+              Sign in to join the conversation
+            </Text>
+            <Text className="text-sm mt-1" style={{ color: colors.text.muted }}>
+              Share your thoughts and connect with others
+            </Text>
           </View>
-          <Pressable onPress={onSignInPress} className="rounded-lg px-4 py-2 ml-3" style={{ backgroundColor: colors.brand.red }}>
-            <Text className="font-semibold text-sm" style={{ color: colors.text.primary }}>Sign In</Text>
+          <Pressable
+            onPress={onSignInPress}
+            className="rounded-lg px-4 py-2 ml-3"
+            style={{ backgroundColor: colors.brand.red }}
+          >
+            <Text className="font-semibold text-sm" style={{ color: colors.text.primary }}>
+              Sign In
+            </Text>
           </Pressable>
         </View>
       </View>
@@ -64,10 +74,15 @@ export default function CommentInput({
     <View style={{ backgroundColor: colors.surface[800], borderTopColor: colors.border, borderTopWidth: 1 }}>
       {/* Reply indicator */}
       {replyToComment && (
-        <View className="flex-row items-center justify-between px-4 py-2" style={{ backgroundColor: `${colors.surface[700]}80` }}>
+        <View
+          className="flex-row items-center justify-between px-4 py-2"
+          style={{ backgroundColor: `${colors.surface[700]}80` }}
+        >
           <View className="flex-row items-center">
             <Ionicons name="return-down-forward" size={16} color={colors.text.muted} />
-            <Text className="text-sm ml-2" style={{ color: colors.text.secondary }}>Replying to {replyToComment}</Text>
+            <Text className="text-sm ml-2" style={{ color: colors.text.secondary }}>
+              Replying to {replyToComment}
+            </Text>
           </View>
           <Pressable onPress={onCancelReply} className="p-1">
             <Ionicons name="close" size={16} color={colors.text.muted} />
@@ -92,11 +107,13 @@ export default function CommentInput({
               backgroundColor: colors.surface[700],
               color: colors.text.primary,
               textAlignVertical: "top",
-              ...(isFocused && { borderWidth: 1, borderColor: `${colors.brand.red}50` })
+              ...(isFocused && { borderWidth: 1, borderColor: `${colors.brand.red}50` }),
             }}
           />
           {comment.length > 400 && (
-            <Text className="text-xs mt-1 text-right" style={{ color: colors.text.muted }}>{comment.length}/500</Text>
+            <Text className="text-xs mt-1 text-right" style={{ color: colors.text.muted }}>
+              {comment.length}/500
+            </Text>
           )}
         </View>
 

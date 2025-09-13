@@ -1,12 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
-import { View, TextInput, Pressable, Text, Dimensions, Platform, Alert } from "react-native";
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  withTiming,
-  interpolate,
-} from "react-native-reanimated";
+import { View, TextInput, Pressable, Text, Platform, Alert } from "react-native";
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, interpolate } from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useTheme } from "../providers/ThemeProvider";
@@ -37,8 +31,6 @@ interface Props {
   disabled?: boolean;
 }
 
-const { width: screenWidth } = Dimensions.get("window");
-
 export default function EnhancedMessageInput({
   onSend,
   onSendVoice,
@@ -50,7 +42,7 @@ export default function EnhancedMessageInput({
   onCancelReply,
   disabled = false,
 }: Props) {
-  const { colors, isDarkMode } = useTheme();
+  const { colors } = useTheme();
   const [text, setText] = useState("");
   const [inputHeight, setInputHeight] = useState(40);
   const [isTyping, setIsTyping] = useState(false);
@@ -174,11 +166,9 @@ export default function EnhancedMessageInput({
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
       }
-      if (isTyping) {
-        onTyping?.(false);
-      }
+      onTyping?.(false);
     };
-  }, [isTyping, onTyping]);
+  }, [onTyping]);
 
   const sendButtonAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: sendButtonScale.value }],
@@ -207,7 +197,7 @@ export default function EnhancedMessageInput({
           {
             backgroundColor: colors.surface[700],
             borderTopWidth: 1,
-            borderColor: colors.border,
+            borderTopColor: colors.border.default,
           },
         ]}
       >
@@ -233,7 +223,7 @@ export default function EnhancedMessageInput({
         className="px-4 py-3 border-t"
         style={{
           backgroundColor: colors.surface[800],
-          borderColor: colors.border,
+          borderTopColor: colors.border.default,
         }}
       >
         <Animated.View style={inputAnimatedStyle} className="flex-row items-end space-x-3">
@@ -242,7 +232,7 @@ export default function EnhancedMessageInput({
             className="flex-1 rounded-2xl border px-4 py-2"
             style={{
               backgroundColor: colors.surface[700],
-              borderColor: isFocused ? colors.brand.red : colors.border,
+              borderColor: isFocused ? colors.brand.red : colors.border.default,
               borderWidth: isFocused ? 2 : 1,
               minHeight: 40,
               height: inputHeight,
@@ -267,7 +257,7 @@ export default function EnhancedMessageInput({
               }}
               onContentSizeChange={handleContentSizeChange}
               returnKeyType="default"
-              blurOnSubmit={false}
+              submitBehavior="newline"
             />
           </View>
 

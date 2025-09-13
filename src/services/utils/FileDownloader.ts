@@ -12,7 +12,7 @@ export class FileDownloader {
     try {
       // Validate the URL
       if (!this.isValidUrl(url)) {
-        throw new AppError("Invalid URL provided", ErrorType.VALIDATION, "INVALID_URL", 400);
+        throw new AppError("Invalid URL provided", ErrorType.INVALID_URL, undefined, 400);
       }
 
       // Fetch the file
@@ -21,9 +21,10 @@ export class FileDownloader {
       if (!response.ok) {
         throw new AppError(
           `Failed to download file: ${response.statusText}`,
-          ErrorType.NETWORK,
-          "DOWNLOAD_FAILED",
+          ErrorType.DOWNLOAD_FAILED,
+          undefined,
           response.status,
+          true,
         );
       }
 
@@ -35,7 +36,7 @@ export class FileDownloader {
       const reader = response.body?.getReader();
 
       if (!reader) {
-        throw new AppError("Failed to get response reader", ErrorType.SERVER, "READER_ERROR", 500);
+        throw new AppError("Failed to get response reader", ErrorType.READER_ERROR, undefined, 500);
       }
 
       // Get the filename from the response headers if not provided
@@ -75,9 +76,10 @@ export class FileDownloader {
 
       throw new AppError(
         `Failed to download file: ${error instanceof Error ? error.message : "Unknown error"}`,
-        ErrorType.NETWORK,
-        "DOWNLOAD_FAILED",
+        ErrorType.DOWNLOAD_FAILED,
+        undefined,
         500,
+        true,
       );
     }
   }
@@ -128,7 +130,7 @@ export class FileDownloader {
   static async getFileMetadata(url: string): Promise<FileMetadata> {
     try {
       if (!this.isValidUrl(url)) {
-        throw new AppError("Invalid URL provided", ErrorType.VALIDATION, "INVALID_URL", 400);
+        throw new AppError("Invalid URL provided", ErrorType.INVALID_URL, undefined, 400);
       }
 
       // Use a HEAD request to get the metadata without downloading the file
@@ -137,9 +139,10 @@ export class FileDownloader {
       if (!response.ok) {
         throw new AppError(
           `Failed to get file metadata: ${response.statusText}`,
-          ErrorType.NETWORK,
-          "METADATA_FAILED",
+          ErrorType.METADATA_FAILED,
+          undefined,
           response.status,
+          true,
         );
       }
 
@@ -176,9 +179,10 @@ export class FileDownloader {
 
       throw new AppError(
         `Failed to get file metadata: ${error instanceof Error ? error.message : "Unknown error"}`,
-        ErrorType.NETWORK,
-        "METADATA_FAILED",
+        ErrorType.METADATA_FAILED,
+        undefined,
         500,
+        true,
       );
     }
   }
@@ -254,7 +258,7 @@ export class FileDownloader {
   static async downloadAsDataUrl(url: string, onProgress?: (progress: number) => void): Promise<string> {
     try {
       if (!this.isValidUrl(url)) {
-        throw new AppError("Invalid URL provided", ErrorType.VALIDATION, "INVALID_URL", 400);
+        throw new AppError("Invalid URL provided", ErrorType.INVALID_URL, undefined, 400);
       }
 
       // Fetch the file
@@ -263,9 +267,10 @@ export class FileDownloader {
       if (!response.ok) {
         throw new AppError(
           `Failed to download file: ${response.statusText}`,
-          ErrorType.NETWORK,
-          "DOWNLOAD_FAILED",
+          ErrorType.DOWNLOAD_FAILED,
+          undefined,
           response.status,
+          true,
         );
       }
 
@@ -277,7 +282,7 @@ export class FileDownloader {
       const reader = response.body?.getReader();
 
       if (!reader) {
-        throw new AppError("Failed to get response reader", ErrorType.SERVER, "READER_ERROR", 500);
+        throw new AppError("Failed to get response reader", ErrorType.READER_ERROR, undefined, 500);
       }
 
       // Get the content type
@@ -316,7 +321,7 @@ export class FileDownloader {
         };
 
         reader.onerror = () => {
-          reject(new AppError("Failed to convert blob to data URL", ErrorType.SERVER, "CONVERSION_ERROR", 500));
+          reject(new AppError("Failed to convert blob to data URL", ErrorType.CONVERSION_ERROR, undefined, 500));
         };
 
         reader.readAsDataURL(blob);
@@ -328,9 +333,10 @@ export class FileDownloader {
 
       throw new AppError(
         `Failed to download file as data URL: ${error instanceof Error ? error.message : "Unknown error"}`,
-        ErrorType.NETWORK,
-        "DOWNLOAD_FAILED",
+        ErrorType.DOWNLOAD_FAILED,
+        undefined,
         500,
+        true,
       );
     }
   }

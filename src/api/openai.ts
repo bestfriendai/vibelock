@@ -20,18 +20,9 @@ import { generateOpenAIResponse } from "./secure-ai-service";
 export const getOpenAIClient = () => {
   console.warn("getOpenAIClient is deprecated. Use generateOpenAIResponse from secure-ai-service instead.");
 
-  // Return a mock client that throws an error to prevent direct usage
-  return {
-    chat: {
-      completions: {
-        create: () => {
-          throw new Error(
-            "Direct OpenAI client usage is disabled for security. Use generateOpenAIResponse from secure-ai-service instead.",
-          );
-        },
-      },
-    },
-  };
+  throw new Error(
+    "Direct OpenAI client usage is disabled for security. Use generateOpenAIResponse from secure-ai-service instead.",
+  );
 };
 
 // Export secure functions for backward compatibility

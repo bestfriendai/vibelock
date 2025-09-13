@@ -211,8 +211,8 @@ export class FileValidator {
         result.errors.push(
           new AppError(
             `File size exceeds maximum allowed size of ${this.formatFileSize(maxSize)}`,
-            ErrorType.VALIDATION,
-            "FILE_TOO_LARGE",
+            ErrorType.FILE_TOO_LARGE,
+            undefined,
             400,
           ),
         );
@@ -223,8 +223,8 @@ export class FileValidator {
         result.errors.push(
           new AppError(
             `File size is below minimum allowed size of ${this.formatFileSize(minSize)}`,
-            ErrorType.VALIDATION,
-            "FILE_TOO_SMALL",
+            ErrorType.FILE_TOO_SMALL,
+            undefined,
             400,
           ),
         );
@@ -234,7 +234,7 @@ export class FileValidator {
       if (allowedTypes.length > 0 && !allowedTypes.includes(file.type)) {
         result.isValid = false;
         result.errors.push(
-          new AppError(`File type "${file.type}" is not allowed`, ErrorType.VALIDATION, "INVALID_FILE_TYPE", 400),
+          new AppError(`File type "${file.type}" is not allowed`, ErrorType.INVALID_FILE_TYPE, undefined, 400),
         );
       }
 
@@ -243,8 +243,8 @@ export class FileValidator {
         result.errors.push(
           new AppError(
             `File type "${file.type}" is blocked for security reasons`,
-            ErrorType.VALIDATION,
-            "BLOCKED_FILE_TYPE",
+            ErrorType.BLOCKED_FILE_TYPE,
+            undefined,
             400,
           ),
         );
@@ -258,8 +258,8 @@ export class FileValidator {
         result.errors.push(
           new AppError(
             `File extension "${fileExtension}" is not allowed`,
-            ErrorType.VALIDATION,
-            "INVALID_FILE_EXTENSION",
+            ErrorType.INVALID_FILE_EXTENSION,
+            undefined,
             400,
           ),
         );
@@ -270,8 +270,8 @@ export class FileValidator {
         result.errors.push(
           new AppError(
             `File extension "${fileExtension}" is blocked for security reasons`,
-            ErrorType.VALIDATION,
-            "BLOCKED_FILE_EXTENSION",
+            ErrorType.BLOCKED_FILE_EXTENSION,
+            undefined,
             400,
           ),
         );
@@ -302,8 +302,8 @@ export class FileValidator {
             result.errors.push(
               new AppError(
                 `File may contain malware: ${malwareScanResult.threats.join(", ")}`,
-                ErrorType.VALIDATION,
-                "MALWARE_DETECTED",
+                ErrorType.MALWARE_DETECTED,
+                undefined,
                 400,
               ),
             );
@@ -324,8 +324,8 @@ export class FileValidator {
             result.errors.push(
               new AppError(
                 `File failed custom validation rule: ${ruleName}`,
-                ErrorType.VALIDATION,
-                "CUSTOM_VALIDATION_FAILED",
+                ErrorType.CUSTOM_VALIDATION_FAILED,
+                undefined,
                 400,
               ),
             );
@@ -349,7 +349,7 @@ export class FileValidator {
       throw new AppError(
         `Failed to validate file: ${error instanceof Error ? error.message : "Unknown error"}`,
         ErrorType.VALIDATION,
-        "VALIDATION_ERROR",
+        undefined,
         500,
       );
     }

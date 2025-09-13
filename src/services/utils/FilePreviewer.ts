@@ -58,27 +58,27 @@ export class FilePreviewer {
       if (file instanceof File) {
         // For File objects, create an object URL
         if (file.size > this.MAX_PREVIEW_SIZE) {
-          throw new AppError("File too large for preview", ErrorType.VALIDATION, "FILE_TOO_LARGE", 400);
+          throw new AppError("File too large for preview", ErrorType.FILE_TOO_LARGE, undefined, 400);
         }
 
         if (!this.isPreviewable(file.type)) {
-          throw new AppError("File type not supported for preview", ErrorType.VALIDATION, "UNSUPPORTED_TYPE", 400);
+          throw new AppError("File type not supported for preview", ErrorType.UNSUPPORTED_TYPE, undefined, 400);
         }
 
         return URL.createObjectURL(file);
       } else {
         // For FileMetadata objects, use the provided URL
         if (!url) {
-          throw new AppError("URL is required for FileMetadata", ErrorType.VALIDATION, "MISSING_URL", 400);
+          throw new AppError("URL is required for FileMetadata", ErrorType.MISSING_URL, undefined, 400);
         }
 
         if (file.size > this.MAX_PREVIEW_SIZE) {
-          throw new AppError("File too large for preview", ErrorType.VALIDATION, "FILE_TOO_LARGE", 400);
+          throw new AppError("File too large for preview", ErrorType.FILE_TOO_LARGE, undefined, 400);
         }
 
         const fileType = "type" in file ? file.type : file.contentType;
         if (!this.isPreviewable(fileType as string)) {
-          throw new AppError("File type not supported for preview", ErrorType.VALIDATION, "UNSUPPORTED_TYPE", 400);
+          throw new AppError("File type not supported for preview", ErrorType.UNSUPPORTED_TYPE, undefined, 400);
         }
 
         return url;
@@ -90,8 +90,8 @@ export class FilePreviewer {
 
       throw new AppError(
         `Failed to generate preview URL: ${error instanceof Error ? error.message : "Unknown error"}`,
-        ErrorType.SERVER,
-        "PREVIEW_FAILED",
+        ErrorType.PREVIEW_FAILED,
+        undefined,
         500,
       );
     }
@@ -103,7 +103,7 @@ export class FilePreviewer {
   static async generateThumbnail(file: File, maxWidth: number = 200, maxHeight: number = 200): Promise<string> {
     try {
       if (!this.isImageFile(file)) {
-        throw new AppError("File is not a supported image format", ErrorType.VALIDATION, "UNSUPPORTED_TYPE", 400);
+        throw new AppError("File is not a supported image format", ErrorType.UNSUPPORTED_TYPE, undefined, 400);
       }
 
       return new Promise((resolve, reject) => {
@@ -130,7 +130,7 @@ export class FilePreviewer {
 
           const ctx = canvas.getContext("2d");
           if (!ctx) {
-            reject(new AppError("Failed to get canvas context", ErrorType.SERVER, "CANVAS_ERROR", 500));
+            reject(new AppError("Failed to get canvas context", ErrorType.CANVAS_ERROR, undefined, 500));
             return;
           }
 
@@ -142,7 +142,7 @@ export class FilePreviewer {
 
         img.onerror = () => {
           URL.revokeObjectURL(url);
-          reject(new AppError("Failed to load image", ErrorType.SERVER, "IMAGE_LOAD_ERROR", 500));
+          reject(new AppError("Failed to load image", ErrorType.IMAGE_LOAD_ERROR, undefined, 500));
         };
 
         img.src = url;
@@ -154,8 +154,8 @@ export class FilePreviewer {
 
       throw new AppError(
         `Failed to generate thumbnail: ${error instanceof Error ? error.message : "Unknown error"}`,
-        ErrorType.SERVER,
-        "THUMBNAIL_FAILED",
+        ErrorType.THUMBNAIL_FAILED,
+        undefined,
         500,
       );
     }
@@ -167,11 +167,11 @@ export class FilePreviewer {
   static async getTextContent(file: File): Promise<string> {
     try {
       if (!this.isTextFile(file)) {
-        throw new AppError("File is not a supported text format", ErrorType.VALIDATION, "UNSUPPORTED_TYPE", 400);
+        throw new AppError("File is not a supported text format", ErrorType.UNSUPPORTED_TYPE, undefined, 400);
       }
 
       if (file.size > this.MAX_PREVIEW_SIZE) {
-        throw new AppError("File too large for preview", ErrorType.VALIDATION, "FILE_TOO_LARGE", 400);
+        throw new AppError("File too large for preview", ErrorType.FILE_TOO_LARGE, undefined, 400);
       }
 
       return new Promise((resolve, reject) => {
@@ -182,7 +182,7 @@ export class FilePreviewer {
         };
 
         reader.onerror = () => {
-          reject(new AppError("Failed to read file", ErrorType.SERVER, "FILE_READ_ERROR", 500));
+          reject(new AppError("Failed to read file", ErrorType.FILE_READ_ERROR, undefined, 500));
         };
 
         reader.readAsText(file);
@@ -194,8 +194,8 @@ export class FilePreviewer {
 
       throw new AppError(
         `Failed to get text content: ${error instanceof Error ? error.message : "Unknown error"}`,
-        ErrorType.SERVER,
-        "TEXT_CONTENT_FAILED",
+        ErrorType.TEXT_CONTENT_FAILED,
+        undefined,
         500,
       );
     }

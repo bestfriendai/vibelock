@@ -10,8 +10,15 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --ext .js,.ts,.tsx",
     "format": "prettier --write .",
-    "check": "npm run typecheck && npm run lint",
+    "lint:fix": "npm run format && npm run lint -- --fix && npm run typecheck",
+    "lint:check": "npm run lint && npm run typecheck",
+    "format:check": "prettier --check .",
+    "verify:lint": "node scripts/verify-linting-status.js",
+    "check": "npm run format:check && npm run lint:check && npm run verify:lint && npm run verify:env",
     "verify:env": "node scripts/verify-env.js",
+    "fix:packages": "bash scripts/fix-package-management.sh",
+    "clean:install": "rimraf node_modules && npm install",
+    "verify:setup": "node scripts/verify-package-setup.js",
     "test": "jest",
     "prebuild:clean": "expo prebuild --clean",
     "build:development": "eas build --platform all --profile development",
@@ -42,7 +49,6 @@
     "@react-navigation/native": "^7.1.17",
     "@react-navigation/native-stack": "^7.3.26",
     "@react-navigation/stack": "^7.4.8",
-    "@shopify/flash-list": "2.0.2",
     "@shopify/react-native-skia": "2.2.12",
     "@supabase/supabase-js": "^2.57.4",
     "@types/uuid": "^10.0.0",
@@ -110,8 +116,8 @@
     "markdown-it": "13.0.1",
     "nativewind": "^4.1.23",
     "openai": "^4.89.0",
-    "react": "19.1.0",
-    "react-dom": "19.1.0",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
     "react-native": "0.81.4",
     "react-native-gesture-handler": "~2.28.0",
     "react-native-get-random-values": "~1.11.0",
@@ -124,7 +130,7 @@
     "react-native-mmkv": "^3.3.1",
     "react-native-pager-view": "6.9.1",
     "react-native-purchases": "^9.4.0",
-    "react-native-reanimated": "^4.1.0",
+    "react-native-reanimated": "~3.6.3",
     "react-native-safe-area-context": "^5.6.1",
     "react-native-screens": "~4.16.0",
     "react-native-svg": "15.12.1",
@@ -141,13 +147,18 @@
     "zeego": "^3.0.6",
     "zustand": "^5.0.8"
   },
+  "resolutions": {
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "@types/react": "~18.2.79"
+  },
   "devDependencies": {
     "@babel/core": "^7.28.4",
     "@react-native-community/cli": "^20.0.2",
     "@testing-library/jest-native": "^5.4.3",
     "@testing-library/react-native": "^13.3.3",
     "@types/jest": "^29.5.12",
-    "@types/react": "~19.1.10",
+    "@types/react": "~18.2.79",
     "@typescript-eslint/eslint-plugin": "^8.43.0",
     "@typescript-eslint/parser": "^8.43.0",
     "babel-plugin-module-resolver": "^5.0.2",
@@ -161,10 +172,8 @@
     "jest-expo": "^54.0.10",
     "npm-force-resolutions": "^0.0.10",
     "prettier": "^3.6.2",
+    "rimraf": "^6.0.1",
     "typescript": "~5.9.2"
   },
-  "private": true,
-  "resolutions": {
-    "markdown-it": "13.0.1"
-  }
+  "private": true
 }

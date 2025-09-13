@@ -96,7 +96,7 @@ export default function ImageCarousel({
   };
 
   const handleImagePress = () => {
-    if (onImagePress && media[currentIndex]) {
+    if (onImagePress && media && currentIndex >= 0 && currentIndex < media.length && media[currentIndex]) {
       onImagePress(media[currentIndex], currentIndex);
     }
   };
@@ -126,9 +126,9 @@ export default function ImageCarousel({
             accessibilityLabel={`Image ${index + 1} of ${media.length}`}
             accessibilityHint="Double tap to view full screen"
           >
-            {item.type === "video" ? (
+            {item?.type === "video" ? (
               // If we have a thumbnail for the video, show it; otherwise show a neutral placeholder
-              item.thumbnailUri && /^https?:\/\//.test(item.thumbnailUri) ? (
+              item?.thumbnailUri && /^https?:\/\//.test(item.thumbnailUri) ? (
                 <Image
                   source={{ uri: item.thumbnailUri }}
                   style={{ width: "100%", height }}
@@ -142,7 +142,7 @@ export default function ImageCarousel({
                   <Ionicons name="videocam" size={60} color="#6B7280" />
                 </View>
               )
-            ) : (
+            ) : item?.uri ? (
               // Show regular image
               <Image
                 source={{ uri: item.uri }}
@@ -152,6 +152,11 @@ export default function ImageCarousel({
                 cachePolicy="memory-disk"
                 placeholder="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
               />
+            ) : (
+              // Show placeholder if no URI
+              <View style={{ width: "100%", height }} className="bg-surface-700 items-center justify-center">
+                <Ionicons name="image-outline" size={60} color="#6B7280" />
+              </View>
             )}
 
             {/* Video play overlay */}
@@ -184,10 +189,8 @@ export default function ImageCarousel({
                 <Pressable
                   onPress={(e) => {
                     e.stopPropagation();
-                    onCommentPress(
-                      item,
-                      media.findIndex((m) => m.id === item.id),
-                    );
+                    const idx = media.findIndex((m) => m.id === item.id);
+                    onCommentPress(item, idx >= 0 ? idx : currentIndex);
                   }}
                   className="bg-black/70 rounded-full p-2"
                 >
@@ -205,7 +208,7 @@ export default function ImageCarousel({
           className="absolute top-4 right-4 px-3 py-1.5 rounded-full border"
           style={{
             backgroundColor: `${colors.surface[900]}CC`,
-            borderColor: `${colors.surface[700]}80`
+            borderColor: `${colors.surface[700]}80`,
           }}
         >
           <Text className="text-sm font-medium" style={{ color: colors.text.primary }}>
@@ -221,7 +224,7 @@ export default function ImageCarousel({
           className="absolute top-4 left-4 rounded-full p-2.5 border"
           style={{
             backgroundColor: `${colors.surface[900]}CC`,
-            borderColor: `${colors.surface[700]}80`
+            borderColor: `${colors.surface[700]}80`,
           }}
           accessible={true}
           accessibilityRole="button"
@@ -242,7 +245,7 @@ export default function ImageCarousel({
               className="h-2 rounded-full transition-all duration-200"
               style={{
                 width: index === currentIndex ? 24 : 8,
-                backgroundColor: index === currentIndex ? colors.brand.red : colors.surface[600]
+                backgroundColor: index === currentIndex ? colors.brand.red : colors.surface[600],
               }}
             />
           ))}
@@ -259,7 +262,7 @@ export default function ImageCarousel({
               className="absolute left-3 top-1/2 -translate-y-4 rounded-full p-4 border"
               style={{
                 backgroundColor: `${colors.surface[900]}CC`,
-                borderColor: `${colors.surface[700]}80`
+                borderColor: `${colors.surface[700]}80`,
               }}
               accessible={true}
               accessibilityRole="button"
@@ -278,7 +281,7 @@ export default function ImageCarousel({
               className="absolute right-3 top-1/2 -translate-y-4 rounded-full p-4 border"
               style={{
                 backgroundColor: `${colors.surface[900]}CC`,
-                borderColor: `${colors.surface[700]}80`
+                borderColor: `${colors.surface[700]}80`,
               }}
               accessible={true}
               accessibilityRole="button"

@@ -19,18 +19,9 @@ import { generateGrokResponse } from "./secure-ai-service";
 export const getGrokClient = () => {
   console.warn("getGrokClient is deprecated. Use generateGrokResponse from secure-ai-service instead.");
 
-  // Return a mock client that throws an error to prevent direct usage
-  return {
-    chat: {
-      completions: {
-        create: () => {
-          throw new Error(
-            "Direct Grok client usage is disabled for security. Use generateGrokResponse from secure-ai-service instead.",
-          );
-        },
-      },
-    },
-  };
+  throw new Error(
+    "Direct Grok client usage is disabled for security. Use generateGrokResponse from secure-ai-service instead.",
+  );
 };
 
 // Export secure functions for backward compatibility

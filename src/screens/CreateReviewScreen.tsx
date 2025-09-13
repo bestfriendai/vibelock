@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { View, Text, TextInput, ScrollView, Pressable, KeyboardAvoidingView, Platform } from "react-native";
+import { View, Text, TextInput, Pressable } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { v4 as uuidv4 } from "uuid";
@@ -296,11 +297,7 @@ export default function CreateReviewScreen() {
 
   return (
     <SafeAreaView className="flex-1" style={{ backgroundColor: colors.background }}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 120 : 0}
-        className="flex-1"
-      >
+      <KeyboardAwareScrollView className="flex-1" enableOnAndroid keyboardShouldPersistTaps="handled">
         {/* Header */}
         <View
           className="px-6 py-6 border-b"
@@ -314,12 +311,7 @@ export default function CreateReviewScreen() {
           </Text>
         </View>
 
-        <ScrollView
-          className="flex-1"
-          showsVerticalScrollIndicator={false}
-          keyboardDismissMode="on-drag"
-          keyboardShouldPersistTaps="handled"
-        >
+        <View className="flex-1">
           <View className="px-6 py-6">
             {/* Error / Success banners */}
             {error && (
@@ -546,8 +538,8 @@ export default function CreateReviewScreen() {
               Your review will be posted immediately and remain completely anonymous
             </Text>
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+        </View>
+      </KeyboardAwareScrollView>
     </SafeAreaView>
   );
 }

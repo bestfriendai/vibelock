@@ -17,8 +17,14 @@ config.transformer.unstable_allowRequireContext = true;
 config.resolver.platforms = ["ios", "android", "native", "web"];
 config.resolver.resolverMainFields = ["react-native", "browser", "main"];
 
-// New Architecture support
-config.transformer.asyncRequireModulePath = require.resolve("metro-runtime/src/modules/asyncRequire");
+// Add React alias to ensure consistent version usage
+config.resolver.alias = {
+  react: require.resolve("react"),
+  "react-dom": require.resolve("react-dom"),
+};
+
+// New Architecture support - disabled for compatibility
+// config.transformer.asyncRequireModulePath = require.resolve("metro-runtime/src/modules/asyncRequire");
 
 // SDK 54 improvements - experimentalImportSupport is enabled by default
 // No need to set it explicitly as it's the default now

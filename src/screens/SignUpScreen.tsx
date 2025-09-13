@@ -1,16 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  Keyboard,
-  TouchableWithoutFeedback,
-  Image,
-  Alert,
-} from "react-native";
+import { View, Text, TextInput, Keyboard, TouchableWithoutFeedback, Image, Alert } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
@@ -225,227 +215,222 @@ export default function SignUpScreen() {
       <SafeAreaView className="flex-1 bg-surface-900">
         <LinearGradient colors={["#141418", "#1A1A20", "#141418"]} className="absolute inset-0" />
 
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          keyboardVerticalOffset={Platform.OS === "ios" ? 120 : 0}
+        <KeyboardAwareScrollView
           className="flex-1"
+          enableOnAndroid
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 20 }}
         >
-          <ScrollView
-            className="flex-1"
-            contentContainerStyle={{ paddingBottom: 20 }}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-          >
-            <View className="px-6 pt-12 pb-6">
-              {/* Logo Section */}
-              <Animated.View style={logoAnimatedStyle} className="items-center mb-12">
-                <View className="w-20 h-20 mb-4 shadow-lg">
-                  <Image
-                    source={require("../../assets/logo-circular.png")}
-                    style={{ width: 80, height: 80 }}
-                    resizeMode="contain"
+          <View className="px-6 pt-12 pb-6">
+            {/* Logo Section */}
+            <Animated.View style={logoAnimatedStyle} className="items-center mb-12">
+              <View className="w-20 h-20 mb-4 shadow-lg">
+                <Image
+                  source={require("../../assets/logo-circular.png")}
+                  style={{ width: 80, height: 80 }}
+                  resizeMode="contain"
+                />
+              </View>
+              <Text className="text-4xl font-bold text-text-primary mb-3 text-center">Join the Community</Text>
+              <Text className="text-lg text-text-secondary text-center leading-7">
+                Create your account to start sharing experiences
+              </Text>
+            </Animated.View>
+
+            {/* Form Section */}
+            <Animated.View style={formAnimatedStyle} className="space-y-6">
+              {step === 1 ? (
+                <>
+                  {/* Step 1: Basic Account Info */}
+                  <View className="mb-4">
+                    <Text className="text-text-muted text-center mb-6">Step 1 of 3: Create your account</Text>
+                  </View>
+
+                  <AnimatedInput
+                    label="Email"
+                    placeholder="Enter your email"
+                    value={email}
+                    onChangeText={(text) => {
+                      setEmail(text);
+                      if (emailError) setEmailError("");
+                    }}
+                    error={emailError}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoComplete="email"
+                    returnKeyType="next"
+                    onSubmitEditing={() => passwordRef.current?.focus()}
+                    leftIcon="mail-outline"
                   />
-                </View>
-                <Text className="text-4xl font-bold text-text-primary mb-3 text-center">Join the Community</Text>
-                <Text className="text-lg text-text-secondary text-center leading-7">
-                  Create your account to start sharing experiences
-                </Text>
-              </Animated.View>
 
-              {/* Form Section */}
-              <Animated.View style={formAnimatedStyle} className="space-y-6">
-                {step === 1 ? (
-                  <>
-                    {/* Step 1: Basic Account Info */}
-                    <View className="mb-4">
-                      <Text className="text-text-muted text-center mb-6">Step 1 of 3: Create your account</Text>
-                    </View>
+                  <AnimatedInput
+                    ref={passwordRef}
+                    label="Password"
+                    placeholder="Enter your password"
+                    value={password}
+                    onChangeText={(text) => {
+                      setPassword(text);
+                      if (passwordError) setPasswordError("");
+                    }}
+                    error={passwordError}
+                    secureTextEntry={!showPassword}
+                    autoComplete="password-new"
+                    returnKeyType="next"
+                    onSubmitEditing={() => confirmPasswordRef.current?.focus()}
+                    leftIcon="lock-closed-outline"
+                    rightIcon={showPassword ? "eye-off-outline" : "eye-outline"}
+                    onRightIconPress={() => setShowPassword(!showPassword)}
+                  />
 
-                    <AnimatedInput
-                      label="Email"
-                      placeholder="Enter your email"
-                      value={email}
-                      onChangeText={(text) => {
-                        setEmail(text);
-                        if (emailError) setEmailError("");
-                      }}
-                      error={emailError}
-                      keyboardType="email-address"
-                      autoCapitalize="none"
-                      autoComplete="email"
-                      returnKeyType="next"
-                      onSubmitEditing={() => passwordRef.current?.focus()}
-                      leftIcon="mail-outline"
+                  <AnimatedInput
+                    ref={confirmPasswordRef}
+                    label="Confirm Password"
+                    placeholder="Confirm your password"
+                    value={confirmPassword}
+                    onChangeText={(text) => {
+                      setConfirmPassword(text);
+                      if (confirmPasswordError) setConfirmPasswordError("");
+                    }}
+                    error={confirmPasswordError}
+                    secureTextEntry={!showConfirmPassword}
+                    autoComplete="password-new"
+                    returnKeyType="done"
+                    onSubmitEditing={handleNext}
+                    leftIcon="lock-closed-outline"
+                    rightIcon={showConfirmPassword ? "eye-off-outline" : "eye-outline"}
+                    onRightIconPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                  />
+
+                  <AnimatedButton
+                    title="Continue"
+                    variant="primary"
+                    size="large"
+                    onPress={handleNext}
+                    className="mt-8"
+                  />
+                </>
+              ) : step === 3 ? (
+                <>
+                  {/* Step 2: Legal Acceptance */}
+                  <View className="mb-4">
+                    <Text className="text-text-muted text-center mb-6">Step 2 of 3: Legal Agreement</Text>
+                  </View>
+
+                  <LegalAcceptance onAccept={handleLegalAcceptance} required={true} showTitle={false} />
+
+                  <View className="mt-6">
+                    <AnimatedButton
+                      title="Back"
+                      variant="ghost"
+                      size="small"
+                      onPress={() => setStep(1)}
+                      textClassName="text-text-secondary"
                     />
+                  </View>
+                </>
+              ) : (
+                <>
+                  {/* Step 3: Preferences (Optional) */}
+                  <View className="mb-4">
+                    <Text className="text-text-muted text-center mb-2">Step 3 of 3: Personalize your experience</Text>
+                    <Text className="text-text-muted text-center text-sm">
+                      These settings help us show you relevant content. You can change them later.
+                    </Text>
+                  </View>
 
-                    <AnimatedInput
-                      ref={passwordRef}
-                      label="Password"
-                      placeholder="Enter your password"
-                      value={password}
-                      onChangeText={(text) => {
-                        setPassword(text);
-                        if (passwordError) setPasswordError("");
+                  {/* Location Selector */}
+                  <View className="space-y-4">
+                    <Text className="text-text-primary font-medium">Location (Optional)</Text>
+                    <LocationSelector
+                      currentLocation={
+                        (location && {
+                          city: location.city,
+                          state: location.state,
+                          fullName: location.fullName || `${location.city}, ${location.state}`,
+                        }) || { city: "Washington", state: "DC", fullName: "Washington, DC" }
+                      }
+                      onLocationChange={(loc) => {
+                        setLocation(loc);
+                        if (locationError) setLocationError("");
                       }}
-                      error={passwordError}
-                      secureTextEntry={!showPassword}
-                      autoComplete="password-new"
-                      returnKeyType="next"
-                      onSubmitEditing={() => confirmPasswordRef.current?.focus()}
-                      leftIcon="lock-closed-outline"
-                      rightIcon={showPassword ? "eye-off-outline" : "eye-outline"}
-                      onRightIconPress={() => setShowPassword(!showPassword)}
                     />
+                  </View>
 
-                    <AnimatedInput
-                      ref={confirmPasswordRef}
-                      label="Confirm Password"
-                      placeholder="Confirm your password"
-                      value={confirmPassword}
-                      onChangeText={(text) => {
-                        setConfirmPassword(text);
-                        if (confirmPasswordError) setConfirmPasswordError("");
-                      }}
-                      error={confirmPasswordError}
-                      secureTextEntry={!showConfirmPassword}
-                      autoComplete="password-new"
-                      returnKeyType="done"
-                      onSubmitEditing={handleNext}
-                      leftIcon="lock-closed-outline"
-                      rightIcon={showConfirmPassword ? "eye-off-outline" : "eye-outline"}
-                      onRightIconPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                  {/* Category Preference */}
+                  <View>
+                    <Text className="text-text-primary font-medium">Show me reviews about</Text>
+                    <SegmentedTabs
+                      tabs={[
+                        { key: "all", label: "All" },
+                        { key: "men", label: "Men" },
+                        { key: "women", label: "Women" },
+                        { key: "lgbtq+", label: "LGBTQ+" },
+                      ]}
+                      value={genderPreference}
+                      onChange={(val) => setGenderPreference(val as any)}
+                    />
+                  </View>
+
+                  {/* My Gender */}
+                  <View>
+                    <Text className="text-text-primary font-medium">I identify as (Optional)</Text>
+                    <SegmentedTabs
+                      tabs={[
+                        { key: "man", label: "Man" },
+                        { key: "woman", label: "Woman" },
+                        { key: "nonbinary", label: "Non-binary" },
+                        { key: "lgbtq+", label: "LGBTQ+" },
+                      ]}
+                      value={gender as any}
+                      onChange={(val) => setGender(val as any)}
+                    />
+                  </View>
+
+                  <View className="space-y-3 mt-8">
+                    <AnimatedButton
+                      title="Create Account"
+                      variant="primary"
+                      size="large"
+                      loading={isLoading}
+                      onPress={handleSubmit}
                     />
 
                     <AnimatedButton
-                      title="Continue"
-                      variant="primary"
-                      size="large"
-                      onPress={handleNext}
-                      className="mt-8"
+                      title="Skip for Now"
+                      variant="ghost"
+                      size="medium"
+                      onPress={handleSkipPreferences}
+                      textClassName="text-text-muted"
                     />
-                  </>
-                ) : step === 3 ? (
-                  <>
-                    {/* Step 2: Legal Acceptance */}
-                    <View className="mb-4">
-                      <Text className="text-text-muted text-center mb-6">Step 2 of 3: Legal Agreement</Text>
-                    </View>
 
-                    <LegalAcceptance onAccept={handleLegalAcceptance} required={true} showTitle={false} />
+                    <AnimatedButton
+                      title="Back"
+                      variant="ghost"
+                      size="small"
+                      onPress={() => setStep(3)} // Go back to legal step
+                      textClassName="text-text-secondary"
+                    />
+                  </View>
+                </>
+              )}
+            </Animated.View>
 
-                    <View className="mt-6">
-                      <AnimatedButton
-                        title="Back"
-                        variant="ghost"
-                        size="small"
-                        onPress={() => setStep(1)}
-                        textClassName="text-text-secondary"
-                      />
-                    </View>
-                  </>
-                ) : (
-                  <>
-                    {/* Step 3: Preferences (Optional) */}
-                    <View className="mb-4">
-                      <Text className="text-text-muted text-center mb-2">Step 3 of 3: Personalize your experience</Text>
-                      <Text className="text-text-muted text-center text-sm">
-                        These settings help us show you relevant content. You can change them later.
-                      </Text>
-                    </View>
-
-                    {/* Location Selector */}
-                    <View className="space-y-4">
-                      <Text className="text-text-primary font-medium">Location (Optional)</Text>
-                      <LocationSelector
-                        currentLocation={
-                          (location && {
-                            city: location.city,
-                            state: location.state,
-                            fullName: location.fullName || `${location.city}, ${location.state}`,
-                          }) || { city: "Washington", state: "DC", fullName: "Washington, DC" }
-                        }
-                        onLocationChange={(loc) => {
-                          setLocation(loc);
-                          if (locationError) setLocationError("");
-                        }}
-                      />
-                    </View>
-
-                    {/* Category Preference */}
-                    <View>
-                      <Text className="text-text-primary font-medium">Show me reviews about</Text>
-                      <SegmentedTabs
-                        tabs={[
-                          { key: "all", label: "All" },
-                          { key: "men", label: "Men" },
-                          { key: "women", label: "Women" },
-                          { key: "lgbtq+", label: "LGBTQ+" },
-                        ]}
-                        value={genderPreference}
-                        onChange={(val) => setGenderPreference(val as any)}
-                      />
-                    </View>
-
-                    {/* My Gender */}
-                    <View>
-                      <Text className="text-text-primary font-medium">I identify as (Optional)</Text>
-                      <SegmentedTabs
-                        tabs={[
-                          { key: "man", label: "Man" },
-                          { key: "woman", label: "Woman" },
-                          { key: "nonbinary", label: "Non-binary" },
-                          { key: "lgbtq+", label: "LGBTQ+" },
-                        ]}
-                        value={gender as any}
-                        onChange={(val) => setGender(val as any)}
-                      />
-                    </View>
-
-                    <View className="space-y-3 mt-8">
-                      <AnimatedButton
-                        title="Create Account"
-                        variant="primary"
-                        size="large"
-                        loading={isLoading}
-                        onPress={handleSubmit}
-                      />
-
-                      <AnimatedButton
-                        title="Skip for Now"
-                        variant="ghost"
-                        size="medium"
-                        onPress={handleSkipPreferences}
-                        textClassName="text-text-muted"
-                      />
-
-                      <AnimatedButton
-                        title="Back"
-                        variant="ghost"
-                        size="small"
-                        onPress={() => setStep(3)} // Go back to legal step
-                        textClassName="text-text-secondary"
-                      />
-                    </View>
-                  </>
-                )}
-              </Animated.View>
-
-              {/* Footer */}
-              <Animated.View style={footerAnimatedStyle} className="mt-8 pt-6">
-                <View className="flex-row justify-center items-center">
-                  <Text className="text-text-secondary">Already have an account? </Text>
-                  <AnimatedButton
-                    title="Sign In"
-                    variant="ghost"
-                    size="small"
-                    onPress={handleSignInPress}
-                    textClassName="text-brand-red font-semibold"
-                  />
-                </View>
-              </Animated.View>
-            </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
+            {/* Footer */}
+            <Animated.View style={footerAnimatedStyle} className="mt-8 pt-6">
+              <View className="flex-row justify-center items-center">
+                <Text className="text-text-secondary">Already have an account? </Text>
+                <AnimatedButton
+                  title="Sign In"
+                  variant="ghost"
+                  size="small"
+                  onPress={handleSignInPress}
+                  textClassName="text-brand-red font-semibold"
+                />
+              </View>
+            </Animated.View>
+          </View>
+        </KeyboardAwareScrollView>
       </SafeAreaView>
     </TouchableWithoutFeedback>
   );

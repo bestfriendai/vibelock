@@ -244,8 +244,8 @@ export class FilePreviewGenerator {
 
       throw new AppError(
         `Failed to generate preview: ${error instanceof Error ? error.message : "Unknown error"}`,
-        ErrorType.SERVER,
-        "PREVIEW_GENERATION_ERROR",
+        ErrorType.PREVIEW_GENERATION_ERROR,
+        undefined,
         500,
       );
     }

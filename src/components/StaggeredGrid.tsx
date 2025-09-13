@@ -1,7 +1,6 @@
-import React, { useMemo, memo } from "react";
-import { View, RefreshControl, Text } from "react-native";
+import React, { useMemo, memo, useCallback } from "react";
+import { View, RefreshControl, Text, FlatList, Dimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { FlashList } from "@shopify/flash-list";
 import { Review } from "../types";
 import ProfileCard from "./ProfileCard";
 import ProfileCardSkeleton from "./ProfileCardSkeleton";
@@ -44,7 +43,7 @@ function StaggeredGrid({
 }: Props) {
   const insets = useSafeAreaInsets();
   const screenData = useResponsiveScreen();
-  // Calculate item heights for FlashList
+  // Calculate item heights for FlatList masonry layout
   const itemsWithHeights = useMemo(() => {
     if (!data || !Array.isArray(data) || data.length === 0) {
       return [];
@@ -77,24 +76,23 @@ function StaggeredGrid({
     });
   }, [data]);
 
-  // Render item function for FlashList with responsive width
-  const renderItem = ({ item, index }: { item: { review: Review; height: number }; index: number }) => {
+  // Render item function for FlatList with responsive width
+  const renderItem = useCallback(({ item, index }: { item: { review: Review; height: number }; index: number }) => {
     const { review, height } = item;
     const { responsive } = screenData;
     const { cardWidth, cardGap, columns } = responsive;
-
-    // Calculate column index for proper spacing
-    const columnIndex = index % columns;
-    const isFirstColumn = columnIndex === 0;
-    const isLastColumn = columnIndex === columns - 1;
+    const screenWidth = Dimensions.get('window').width;
+    const padding = responsive.basePadding;
+    const availableWidth = screenWidth - (padding * 2);
+    const itemWidth = (availableWidth - cardGap * (columns - 1)) / columns;
 
     return (
       <View
         style={{
-          width: cardWidth,
+          width: itemWidth,
           marginBottom: cardGap,
-          marginRight: isLastColumn ? 0 : cardGap / 2,
-          marginLeft: isFirstColumn ? 0 : cardGap / 2,
+          marginRight: cardGap / 2,
+          marginLeft: cardGap / 2,
         }}
       >
         <MemoizedProfileCard
@@ -106,17 +104,10 @@ function StaggeredGrid({
         />
       </View>
     );
-  };
+  }, [screenData, onReport, onLike, likedReviews]);
 
-  // Get item layout for FlashList optimization (currently unused but kept for future optimization)
-  // const getItemLayout = (data: any, index: number) => {
-  //   const item = itemsWithHeights[index];
-  //   return {
-  //     length: item?.height || 280,
-  //     offset: 0, // FlashList will calculate this
-  //     index,
-  //   };
-  // };
+  // Key extractor for FlatList optimization
+  const keyExtractor = useCallback((item: { review: Review; height: number }) => item.review.id, []);
 
   // Skeleton loading component
   const renderSkeletonGrid = () => {
@@ -165,9 +156,10 @@ function StaggeredGrid({
   if (!data || !Array.isArray(data) || data.length === 0) {
     return (
       <View className="flex-1">
-        <FlashList
+        <FlatList
           data={[]}
           renderItem={() => null}
+          numColumns={2}
           contentContainerStyle={{ padding: 24 }}
           refreshControl={
             onRefresh ? (
@@ -183,7 +175,7 @@ function StaggeredGrid({
   return (
     <View className="flex-1">
       <ErrorBoundary fallback={<Text className="text-red-400 p-4 text-center">Failed to load reviews</Text>}>
-        <FlashList
+        <FlatList
           data={itemsWithHeights}
           renderItem={renderItem}
           numColumns={screenData.responsive.columns}
@@ -200,9 +192,11 @@ function StaggeredGrid({
           // Add dynamic bottom spacing for floating button and tab bar
           ListFooterComponent={() => <View style={{ height: insets.bottom + 80 }} />}
           // Performance optimizations
-          getItemType={(item) => item.review.category || "default"}
-          keyExtractor={(item) => item.review.id}
-          drawDistance={200}
+          keyExtractor={keyExtractor}
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={10}
+          updateCellsBatchingPeriod={50}
+          windowSize={10}
         />
       </ErrorBoundary>
     </View>

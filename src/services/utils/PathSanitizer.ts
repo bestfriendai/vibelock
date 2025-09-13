@@ -29,12 +29,12 @@ export class PathSanitizer {
    */
   static sanitizePath(path: string): string {
     if (!path || typeof path !== "string") {
-      throw new AppError("Invalid path", ErrorType.VALIDATION, "INVALID_PATH", 400);
+      throw new AppError("Invalid path", ErrorType.INVALID_PATH, undefined, 400);
     }
 
     // Check for path traversal attempts
     if (this.PATH_TRAVERSAL_REGEX.test(path)) {
-      throw new AppError("Path traversal detected", ErrorType.VALIDATION, "PATH_TRAVERSAL", 400);
+      throw new AppError("Path traversal detected", ErrorType.PATH_TRAVERSAL, undefined, 400);
     }
 
     // Normalize path separators
@@ -52,7 +52,7 @@ export class PathSanitizer {
 
     // Validate the final path length
     if (sanitized.length > this.MAX_PATH_LENGTH) {
-      throw new AppError("Path too long", ErrorType.VALIDATION, "PATH_TOO_LONG", 400);
+      throw new AppError("Path too long", ErrorType.PATH_TOO_LONG, undefined, 400);
     }
 
     return sanitized;
@@ -63,17 +63,17 @@ export class PathSanitizer {
    */
   private static sanitizeSegment(segment: string): string {
     if (!segment) {
-      throw new AppError("Empty path segment", ErrorType.VALIDATION, "INVALID_PATH_SEGMENT", 400);
+      throw new AppError("Empty path segment", ErrorType.INVALID_PATH_SEGMENT, undefined, 400);
     }
 
     // Check for invalid characters
     if (this.INVALID_CHARS_REGEX.test(segment)) {
-      throw new AppError("Invalid characters in path", ErrorType.VALIDATION, "INVALID_PATH_CHARS", 400);
+      throw new AppError("Invalid characters in path", ErrorType.INVALID_PATH_CHARS, undefined, 400);
     }
 
     // Check for reserved names (Windows)
     if (this.RESERVED_NAMES_REGEX.test(segment)) {
-      throw new AppError("Reserved file name", ErrorType.VALIDATION, "RESERVED_FILENAME", 400);
+      throw new AppError("Reserved file name", ErrorType.RESERVED_FILENAME, undefined, 400);
     }
 
     // Remove leading and trailing spaces and dots
@@ -81,7 +81,7 @@ export class PathSanitizer {
 
     // Ensure the segment is not empty after sanitization
     if (!sanitized) {
-      throw new AppError("Invalid path segment", ErrorType.VALIDATION, "INVALID_PATH_SEGMENT", 400);
+      throw new AppError("Invalid path segment", ErrorType.INVALID_PATH_SEGMENT, undefined, 400);
     }
 
     return sanitized;
@@ -92,7 +92,7 @@ export class PathSanitizer {
    */
   static generateSafeFileName(fileName: string): string {
     if (!fileName || typeof fileName !== "string") {
-      throw new AppError("Invalid file name", ErrorType.VALIDATION, "INVALID_FILENAME", 400);
+      throw new AppError("Invalid file name", ErrorType.INVALID_FILENAME, undefined, 400);
     }
 
     // Remove invalid characters

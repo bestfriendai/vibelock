@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, Platform } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { View, Text } from "react-native";
 import useSubscriptionStore from "../state/subscriptionStore";
 import { canUseAdMob, buildEnv } from "../utils/buildEnvironment";
 import { adMobService } from "../services/adMobService";
@@ -8,7 +7,7 @@ import { useAdContext } from "../contexts/AdContext";
 import { useTheme } from "../providers/ThemeProvider";
 
 interface Props {
-  placement: "browse" | "chat";
+  placement?: "browse" | "chat";
 }
 
 // Mock Banner Component for Expo Go
@@ -78,7 +77,10 @@ const RealBannerAd: React.FC<{
       unitId={unitId}
       size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
       onAdLoaded={onLoad}
-      onAdFailedToLoad={(error: any) => onError(error.message)}
+      onAdFailedToLoad={(e: any) => {
+        const msg = typeof e === "string" ? e : (e?.message ?? "Ad failed to load");
+        onError(msg);
+      }}
     />
   );
 };
@@ -131,7 +133,7 @@ export default function AdBanner({ placement }: Props) {
       className="border-t"
       style={{
         backgroundColor: colors.surface[800],
-        borderTopColor: colors.border,
+        borderTopColor: colors.border.default,
       }}
     >
       <View className="items-center py-2">
@@ -139,7 +141,7 @@ export default function AdBanner({ placement }: Props) {
           className="w-11/12 border rounded-xl overflow-hidden"
           style={{
             backgroundColor: colors.surface[800],
-            borderColor: colors.border,
+            borderColor: colors.border.default,
           }}
         >
           {adError ? (
@@ -149,11 +151,14 @@ export default function AdBanner({ placement }: Props) {
               </Text>
             </View>
           ) : canUseAdMob() ? (
-            <RealBannerAd
-              unitId={adMobService.getBannerAdUnitId()!}
-              onLoad={handleAdLoad}
-              onError={handleAdError}
-            />
+            (() => {
+              const unitId = adMobService.getBannerAdUnitId();
+              if (!unitId) {
+                handleAdError("Missing AdMob banner unit ID");
+                return null;
+              }
+              return <RealBannerAd unitId={unitId} onLoad={handleAdLoad} onError={handleAdError} />;
+            })()
           ) : (
             <MockBannerAd onLoad={handleAdLoad} onError={handleAdError} />
           )}

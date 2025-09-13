@@ -1,15 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  Keyboard,
-  TouchableWithoutFeedback,
-  Image,
-} from "react-native";
+import { View, Text, TextInput, Keyboard, TouchableWithoutFeedback, Image } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
@@ -126,110 +117,105 @@ export default function SignInScreen() {
       <SafeAreaView className="flex-1 bg-surface-900">
         <LinearGradient colors={["#141418", "#1A1A20", "#141418"]} className="absolute inset-0" />
 
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          keyboardVerticalOffset={Platform.OS === "ios" ? 120 : 0}
+        <KeyboardAwareScrollView
           className="flex-1"
+          enableOnAndroid
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 20 }}
         >
-          <ScrollView
-            className="flex-1"
-            contentContainerStyle={{ paddingBottom: 20 }}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-          >
-            <View className="px-6 pt-12 pb-6">
-              {/* Logo Section */}
-              <Animated.View style={logoAnimatedStyle} className="items-center mb-12">
-                <View className="w-20 h-20 mb-4 shadow-lg">
-                  <Image
-                    source={require("../../assets/logo-circular.png")}
-                    style={{ width: 80, height: 80 }}
-                    resizeMode="contain"
-                  />
-                </View>
-                <Text className="text-4xl font-bold text-text-primary mb-3 text-center">Welcome Back</Text>
-                <Text className="text-lg text-text-secondary text-center leading-7">
-                  Sign in to continue to Locker Room Talk
-                </Text>
-              </Animated.View>
-
-              {/* Form Section */}
-              <Animated.View style={formAnimatedStyle} className="space-y-6">
-                <AnimatedInput
-                  label="Email"
-                  placeholder="Enter your email"
-                  value={email}
-                  onChangeText={(text) => {
-                    setEmail(text);
-                    if (emailError) setEmailError("");
-                  }}
-                  error={emailError}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoComplete="email"
-                  returnKeyType="next"
-                  onSubmitEditing={() => passwordRef.current?.focus()}
-                  leftIcon="mail-outline"
+          <View className="px-6 pt-12 pb-6">
+            {/* Logo Section */}
+            <Animated.View style={logoAnimatedStyle} className="items-center mb-12">
+              <View className="w-20 h-20 mb-4 shadow-lg">
+                <Image
+                  source={require("../../assets/logo-circular.png")}
+                  style={{ width: 80, height: 80 }}
+                  resizeMode="contain"
                 />
+              </View>
+              <Text className="text-4xl font-bold text-text-primary mb-3 text-center">Welcome Back</Text>
+              <Text className="text-lg text-text-secondary text-center leading-7">
+                Sign in to continue to Locker Room Talk
+              </Text>
+            </Animated.View>
 
-                <AnimatedInput
-                  ref={passwordRef}
-                  label="Password"
-                  placeholder="Enter your password"
-                  value={password}
-                  onChangeText={(text) => {
-                    setPassword(text);
-                    if (passwordError) setPasswordError("");
-                  }}
-                  error={passwordError}
-                  secureTextEntry={!showPassword}
-                  autoComplete="password"
-                  returnKeyType="done"
-                  onSubmitEditing={handleSubmit}
-                  leftIcon="lock-closed-outline"
-                  rightIcon={showPassword ? "eye-off-outline" : "eye-outline"}
-                  onRightIconPress={() => setShowPassword(!showPassword)}
-                />
+            {/* Form Section */}
+            <Animated.View style={formAnimatedStyle} className="space-y-6">
+              <AnimatedInput
+                label="Email"
+                placeholder="Enter your email"
+                value={email}
+                onChangeText={(text) => {
+                  setEmail(text);
+                  if (emailError) setEmailError("");
+                }}
+                error={emailError}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoComplete="email"
+                returnKeyType="next"
+                onSubmitEditing={() => passwordRef.current?.focus()}
+                leftIcon="mail-outline"
+              />
 
-                {/* Submit Button */}
+              <AnimatedInput
+                ref={passwordRef}
+                label="Password"
+                placeholder="Enter your password"
+                value={password}
+                onChangeText={(text) => {
+                  setPassword(text);
+                  if (passwordError) setPasswordError("");
+                }}
+                error={passwordError}
+                secureTextEntry={!showPassword}
+                autoComplete="password"
+                returnKeyType="done"
+                onSubmitEditing={handleSubmit}
+                leftIcon="lock-closed-outline"
+                rightIcon={showPassword ? "eye-off-outline" : "eye-outline"}
+                onRightIconPress={() => setShowPassword(!showPassword)}
+              />
+
+              {/* Submit Button */}
+              <AnimatedButton
+                title="Sign In"
+                variant="primary"
+                size="large"
+                loading={isLoading}
+                onPress={handleSubmit}
+                className="mt-8"
+              />
+
+              {/* Forgot Password */}
+              <View className="items-center">
                 <AnimatedButton
-                  title="Sign In"
-                  variant="primary"
-                  size="large"
-                  loading={isLoading}
-                  onPress={handleSubmit}
-                  className="mt-8"
+                  title="Forgot Password?"
+                  variant="ghost"
+                  size="small"
+                  onPress={() => {
+                    // Handle forgot password
+                  }}
                 />
+              </View>
+            </Animated.View>
 
-                {/* Forgot Password */}
-                <View className="items-center">
-                  <AnimatedButton
-                    title="Forgot Password?"
-                    variant="ghost"
-                    size="small"
-                    onPress={() => {
-                      // Handle forgot password
-                    }}
-                  />
-                </View>
-              </Animated.View>
-
-              {/* Footer */}
-              <Animated.View style={footerAnimatedStyle} className="mt-8 pt-6">
-                <View className="flex-row justify-center items-center">
-                  <Text className="text-text-secondary">Don't have an account? </Text>
-                  <AnimatedButton
-                    title="Sign Up"
-                    variant="ghost"
-                    size="small"
-                    onPress={handleSignUpPress}
-                    textClassName="text-brand-red font-semibold"
-                  />
-                </View>
-              </Animated.View>
-            </View>
-          </ScrollView>
-        </KeyboardAvoidingView>
+            {/* Footer */}
+            <Animated.View style={footerAnimatedStyle} className="mt-8 pt-6">
+              <View className="flex-row justify-center items-center">
+                <Text className="text-text-secondary">Don't have an account? </Text>
+                <AnimatedButton
+                  title="Sign Up"
+                  variant="ghost"
+                  size="small"
+                  onPress={handleSignUpPress}
+                  textClassName="text-brand-red font-semibold"
+                />
+              </View>
+            </Animated.View>
+          </View>
+        </KeyboardAwareScrollView>
       </SafeAreaView>
     </TouchableWithoutFeedback>
   );

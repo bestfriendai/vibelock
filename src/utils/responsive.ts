@@ -148,11 +148,11 @@ export function getResponsiveDimensions(screenWidth: number) {
     }
   }
 
-  // Calculate grid dimensions
+  // Calculate grid dimensions optimized for FlatList
   const horizontalPadding = basePadding * 2;
   const availableWidth = screenWidth - horizontalPadding;
 
-  // Determine number of columns based on screen size
+  // Determine number of columns based on screen size (optimized for FlatList)
   let columns = 2; // Default for phones
   if (deviceInfo.isTablet) {
     if (screenWidth >= DEVICE_BREAKPOINTS.tabletLarge) {
@@ -164,31 +164,52 @@ export function getResponsiveDimensions(screenWidth: number) {
     columns = 3; // Unfolded foldables
   }
 
+  // FlatList-optimized spacing calculations
+  // Account for FlatList's different rendering behavior compared to FlashList
   const totalGaps = cardGap * (columns - 1);
-  const cardWidth = (availableWidth - totalGaps) / columns;
+  const cardWidth = Math.floor((availableWidth - totalGaps) / columns);
+  
+  // Ensure minimum card width for better FlatList performance
+  const minCardWidth = deviceInfo.isTablet ? 180 : 140;
+  const adjustedCardWidth = Math.max(cardWidth, minCardWidth);
 
   return {
     basePadding,
     baseMargin,
     cardGap,
-    cardWidth,
+    cardWidth: adjustedCardWidth,
     columns,
     horizontalPadding,
     availableWidth,
     deviceInfo,
+    // FlatList-specific optimizations
+    flatListItemHeight: deviceInfo.isTablet ? 300 : 280, // Base item height for FlatList
+    flatListOptimizations: {
+      removeClippedSubviews: true,
+      maxToRenderPerBatch: deviceInfo.isTablet ? 6 : 4,
+      updateCellsBatchingPeriod: deviceInfo.isTablet ? 100 : 50,
+      windowSize: deviceInfo.isTablet ? 15 : 10,
+    },
   };
 }
 
 /**
- * Hook for responsive screen dimensions with device info
+ * Hook for responsive screen dimensions with device info (FlatList optimized)
  */
 export function useResponsiveScreen() {
   const [screenData, setScreenData] = useState(() => {
     const dimensions = Dimensions.get("window");
+    const responsive = getResponsiveDimensions(dimensions.width);
     return {
       ...dimensions,
       deviceInfo: getDeviceInfo(dimensions),
-      responsive: getResponsiveDimensions(dimensions.width),
+      responsive,
+      // Pre-calculate FlatList props for better performance
+      flatListProps: {
+        numColumns: responsive.columns,
+        key: `flatlist-${responsive.columns}`, // Force re-render when columns change
+        ...responsive.flatListOptimizations,
+      },
     };
   });
 
@@ -201,6 +222,11 @@ export function useResponsiveScreen() {
         ...window,
         deviceInfo,
         responsive,
+        flatListProps: {
+          numColumns: responsive.columns,
+          key: `flatlist-${responsive.columns}`,
+          ...responsive.flatListOptimizations,
+        },
       });
     });
 

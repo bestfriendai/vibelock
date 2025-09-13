@@ -4,31 +4,31 @@ on:
   workflow_dispatch:
     inputs:
       profile:
-        description: 'Build profile to use'
+        description: "Build profile to use"
         required: true
-        default: 'preview'
+        default: "preview"
         type: choice
         options:
           - development
           - preview
           - production
       platform:
-        description: 'Platform to build for'
+        description: "Platform to build for"
         required: true
-        default: 'all'
+        default: "all"
         type: choice
         options:
           - all
           - ios
           - android
       submit:
-        description: 'Submit to app stores after build'
+        description: "Submit to app stores after build"
         required: false
         default: false
         type: boolean
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 jobs:
   build:
