@@ -45,8 +45,13 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onClose, showNavig
           <Text className="text-text-primary text-lg font-semibold mb-3">Introduction</Text>
           <Text className="text-text-secondary text-sm leading-6 mb-3">
             Welcome to Locker Room Talk ("we," "our," or "us"). This Privacy Policy explains how we collect, use,
-            disclose, and safeguard your information when you use our mobile application and related services
-            (collectively, the "Service").
+            disclose, and safeguard your information when you use our anonymous review platform mobile application
+            and related services (collectively, the "Service").
+          </Text>
+          <Text className="text-text-secondary text-sm leading-6 mb-3">
+            <Text className="font-semibold">ANONYMOUS PLATFORM NOTICE:</Text> Our Service is designed to allow anonymous
+            posting of reviews. While we enable anonymous interactions, we may collect certain technical information
+            for security, legal compliance, and platform integrity purposes.
           </Text>
           <Text className="text-text-secondary text-sm leading-6">
             By using our Service, you consent to the data practices described in this Privacy Policy. If you do not
@@ -64,16 +69,16 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onClose, showNavig
           </Text>
           <View className="ml-4 mb-3">
             <Text className="text-text-secondary text-sm leading-6">
-              • Account information (username, email address, profile picture)
+              • Account information (anonymous username, email address for account recovery only)
             </Text>
             <Text className="text-text-secondary text-sm leading-6">
-              • Profile details (bio, preferences, settings)
+              • Anonymous profile details (preferences, settings)
             </Text>
             <Text className="text-text-secondary text-sm leading-6">
-              • User-generated content (reviews, ratings, comments, chat messages)
+              • Anonymous user-generated content (reviews, ratings, comments, chat messages)
             </Text>
             <Text className="text-text-secondary text-sm leading-6">
-              • Communication data (support requests, feedback)
+              • Communication data (support requests, feedback, report submissions)
             </Text>
           </View>
 
@@ -148,30 +153,36 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onClose, showNavig
             We use the collected information for the following purposes:
           </Text>
           <View className="ml-4 mb-3">
-            <Text className="text-text-secondary text-sm leading-6">• Provide, maintain, and improve our Service</Text>
+            <Text className="text-text-secondary text-sm leading-6">• Provide, maintain, and improve our anonymous review Service</Text>
             <Text className="text-text-secondary text-sm leading-6">
               • Process transactions and manage subscriptions
             </Text>
             <Text className="text-text-secondary text-sm leading-6">
-              • Personalize your experience and content recommendations
+              • Maintain platform anonymity while preventing abuse
             </Text>
             <Text className="text-text-secondary text-sm leading-6">
               • Enable location-based features and search functionality
             </Text>
             <Text className="text-text-secondary text-sm leading-6">
-              • Facilitate user communications and community features
+              • Facilitate anonymous user communications
             </Text>
             <Text className="text-text-secondary text-sm leading-6">
-              • Send notifications, updates, and promotional materials
+              • Process content reports and moderation requests
+            </Text>
+            <Text className="text-text-secondary text-sm leading-6">
+              • Send service notifications and updates
             </Text>
             <Text className="text-text-secondary text-sm leading-6">
               • Analyze usage patterns and improve app performance
             </Text>
             <Text className="text-text-secondary text-sm leading-6">
-              • Detect, prevent, and address technical issues and security threats
+              • Detect, prevent, and address abuse, fraud, and security threats
             </Text>
             <Text className="text-text-secondary text-sm leading-6">
-              • Comply with legal obligations and enforce our Terms of Service
+              • Comply with legal obligations including law enforcement requests
+            </Text>
+            <Text className="text-text-secondary text-sm leading-6">
+              • Enforce our Terms of Service and content policies
             </Text>
           </View>
         </View>
@@ -190,10 +201,12 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onClose, showNavig
             subject to confidentiality agreements.
           </Text>
 
-          <Text className="text-text-primary text-base font-medium mb-2">4.2 Legal Requirements</Text>
+          <Text className="text-text-primary text-base font-medium mb-2">4.2 Legal Requirements and Law Enforcement</Text>
           <Text className="text-text-secondary text-sm leading-6 mb-3">
-            We may disclose information if required by law, court order, or government request, or to protect our
-            rights, property, or safety.
+            We may disclose information if required by law, court order, subpoena, or government request. This includes
+            responding to law enforcement requests, protecting our rights, property, or safety, investigating fraud or
+            security issues, or protecting against harm to individuals. While our platform is anonymous, we may be
+            legally required to provide available technical information in response to valid legal processes.
           </Text>
 
           <Text className="text-text-primary text-base font-medium mb-2">4.3 Business Transfers</Text>
@@ -202,20 +215,23 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onClose, showNavig
             transaction.
           </Text>
 
-          <Text className="text-text-primary text-base font-medium mb-2">4.4 Public Information</Text>
+          <Text className="text-text-primary text-base font-medium mb-2">4.4 Public Anonymous Information</Text>
           <Text className="text-text-secondary text-sm leading-6 mb-3">
-            Information you choose to make public (such as reviews, ratings, and profile information) may be visible to
-            other users and the general public.
+            Information you post anonymously (such as reviews, ratings, and comments) will be visible to other users
+            and the general public. While your identity is not directly revealed, please be aware that the content
+            of your posts may contain information that could potentially identify you. Exercise caution when posting.
           </Text>
         </View>
 
         {/* Data Security */}
         <View className="mb-6">
-          <Text className="text-text-primary text-lg font-semibold mb-3">5. Data Security</Text>
+          <Text className="text-text-primary text-lg font-semibold mb-3">5. Data Security and Anonymity</Text>
           <Text className="text-text-secondary text-sm leading-6 mb-3">
             We implement appropriate technical and organizational security measures to protect your personal information
-            against unauthorized access, alteration, disclosure, or destruction. However, no method of transmission over
-            the internet or electronic storage is 100% secure.
+            and maintain platform anonymity. This includes separating identifying information from posted content,
+            encrypting sensitive data, and limiting internal access. However, no method of transmission over the
+            internet or electronic storage is 100% secure, and we cannot guarantee absolute anonymity in all circumstances,
+            particularly in response to legal requirements.
           </Text>
         </View>
 
@@ -311,8 +327,10 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onClose, showNavig
           <Text className="text-text-primary text-lg font-semibold mb-3">10. Data Retention</Text>
           <Text className="text-text-secondary text-sm leading-6 mb-3">
             We retain your personal information for as long as necessary to provide our Service, comply with legal
-            obligations, resolve disputes, and enforce our agreements. When you delete your account, we will delete or
-            anonymize your personal information, except where retention is required by law.
+            obligations, resolve disputes, and enforce our agreements. Anonymous reviews and content may remain on
+            the platform even after account deletion, but will no longer be associated with any identifying information.
+            We may retain certain technical information as required by law or for legitimate business purposes including
+            fraud prevention and platform security.
           </Text>
         </View>
 
@@ -326,9 +344,34 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onClose, showNavig
           </Text>
         </View>
 
+        {/* Special Notice for Anonymous Platform */}
+        <View className="mb-6">
+          <Text className="text-text-primary text-lg font-semibold mb-3">12. Special Notice: Anonymous Platform</Text>
+          <Text className="text-text-secondary text-sm leading-6 mb-3">
+            <Text className="font-semibold">IMPORTANT:</Text> While we design our platform to enable anonymous posting:
+          </Text>
+          <View className="ml-4 mb-3">
+            <Text className="text-text-secondary text-sm leading-6">
+              • We cannot guarantee complete anonymity in all circumstances
+            </Text>
+            <Text className="text-text-secondary text-sm leading-6">
+              • Legal processes may require disclosure of available information
+            </Text>
+            <Text className="text-text-secondary text-sm leading-6">
+              • Technical data (IP addresses, device IDs) may be logged for security
+            </Text>
+            <Text className="text-text-secondary text-sm leading-6">
+              • Pattern analysis may potentially link anonymous accounts
+            </Text>
+            <Text className="text-text-secondary text-sm leading-6">
+              • Content you post may inadvertently reveal identifying information
+            </Text>
+          </View>
+        </View>
+
         {/* Contact Information */}
         <View className="mb-8">
-          <Text className="text-text-primary text-lg font-semibold mb-3">12. Contact Us</Text>
+          <Text className="text-text-primary text-lg font-semibold mb-3">13. Contact Us</Text>
           <Text className="text-text-secondary text-sm leading-6 mb-3">
             If you have any questions about this Privacy Policy or our data practices, please contact us:
           </Text>

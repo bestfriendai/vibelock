@@ -49,7 +49,12 @@ export const TermsOfService: React.FC<TermsOfServiceProps> = ({
           <Text className="text-text-primary text-lg font-semibold mb-3">Introduction</Text>
           <Text className="text-text-secondary text-sm leading-6 mb-3">
             Welcome to Locker Room Talk ("we," "our," "us," or "Company"). These Terms of Service ("Terms") govern your
-            use of our mobile application and related services (collectively, the "Service").
+            use of our mobile application, an anonymous review platform that enables users to post and read anonymous reviews
+            and opinions about individuals, places, and experiences (collectively, the "Service").
+          </Text>
+          <Text className="text-text-secondary text-sm leading-6 mb-3">
+            <Text className="font-semibold">IMPORTANT: THIS IS AN ANONYMOUS REVIEW PLATFORM.</Text> All content posted on this
+            platform is user-generated and anonymous. We do not verify the identity of users or the accuracy of posted content.
           </Text>
           <Text className="text-text-secondary text-sm leading-6">
             By accessing or using our Service, you agree to be bound by these Terms. If you disagree with any part of
@@ -75,16 +80,21 @@ export const TermsOfService: React.FC<TermsOfServiceProps> = ({
         <View className="mb-6">
           <Text className="text-text-primary text-lg font-semibold mb-3">2. Description of Service</Text>
           <Text className="text-text-secondary text-sm leading-6 mb-3">
-            Locker Room Talk is a platform that allows users to discover, review, and discuss various locations and
-            experiences. The Service includes features such as:
+            Locker Room Talk is an anonymous review platform that allows users to post and read anonymous reviews
+            about individuals, locations, and experiences. The Service includes features such as:
           </Text>
           <View className="ml-4 mb-3">
+            <Text className="text-text-secondary text-sm leading-6">• Anonymous posting and reviewing capabilities</Text>
             <Text className="text-text-secondary text-sm leading-6">• Location-based search and discovery</Text>
-            <Text className="text-text-secondary text-sm leading-6">• User reviews and ratings</Text>
-            <Text className="text-text-secondary text-sm leading-6">• Chat and messaging features</Text>
-            <Text className="text-text-secondary text-sm leading-6">• User profiles and social features</Text>
+            <Text className="text-text-secondary text-sm leading-6">• Anonymous user reviews and ratings</Text>
+            <Text className="text-text-secondary text-sm leading-6">• Anonymous chat and messaging features</Text>
+            <Text className="text-text-secondary text-sm leading-6">• Content reporting and moderation system</Text>
             <Text className="text-text-secondary text-sm leading-6">• Premium subscription services</Text>
           </View>
+          <Text className="text-text-secondary text-sm leading-6 mt-3">
+            <Text className="font-semibold">WE DO NOT VERIFY THE ACCURACY OR TRUTHFULNESS</Text> of any user-generated content.
+            Users are solely responsible for their posts and the consequences thereof.
+          </Text>
         </View>
 
         {/* User Accounts */}
@@ -118,22 +128,25 @@ export const TermsOfService: React.FC<TermsOfServiceProps> = ({
             4. User-Generated Content and Platform Liability
           </Text>
 
-          <Text className="text-text-primary text-base font-medium mb-2">4.1 Content Responsibility</Text>
+          <Text className="text-text-primary text-base font-medium mb-2">4.1 Content Responsibility - Anonymous Reviews</Text>
           <Text className="text-text-secondary text-sm leading-6 mb-3">
             <Text className="font-semibold">
-              YOU ACKNOWLEDGE AND AGREE THAT THE COMPANY IS NOT RESPONSIBLE FOR ANY CONTENT POSTED BY USERS.
+              YOU ACKNOWLEDGE AND AGREE THAT THE COMPANY IS NOT RESPONSIBLE FOR ANY ANONYMOUS CONTENT POSTED BY USERS.
             </Text>{" "}
-            All reviews, ratings, comments, messages, profiles, and other content ("User Content") are created and
-            posted solely by users. The Company does not endorse, support, represent, or guarantee the completeness,
-            truthfulness, accuracy, or reliability of any User Content.
+            All anonymous reviews, ratings, comments, messages, and other content ("User Content") are created and
+            posted solely by anonymous users. The Company does not and cannot verify the identity of anonymous posters,
+            does not endorse, support, represent, or guarantee the completeness, truthfulness, accuracy, or reliability
+            of any User Content. Anonymous reviews may be false, defamatory, or misleading.
           </Text>
 
-          <Text className="text-text-primary text-base font-medium mb-2">4.2 No Editorial Control</Text>
+          <Text className="text-text-primary text-base font-medium mb-2">4.2 Section 230 Protection and No Editorial Control</Text>
           <Text className="text-text-secondary text-sm leading-6 mb-3">
-            The Company acts as a passive conduit for User Content and does not exercise editorial control over such
-            content. We do not pre-screen, monitor, or approve User Content before it is posted. Any opinions, advice,
-            statements, or other information expressed in User Content are those of the respective users and not of the
-            Company.
+            The Company operates as an interactive computer service provider under Section 230 of the Communications
+            Decency Act. We act as a passive conduit for anonymous User Content and do not exercise editorial control
+            over such content. We do not pre-screen, monitor, or approve User Content before it is posted. The Company
+            is not the publisher or speaker of any User Content and maintains immunity from liability for third-party
+            content under federal law. Any opinions, advice, statements, or other information expressed in User Content
+            are those of the anonymous users and not of the Company.
           </Text>
 
           <Text className="text-text-primary text-base font-medium mb-2">4.3 Content Disclaimer</Text>
@@ -202,8 +215,10 @@ export const TermsOfService: React.FC<TermsOfServiceProps> = ({
 
           <Text className="text-text-primary text-base font-medium mb-2">6.2 Reporting System</Text>
           <Text className="text-text-secondary text-sm leading-6 mb-3">
-            Users may report content that violates these Terms. We will investigate reports in good faith but make no
-            guarantee regarding response time or action taken.
+            Users may report content that violates these Terms. We will attempt to review reports in a timely manner
+            and investigate in good faith, but make no guarantee regarding specific response time or action taken.
+            Due to the anonymous nature of our platform, we may have limited ability to verify claims or identify
+            violators. Report processing times may vary based on volume and severity.
           </Text>
 
           <Text className="text-text-primary text-base font-medium mb-2">6.3 Account Suspension and Termination</Text>
@@ -213,9 +228,41 @@ export const TermsOfService: React.FC<TermsOfServiceProps> = ({
           </Text>
         </View>
 
+        {/* DMCA Compliance */}
+        <View className="mb-6">
+          <Text className="text-text-primary text-lg font-semibold mb-3">7. DMCA Compliance and Copyright Policy</Text>
+
+          <Text className="text-text-primary text-base font-medium mb-2">7.1 DMCA Safe Harbor</Text>
+          <Text className="text-text-secondary text-sm leading-6 mb-3">
+            We comply with the Digital Millennium Copyright Act (DMCA) and maintain safe harbor protections. If you
+            believe content infringes your copyright, submit a DMCA notice to our designated agent at
+            contact@lockerroomapp.com with:
+          </Text>
+          <View className="ml-4 mb-3">
+            <Text className="text-text-secondary text-sm leading-6">• Identification of the copyrighted work</Text>
+            <Text className="text-text-secondary text-sm leading-6">• Identification of the infringing material</Text>
+            <Text className="text-text-secondary text-sm leading-6">• Your contact information</Text>
+            <Text className="text-text-secondary text-sm leading-6">• A statement of good faith belief</Text>
+            <Text className="text-text-secondary text-sm leading-6">• A statement of accuracy under penalty of perjury</Text>
+            <Text className="text-text-secondary text-sm leading-6">• Your physical or electronic signature</Text>
+          </View>
+
+          <Text className="text-text-primary text-base font-medium mb-2">7.2 Repeat Infringer Policy</Text>
+          <Text className="text-text-secondary text-sm leading-6 mb-3">
+            We maintain a policy for terminating repeat copyright infringers. Users who repeatedly violate copyright
+            laws will have their accounts permanently terminated.
+          </Text>
+
+          <Text className="text-text-primary text-base font-medium mb-2">7.3 Counter-Notice Procedure</Text>
+          <Text className="text-text-secondary text-sm leading-6 mb-3">
+            If your content was removed due to a DMCA notice and you believe it was wrongfully removed, you may
+            submit a counter-notice including the required legal statements to contact@lockerroomapp.com.
+          </Text>
+        </View>
+
         {/* Intellectual Property */}
         <View className="mb-6">
-          <Text className="text-text-primary text-lg font-semibold mb-3">7. Intellectual Property Rights</Text>
+          <Text className="text-text-primary text-lg font-semibold mb-3">8. Intellectual Property Rights</Text>
           <Text className="text-text-secondary text-sm leading-6 mb-3">
             The Service and its original content, features, and functionality are owned by the Company and are protected
             by international copyright, trademark, patent, trade secret, and other intellectual property laws.
@@ -227,9 +274,40 @@ export const TermsOfService: React.FC<TermsOfServiceProps> = ({
           </Text>
         </View>
 
+        {/* Anonymous Reviews Disclaimer */}
+        <View className="mb-6">
+          <Text className="text-text-primary text-lg font-semibold mb-3">9. Anonymous Reviews and Content Disclaimer</Text>
+          <Text className="text-text-secondary text-sm leading-6 mb-3">
+            <Text className="font-semibold">CRITICAL DISCLAIMER REGARDING ANONYMOUS REVIEWS:</Text>
+          </Text>
+          <View className="ml-4 mb-3">
+            <Text className="text-text-secondary text-sm leading-6">
+              • All reviews on this platform are posted anonymously
+            </Text>
+            <Text className="text-text-secondary text-sm leading-6">
+              • We cannot and do not verify the identity of reviewers
+            </Text>
+            <Text className="text-text-secondary text-sm leading-6">
+              • We cannot verify the accuracy or truthfulness of any review
+            </Text>
+            <Text className="text-text-secondary text-sm leading-6">
+              • Reviews may be false, misleading, or defamatory
+            </Text>
+            <Text className="text-text-secondary text-sm leading-6">
+              • Reviews may be posted by competitors, disgruntled individuals, or bad actors
+            </Text>
+            <Text className="text-text-secondary text-sm leading-6">
+              • You should not rely solely on anonymous reviews for decision-making
+            </Text>
+            <Text className="text-text-secondary text-sm leading-6">
+              • The Company is not liable for any damages resulting from anonymous reviews
+            </Text>
+          </View>
+        </View>
+
         {/* Location-Based Services Disclaimer */}
         <View className="mb-6">
-          <Text className="text-text-primary text-lg font-semibold mb-3">8. Location-Based Services Disclaimer</Text>
+          <Text className="text-text-primary text-lg font-semibold mb-3">10. Location-Based Services Disclaimer</Text>
           <Text className="text-text-secondary text-sm leading-6 mb-3">
             <Text className="font-semibold">LOCATION DATA ACCURACY DISCLAIMER:</Text> Location-based features rely on
             third-party data sources and GPS technology. We do not guarantee the accuracy, completeness, or reliability
@@ -251,7 +329,7 @@ export const TermsOfService: React.FC<TermsOfServiceProps> = ({
 
         {/* Subscription and Payment Terms */}
         <View className="mb-6">
-          <Text className="text-text-primary text-lg font-semibold mb-3">9. Subscription and Payment Terms</Text>
+          <Text className="text-text-primary text-lg font-semibold mb-3">11. Subscription and Payment Terms</Text>
 
           <Text className="text-text-primary text-base font-medium mb-2">9.1 Premium Subscriptions</Text>
           <Text className="text-text-secondary text-sm leading-6 mb-3">
@@ -274,7 +352,7 @@ export const TermsOfService: React.FC<TermsOfServiceProps> = ({
 
         {/* Third-Party Services and Advertising */}
         <View className="mb-6">
-          <Text className="text-text-primary text-lg font-semibold mb-3">10. Third-Party Services and Advertising</Text>
+          <Text className="text-text-primary text-lg font-semibold mb-3">12. Third-Party Services and Advertising</Text>
 
           <Text className="text-text-primary text-base font-medium mb-2">10.1 Third-Party Content</Text>
           <Text className="text-text-secondary text-sm leading-6 mb-3">
@@ -293,7 +371,7 @@ export const TermsOfService: React.FC<TermsOfServiceProps> = ({
         {/* Disclaimers and Limitation of Liability */}
         <View className="mb-6">
           <Text className="text-text-primary text-lg font-semibold mb-3">
-            11. Disclaimers and Limitation of Liability
+            13. Disclaimers and Limitation of Liability
           </Text>
 
           <Text className="text-text-primary text-base font-medium mb-2">11.1 Service Availability</Text>
@@ -329,7 +407,7 @@ export const TermsOfService: React.FC<TermsOfServiceProps> = ({
 
         {/* Indemnification */}
         <View className="mb-6">
-          <Text className="text-text-primary text-lg font-semibold mb-3">12. Indemnification</Text>
+          <Text className="text-text-primary text-lg font-semibold mb-3">14. Indemnification</Text>
           <Text className="text-text-secondary text-sm leading-6 mb-3">
             <Text className="font-semibold">You agree to indemnify, defend, and hold harmless the Company</Text> and its
             officers, directors, employees, agents, and affiliates from and against any claims, liabilities, damages,
@@ -347,7 +425,7 @@ export const TermsOfService: React.FC<TermsOfServiceProps> = ({
 
         {/* Force Majeure */}
         <View className="mb-6">
-          <Text className="text-text-primary text-lg font-semibold mb-3">13. Force Majeure</Text>
+          <Text className="text-text-primary text-lg font-semibold mb-3">15. Force Majeure</Text>
           <Text className="text-text-secondary text-sm leading-6 mb-3">
             We shall not be liable for any failure or delay in performance under these Terms due to circumstances beyond
             our reasonable control, including but not limited to acts of God, natural disasters, war, terrorism, labor
@@ -357,7 +435,7 @@ export const TermsOfService: React.FC<TermsOfServiceProps> = ({
 
         {/* Dispute Resolution */}
         <View className="mb-6">
-          <Text className="text-text-primary text-lg font-semibold mb-3">14. Dispute Resolution and Governing Law</Text>
+          <Text className="text-text-primary text-lg font-semibold mb-3">16. Dispute Resolution and Governing Law</Text>
 
           <Text className="text-text-primary text-base font-medium mb-2">14.1 Governing Law</Text>
           <Text className="text-text-secondary text-sm leading-6 mb-3">
@@ -381,7 +459,7 @@ export const TermsOfService: React.FC<TermsOfServiceProps> = ({
 
         {/* Severability */}
         <View className="mb-6">
-          <Text className="text-text-primary text-lg font-semibold mb-3">15. Severability</Text>
+          <Text className="text-text-primary text-lg font-semibold mb-3">17. Severability</Text>
           <Text className="text-text-secondary text-sm leading-6 mb-3">
             If any provision of these Terms is held to be invalid or unenforceable, the remaining provisions shall
             remain in full force and effect.
@@ -390,7 +468,7 @@ export const TermsOfService: React.FC<TermsOfServiceProps> = ({
 
         {/* Changes to Terms */}
         <View className="mb-6">
-          <Text className="text-text-primary text-lg font-semibold mb-3">16. Changes to Terms</Text>
+          <Text className="text-text-primary text-lg font-semibold mb-3">18. Changes to Terms</Text>
           <Text className="text-text-secondary text-sm leading-6 mb-3">
             We reserve the right to modify these Terms at any time. We will notify users of material changes by posting
             the updated Terms in the app and updating the "Last Updated" date. Your continued use of the Service after
@@ -400,7 +478,7 @@ export const TermsOfService: React.FC<TermsOfServiceProps> = ({
 
         {/* Contact Information */}
         <View className="mb-8">
-          <Text className="text-text-primary text-lg font-semibold mb-3">17. Contact Information</Text>
+          <Text className="text-text-primary text-lg font-semibold mb-3">19. Contact Information</Text>
           <Text className="text-text-secondary text-sm leading-6 mb-3">
             If you have any questions about these Terms, please contact us:
           </Text>
