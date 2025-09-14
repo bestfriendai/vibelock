@@ -4,6 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRoute, RouteProp, useNavigation } from "@react-navigation/native";
 import { FlashList } from "@shopify/flash-list";
+import * as Clipboard from "expo-clipboard";
 import useChatStore from "../state/chatStore";
 import { useAuthState } from "../utils/authUtils";
 import { RootStackParamList, RootStackNavigationProp } from "../navigation/AppNavigator";
@@ -17,7 +18,6 @@ import { useTheme } from "../providers/ThemeProvider";
 import { notificationService } from "../services/notificationService";
 import OfflineBanner from "../components/OfflineBanner";
 import LoadingSpinner from "../components/LoadingSpinner";
-import { useOffline } from "../hooks/useOffline";
 
 export type ChatRoomRouteProp = RouteProp<RootStackParamList, "ChatRoom">;
 
@@ -50,7 +50,6 @@ export default function ChatRoomScreen() {
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const {
-    currentChatRoom,
     messages,
     members,
     joinChatRoom,
@@ -70,7 +69,6 @@ export default function ChatRoomScreen() {
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
   const [selectedMessage, setSelectedMessage] = useState<ChatMessage | null>(null);
   const [isActionsModalVisible, setIsActionsModalVisible] = useState(false);
-  const { isOnline } = useOffline();
   const hasAutoScrolledRef = useRef(false);
 
   const scrollToBottom = (animated: boolean = true) => {
@@ -122,30 +120,6 @@ export default function ChatRoomScreen() {
         });
     }
   }, [roomId, canAccessChat, needsSignIn, user]);
-
-  // Guard against guest access or missing user data
-  if (!canAccessChat || needsSignIn || !user) {
-    return (
-      <SafeAreaView className="flex-1 bg-black">
-        <View className="flex-1 items-center justify-center px-6">
-          <Ionicons name="chatbubbles-outline" size={64} color="#6B7280" />
-          <Text className="text-text-primary text-xl font-bold mt-4 text-center">Sign In Required</Text>
-          <Text className="text-text-secondary text-center mt-2 leading-6">
-            You need to sign in to join chat rooms and participate in conversations.
-          </Text>
-          <Pressable onPress={() => navigation.navigate("SignIn")} className="bg-brand-red rounded-xl px-6 py-3 mt-6">
-            <Text className="text-black font-semibold text-base">Sign In</Text>
-          </Pressable>
-          <Pressable
-            onPress={() => (navigation.canGoBack() ? navigation.goBack() : navigation.navigate("MainTabs"))}
-            className="mt-4"
-          >
-            <Text className="text-text-muted text-base">Go Back</Text>
-          </Pressable>
-        </View>
-      </SafeAreaView>
-    );
-  }
 
   // Store now guarantees ascending (oldest -> newest)
   const roomMessages = messages[roomId] || [];
@@ -223,6 +197,29 @@ export default function ChatRoomScreen() {
       setIsLoadingOlderMessages(false);
     }
   };
+  // Guard against guest access or missing user data (after all hooks declared)
+  if (!canAccessChat || needsSignIn || !user) {
+    return (
+      <SafeAreaView className="flex-1 bg-black">
+        <View className="flex-1 items-center justify-center px-6">
+          <Ionicons name="chatbubbles-outline" size={64} color="#6B7280" />
+          <Text className="text-text-primary text-xl font-bold mt-4 text-center">Sign In Required</Text>
+          <Text className="text-text-secondary text-center mt-2 leading-6">
+            You need to sign in to join chat rooms and participate in conversations.
+          </Text>
+          <Pressable onPress={() => navigation.navigate("SignIn")} className="bg-brand-red rounded-xl px-6 py-3 mt-6">
+            <Text className="text-black font-semibold text-base">Sign In</Text>
+          </Pressable>
+          <Pressable
+            onPress={() => (navigation.canGoBack() ? navigation.goBack() : navigation.navigate("MainTabs"))}
+            className="mt-4"
+          >
+            <Text className="text-text-muted text-base">Go Back</Text>
+          </Pressable>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView className="flex-1" style={{ backgroundColor: colors.background }}>
@@ -258,11 +255,7 @@ export default function ChatRoomScreen() {
                 isOwn={item.senderId === user.id}
                 // With oldest-first data, chronological previous = index - 1
                 previousMessage={index > 0 ? roomMessages[index - 1] : undefined}
-                nextMessage={
-                  index < roomMessages.length - 1
-                    ? roomMessages[index + 1]
-                    : undefined
-                }
+                nextMessage={index < roomMessages.length - 1 ? roomMessages[index + 1] : undefined}
                 reactions={item.reactions}
                 onReply={handleReply}
                 onReact={handleReact}
@@ -434,12 +427,26 @@ export default function ChatRoomScreen() {
           setIsActionsModalVisible(false);
         }}
         onCopy={() => {
-          // TODO: Implement copy
-          setIsActionsModalVisible(false);
+          try {
+            if (selectedMessage?.content) {
+              Clipboard.setStringAsync(selectedMessage.content);
+            }
+          } catch (e) {
+            console.warn("Failed to copy message:", e);
+          } finally {
+            setIsActionsModalVisible(false);
+          }
         }}
-        onDelete={() => {
-          // TODO: Implement delete
-          setIsActionsModalVisible(false);
+        onDelete={async () => {
+          try {
+            if (selectedMessage?.id) {
+              await useChatStore.getState().deleteMessage?.(roomId, selectedMessage.id);
+            }
+          } catch (e) {
+            console.warn("Failed to delete message:", e);
+          } finally {
+            setIsActionsModalVisible(false);
+          }
         }}
       />
     </SafeAreaView>

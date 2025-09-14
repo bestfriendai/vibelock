@@ -91,6 +91,7 @@ interface ChatActions {
   markMessagesAsRead: (roomId: string) => void;
   reactToMessage: (roomId: string, messageId: string, reaction: string) => Promise<void>;
   toggleNotifications: (roomId: string) => Promise<void>;
+  deleteMessage: (roomId: string, messageId: string) => Promise<void>;
 
   // Typing indicators
   setTyping: (roomId: string, isTyping: boolean) => void;
@@ -685,6 +686,48 @@ const useChatStore = create<ChatStore>()(
           if (reverted) {
             // No-op: the realtime update stream will reconcile
           }
+        }
+      },
+
+      deleteMessage: async (roomId: string, messageId: string) => {
+        // Follow async action pattern with optimistic UI and rollback on error
+        const prevMessages = get().messages[roomId] || [];
+        let didOptimisticallyRemove = false;
+        try {
+          await requireAuthentication("delete messages");
+
+          // Optimistically remove from UI
+          set((state) => ({
+            messages: {
+              ...state.messages,
+              [roomId]: (state.messages[roomId] || []).filter((m) => m.id !== messageId),
+            },
+          }));
+          didOptimisticallyRemove = true;
+
+          const { error } = await supabase
+            .from("chat_messages_firebase")
+            .update({ is_deleted: true })
+            .eq("id", messageId)
+            .eq("chat_room_id", roomId);
+
+          if (error) {
+            throw error;
+          }
+        } catch (error) {
+          console.warn("💥 Failed to delete message:", error);
+          const appError = error instanceof AppError ? error : parseSupabaseError(error);
+          // Rollback optimistic removal
+          if (didOptimisticallyRemove) {
+            set((state) => ({
+              messages: {
+                ...state.messages,
+                [roomId]: prevMessages,
+              },
+            }));
+          }
+          set({ error: appError.userMessage });
+          throw appError;
         }
       },
 

@@ -24,14 +24,14 @@ class AdMobService {
 
   // Enhanced error classification for Expo SDK 54 compatibility
   private isExpoSDK54CompatibilityError(error: any): boolean {
-    const errorMessage = error?.message?.toLowerCase() || '';
+    const errorMessage = error?.message?.toLowerCase() || "";
     return (
-      errorMessage.includes('expo sdk 54') ||
-      errorMessage.includes('module not found') ||
-      errorMessage.includes('native module') ||
-      errorMessage.includes('admob') ||
-      errorMessage.includes('google-mobile-ads') ||
-      errorMessage.includes('react-native-google-mobile-ads')
+      errorMessage.includes("expo sdk 54") ||
+      errorMessage.includes("module not found") ||
+      errorMessage.includes("native module") ||
+      errorMessage.includes("admob") ||
+      errorMessage.includes("google-mobile-ads") ||
+      errorMessage.includes("react-native-google-mobile-ads")
     );
   }
 
@@ -58,8 +58,10 @@ class AdMobService {
         // Add delay for retry attempts (except first attempt)
         if (this.initializationAttempts > 1) {
           const delay = this.getRetryDelay(this.initializationAttempts - 2);
-          console.log(`AdMob: Retrying initialization (attempt ${this.initializationAttempts}/${this.MAX_INITIALIZATION_ATTEMPTS}) after ${delay}ms delay`);
-          await new Promise(resolve => setTimeout(resolve, delay));
+          console.log(
+            `AdMob: Retrying initialization (attempt ${this.initializationAttempts}/${this.MAX_INITIALIZATION_ATTEMPTS}) after ${delay}ms delay`,
+          );
+          await new Promise((resolve) => setTimeout(resolve, delay));
         }
 
         // Dynamic import with enhanced error handling for Expo SDK 54
@@ -67,12 +69,12 @@ class AdMobService {
         const { MaxAdContentRating } = await import("react-native-google-mobile-ads");
 
         // SDK 54 compatibility: Add initialization delay
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise((resolve) => setTimeout(resolve, 500));
 
         await mobileAds().initialize();
 
         // Additional delay after initialization for SDK 54 stability
-        await new Promise(resolve => setTimeout(resolve, 300));
+        await new Promise((resolve) => setTimeout(resolve, 300));
 
         await mobileAds().setRequestConfiguration({
           maxAdContentRating: MaxAdContentRating.PG,
