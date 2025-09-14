@@ -23,8 +23,41 @@ import { useTheme } from "../providers/ThemeProvider";
 import PremiumBadge from "../components/PremiumBadge";
 import { imageCompressionService } from "../services/imageCompressionService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { AppError, parseSupabaseError } from "../utils/errorHandling";
 
 const DRAFT_KEY = "create-review-draft";
+const DRAFT_EXPIRY = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+// Sanitize draft data for storage - remove sensitive information
+const sanitizeDraftForStorage = (draft: any) => {
+  return {
+    ...draft,
+    // Remove sensitive media URIs, keep only metadata
+    media: draft.media ? draft.media.map((item: MediaItem) => ({
+      ...item,
+      uri: item.type === 'image' ? '[Image Draft]' : item.type === 'video' ? '[Video Draft]' : item.uri,
+    })) : [],
+    // Remove sensitive social media information
+    socialMedia: draft.socialMedia ? Object.keys(draft.socialMedia).reduce((acc: any, key) => {
+      acc[key] = draft.socialMedia[key] ? '[Social Handle]' : '';
+      return acc;
+    }, {}) : {},
+    // Limit text length
+    reviewText: draft.reviewText ? draft.reviewText.substring(0, 500) : '',
+    // Add timestamp for expiry
+    timestamp: Date.now(),
+  };
+};
+
+// Validate draft data on load
+const isValidDraft = (draft: any): boolean => {
+  if (!draft || typeof draft !== 'object') return false;
+  if (typeof draft.timestamp !== 'number') return false;
+
+  // Check if draft is not expired
+  const now = Date.now();
+  return (now - draft.timestamp) < DRAFT_EXPIRY;
+};
 
 interface Location {
   city: string;
@@ -63,13 +96,22 @@ export default function CreateReviewScreen() {
 
   const { createReview, isLoading } = useReviewsStore();
 
-  // Load draft
+  // Load draft with validation and security
   useEffect(() => {
     (async () => {
       try {
         const json = await AsyncStorage.getItem(DRAFT_KEY);
         if (json) {
           const draft = JSON.parse(json);
+
+          // Validate draft data
+          if (!isValidDraft(draft)) {
+            console.log("🧹 Removing expired or invalid draft");
+            await AsyncStorage.removeItem(DRAFT_KEY);
+            return;
+          }
+
+          // Load validated draft data
           setFirstName(draft.firstName || "");
           if (draft.selectedLocation) {
             setSelectedLocation(draft.selectedLocation);
@@ -87,28 +129,46 @@ export default function CreateReviewScreen() {
           setReviewText(draft.reviewText || "");
           setSentiment(draft.sentiment || null);
           setCategory(draft.category || "men");
-          setMedia(draft.media || []);
-          setSocialMedia(draft.socialMedia || {});
+          // Don't load media from draft for security reasons
+          setMedia([]);
+          // Don't load social media from draft for security reasons
+          setSocialMedia({});
+
+          if (__DEV__) {
+            console.log("📝 Loaded draft data (media and social media excluded for security)");
+          }
         }
-      } catch {}
+      } catch (error) {
+        console.warn("Failed to load draft:", error);
+        // Clear corrupted draft
+        try {
+          await AsyncStorage.removeItem(DRAFT_KEY);
+        } catch (clearError) {
+          console.warn("Failed to clear corrupted draft:", clearError);
+        }
+      }
     })();
   }, []);
 
-  // Save draft
+  // Save draft with sanitization
   useEffect(() => {
     const save = setTimeout(() => {
-      AsyncStorage.setItem(
-        DRAFT_KEY,
-        JSON.stringify({
-          firstName,
-          selectedLocation,
-          reviewText,
-          sentiment,
-          category,
-          media,
-          socialMedia,
-        }),
-      ).catch(() => {});
+      const draftData = {
+        firstName,
+        selectedLocation,
+        reviewText,
+        sentiment,
+        category,
+        media,
+        socialMedia,
+      };
+
+      const sanitizedDraft = sanitizeDraftForStorage(draftData);
+
+      AsyncStorage.setItem(DRAFT_KEY, JSON.stringify(sanitizedDraft)).catch((error) => {
+        const appError = error instanceof AppError ? error : parseSupabaseError(error);
+        console.warn("Failed to save draft:", appError.userMessage);
+      });
     }, 400);
     return () => clearTimeout(save);
   }, [firstName, selectedLocation, reviewText, sentiment, category, media, socialMedia]);

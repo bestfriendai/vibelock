@@ -23,8 +23,15 @@
     "prebuild:clean": "expo prebuild --clean",
     "build:development": "eas build --platform all --profile development",
     "build:preview": "eas build --platform all --profile preview",
-    "build:production": "eas build --platform all --profile production",
-    "submit:production": "eas submit --platform all --profile production"
+    "build:production": "npm run verify:production && eas build --platform all --profile production",
+    "submit:production": "eas submit --platform all --profile production",
+    "verify:production": "node scripts/verify-production-readiness.js",
+    "test:production": "node scripts/run-production-tests.js",
+    "verify:typescript": "node scripts/verify-typescript-compliance.js",
+    "audit:security": "npm audit --audit-level=moderate",
+    "analyze:bundle": "npx expo export --dump-assetmap",
+    "performance:test": "npm run test:production && npm run analyze:bundle",
+    "production:check": "npm run verify:production && npm run test:production && npm run verify:typescript"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.62.0",
@@ -32,6 +39,7 @@
     "@expo/metro-runtime": "~6.1.1",
     "@expo/react-native-action-sheet": "^4.1.1",
     "@expo/vector-icons": "^15.0.2",
+    "@sentry/react-native": "^5.33.1",
     "@gorhom/bottom-sheet": "^5.2.6",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-native-clipboard/clipboard": "^1.16.3",
@@ -117,8 +125,8 @@
     "markdown-it": "13.0.1",
     "nativewind": "^4.1.23",
     "openai": "^4.89.0",
-    "react": "19.1.0",
-    "react-dom": "19.1.0",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
     "react-native": "0.81.4",
     "react-native-gesture-handler": "~2.28.0",
     "react-native-get-random-values": "~1.11.0",
@@ -146,11 +154,6 @@
     "victory-native": "^41.20.1",
     "zeego": "^3.0.6",
     "zustand": "^5.0.8"
-  },
-  "resolutions": {
-    "react": "18.2.0",
-    "react-dom": "18.2.0",
-    "@types/react": "~18.2.79"
   },
   "devDependencies": {
     "@babel/core": "^7.28.4",

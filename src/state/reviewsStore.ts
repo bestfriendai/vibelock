@@ -13,6 +13,34 @@ import { notificationService } from "../services/notificationService";
 import { AppError, parseSupabaseError } from "../utils/errorHandling";
 import { withMediaErrorHandling, handleMediaUploadError } from "../utils/mediaErrorHandling";
 
+// Constants for data limits
+const MAX_PERSISTED_REVIEWS = 100;
+const MAX_MEDIA_ITEMS_PER_REVIEW = 3;
+
+// Sanitize reviews for persistence - remove sensitive information
+const sanitizeReviewsForPersistence = (reviews: Review[]): Partial<Review>[] => {
+  // Limit number of reviews
+  const limitedReviews = reviews.slice(0, MAX_PERSISTED_REVIEWS);
+
+  return limitedReviews.map(review => ({
+    ...review,
+    // Remove or anonymize sensitive author information
+    authorId: review.authorId ? 'anon_' + review.authorId.substring(0, 8) : 'anonymous',
+    reviewerAnonymousId: review.reviewerAnonymousId ? 'anon_' + review.reviewerAnonymousId.substring(0, 8) : review.reviewerAnonymousId,
+    // Limit media items and remove large media objects
+    media: review.media ? review.media.slice(0, MAX_MEDIA_ITEMS_PER_REVIEW).map(mediaItem => ({
+      ...mediaItem,
+      // Keep only essential media metadata, remove actual URIs for security
+      uri: mediaItem.type === 'image' ? '[Image]' : mediaItem.type === 'video' ? '[Video]' : mediaItem.uri,
+      thumbnailUri: undefined,
+    })) : [],
+    // Remove sensitive social media information
+    socialMedia: undefined,
+    // Keep essential review data but limit text length
+    reviewText: review.reviewText ? review.reviewText.substring(0, 200) + (review.reviewText.length > 200 ? '...' : '') : review.reviewText,
+  }));
+};
+
 interface ReviewsState {
   reviews: Review[];
   isLoading: boolean;
@@ -598,11 +626,41 @@ const useReviewsStore = create<ReviewsStore>()(
     {
       name: "reviews-storage",
       storage: createJSONStorage(() => AsyncStorage),
-      // Only persist reviews and filters, not loading states
+      // Only persist sanitized reviews and filters, not loading states
       partialize: (state) => ({
-        reviews: state.reviews,
+        reviews: sanitizeReviewsForPersistence(state.reviews),
         filters: state.filters,
       }),
+      // Add version for future migrations
+      version: 1,
+      migrate: (persistedState: any, _version: number) => {
+        try {
+          const ps = persistedState || {};
+          return {
+            reviews: Array.isArray(ps.reviews) ? ps.reviews : [],
+            filters: ps.filters ?? { category: "all", radius: 50, sortBy: "recent" },
+          };
+        } catch {
+          return { reviews: [], filters: { category: "all", radius: 50, sortBy: "recent" } };
+        }
+      },
+      // Add data cleanup on hydration
+      onRehydrateStorage: () => (state) => {
+        if (state && state.reviews) {
+          // Clean up old persisted reviews periodically
+          const now = Date.now();
+          const oneMonthAgo = now - 30 * 24 * 60 * 60 * 1000;
+
+          // Remove reviews older than a month
+          state.reviews = state.reviews.filter((review) => {
+            return new Date(review.createdAt).getTime() > oneMonthAgo;
+          });
+
+          if (__DEV__) {
+            console.log("🧹 Reviews store: Cleaned up old persisted data");
+          }
+        }
+      },
     },
   ),
 );

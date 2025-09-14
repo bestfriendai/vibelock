@@ -7,6 +7,42 @@ import { User } from "../types";
 import { supabaseAuth, supabaseUsers } from "../services/supabase";
 import { AppError, ErrorType, parseSupabaseError } from "../utils/errorHandling";
 
+// Cleanup tracker for auth listeners
+let authCleanupTracker: {
+  cleanupFunctions: Set<() => void>;
+  isCleaningUp: boolean;
+  addCleanup: (fn: () => void) => void;
+  executeCleanup: () => void;
+} = {
+  cleanupFunctions: new Set(),
+  isCleaningUp: false,
+  addCleanup(fn: () => void) {
+    this.cleanupFunctions.add(fn);
+    if (__DEV__) {
+      console.log(`🧹 Added auth cleanup function. Total: ${this.cleanupFunctions.size}`);
+    }
+  },
+  executeCleanup() {
+    if (this.isCleaningUp) return;
+    this.isCleaningUp = true;
+
+    if (__DEV__) {
+      console.log(`🧹 Executing ${this.cleanupFunctions.size} auth cleanup functions`);
+    }
+
+    this.cleanupFunctions.forEach(fn => {
+      try {
+        fn();
+      } catch (error) {
+        console.warn("Auth cleanup function failed:", error);
+      }
+    });
+
+    this.cleanupFunctions.clear();
+    this.isCleaningUp = false;
+  }
+};
+
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
@@ -38,7 +74,28 @@ interface AuthActions {
     institutionType?: string;
   }) => Promise<void>;
   initializeAuthListener: () => () => void;
+  // Memory leak prevention
+  executeCleanup: () => void;
 }
+
+// Sanitize user data for persistence - remove sensitive information
+const sanitizeUserForPersistence = (user: User | null): User | null => {
+  if (!user) return null;
+
+  return {
+    ...user,
+    // Remove or hash sensitive data (keep type as string)
+    email: user.email ? `${user.email.substring(0, 3)}***@${user.email.split('@')[1]}` : user.email,
+    // Reduce precision of coordinates for privacy
+    location: user.location ? {
+      ...user.location,
+      coordinates: user.location.coordinates ? {
+        latitude: Math.round(user.location.coordinates.latitude * 100) / 100, // 2 decimal places
+        longitude: Math.round(user.location.coordinates.longitude * 100) / 100,
+      } : undefined,
+    } : user.location,
+  };
+};
 
 type AuthStore = AuthState & AuthActions;
 
@@ -103,10 +160,10 @@ const useAuthStore = create<AuthStore>()(
 
           // Validate inputs
           if (!email?.trim()) {
-            throw new Error("Email is required");
+            throw new AppError("Email is required", ErrorType.VALIDATION, "EMAIL_REQUIRED");
           }
           if (!password?.trim()) {
-            throw new Error("Password is required");
+            throw new AppError("Password is required", ErrorType.VALIDATION, "PASSWORD_REQUIRED");
           }
 
           // Sanitize email for safety (remove hidden chars, lowercase)
@@ -145,15 +202,10 @@ const useAuthStore = create<AuthStore>()(
           }));
         } catch (error) {
           console.warn("Login error:", error);
-
-          // Extract user-friendly error message
-          let errorMessage = "Failed to sign in. Please try again.";
-          if (error instanceof Error && error.message) {
-            errorMessage = error.message;
-          }
+          const appError = error instanceof AppError ? error : parseSupabaseError(error);
 
           // Show specific error dialog
-          Alert.alert("Sign In Failed", errorMessage, [{ text: "OK", style: "default" }]);
+          Alert.alert("Sign In Failed", appError.userMessage, [{ text: "OK", style: "default" }]);
 
           set((state) => ({
             ...state,
@@ -169,15 +221,15 @@ const useAuthStore = create<AuthStore>()(
         try {
           set((state) => ({ ...state, isLoading: true, error: null }));
 
-          // Validate inputs
+          // Validate inputs with AppError
           if (!email?.trim()) {
-            throw new Error("Email is required");
+            throw new AppError("Email is required", ErrorType.VALIDATION, "EMAIL_REQUIRED");
           }
           if (!password?.trim()) {
-            throw new Error("Password is required");
+            throw new AppError("Password is required", ErrorType.VALIDATION, "PASSWORD_REQUIRED");
           }
           if (password.length < 6) {
-            throw new Error("Password must be at least 6 characters long");
+            throw new AppError("Password must be at least 6 characters long", ErrorType.VALIDATION, "PASSWORD_TOO_SHORT");
           }
 
           // Sanitize email for safety (remove hidden chars, lowercase)
@@ -211,15 +263,10 @@ const useAuthStore = create<AuthStore>()(
           }));
         } catch (error) {
           console.warn("Registration error:", error);
-
-          // Extract user-friendly error message
-          let errorMessage = "Failed to create account. Please try again.";
-          if (error instanceof Error && error.message) {
-            errorMessage = error.message;
-          }
+          const appError = error instanceof AppError ? error : parseSupabaseError(error);
 
           // Show specific error dialog
-          Alert.alert("Registration Failed", errorMessage, [{ text: "OK", style: "default" }]);
+          Alert.alert("Registration Failed", appError.userMessage, [{ text: "OK", style: "default" }]);
 
           set((state) => ({
             ...state,
@@ -235,6 +282,9 @@ const useAuthStore = create<AuthStore>()(
         try {
           set({ isLoading: true });
 
+          // Execute cleanup before logout
+          authCleanupTracker.executeCleanup();
+
           // Sign out from Supabase
           await supabaseAuth.signOut();
 
@@ -246,11 +296,16 @@ const useAuthStore = create<AuthStore>()(
             error: null,
           });
         } catch (error) {
+          const appError = error instanceof AppError ? error : parseSupabaseError(error);
           set({
-            error: error instanceof Error ? error.message : "Logout failed",
+            error: appError.userMessage,
             isLoading: false,
           });
         }
+      },
+
+      executeCleanup: () => {
+        authCleanupTracker.executeCleanup();
       },
 
       updateUserLocation: async (location) => {
@@ -480,8 +535,8 @@ const useAuthStore = create<AuthStore>()(
 
         authSubscription = subscription;
 
-        // Return unsubscribe function
-        return () => {
+        // Return unsubscribe function with enhanced cleanup tracking
+        const cleanup = () => {
           console.log("🧹 Cleaning up auth listener");
           if (authChangeTimeout) {
             clearTimeout(authChangeTimeout);
@@ -493,18 +548,42 @@ const useAuthStore = create<AuthStore>()(
           }
           isProcessingAuthChange = false;
           isInitializing = false;
+
+          if (__DEV__) {
+            console.log("✅ Auth listener cleanup completed");
+          }
         };
+
+        // Register cleanup function with tracker
+        authCleanupTracker.addCleanup(cleanup);
+
+        return cleanup;
       },
     }),
     {
       name: "auth-storage",
       storage: createJSONStorage(() => AsyncStorage),
-      // Only persist user data, not loading states
+      // Only persist sanitized user data, not loading states
       partialize: (state) => ({
-        user: state.user,
+        user: sanitizeUserForPersistence(state.user),
         isAuthenticated: state.isAuthenticated,
         isGuestMode: state.isGuestMode,
       }),
+      // Add version for future migrations
+      version: 1,
+      // Graceful no-op migration to avoid LogBox error when version changes
+      migrate: (persistedState: any, _version: number) => {
+        try {
+          const ps = persistedState || {};
+          return {
+            user: ps.user ?? null,
+            isAuthenticated: !!ps.isAuthenticated,
+            isGuestMode: !!ps.isGuestMode,
+          };
+        } catch {
+          return { user: null, isAuthenticated: false, isGuestMode: false };
+        }
+      },
     },
   ),
 );

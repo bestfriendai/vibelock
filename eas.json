@@ -47,7 +47,8 @@
         "appleId": "trappat@gmail.com"
       },
       "android": {
-        "serviceAccountKeyPath": "./path/to/service-account-key.json",
+        // Upload your service account key using: eas secret:create --scope project --name GOOGLE_SERVICE_ACCOUNT_KEY --type file --value ./path/to/your-service-account-key.json
+        "serviceAccountKeyPath": "GOOGLE_SERVICE_ACCOUNT_KEY",
         "track": "production"
       }
     }

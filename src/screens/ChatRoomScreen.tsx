@@ -71,6 +71,23 @@ export default function ChatRoomScreen() {
   const [selectedMessage, setSelectedMessage] = useState<ChatMessage | null>(null);
   const [isActionsModalVisible, setIsActionsModalVisible] = useState(false);
   const { isOnline } = useOffline();
+  const hasAutoScrolledRef = useRef(false);
+
+  const scrollToBottom = (animated: boolean = true) => {
+    const ref: any = listRef.current;
+    if (!ref || roomMessages.length === 0) return;
+    try {
+      if (typeof ref.scrollToIndex === "function") {
+        ref.scrollToIndex({ index: Math.max(0, roomMessages.length - 1), animated });
+        return;
+      }
+    } catch {}
+    try {
+      if (typeof ref.scrollToOffset === "function") {
+        ref.scrollToOffset({ offset: Number.MAX_SAFE_INTEGER, animated });
+      }
+    } catch {}
+  };
 
   useEffect(() => {
     if (canAccessChat && !needsSignIn && user) {
@@ -130,8 +147,17 @@ export default function ChatRoomScreen() {
     );
   }
 
+  // Store now guarantees ascending (oldest -> newest)
   const roomMessages = messages[roomId] || [];
   const roomMembers = members[roomId] || [];
+
+  // Ensure we start at the bottom (newest message visible) once on initial load
+  useEffect(() => {
+    if (!hasAutoScrolledRef.current && roomMessages.length > 0 && listRef.current) {
+      scrollToBottom(false);
+      hasAutoScrolledRef.current = true;
+    }
+  }, [roomMessages.length]);
 
   const onSend = (text: string) => {
     sendMessage(roomId, text, replyingTo?.id);
@@ -142,15 +168,10 @@ export default function ChatRoomScreen() {
       clearTimeout(scrollTimeoutRef.current);
     }
 
-    // Scroll to bottom for newest message with inverted list
+    // Scroll to bottom so newest message remains visible
     scrollTimeoutRef.current = setTimeout(() => {
       if (mountedRef.current && listRef.current) {
-        try {
-          listRef.current.scrollToOffset({ offset: 0, animated: true });
-        } catch (e) {
-          // Fallback if needed
-          (listRef.current as any)?.scrollToEnd?.({ animated: true });
-        }
+        scrollToBottom(true);
       }
       scrollTimeoutRef.current = null;
     }, 100);
@@ -206,29 +227,7 @@ export default function ChatRoomScreen() {
   return (
     <SafeAreaView className="flex-1" style={{ backgroundColor: colors.background }}>
       <View className="flex-1">
-        {/* Simple iMessage-style header */}
-        <View
-          className="px-4 py-2 border-b"
-          style={{
-            backgroundColor: colors.surface[800],
-            borderColor: colors.border.default,
-          }}
-        >
-          <View className="flex-row items-center justify-between">
-            <Pressable
-              onPress={() => (navigation.canGoBack() ? navigation.goBack() : navigation.navigate("MainTabs"))}
-              className="mr-3"
-            >
-              <Ionicons name="chevron-back" size={24} color={colors.brand.red} />
-            </Pressable>
-            <View className="flex-1">
-              <Text className="text-lg font-semibold text-center" style={{ color: colors.text.primary }}>
-                {currentChatRoom?.name || "Anonymous Chat"}
-              </Text>
-            </View>
-            <View className="w-6" />
-          </View>
-        </View>
+        {/* Navigation header already shows "Chat". Remove in-screen title. */}
 
         {/* Smart Chat Features */}
         <SmartChatFeatures
@@ -246,8 +245,7 @@ export default function ChatRoomScreen() {
 
         <FlashListAny
           ref={listRef}
-          // Invert the list so newest messages appear at bottom (like modern chat apps)
-          inverted={true}
+          // Normal list with oldest->newest; anchor at bottom
           data={roomMessages}
           keyExtractor={(item: ChatMessage) => item.id}
           renderItem={({ item, index }: { item: ChatMessage; index: number }) => {
@@ -258,9 +256,13 @@ export default function ChatRoomScreen() {
               <EnhancedMessageBubble
                 message={item}
                 isOwn={item.senderId === user.id}
-                // With newest-first data and inverted list, chronological previous = index + 1
-                previousMessage={index < roomMessages.length - 1 ? roomMessages[index + 1] : undefined}
-                nextMessage={index > 0 ? roomMessages[index - 1] : undefined}
+                // With oldest-first data, chronological previous = index - 1
+                previousMessage={index > 0 ? roomMessages[index - 1] : undefined}
+                nextMessage={
+                  index < roomMessages.length - 1
+                    ? roomMessages[index + 1]
+                    : undefined
+                }
                 reactions={item.reactions}
                 onReply={handleReply}
                 onReact={handleReact}
@@ -271,14 +273,16 @@ export default function ChatRoomScreen() {
           }}
           contentContainerStyle={{
             paddingHorizontal: 16,
-            paddingTop: 4, // Reduced top padding
-            paddingBottom: 16, // Bottom padding for messages
+            paddingTop: 8,
+            paddingBottom: 16,
             backgroundColor: colors.background,
           }}
           estimatedItemSize={72}
           showsVerticalScrollIndicator={false}
-          // For inverted lists, use ListFooterComponent to render at visual top
-          ListFooterComponent={
+          // Keep bottom anchored when new messages arrive
+          maintainVisibleContentPosition={{ minIndexForVisible: 1, autoscrollToTopThreshold: 20 }}
+          // Show "Load older" at the top for normal list
+          ListHeaderComponent={
             roomMessages.length > 0 ? (
               <View className="items-center py-1">
                 <Pressable

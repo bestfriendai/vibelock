@@ -12,6 +12,38 @@ import { useTheme } from "../providers/ThemeProvider";
 import { validateSearchQuery, searchLimiter } from "../utils/inputValidation";
 import EmptyState from "../components/EmptyState";
 import { STRINGS } from "../constants/strings";
+import { AppError, parseSupabaseError } from "../utils/errorHandling";
+
+// Constants for secure search history
+const MAX_SEARCH_HISTORY_ITEMS = 10;
+const SEARCH_HISTORY_EXPIRY = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+// Sanitize search query for storage - remove sensitive patterns
+const sanitizeSearchQuery = (query: string): string => {
+  if (!query || typeof query !== 'string') return '';
+
+  // Remove potentially sensitive patterns
+  const sanitized = query
+    .replace(/\b\d{3}-\d{2}-\d{4}\b/g, '[SSN]') // SSN patterns
+    .replace(/\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b/g, '[CARD]') // Credit card patterns
+    .replace(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g, '[EMAIL]') // Email patterns
+    .replace(/\b\d{3}[\s-]?\d{3}[\s-]?\d{4}\b/g, '[PHONE]') // Phone patterns
+    .trim()
+    .substring(0, 50); // Limit length
+
+  return sanitized;
+};
+
+// Validate search history item
+const isValidSearchHistoryItem = (item: any): boolean => {
+  if (typeof item !== 'object' || !item) return false;
+  if (typeof item.query !== 'string' || !item.query.trim()) return false;
+  if (typeof item.timestamp !== 'number' || item.timestamp <= 0) return false;
+
+  // Check if item is not expired
+  const now = Date.now();
+  return (now - item.timestamp) < SEARCH_HISTORY_EXPIRY;
+};
 
 // Debounce utility
 const debounce = (func: Function, delay: number) => {
@@ -57,26 +89,65 @@ export default function SearchScreen({ navigation, route }: Props) {
 
   const loadSearchHistory = async () => {
     try {
-      const history = await AsyncStorage.getItem("search_history");
-      if (history) {
-        setSearchHistory(JSON.parse(history));
+      const historyData = await AsyncStorage.getItem("search_history");
+      if (historyData) {
+        const parsedHistory = JSON.parse(historyData);
+
+        // Validate and filter history items
+        const validHistory = Array.isArray(parsedHistory)
+          ? parsedHistory.filter(isValidSearchHistoryItem).map(item => item.query)
+          : [];
+
+        setSearchHistory(validHistory);
+
+        // Clean up expired items
+        if (validHistory.length !== parsedHistory.length) {
+          await AsyncStorage.setItem("search_history", JSON.stringify(
+            validHistory.map(query => ({
+              query: sanitizeSearchQuery(query),
+              timestamp: Date.now()
+            }))
+          ));
+        }
       }
     } catch (error) {
       console.warn("Failed to load search history:", error);
+      // Clear corrupted data
+      try {
+        await AsyncStorage.removeItem("search_history");
+      } catch (clearError) {
+        console.warn("Failed to clear corrupted search history:", clearError);
+      }
     }
   };
 
   const saveToSearchHistory = async (query: string) => {
     try {
-      const trimmedQuery = query.trim();
-      if (trimmedQuery.length < 2) return;
+      const sanitizedQuery = sanitizeSearchQuery(query);
+      if (sanitizedQuery.length < 2) return;
 
-      const updatedHistory = [trimmedQuery, ...searchHistory.filter((item) => item !== trimmedQuery)].slice(0, 10); // Keep only last 10 searches
+      // Create history item with timestamp
+      const historyItem = {
+        query: sanitizedQuery,
+        timestamp: Date.now()
+      };
+
+      // Update local state
+      const updatedHistory = [sanitizedQuery, ...searchHistory.filter((item) => item !== sanitizedQuery)]
+        .slice(0, MAX_SEARCH_HISTORY_ITEMS);
 
       setSearchHistory(updatedHistory);
-      await AsyncStorage.setItem("search_history", JSON.stringify(updatedHistory));
+
+      // Save to storage with metadata
+      const historyWithMetadata = updatedHistory.map(q => ({
+        query: q,
+        timestamp: q === sanitizedQuery ? Date.now() : Date.now() - 1000 // Slight offset for existing items
+      }));
+
+      await AsyncStorage.setItem("search_history", JSON.stringify(historyWithMetadata));
     } catch (error) {
-      console.warn("Failed to save search history:", error);
+      const appError = error instanceof AppError ? error : parseSupabaseError(error);
+      console.warn("Failed to save search history:", appError.userMessage);
     }
   };
 
@@ -84,8 +155,13 @@ export default function SearchScreen({ navigation, route }: Props) {
     try {
       setSearchHistory([]);
       await AsyncStorage.removeItem("search_history");
+
+      if (__DEV__) {
+        console.log("🧹 Search history cleared");
+      }
     } catch (error) {
-      console.warn("Failed to clear search history:", error);
+      const appError = error instanceof AppError ? error : parseSupabaseError(error);
+      console.warn("Failed to clear search history:", appError.userMessage);
     }
   };
 
@@ -165,7 +241,8 @@ export default function SearchScreen({ navigation, route }: Props) {
       }
     } catch (e) {
       console.warn("Search failed:", e);
-      setSearchError("Search failed. Please check your connection and try again.");
+      const appError = e instanceof AppError ? e : parseSupabaseError(e);
+      setSearchError(appError.userMessage || "Search failed. Please check your connection and try again.");
       setContentResults({ reviews: [], comments: [], messages: [] });
     } finally {
       setIsSearching(false);

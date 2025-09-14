@@ -12,6 +12,58 @@ import { notificationService } from "../services/notificationService";
 import { storageService } from "../services/storageService";
 import NetInfo from "@react-native-community/netinfo";
 
+// Constants for data limits
+const MAX_PERSISTED_MESSAGES_PER_ROOM = 50;
+const MAX_PERSISTED_MEMBERS_PER_ROOM = 100;
+
+// Sanitize messages for persistence - remove sensitive content
+const sanitizeMessagesForPersistence = (messages: { [roomId: string]: ChatMessage[] }): { [roomId: string]: ChatMessage[] } => {
+  const sanitized: { [roomId: string]: ChatMessage[] } = {};
+
+  Object.entries(messages).forEach(([roomId, roomMessages]) => {
+    // Limit number of messages per room
+    const limitedMessages = roomMessages.slice(0, MAX_PERSISTED_MESSAGES_PER_ROOM);
+
+    sanitized[roomId] = limitedMessages.map(msg => ({
+      ...msg,
+      // Remove sensitive media URIs
+      audioUri: undefined,
+      imageUri: undefined,
+      videoUri: undefined,
+      // Keep only essential metadata
+      content: msg.messageType === 'text' ? msg.content.substring(0, 100) : '[Media]',
+      // Anonymize sender info
+      senderName: msg.senderName ? msg.senderName.substring(0, 1) + '***' : 'Anonymous',
+    }));
+  });
+
+  return sanitized;
+};
+
+// Sanitize members for persistence - remove detailed member information
+const sanitizeMembersForPersistence = (members: { [roomId: string]: ChatMember[] }): { [roomId: string]: ChatMember[] } => {
+  const sanitized: { [roomId: string]: ChatMember[] } = {};
+
+  Object.entries(members).forEach(([roomId, roomMembers]) => {
+    // Limit number of members per room
+    const limitedMembers = roomMembers.slice(0, MAX_PERSISTED_MEMBERS_PER_ROOM);
+
+    sanitized[roomId] = limitedMembers.map(member => ({
+      ...member,
+      // Remove sensitive member data - use userName field
+      userName: member.userName ? member.userName.substring(0, 1) + '***' : 'Anonymous',
+      userAvatar: undefined, // Remove avatar URLs
+      // Keep only essential fields
+      userId: member.userId,
+      chatRoomId: member.chatRoomId,
+      joinedAt: member.joinedAt,
+      isOnline: false, // Don't persist online status
+    }));
+  });
+
+  return sanitized;
+};
+
 interface ChatActions {
   // Connection management
   connect: (userId: string) => void;
@@ -244,17 +296,15 @@ const useChatStore = create<ChatStore>()(
                 let allMessages: ChatMessage[];
 
                 if (isInitialLoad) {
-                  // For initial load, replace all messages
+                  // Service now returns ascending (oldest->newest)
                   allMessages = [...newMessages];
                 } else {
-                  // For new messages, trust the service's deduplication
+                  // Merge new messages into existing (keep ascending order)
                   const existingMessages = state.messages[roomId] || [];
                   allMessages = [...existingMessages];
 
                   newMessages.forEach((newMsg: any) => {
                     if (newMsg.isReplacement) {
-                      // This is a real message replacing an optimistic one
-                      // Find and replace the optimistic message
                       const optimisticPrefix = "optimistic_";
                       const optimisticIndex = allMessages.findIndex(
                         (msg) =>
@@ -265,16 +315,13 @@ const useChatStore = create<ChatStore>()(
 
                       if (optimisticIndex !== -1) {
                         allMessages[optimisticIndex] = { ...newMsg, status: newMsg.isRead ? "read" : "sent" } as any;
-                        console.log(`✅ Replaced optimistic message with real message`);
                       } else {
-                        // Couldn't find optimistic message, just add the new one
                         const isDuplicate = allMessages.some((msg) => msg.id === newMsg.id);
                         if (!isDuplicate) {
                           allMessages.push({ ...newMsg, status: newMsg.isRead ? "read" : "sent" } as any);
                         }
                       }
                     } else {
-                      // Update existing by ID if present, else append
                       const existingIndex = allMessages.findIndex((m) => m.id === newMsg.id);
                       if (existingIndex !== -1) {
                         allMessages[existingIndex] = { ...allMessages[existingIndex], ...newMsg } as any;
@@ -285,10 +332,9 @@ const useChatStore = create<ChatStore>()(
                   });
                 }
 
-                // Sort messages newest-first for consistent display
-                // Only sort if we actually modified the array
+                // Keep ascending order for display (oldest->newest)
                 if (isInitialLoad || newMessages.length > 0) {
-                  allMessages.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+                  allMessages.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
                 }
 
                 return {
@@ -460,8 +506,8 @@ const useChatStore = create<ChatStore>()(
           // Add message and sort only if needed
           const updatedMessages = [...roomMessages, message];
 
-          // Sort newest-first for consistent display
-          updatedMessages.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+          // Keep ascending order (oldest -> newest)
+          updatedMessages.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 
           return {
             messages: {
@@ -662,25 +708,19 @@ const useChatStore = create<ChatStore>()(
             return;
           }
 
-          // Get the oldest message timestamp for cursor-based pagination
-          const oldestMessage = currentMessages[currentMessages.length - 1]!; // Last in newest-first array
+          // Get the oldest loaded message (ascending array => index 0)
+          const oldestMessage = currentMessages[0]!;
           const cursor = oldestMessage.timestamp.toISOString();
 
           // Load older messages using enhanced service with cursor
           const olderMessages = await enhancedRealtimeChatService.loadOlderMessages(roomId, cursor, 20);
 
           if (olderMessages.length > 0) {
-            // Efficient merge with Map for deduplication
-            const messageMap = new Map(currentMessages.map((msg) => [msg.id, msg]));
-            olderMessages.forEach((msg) => {
-              if (!messageMap.has(msg.id)) {
-                messageMap.set(msg.id, msg);
-              }
-            });
-
-            // Convert back to array and sort newest-first
+            // Prepend older messages and keep ascending order
+            const combined = [...olderMessages, ...currentMessages];
+            const messageMap = new Map(combined.map((msg) => [msg.id, msg]));
             const uniqueMessages = Array.from(messageMap.values()).sort(
-              (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+              (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
             );
 
             set((state) => ({
@@ -831,13 +871,49 @@ const useChatStore = create<ChatStore>()(
     {
       name: "chat-storage",
       storage: createJSONStorage(() => AsyncStorage),
-      // Only persist essential data, not real-time state
+      // Only persist sanitized essential data, not real-time state
       partialize: (state) => ({
         chatRooms: state.chatRooms,
-        messages: state.messages,
-        members: state.members,
+        messages: sanitizeMessagesForPersistence(state.messages),
+        members: sanitizeMembersForPersistence(state.members),
         roomCategoryFilter: (state as any).roomCategoryFilter,
       }),
+      // Add version for future migrations
+      version: 1,
+      migrate: (persistedState: any, _version: number) => {
+        try {
+          const ps = persistedState || {};
+          return {
+            chatRooms: Array.isArray(ps.chatRooms) ? ps.chatRooms : [],
+            messages: ps.messages ?? {},
+            members: ps.members ?? {},
+            roomCategoryFilter: ps.roomCategoryFilter ?? "all",
+          };
+        } catch {
+          return { chatRooms: [], messages: {}, members: {}, roomCategoryFilter: "all" };
+        }
+      },
+      // Add data cleanup on hydration
+      onRehydrateStorage: () => (state) => {
+        if (state && state.messages) {
+          // Clean up old persisted data periodically
+          const now = Date.now();
+          const oneWeekAgo = now - 7 * 24 * 60 * 60 * 1000;
+
+          // Remove messages older than a week
+          Object.keys(state.messages).forEach((roomId) => {
+            if (state.messages[roomId]) {
+              state.messages[roomId] = state.messages[roomId].filter((msg) => {
+                return new Date(msg.timestamp).getTime() > oneWeekAgo;
+              });
+            }
+          });
+
+          if (__DEV__) {
+            console.log("🧹 Chat store: Cleaned up old persisted data");
+          }
+        }
+      },
     },
   ),
 );

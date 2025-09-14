@@ -34,8 +34,8 @@ import LocationSettingsScreen from "../screens/LocationSettingsScreen";
 // Import stores
 import useAuthStore from "../state/authStore";
 
-// Wrapper component for ChatRoomScreen with error boundary
-const ChatRoomScreenWithErrorBoundary = (props: any) => (
+// Stable wrapper components to prevent unnecessary re-renders
+const ChatRoomScreenWithErrorBoundary = React.memo((props: any) => (
   <ErrorBoundary
     fallback={
       <SafeAreaView className="flex-1 bg-surface-900 justify-center items-center px-6">
@@ -51,7 +51,38 @@ const ChatRoomScreenWithErrorBoundary = (props: any) => (
   >
     <ChatRoomScreen {...props} />
   </ErrorBoundary>
-);
+));
+
+// Stable screen wrapper components
+const BrowseScreenWrapper = React.memo((props: any) => (
+  <ScreenErrorBoundary screenName="Browse">
+    <BrowseScreen {...props} />
+  </ScreenErrorBoundary>
+));
+
+const SearchScreenWrapper = React.memo((props: any) => (
+  <ScreenErrorBoundary screenName="Search">
+    <SearchScreen {...props} />
+  </ScreenErrorBoundary>
+));
+
+const ReviewDetailScreenWrapper = React.memo(() => (
+  <ScreenErrorBoundary screenName="Review Detail">
+    <ReviewDetailScreen />
+  </ScreenErrorBoundary>
+));
+
+const CreateReviewScreenWrapper = React.memo(() => (
+  <ScreenErrorBoundary screenName="Create Review">
+    <CreateReviewScreen />
+  </ScreenErrorBoundary>
+));
+
+const PersonProfileScreenWrapper = React.memo(() => (
+  <ScreenErrorBoundary screenName="Profile">
+    <PersonProfileScreen />
+  </ScreenErrorBoundary>
+));
 
 // Types for navigation - using serialized versions for React Navigation
 type SerializedReview = Omit<import("../types").Review, "createdAt" | "updatedAt"> & {
@@ -194,26 +225,15 @@ function BrowseStackNavigator() {
         headerShown: false,
       }}
     >
-      <BrowseStack.Screen name="Browse">
-        {(props) => (
-          <ScreenErrorBoundary screenName="Browse">
-            <BrowseScreen {...props} />
-          </ScreenErrorBoundary>
-        )}
-      </BrowseStack.Screen>
+      <BrowseStack.Screen name="Browse" component={BrowseScreenWrapper} />
       <BrowseStack.Screen
         name="ReviewDetail"
+        component={ReviewDetailScreenWrapper}
         options={{
           ...standardHeader,
           headerTitle: "Review",
         }}
-      >
-        {() => (
-          <ScreenErrorBoundary screenName="Review Detail">
-            <ReviewDetailScreen />
-          </ScreenErrorBoundary>
-        )}
-      </BrowseStack.Screen>
+      />
     </BrowseStack.Navigator>
   );
 }
@@ -226,26 +246,15 @@ function SearchStackNavigator() {
         headerShown: false,
       }}
     >
-      <SearchStack.Screen name="Search">
-        {(props) => (
-          <ScreenErrorBoundary screenName="Search">
-            <SearchScreen {...props} />
-          </ScreenErrorBoundary>
-        )}
-      </SearchStack.Screen>
+      <SearchStack.Screen name="Search" component={SearchScreenWrapper} />
       <SearchStack.Screen
         name="ReviewDetail"
+        component={ReviewDetailScreenWrapper}
         options={{
           ...standardHeader,
           headerTitle: "Review",
         }}
-      >
-        {() => (
-          <ScreenErrorBoundary screenName="Review Detail">
-            <ReviewDetailScreen />
-          </ScreenErrorBoundary>
-        )}
-      </SearchStack.Screen>
+      />
     </SearchStack.Navigator>
   );
 }
@@ -436,32 +445,22 @@ export default function AppNavigator() {
           <Stack.Screen name="MainTabs" component={TabNavigator} />
           <Stack.Screen
             name="CreateReview"
+            component={CreateReviewScreenWrapper}
             options={{
               presentation: "modal",
               ...standardHeader,
               headerTitle: "Write Review",
             }}
-          >
-            {() => (
-              <ScreenErrorBoundary screenName="Create Review">
-                <CreateReviewScreen />
-              </ScreenErrorBoundary>
-            )}
-          </Stack.Screen>
+          />
           <Stack.Screen
             name="PersonProfile"
+            component={PersonProfileScreenWrapper}
             options={{
               presentation: "modal",
               ...standardHeader,
               headerTitle: "Profile",
             }}
-          >
-            {() => (
-              <ScreenErrorBoundary screenName="Profile">
-                <PersonProfileScreen />
-              </ScreenErrorBoundary>
-            )}
-          </Stack.Screen>
+          />
           <Stack.Screen
             name="ChatRoom"
             component={ChatRoomScreenWithErrorBoundary}

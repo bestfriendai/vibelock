@@ -8,6 +8,33 @@ import { RealtimeChannel } from "@supabase/supabase-js";
 import { notificationService } from "../services/notificationService";
 import useAuthStore from "./authStore";
 import { requireAuthentication, getUserDisplayName } from "../utils/authUtils";
+import { AppError, parseSupabaseError } from "../utils/errorHandling";
+
+// Constants for data limits
+const MAX_PERSISTED_COMMENTS_PER_REVIEW = 20;
+
+// Sanitize comments for persistence - remove sensitive content
+const sanitizeCommentsForPersistence = (comments: { [reviewId: string]: Comment[] }): { [reviewId: string]: Comment[] } => {
+  const sanitized: { [reviewId: string]: Comment[] } = {};
+
+  Object.entries(comments).forEach(([reviewId, reviewComments]) => {
+    // Limit number of comments per review
+    const limitedComments = reviewComments.slice(0, MAX_PERSISTED_COMMENTS_PER_REVIEW);
+
+    sanitized[reviewId] = limitedComments.map(comment => ({
+      ...comment,
+      // Anonymize author information
+      authorName: comment.authorName ? comment.authorName.substring(0, 1) + '***' : 'Anonymous',
+      authorId: comment.authorId ? 'anon_' + comment.authorId.substring(0, 8) : 'anonymous',
+      // Limit content length
+      content: comment.content ? comment.content.substring(0, 100) + (comment.content.length > 100 ? '...' : '') : comment.content,
+      // Remove media references
+      mediaId: undefined,
+    }));
+  });
+
+  return sanitized;
+};
 
 interface CommentsStore extends CommentState {
   // Actions
@@ -58,8 +85,9 @@ const useCommentsStore = create<CommentsStore>()(
               isLoading: false,
             }));
           } catch (error) {
+            const appError = error instanceof AppError ? error : parseSupabaseError(error);
             set({
-              error: error instanceof Error ? error.message : "Failed to load comments",
+              error: appError.userMessage,
               isLoading: false,
             });
           }
@@ -163,8 +191,9 @@ const useCommentsStore = create<CommentsStore>()(
               }));
             }
           } catch (error) {
+            const appError = error instanceof AppError ? error : parseSupabaseError(error);
             set({
-              error: error instanceof Error ? error.message : "Failed to create comment",
+              error: appError.userMessage,
               isPosting: false,
             });
           }
@@ -206,8 +235,9 @@ const useCommentsStore = create<CommentsStore>()(
               });
             }
           } catch (error) {
+            const appError = error instanceof AppError ? error : parseSupabaseError(error);
             set({
-              error: error instanceof Error ? error.message : "Failed to like comment",
+              error: appError.userMessage,
             });
           }
         },
@@ -248,8 +278,9 @@ const useCommentsStore = create<CommentsStore>()(
               });
             }
           } catch (error) {
+            const appError = error instanceof AppError ? error : parseSupabaseError(error);
             set({
-              error: error instanceof Error ? error.message : "Failed to dislike comment",
+              error: appError.userMessage,
             });
           }
         },
@@ -267,8 +298,9 @@ const useCommentsStore = create<CommentsStore>()(
             // Delete from Supabase
             await supabaseComments.deleteComment(commentId);
           } catch (error) {
+            const appError = error instanceof AppError ? error : parseSupabaseError(error);
             set({
-              error: error instanceof Error ? error.message : "Failed to delete comment",
+              error: appError.userMessage,
             });
             // Could reload comments here to restore state
           }
@@ -378,12 +410,47 @@ const useCommentsStore = create<CommentsStore>()(
     {
       name: "comments-storage",
       storage: createJSONStorage(() => AsyncStorage),
-      // Only persist comments, not loading states
+      // Only persist sanitized comments, not loading states
       partialize: (state) => ({
-        comments: state.comments,
+        comments: sanitizeCommentsForPersistence(state.comments),
         commentThreads: state.commentThreads,
         mediaComments: state.mediaComments,
       }),
+      // Add version for future migrations
+      version: 1,
+      migrate: (persistedState: any, _version: number) => {
+        try {
+          const ps = persistedState || {};
+          return {
+            comments: ps.comments ?? {},
+            commentThreads: ps.commentThreads ?? {},
+            mediaComments: ps.mediaComments ?? {},
+          };
+        } catch {
+          return { comments: {}, commentThreads: {}, mediaComments: {} };
+        }
+      },
+      // Add data cleanup on hydration
+      onRehydrateStorage: () => (state) => {
+        if (state && state.comments) {
+          // Clean up old persisted comments periodically
+          const now = Date.now();
+          const twoWeeksAgo = now - 14 * 24 * 60 * 60 * 1000;
+
+          // Remove comments older than two weeks
+          Object.keys(state.comments).forEach((reviewId) => {
+            if (state.comments[reviewId]) {
+              state.comments[reviewId] = state.comments[reviewId].filter((comment) => {
+                return new Date(comment.createdAt).getTime() > twoWeeksAgo;
+              });
+            }
+          });
+
+          if (__DEV__) {
+            console.log("🧹 Comments store: Cleaned up old persisted data");
+          }
+        }
+      },
     },
   ),
 );

@@ -1,6 +1,33 @@
 import * as Location from "expo-location";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { locationCache } from "./cacheService";
+import { AppError, parseSupabaseError } from "../utils/errorHandling";
+
+// Constants for secure location caching
+const LOCATION_CACHE_EXPIRY = 30 * 60 * 1000; // 30 minutes
+const MAX_CACHED_LOCATIONS = 5;
+
+// Sanitize location data for storage - reduce precision for privacy
+const sanitizeLocationForStorage = (location: LocationData): LocationData => {
+  return {
+    ...location,
+    // Reduce coordinate precision to ~100m accuracy for privacy
+    coordinates: location.coordinates ? {
+      latitude: Math.round(location.coordinates.latitude * 1000) / 1000,
+      longitude: Math.round(location.coordinates.longitude * 1000) / 1000,
+    } : undefined,
+  };
+};
+
+// Validate cached location data
+const isValidCachedLocation = (location: any): boolean => {
+  if (!location || typeof location !== 'object') return false;
+  if (typeof location.city !== 'string' || typeof location.state !== 'string') return false;
+  if (location.coordinates) {
+    if (typeof location.coordinates.latitude !== 'number' || typeof location.coordinates.longitude !== 'number') return false;
+  }
+  return true;
+};
 
 export interface LocationData {
   city: string;
@@ -53,7 +80,8 @@ class LocationService {
       // Strategy 4: Fallback to major cities
       return this.getFallbackLocation();
     } catch (error) {
-      console.warn("Location detection failed:", error);
+      const appError = error instanceof AppError ? error : parseSupabaseError(error);
+      console.warn("Location detection failed:", appError.userMessage);
       return this.getFallbackLocation();
     }
   }
@@ -181,9 +209,10 @@ class LocationService {
         source: "ip",
       };
     } catch (error) {
+      const appError = error instanceof AppError ? error : parseSupabaseError(error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : "IP location failed",
+        error: appError.userMessage,
         source: "ip",
       };
     }
@@ -244,28 +273,76 @@ class LocationService {
   }
 
   /**
-   * Cache location data
+   * Cache location data with sanitization
    */
   private async cacheLocation(location: LocationData): Promise<void> {
     try {
+      // Sanitize location data before caching
+      const sanitizedLocation = sanitizeLocationForStorage(location);
+
       const cacheData = {
-        location,
+        location: sanitizedLocation,
         timestamp: Date.now(),
       };
+
       await AsyncStorage.setItem(LocationService.LOCATION_CACHE_KEY, JSON.stringify(cacheData));
+
+      if (__DEV__) {
+        console.log("📍 Location cached with reduced precision for privacy");
+      }
     } catch (error) {
-      console.warn("Failed to cache location:", error);
+      const appError = error instanceof AppError ? error : parseSupabaseError(error);
+      console.warn("Failed to cache location:", appError.userMessage);
     }
   }
 
   /**
-   * Clear cached location
+   * Clear cached location with cleanup
    */
   async clearCache(): Promise<void> {
     try {
       await AsyncStorage.removeItem(LocationService.LOCATION_CACHE_KEY);
+
+      if (__DEV__) {
+        console.log("🧹 Location cache cleared");
+      }
     } catch (error) {
-      console.warn("Failed to clear location cache:", error);
+      const appError = error instanceof AppError ? error : parseSupabaseError(error);
+      console.warn("Failed to clear location cache:", appError.userMessage);
+    }
+  }
+
+  /**
+   * Cleanup expired location data
+   */
+  async cleanupExpiredCache(): Promise<void> {
+    try {
+      const cacheData = await AsyncStorage.getItem(LocationService.LOCATION_CACHE_KEY);
+      if (!cacheData) return;
+
+      const cache = JSON.parse(cacheData);
+      if (!cache || typeof cache !== 'object') {
+        await AsyncStorage.removeItem(LocationService.LOCATION_CACHE_KEY);
+        return;
+      }
+
+      // Check if cache is expired
+      const now = Date.now();
+      if (cache.timestamp && (now - cache.timestamp) > LocationService.CACHE_DURATION) {
+        await AsyncStorage.removeItem(LocationService.LOCATION_CACHE_KEY);
+
+        if (__DEV__) {
+          console.log("🧹 Expired location cache cleaned up");
+        }
+      }
+    } catch (error) {
+      console.warn("Failed to cleanup location cache:", error);
+      // Clear corrupted cache
+      try {
+        await AsyncStorage.removeItem(LocationService.LOCATION_CACHE_KEY);
+      } catch (clearError) {
+        console.warn("Failed to clear corrupted location cache:", clearError);
+      }
     }
   }
 }

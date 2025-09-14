@@ -18,6 +18,27 @@ class AdMobService {
   private lastAppOpenAdTime = 0;
   private postCreationCount = 0;
   private chatExitCount = 0;
+  private initializationAttempts = 0;
+  private readonly MAX_INITIALIZATION_ATTEMPTS = 3;
+  private readonly INITIALIZATION_DELAY = 1000; // 1 second base delay
+
+  // Enhanced error classification for Expo SDK 54 compatibility
+  private isExpoSDK54CompatibilityError(error: any): boolean {
+    const errorMessage = error?.message?.toLowerCase() || '';
+    return (
+      errorMessage.includes('expo sdk 54') ||
+      errorMessage.includes('module not found') ||
+      errorMessage.includes('native module') ||
+      errorMessage.includes('admob') ||
+      errorMessage.includes('google-mobile-ads') ||
+      errorMessage.includes('react-native-google-mobile-ads')
+    );
+  }
+
+  // Exponential backoff delay calculation
+  private getRetryDelay(attempt: number): number {
+    return this.INITIALIZATION_DELAY * Math.pow(2, attempt);
+  }
 
   async initialize() {
     if (this.initialized) return;
@@ -29,128 +50,265 @@ class AdMobService {
       return;
     }
 
-    try {
-      // Dynamic import for development builds only
-      const mobileAds = (await import("react-native-google-mobile-ads")).default;
-      const { MaxAdContentRating } = await import("react-native-google-mobile-ads");
+    // Enhanced initialization with retry logic and SDK 54 compatibility fixes
+    while (this.initializationAttempts < this.MAX_INITIALIZATION_ATTEMPTS) {
+      try {
+        this.initializationAttempts++;
 
-      await mobileAds().initialize();
+        // Add delay for retry attempts (except first attempt)
+        if (this.initializationAttempts > 1) {
+          const delay = this.getRetryDelay(this.initializationAttempts - 2);
+          console.log(`AdMob: Retrying initialization (attempt ${this.initializationAttempts}/${this.MAX_INITIALIZATION_ATTEMPTS}) after ${delay}ms delay`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
 
-      await mobileAds().setRequestConfiguration({
-        maxAdContentRating: MaxAdContentRating.PG,
-        tagForChildDirectedTreatment: ADMOB_CONFIG.SETTINGS.tagForChildDirectedTreatment,
-        tagForUnderAgeOfConsent: ADMOB_CONFIG.SETTINGS.tagForUnderAgeOfConsent,
-        testDeviceIdentifiers: ADMOB_CONFIG.SETTINGS.testDeviceIdentifiers,
-      });
+        // Dynamic import with enhanced error handling for Expo SDK 54
+        const mobileAds = (await import("react-native-google-mobile-ads")).default;
+        const { MaxAdContentRating } = await import("react-native-google-mobile-ads");
 
-      await this.initializeInterstitialAd();
-      await this.initializeAppOpenAd();
-      this.initialized = true;
-      console.log("AdMob initialized successfully");
-    } catch (error) {
-      console.warn("Failed to initialize AdMob:", error);
-      // Fallback to mock implementation
-      this.initializeMockAds();
-      this.initialized = true;
+        // SDK 54 compatibility: Add initialization delay
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        await mobileAds().initialize();
+
+        // Additional delay after initialization for SDK 54 stability
+        await new Promise(resolve => setTimeout(resolve, 300));
+
+        await mobileAds().setRequestConfiguration({
+          maxAdContentRating: MaxAdContentRating.PG,
+          tagForChildDirectedTreatment: ADMOB_CONFIG.SETTINGS.tagForChildDirectedTreatment,
+          tagForUnderAgeOfConsent: ADMOB_CONFIG.SETTINGS.tagForUnderAgeOfConsent,
+          testDeviceIdentifiers: ADMOB_CONFIG.SETTINGS.testDeviceIdentifiers,
+        });
+
+        await this.initializeInterstitialAd();
+        await this.initializeAppOpenAd();
+        this.initialized = true;
+        console.log(`AdMob: Initialized successfully on attempt ${this.initializationAttempts}`);
+        return;
+      } catch (error) {
+        console.error(`AdMob: Initialization attempt ${this.initializationAttempts} failed:`, error);
+
+        // Check if this is a known Expo SDK 54 compatibility issue
+        if (this.isExpoSDK54CompatibilityError(error)) {
+          console.warn("AdMob: Detected Expo SDK 54 compatibility issue, applying workarounds...");
+
+          // Apply SDK 54 specific workarounds
+          try {
+            // Workaround: Try alternative import strategy with extended delays
+            await new Promise((resolve) => setTimeout(resolve, 2000)); // Extended delay for SDK 54
+
+            const mobileAds = (await import("react-native-google-mobile-ads")).default;
+            await mobileAds().initialize();
+
+            await this.initializeInterstitialAd();
+            await this.initializeAppOpenAd();
+            this.initialized = true;
+            console.log("AdMob: SDK 54 workaround successful");
+            return;
+          } catch (workaroundError) {
+            console.error("AdMob: SDK 54 workaround failed:", workaroundError);
+          }
+        }
+
+        // If this is the last attempt, fall back to mock implementation
+        if (this.initializationAttempts >= this.MAX_INITIALIZATION_ATTEMPTS) {
+          console.warn("AdMob: All initialization attempts failed, falling back to mock implementation");
+          this.initializeMockAds();
+          this.initialized = true;
+          return;
+        }
+      }
     }
   }
 
   private initializeMockAds() {
-    // Create mock interstitial ad for Expo Go
+    // Enhanced mock interstitial ad for Expo Go with better simulation
     this.mockInterstitialAd = {
-      loaded: true,
-      load: () => console.log("Mock: Loading interstitial ad"),
-      show: () => console.log("Mock: Showing interstitial ad"),
+      loaded: false,
+      load: () => {
+        console.log("Mock: Loading interstitial ad");
+        // Simulate realistic loading time
+        setTimeout(
+          () => {
+            this.mockInterstitialAd!.loaded = true;
+            console.log("Mock: Interstitial ad loaded successfully");
+          },
+          Math.random() * 2000 + 500,
+        ); // 500-2500ms loading time
+      },
+      show: () => {
+        console.log("Mock: Showing interstitial ad");
+        // Simulate ad display and reset loaded state
+        this.mockInterstitialAd!.loaded = false;
+        // Auto-reload after showing
+        setTimeout(() => this.mockInterstitialAd!.load(), 1000);
+      },
       addAdEventListener: (event: string, callback: (data?: any) => void) => {
         console.log(`Mock: Added listener for ${event}`);
-        // Simulate loaded event
+        // Simulate various ad events with realistic timing
         if (event === "loaded") {
-          setTimeout(() => callback(), 1000);
+          setTimeout(() => callback(), Math.random() * 2000 + 500);
+        } else if (event === "closed") {
+          setTimeout(() => callback(), 100);
+        } else if (event === "error") {
+          // Occasionally simulate errors for testing
+          if (Math.random() < 0.1) {
+            setTimeout(() => callback({ message: "Mock ad error for testing" }), 1000);
+          }
         }
       },
     };
+
+    // Start initial load
+    this.mockInterstitialAd.load();
   }
 
   private async initializeInterstitialAd() {
     if (!canUseAdMob()) return;
 
-    try {
-      const { InterstitialAd, AdEventType } = await import("react-native-google-mobile-ads");
+    let retryCount = 0;
+    const maxRetries = 2;
 
-      const adUnitId = this.getInterstitialAdUnitId();
+    while (retryCount <= maxRetries) {
+      try {
+        const { InterstitialAd, AdEventType } = await import("react-native-google-mobile-ads");
 
-      if (!adUnitId) {
-        console.warn("Interstitial ad unit ID not configured");
-        return;
-      }
+        const adUnitId = this.getInterstitialAdUnitId();
 
-      this.interstitialAd = InterstitialAd.createForAdRequest(adUnitId);
+        if (!adUnitId) {
+          console.warn("Interstitial ad unit ID not configured");
+          return;
+        }
 
-      this.interstitialAd.addAdEventListener(AdEventType.LOADED, () => {
-        console.log("Interstitial ad loaded");
-      });
+        // Add delay for SDK 54 compatibility
+        if (retryCount > 0) {
+          await new Promise((resolve) => setTimeout(resolve, 1000 * retryCount));
+        }
 
-      this.interstitialAd.addAdEventListener(AdEventType.ERROR, (error: any) => {
-        console.warn("Interstitial ad error:", error);
-      });
+        this.interstitialAd = InterstitialAd.createForAdRequest(adUnitId);
 
-      this.interstitialAd.addAdEventListener(AdEventType.CLOSED, () => {
-        console.log("Interstitial ad closed");
-        // Preload next ad
+        this.interstitialAd.addAdEventListener(AdEventType.LOADED, () => {
+          console.log("Interstitial ad loaded successfully");
+        });
+
+        this.interstitialAd.addAdEventListener(AdEventType.ERROR, (error: any) => {
+          console.warn("Interstitial ad error:", error);
+          // Retry loading after error
+          setTimeout(() => {
+            if (this.interstitialAd) {
+              this.interstitialAd.load();
+            }
+          }, 5000);
+        });
+
+        this.interstitialAd.addAdEventListener(AdEventType.CLOSED, () => {
+          console.log("Interstitial ad closed");
+          // Preload next ad with delay
+          setTimeout(() => {
+            if (this.interstitialAd) {
+              this.interstitialAd.load();
+            }
+          }, 1000);
+        });
+
         this.interstitialAd.load();
-      });
+        return; // Success, exit retry loop
+      } catch (error) {
+        retryCount++;
+        console.warn(`Failed to initialize interstitial ad (attempt ${retryCount}/${maxRetries + 1}):`, error);
 
-      this.interstitialAd.load();
-    } catch (error) {
-      console.warn("Failed to initialize interstitial ad:", error);
+        if (retryCount > maxRetries) {
+          console.error("All interstitial ad initialization attempts failed");
+          return;
+        }
+
+        // Wait before retry
+        await new Promise((resolve) => setTimeout(resolve, 2000 * retryCount));
+      }
     }
   }
 
   private async initializeAppOpenAd() {
     if (!canUseAdMob()) return;
 
-    try {
-      const { AppOpenAd, AdEventType } = await import("react-native-google-mobile-ads");
+    let retryCount = 0;
+    const maxRetries = 2;
 
-      const adUnitId = this.getAppOpenAdUnitId();
+    while (retryCount <= maxRetries) {
+      try {
+        const { AppOpenAd, AdEventType } = await import("react-native-google-mobile-ads");
 
-      if (!adUnitId) {
-        console.warn("App Open ad unit ID not configured");
-        return;
-      }
+        const adUnitId = this.getAppOpenAdUnitId();
 
-      this.appOpenAd = AppOpenAd.createForAdRequest(adUnitId);
+        if (!adUnitId) {
+          console.warn("App Open ad unit ID not configured");
+          return;
+        }
 
-      this.appOpenAd.addAdEventListener(AdEventType.LOADED, () => {
-        console.log("App Open ad loaded");
-      });
+        // Add delay for SDK 54 compatibility
+        if (retryCount > 0) {
+          await new Promise((resolve) => setTimeout(resolve, 1000 * retryCount));
+        }
 
-      this.appOpenAd.addAdEventListener(AdEventType.ERROR, (error: any) => {
-        console.warn("App Open ad error:", error);
-      });
+        this.appOpenAd = AppOpenAd.createForAdRequest(adUnitId);
 
-      this.appOpenAd.addAdEventListener(AdEventType.CLOSED, () => {
-        console.log("App Open ad closed");
-        // Preload next ad
+        this.appOpenAd.addAdEventListener(AdEventType.LOADED, () => {
+          console.log("App Open ad loaded successfully");
+        });
+
+        this.appOpenAd.addAdEventListener(AdEventType.ERROR, (error: any) => {
+          console.warn("App Open ad error:", error);
+          // Retry loading after error
+          setTimeout(() => {
+            if (this.appOpenAd) {
+              this.appOpenAd.load();
+            }
+          }, 5000);
+        });
+
+        this.appOpenAd.addAdEventListener(AdEventType.CLOSED, () => {
+          console.log("App Open ad closed");
+          // Preload next ad with delay
+          setTimeout(() => {
+            if (this.appOpenAd) {
+              this.appOpenAd.load();
+            }
+          }, 1000);
+        });
+
         this.appOpenAd.load();
-      });
+        return; // Success, exit retry loop
+      } catch (error) {
+        retryCount++;
+        console.warn(`Failed to initialize App Open ad (attempt ${retryCount}/${maxRetries + 1}):`, error);
 
-      this.appOpenAd.load();
-    } catch (error) {
-      console.warn("Failed to initialize App Open ad:", error);
+        if (retryCount > maxRetries) {
+          console.error("All App Open ad initialization attempts failed");
+          return;
+        }
+
+        // Wait before retry
+        await new Promise((resolve) => setTimeout(resolve, 2000 * retryCount));
+      }
     }
   }
 
   async showInterstitialAd(): Promise<boolean> {
     if (!canUseAdMob()) {
-      // Mock implementation for Expo Go
+      // Enhanced mock implementation for Expo Go
       console.log("Mock: Showing interstitial ad");
+      if (this.mockInterstitialAd) {
+        this.mockInterstitialAd.show();
+      }
       return true;
     }
 
     const ad = this.interstitialAd || this.mockInterstitialAd;
     if (!ad) {
       console.warn("Interstitial ad not initialized");
+      // Try to reinitialize
+      await this.initializeInterstitialAd();
       return false;
     }
 
@@ -158,15 +316,28 @@ class AdMobService {
       if (ad.loaded) {
         ad.show();
         if (this.interstitialAd) {
-          this.interstitialAd.load(); // Reload for next time
+          // Reload for next time with delay for SDK 54 compatibility
+          setTimeout(() => {
+            if (this.interstitialAd) {
+              this.interstitialAd.load();
+            }
+          }, 1000);
         }
         return true;
       } else {
-        console.log("Interstitial ad not ready");
+        console.log("Interstitial ad not ready, attempting to load");
+        // Try to load the ad if it's not ready
+        if (this.interstitialAd) {
+          this.interstitialAd.load();
+        }
         return false;
       }
     } catch (error) {
       console.warn("Failed to show interstitial ad:", error);
+      // Try to reinitialize on error
+      setTimeout(() => {
+        this.initializeInterstitialAd();
+      }, 2000);
       return false;
     }
   }

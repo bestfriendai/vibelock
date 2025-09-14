@@ -1,5 +1,19 @@
-// Enhanced error handling utilities for Supabase integrations
+// Enhanced error handling utilities for Supabase integrations with Sentry integration
 import { handleSupabaseError } from "../config/supabase";
+
+// Lazy import to avoid circular dependencies and ensure error reporting is initialized
+let errorReportingService: any = null;
+const getErrorReportingService = async () => {
+  if (!errorReportingService) {
+    try {
+      const module = await import("../services/errorReporting");
+      errorReportingService = module.errorReportingService;
+    } catch (error) {
+      console.warn("[ErrorHandling] Error reporting service not available:", error);
+    }
+  }
+  return errorReportingService;
+};
 
 // Error types for better categorization
 export enum ErrorType {
@@ -62,13 +76,15 @@ export enum ErrorType {
   PREVIEW_GENERATION_ERROR = "PREVIEW_GENERATION_ERROR",
 }
 
-// Enhanced error class with more context
+// Enhanced error class with more context and Sentry integration
 export class AppError extends Error {
   public readonly type: ErrorType;
   public readonly code?: string;
   public readonly statusCode?: number;
   public readonly retryable: boolean;
   public readonly userMessage: string;
+  public readonly timestamp: number;
+  public readonly context?: Record<string, any>;
 
   constructor(
     message: string,
@@ -76,6 +92,7 @@ export class AppError extends Error {
     code?: string,
     statusCode?: number,
     retryable: boolean = false,
+    context?: Record<string, any>,
   ) {
     super(message);
     this.name = "AppError";
@@ -84,6 +101,11 @@ export class AppError extends Error {
     this.statusCode = statusCode;
     this.retryable = retryable;
     this.userMessage = this.generateUserMessage();
+    this.timestamp = Date.now();
+    this.context = context;
+
+    // Automatically report to Sentry in production
+    this.reportToSentry();
   }
 
   private generateUserMessage(): string {
@@ -167,6 +189,67 @@ export class AppError extends Error {
         return "An unexpected error occurred. Please try again.";
     }
   }
+
+  /**
+   * Report error to Sentry (async to avoid blocking)
+   */
+  private reportToSentry(): void {
+    // Use setTimeout to avoid blocking the main thread
+    setTimeout(async () => {
+      try {
+        const errorReporting = await getErrorReportingService();
+        if (errorReporting) {
+          errorReporting.reportError(this, this.context);
+        }
+      } catch (reportingError) {
+        // Silently fail - don't throw errors from error reporting
+        console.warn("[ErrorHandling] Failed to report error to Sentry:", reportingError);
+      }
+    }, 0);
+  }
+
+  /**
+   * Create error with enhanced context
+   */
+  static withContext(
+    message: string,
+    type: ErrorType,
+    context: Record<string, any>,
+    code?: string,
+    statusCode?: number,
+    retryable: boolean = false,
+  ): AppError {
+    return new AppError(message, type, code, statusCode, retryable, context);
+  }
+
+  /**
+   * Create error from another error with additional context
+   */
+  static fromError(
+    error: Error,
+    type: ErrorType = ErrorType.UNKNOWN,
+    context?: Record<string, any>,
+  ): AppError {
+    const appError = new AppError(
+      error.message,
+      type,
+      "WRAPPED_ERROR",
+      undefined,
+      false,
+      {
+        originalError: error.name,
+        originalStack: error.stack,
+        ...context,
+      }
+    );
+
+    // Preserve original stack trace
+    if (error.stack) {
+      appError.stack = error.stack;
+    }
+
+    return appError;
+  }
 }
 
 // Enhanced error parser for Supabase errors
@@ -237,33 +320,93 @@ export const parseSupabaseError = (error: any): AppError => {
   return new AppError(error?.message || "Unknown error", ErrorType.UNKNOWN, "UNKNOWN", undefined, false);
 };
 
-// Enhanced retry function with better error handling
+// Enhanced retry function with better error handling and Sentry integration
 export const retryWithBackoff = async <T>(
   fn: () => Promise<T>,
   maxRetries: number = 3,
   baseDelay: number = 1000,
   shouldRetry?: (error: AppError) => boolean,
+  context?: Record<string, any>,
 ): Promise<T> => {
   let lastError: AppError;
+  const startTime = Date.now();
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
-      return await fn();
+      const result = await fn();
+
+      // Report successful retry to Sentry if there were previous failures
+      if (attempt > 0) {
+        const errorReporting = await getErrorReportingService();
+        if (errorReporting) {
+          errorReporting.addBreadcrumb({
+            message: `Retry succeeded after ${attempt} attempts`,
+            category: "retry",
+            level: "info",
+            data: {
+              attempts: attempt + 1,
+              totalTime: Date.now() - startTime,
+              ...context,
+            },
+          });
+        }
+      }
+
+      return result;
     } catch (error: any) {
       const appError = error instanceof AppError ? error : parseSupabaseError(error);
       lastError = appError;
+
+      // Add retry context to error
+      const retryContext = {
+        attempt: attempt + 1,
+        maxRetries,
+        baseDelay,
+        totalTime: Date.now() - startTime,
+        ...context,
+      };
 
       // Use custom retry logic if provided, otherwise use error's retryable flag
       const canRetry = shouldRetry ? shouldRetry(appError) : appError.retryable;
 
       // Don't retry on the last attempt or if error is not retryable
       if (attempt === maxRetries - 1 || !canRetry) {
+        // Report final failure to Sentry
+        const errorReporting = await getErrorReportingService();
+        if (errorReporting) {
+          errorReporting.reportError(
+            AppError.withContext(
+              `Retry failed after ${attempt + 1} attempts: ${appError.message}`,
+              appError.type,
+              retryContext,
+              "RETRY_EXHAUSTED",
+              appError.statusCode,
+              false
+            )
+          );
+        }
         break;
       }
 
       // Exponential backoff with jitter
       const delay = baseDelay * Math.pow(2, attempt) + Math.random() * 1000;
       console.warn(`Retry attempt ${attempt + 1}/${maxRetries} after ${delay}ms:`, appError.message);
+
+      // Add breadcrumb for retry attempt
+      const errorReporting = await getErrorReportingService();
+      if (errorReporting) {
+        errorReporting.addBreadcrumb({
+          message: `Retry attempt ${attempt + 1}/${maxRetries}`,
+          category: "retry",
+          level: "warning",
+          data: {
+            error: appError.message,
+            delay,
+            ...retryContext,
+          },
+        });
+      }
+
       await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
@@ -271,21 +414,35 @@ export const retryWithBackoff = async <T>(
   throw lastError!;
 };
 
-// Utility to safely execute async operations with error handling
+// Utility to safely execute async operations with error handling and Sentry integration
 export const safeAsync = async <T>(
   operation: () => Promise<T>,
   fallback?: T,
   onError?: (error: AppError) => void,
+  context?: Record<string, any>,
 ): Promise<T | undefined> => {
   try {
     return await operation();
   } catch (error: any) {
-    const appError = error instanceof AppError ? error : parseSupabaseError(error);
+    const appError = error instanceof AppError ?
+      error :
+      AppError.withContext(
+        error?.message || "Unknown error",
+        ErrorType.UNKNOWN,
+        { originalError: error, ...context },
+        "SAFE_ASYNC_ERROR"
+      );
 
     if (onError) {
       onError(appError);
     } else {
       console.warn("Safe async operation failed:", appError);
+
+      // Report to Sentry if no custom error handler
+      const errorReporting = await getErrorReportingService();
+      if (errorReporting) {
+        errorReporting.reportError(appError, context);
+      }
     }
 
     return fallback;
@@ -401,7 +558,7 @@ export const convertToAppError = (workletError: {
   return new AppError(workletError.message, workletError.type, workletError.code);
 };
 
-// Network status checker
+// Network status checker with enhanced error reporting
 export const checkNetworkStatus = async (): Promise<boolean> => {
   try {
     // Use environment variable for Supabase URL or fallback to a reliable endpoint
@@ -413,8 +570,163 @@ export const checkNetworkStatus = async (): Promise<boolean> => {
       // @ts-ignore - timeout is supported in React Native
       timeout: 5000,
     });
-    return response.ok || response.status === 204;
-  } catch {
+
+    const isOnline = response.ok || response.status === 204;
+
+    // Report network status to Sentry
+    const errorReporting = await getErrorReportingService();
+    if (errorReporting) {
+      errorReporting.addBreadcrumb({
+        message: `Network status check: ${isOnline ? "online" : "offline"}`,
+        category: "network",
+        level: isOnline ? "info" : "warning",
+        data: {
+          url: checkUrl,
+          status: response.status,
+          statusText: response.statusText,
+        },
+      });
+    }
+
+    return isOnline;
+  } catch (error: any) {
+    // Report network error to Sentry
+    const errorReporting = await getErrorReportingService();
+    if (errorReporting) {
+      errorReporting.reportError(
+        AppError.withContext(
+          "Network connectivity check failed",
+          ErrorType.NETWORK,
+          { originalError: error?.message },
+          "NETWORK_CHECK_FAILED"
+        )
+      );
+    }
+
     return false;
   }
 };
+
+// Production error monitoring utilities
+export const startErrorMonitoring = async (): Promise<void> => {
+  try {
+    const errorReporting = await getErrorReportingService();
+    if (errorReporting) {
+      await errorReporting.initialize();
+      console.log("[ErrorHandling] Error monitoring initialized");
+    }
+  } catch (error) {
+    console.warn("[ErrorHandling] Failed to initialize error monitoring:", error);
+  }
+};
+
+export const setUserContext = async (user: {
+  id?: string;
+  email?: string;
+  username?: string;
+  subscription?: string;
+  location?: string;
+}): Promise<void> => {
+  try {
+    const errorReporting = await getErrorReportingService();
+    if (errorReporting) {
+      errorReporting.setUserContext(user);
+    }
+  } catch (error) {
+    console.warn("[ErrorHandling] Failed to set user context:", error);
+  }
+};
+
+export const clearUserContext = async (): Promise<void> => {
+  try {
+    const errorReporting = await getErrorReportingService();
+    if (errorReporting) {
+      errorReporting.clearUserContext();
+    }
+  } catch (error) {
+    console.warn("[ErrorHandling] Failed to clear user context:", error);
+  }
+};
+
+export const addErrorBreadcrumb = async (breadcrumb: {
+  message: string;
+  category: string;
+  level: "debug" | "info" | "warning" | "error" | "fatal";
+  data?: Record<string, any>;
+}): Promise<void> => {
+  try {
+    const errorReporting = await getErrorReportingService();
+    if (errorReporting) {
+      errorReporting.addBreadcrumb(breadcrumb);
+    }
+  } catch (error) {
+    console.warn("[ErrorHandling] Failed to add breadcrumb:", error);
+  }
+};
+
+export const captureMessage = async (
+  message: string,
+  level: "debug" | "info" | "warning" | "error" | "fatal" = "info",
+  context?: Record<string, any>
+): Promise<void> => {
+  try {
+    const errorReporting = await getErrorReportingService();
+    if (errorReporting) {
+      if (context) {
+        errorReporting.setContext("message_context", context);
+      }
+      errorReporting.captureMessage(message, level);
+    }
+  } catch (error) {
+    console.warn("[ErrorHandling] Failed to capture message:", error);
+  }
+};
+
+// Performance monitoring
+export const startTransaction = async (name: string, operation: string): Promise<any> => {
+  try {
+    const errorReporting = await getErrorReportingService();
+    if (errorReporting) {
+      return errorReporting.startTransaction(name, operation);
+    }
+  } catch (error) {
+    console.warn("[ErrorHandling] Failed to start transaction:", error);
+  }
+  return null;
+};
+
+// Error aggregation for batch reporting
+const errorQueue: AppError[] = [];
+const MAX_QUEUE_SIZE = 50;
+
+export const queueError = (error: AppError): void => {
+  errorQueue.push(error);
+
+  if (errorQueue.length >= MAX_QUEUE_SIZE) {
+    flushErrorQueue();
+  }
+};
+
+export const flushErrorQueue = async (): Promise<void> => {
+  if (errorQueue.length === 0) return;
+
+  try {
+    const errorReporting = await getErrorReportingService();
+    if (errorReporting) {
+      const errors = errorQueue.splice(0); // Clear queue
+
+      for (const error of errors) {
+        errorReporting.reportError(error);
+      }
+
+      console.log(`[ErrorHandling] Flushed ${errors.length} queued errors`);
+    }
+  } catch (error) {
+    console.warn("[ErrorHandling] Failed to flush error queue:", error);
+  }
+};
+
+// Auto-flush error queue every 30 seconds
+if (typeof setInterval !== "undefined") {
+  setInterval(flushErrorQueue, 30000);
+}

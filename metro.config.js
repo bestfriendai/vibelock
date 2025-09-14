@@ -7,11 +7,16 @@ const config = getDefaultConfig(__dirname);
 
 // React Native 0.81 specific configurations
 config.resolver.sourceExts.push("cjs");
-config.resolver.unstable_enablePackageExports = true;
+// Removed unstable_enablePackageExports for production stability
+// config.resolver.unstable_enablePackageExports = true;
 
 // Hermes compatibility for React Native 0.81
 config.transformer.hermesParser = true;
-config.transformer.unstable_allowRequireContext = true;
+// Removed unstable_allowRequireContext for production stability
+// config.transformer.unstable_allowRequireContext = true;
+
+// Production optimizations
+config.transformer.inlineRequires = true;
 
 // Resolver configuration for React Native 0.81
 config.resolver.platforms = ["ios", "android", "native", "web"];
