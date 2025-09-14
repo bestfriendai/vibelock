@@ -14,20 +14,24 @@ import { AppError, parseSupabaseError } from "../utils/errorHandling";
 const MAX_PERSISTED_COMMENTS_PER_REVIEW = 20;
 
 // Sanitize comments for persistence - remove sensitive content
-const sanitizeCommentsForPersistence = (comments: { [reviewId: string]: Comment[] }): { [reviewId: string]: Comment[] } => {
+const sanitizeCommentsForPersistence = (comments: {
+  [reviewId: string]: Comment[];
+}): { [reviewId: string]: Comment[] } => {
   const sanitized: { [reviewId: string]: Comment[] } = {};
 
   Object.entries(comments).forEach(([reviewId, reviewComments]) => {
     // Limit number of comments per review
     const limitedComments = reviewComments.slice(0, MAX_PERSISTED_COMMENTS_PER_REVIEW);
 
-    sanitized[reviewId] = limitedComments.map(comment => ({
+    sanitized[reviewId] = limitedComments.map((comment) => ({
       ...comment,
       // Anonymize author information
-      authorName: comment.authorName ? comment.authorName.substring(0, 1) + '***' : 'Anonymous',
-      authorId: comment.authorId ? 'anon_' + comment.authorId.substring(0, 8) : 'anonymous',
+      authorName: comment.authorName ? comment.authorName.substring(0, 1) + "***" : "Anonymous",
+      authorId: comment.authorId ? "anon_" + comment.authorId.substring(0, 8) : "anonymous",
       // Limit content length
-      content: comment.content ? comment.content.substring(0, 100) + (comment.content.length > 100 ? '...' : '') : comment.content,
+      content: comment.content
+        ? comment.content.substring(0, 100) + (comment.content.length > 100 ? "..." : "")
+        : comment.content,
       // Remove media references
       mediaId: undefined,
     }));

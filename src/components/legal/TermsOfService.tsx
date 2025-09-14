@@ -49,12 +49,13 @@ export const TermsOfService: React.FC<TermsOfServiceProps> = ({
           <Text className="text-text-primary text-lg font-semibold mb-3">Introduction</Text>
           <Text className="text-text-secondary text-sm leading-6 mb-3">
             Welcome to Locker Room Talk ("we," "our," "us," or "Company"). These Terms of Service ("Terms") govern your
-            use of our mobile application, an anonymous review platform that enables users to post and read anonymous reviews
-            and opinions about individuals, places, and experiences (collectively, the "Service").
+            use of our mobile application, an anonymous review platform that enables users to post and read anonymous
+            reviews and opinions about individuals, places, and experiences (collectively, the "Service").
           </Text>
           <Text className="text-text-secondary text-sm leading-6 mb-3">
-            <Text className="font-semibold">IMPORTANT: THIS IS AN ANONYMOUS REVIEW PLATFORM.</Text> All content posted on this
-            platform is user-generated and anonymous. We do not verify the identity of users or the accuracy of posted content.
+            <Text className="font-semibold">IMPORTANT: THIS IS AN ANONYMOUS REVIEW PLATFORM.</Text> All content posted
+            on this platform is user-generated and anonymous. We do not verify the identity of users or the accuracy of
+            posted content.
           </Text>
           <Text className="text-text-secondary text-sm leading-6">
             By accessing or using our Service, you agree to be bound by these Terms. If you disagree with any part of
@@ -80,11 +81,13 @@ export const TermsOfService: React.FC<TermsOfServiceProps> = ({
         <View className="mb-6">
           <Text className="text-text-primary text-lg font-semibold mb-3">2. Description of Service</Text>
           <Text className="text-text-secondary text-sm leading-6 mb-3">
-            Locker Room Talk is an anonymous review platform that allows users to post and read anonymous reviews
-            about individuals, locations, and experiences. The Service includes features such as:
+            Locker Room Talk is an anonymous review platform that allows users to post and read anonymous reviews about
+            individuals, locations, and experiences. The Service includes features such as:
           </Text>
           <View className="ml-4 mb-3">
-            <Text className="text-text-secondary text-sm leading-6">• Anonymous posting and reviewing capabilities</Text>
+            <Text className="text-text-secondary text-sm leading-6">
+              • Anonymous posting and reviewing capabilities
+            </Text>
             <Text className="text-text-secondary text-sm leading-6">• Location-based search and discovery</Text>
             <Text className="text-text-secondary text-sm leading-6">• Anonymous user reviews and ratings</Text>
             <Text className="text-text-secondary text-sm leading-6">• Anonymous chat and messaging features</Text>
@@ -92,8 +95,8 @@ export const TermsOfService: React.FC<TermsOfServiceProps> = ({
             <Text className="text-text-secondary text-sm leading-6">• Premium subscription services</Text>
           </View>
           <Text className="text-text-secondary text-sm leading-6 mt-3">
-            <Text className="font-semibold">WE DO NOT VERIFY THE ACCURACY OR TRUTHFULNESS</Text> of any user-generated content.
-            Users are solely responsible for their posts and the consequences thereof.
+            <Text className="font-semibold">WE DO NOT VERIFY THE ACCURACY OR TRUTHFULNESS</Text> of any user-generated
+            content. Users are solely responsible for their posts and the consequences thereof.
           </Text>
         </View>
 
@@ -128,7 +131,9 @@ export const TermsOfService: React.FC<TermsOfServiceProps> = ({
             4. User-Generated Content and Platform Liability
           </Text>
 
-          <Text className="text-text-primary text-base font-medium mb-2">4.1 Content Responsibility - Anonymous Reviews</Text>
+          <Text className="text-text-primary text-base font-medium mb-2">
+            4.1 Content Responsibility - Anonymous Reviews
+          </Text>
           <Text className="text-text-secondary text-sm leading-6 mb-3">
             <Text className="font-semibold">
               YOU ACKNOWLEDGE AND AGREE THAT THE COMPANY IS NOT RESPONSIBLE FOR ANY ANONYMOUS CONTENT POSTED BY USERS.
@@ -139,7 +144,9 @@ export const TermsOfService: React.FC<TermsOfServiceProps> = ({
             of any User Content. Anonymous reviews may be false, defamatory, or misleading.
           </Text>
 
-          <Text className="text-text-primary text-base font-medium mb-2">4.2 Section 230 Protection and No Editorial Control</Text>
+          <Text className="text-text-primary text-base font-medium mb-2">
+            4.2 Section 230 Protection and No Editorial Control
+          </Text>
           <Text className="text-text-secondary text-sm leading-6 mb-3">
             The Company operates as an interactive computer service provider under Section 230 of the Communications
             Decency Act. We act as a passive conduit for anonymous User Content and do not exercise editorial control
@@ -215,10 +222,10 @@ export const TermsOfService: React.FC<TermsOfServiceProps> = ({
 
           <Text className="text-text-primary text-base font-medium mb-2">6.2 Reporting System</Text>
           <Text className="text-text-secondary text-sm leading-6 mb-3">
-            Users may report content that violates these Terms. We will attempt to review reports in a timely manner
-            and investigate in good faith, but make no guarantee regarding specific response time or action taken.
-            Due to the anonymous nature of our platform, we may have limited ability to verify claims or identify
-            violators. Report processing times may vary based on volume and severity.
+            Users may report content that violates these Terms. We will attempt to review reports in a timely manner and
+            investigate in good faith, but make no guarantee regarding specific response time or action taken. Due to
+            the anonymous nature of our platform, we may have limited ability to verify claims or identify violators.
+            Report processing times may vary based on volume and severity.
           </Text>
 
           <Text className="text-text-primary text-base font-medium mb-2">6.3 Account Suspension and Termination</Text>
@@ -243,7 +250,9 @@ export const TermsOfService: React.FC<TermsOfServiceProps> = ({
             <Text className="text-text-secondary text-sm leading-6">• Identification of the infringing material</Text>
             <Text className="text-text-secondary text-sm leading-6">• Your contact information</Text>
             <Text className="text-text-secondary text-sm leading-6">• A statement of good faith belief</Text>
-            <Text className="text-text-secondary text-sm leading-6">• A statement of accuracy under penalty of perjury</Text>
+            <Text className="text-text-secondary text-sm leading-6">
+              • A statement of accuracy under penalty of perjury
+            </Text>
             <Text className="text-text-secondary text-sm leading-6">• Your physical or electronic signature</Text>
           </View>
 
@@ -255,8 +264,8 @@ export const TermsOfService: React.FC<TermsOfServiceProps> = ({
 
           <Text className="text-text-primary text-base font-medium mb-2">7.3 Counter-Notice Procedure</Text>
           <Text className="text-text-secondary text-sm leading-6 mb-3">
-            If your content was removed due to a DMCA notice and you believe it was wrongfully removed, you may
-            submit a counter-notice including the required legal statements to contact@lockerroomapp.com.
+            If your content was removed due to a DMCA notice and you believe it was wrongfully removed, you may submit a
+            counter-notice including the required legal statements to contact@lockerroomapp.com.
           </Text>
         </View>
 
@@ -276,7 +285,9 @@ export const TermsOfService: React.FC<TermsOfServiceProps> = ({
 
         {/* Anonymous Reviews Disclaimer */}
         <View className="mb-6">
-          <Text className="text-text-primary text-lg font-semibold mb-3">9. Anonymous Reviews and Content Disclaimer</Text>
+          <Text className="text-text-primary text-lg font-semibold mb-3">
+            9. Anonymous Reviews and Content Disclaimer
+          </Text>
           <Text className="text-text-secondary text-sm leading-6 mb-3">
             <Text className="font-semibold">CRITICAL DISCLAIMER REGARDING ANONYMOUS REVIEWS:</Text>
           </Text>

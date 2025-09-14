@@ -225,23 +225,12 @@ export class AppError extends Error {
   /**
    * Create error from another error with additional context
    */
-  static fromError(
-    error: Error,
-    type: ErrorType = ErrorType.UNKNOWN,
-    context?: Record<string, any>,
-  ): AppError {
-    const appError = new AppError(
-      error.message,
-      type,
-      "WRAPPED_ERROR",
-      undefined,
-      false,
-      {
-        originalError: error.name,
-        originalStack: error.stack,
-        ...context,
-      }
-    );
+  static fromError(error: Error, type: ErrorType = ErrorType.UNKNOWN, context?: Record<string, any>): AppError {
+    const appError = new AppError(error.message, type, "WRAPPED_ERROR", undefined, false, {
+      originalError: error.name,
+      originalStack: error.stack,
+      ...context,
+    });
 
     // Preserve original stack trace
     if (error.stack) {
@@ -381,8 +370,8 @@ export const retryWithBackoff = async <T>(
               retryContext,
               "RETRY_EXHAUSTED",
               appError.statusCode,
-              false
-            )
+              false,
+            ),
           );
         }
         break;
@@ -424,14 +413,15 @@ export const safeAsync = async <T>(
   try {
     return await operation();
   } catch (error: any) {
-    const appError = error instanceof AppError ?
-      error :
-      AppError.withContext(
-        error?.message || "Unknown error",
-        ErrorType.UNKNOWN,
-        { originalError: error, ...context },
-        "SAFE_ASYNC_ERROR"
-      );
+    const appError =
+      error instanceof AppError
+        ? error
+        : AppError.withContext(
+            error?.message || "Unknown error",
+            ErrorType.UNKNOWN,
+            { originalError: error, ...context },
+            "SAFE_ASYNC_ERROR",
+          );
 
     if (onError) {
       onError(appError);
@@ -598,8 +588,8 @@ export const checkNetworkStatus = async (): Promise<boolean> => {
           "Network connectivity check failed",
           ErrorType.NETWORK,
           { originalError: error?.message },
-          "NETWORK_CHECK_FAILED"
-        )
+          "NETWORK_CHECK_FAILED",
+        ),
       );
     }
 
@@ -667,7 +657,7 @@ export const addErrorBreadcrumb = async (breadcrumb: {
 export const captureMessage = async (
   message: string,
   level: "debug" | "info" | "warning" | "error" | "fatal" = "info",
-  context?: Record<string, any>
+  context?: Record<string, any>,
 ): Promise<void> => {
   try {
     const errorReporting = await getErrorReportingService();

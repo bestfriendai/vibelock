@@ -58,17 +58,16 @@ export default function ProfileScreen() {
   // Privacy settings removed per product direction
 
   const handleHelpSupport = () => {
-    Alert.alert(
-      "Help & Support",
-      "For assistance, feature requests, or to report issues, please contact us at:",
-      [
-        { text: "Email Us", onPress: () => {
+    Alert.alert("Help & Support", "For assistance, feature requests, or to report issues, please contact us at:", [
+      {
+        text: "Email Us",
+        onPress: () => {
           const { Linking } = require("react-native");
           Linking.openURL("mailto:contact@lockerroomapp.com");
-        }},
-        { text: "Cancel", style: "cancel" },
-      ]
-    );
+        },
+      },
+      { text: "Cancel", style: "cancel" },
+    ]);
   };
 
   // Firebase test removed per product direction

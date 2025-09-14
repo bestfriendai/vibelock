@@ -18,18 +18,18 @@ const sanitizeSafetyDataForPersistence = (data: {
 }) => {
   return {
     // Limit and anonymize blocked users
-    blockedUsers: data.blockedUsers.slice(0, MAX_PERSISTED_BLOCKED_USERS).map(userId =>
-      'blocked_' + userId.substring(0, 8)
-    ),
+    blockedUsers: data.blockedUsers
+      .slice(0, MAX_PERSISTED_BLOCKED_USERS)
+      .map((userId) => "blocked_" + userId.substring(0, 8)),
     // Limit and anonymize blocked profiles
-    blockedProfiles: data.blockedProfiles.slice(0, MAX_PERSISTED_BLOCKED_USERS).map(profileId =>
-      'blocked_' + profileId.substring(0, 8)
-    ),
+    blockedProfiles: data.blockedProfiles
+      .slice(0, MAX_PERSISTED_BLOCKED_USERS)
+      .map((profileId) => "blocked_" + profileId.substring(0, 8)),
     // Limit reports and remove sensitive details
-    reports: data.reports.slice(0, MAX_PERSISTED_REPORTS).map(report => ({
+    reports: data.reports.slice(0, MAX_PERSISTED_REPORTS).map((report) => ({
       ...report,
-      reporterId: 'reporter_' + report.reporterId.substring(0, 8),
-      description: report.description ? report.description.substring(0, 50) + '...' : report.description,
+      reporterId: "reporter_" + report.reporterId.substring(0, 8),
+      description: report.description ? report.description.substring(0, 50) + "..." : report.description,
     })),
   };
 };
@@ -155,11 +155,12 @@ const useSafetyStore = create<SafetyStore>()(
       name: "safety-storage",
       storage: createJSONStorage(() => AsyncStorage),
       // Persist sanitized safety data, but not loading states
-      partialize: (state) => sanitizeSafetyDataForPersistence({
-        blockedUsers: state.blockedUsers,
-        blockedProfiles: state.blockedProfiles,
-        reports: state.reports,
-      }),
+      partialize: (state) =>
+        sanitizeSafetyDataForPersistence({
+          blockedUsers: state.blockedUsers,
+          blockedProfiles: state.blockedProfiles,
+          reports: state.reports,
+        }),
       // Add version for future migrations
       version: 1,
       migrate: (persistedState: any, _version: number) => {

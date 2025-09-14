@@ -33,17 +33,21 @@ const sanitizeDraftForStorage = (draft: any) => {
   return {
     ...draft,
     // Remove sensitive media URIs, keep only metadata
-    media: draft.media ? draft.media.map((item: MediaItem) => ({
-      ...item,
-      uri: item.type === 'image' ? '[Image Draft]' : item.type === 'video' ? '[Video Draft]' : item.uri,
-    })) : [],
+    media: draft.media
+      ? draft.media.map((item: MediaItem) => ({
+          ...item,
+          uri: item.type === "image" ? "[Image Draft]" : item.type === "video" ? "[Video Draft]" : item.uri,
+        }))
+      : [],
     // Remove sensitive social media information
-    socialMedia: draft.socialMedia ? Object.keys(draft.socialMedia).reduce((acc: any, key) => {
-      acc[key] = draft.socialMedia[key] ? '[Social Handle]' : '';
-      return acc;
-    }, {}) : {},
+    socialMedia: draft.socialMedia
+      ? Object.keys(draft.socialMedia).reduce((acc: any, key) => {
+          acc[key] = draft.socialMedia[key] ? "[Social Handle]" : "";
+          return acc;
+        }, {})
+      : {},
     // Limit text length
-    reviewText: draft.reviewText ? draft.reviewText.substring(0, 500) : '',
+    reviewText: draft.reviewText ? draft.reviewText.substring(0, 500) : "",
     // Add timestamp for expiry
     timestamp: Date.now(),
   };
@@ -51,12 +55,12 @@ const sanitizeDraftForStorage = (draft: any) => {
 
 // Validate draft data on load
 const isValidDraft = (draft: any): boolean => {
-  if (!draft || typeof draft !== 'object') return false;
-  if (typeof draft.timestamp !== 'number') return false;
+  if (!draft || typeof draft !== "object") return false;
+  if (typeof draft.timestamp !== "number") return false;
 
   // Check if draft is not expired
   const now = Date.now();
-  return (now - draft.timestamp) < DRAFT_EXPIRY;
+  return now - draft.timestamp < DRAFT_EXPIRY;
 };
 
 interface Location {

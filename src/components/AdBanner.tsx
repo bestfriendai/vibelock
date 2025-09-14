@@ -57,13 +57,13 @@ const RealBannerAd: React.FC<{
 
   // Enhanced error classification for SDK 54 compatibility
   const isSDK54CompatibilityError = (error: any): boolean => {
-    const errorMessage = error?.message?.toLowerCase() || '';
+    const errorMessage = error?.message?.toLowerCase() || "";
     return (
-      errorMessage.includes('expo sdk 54') ||
-      errorMessage.includes('module not found') ||
-      errorMessage.includes('native module') ||
-      errorMessage.includes('admob') ||
-      errorMessage.includes('google-mobile-ads')
+      errorMessage.includes("expo sdk 54") ||
+      errorMessage.includes("module not found") ||
+      errorMessage.includes("native module") ||
+      errorMessage.includes("admob") ||
+      errorMessage.includes("google-mobile-ads")
     );
   };
 
@@ -84,7 +84,6 @@ const RealBannerAd: React.FC<{
       setBannerAd(adModule.BannerAd);
       setBannerAdSize(adModule.BannerAdSize);
       setIsLoading(false);
-
     } catch (error) {
       console.warn(`Failed to load AdMob components (attempt ${attempt}/${MAX_LOAD_ATTEMPTS}):`, error);
 
@@ -138,7 +137,7 @@ const RealBannerAd: React.FC<{
         if (loadAttempts < MAX_LOAD_ATTEMPTS - 1) {
           console.log("Retrying banner ad load...");
           setTimeout(() => {
-            setLoadAttempts(prev => prev + 1);
+            setLoadAttempts((prev) => prev + 1);
             // Force re-render to retry ad load
             setBannerAd(null);
             loadAdComponents(loadAttempts + 1);
@@ -209,7 +208,7 @@ export default function AdBanner({ placement }: Props) {
       console.log(`AdBanner: Retrying ad load (attempt ${retryCount + 1}/${MAX_RETRIES})`);
 
       setTimeout(() => {
-        setRetryCount(prev => prev + 1);
+        setRetryCount((prev) => prev + 1);
         setAdError(null);
         setIsRetrying(false);
         // Force component re-render to retry ad loading

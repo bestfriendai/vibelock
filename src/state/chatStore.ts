@@ -17,23 +17,25 @@ const MAX_PERSISTED_MESSAGES_PER_ROOM = 50;
 const MAX_PERSISTED_MEMBERS_PER_ROOM = 100;
 
 // Sanitize messages for persistence - remove sensitive content
-const sanitizeMessagesForPersistence = (messages: { [roomId: string]: ChatMessage[] }): { [roomId: string]: ChatMessage[] } => {
+const sanitizeMessagesForPersistence = (messages: {
+  [roomId: string]: ChatMessage[];
+}): { [roomId: string]: ChatMessage[] } => {
   const sanitized: { [roomId: string]: ChatMessage[] } = {};
 
   Object.entries(messages).forEach(([roomId, roomMessages]) => {
     // Limit number of messages per room
     const limitedMessages = roomMessages.slice(0, MAX_PERSISTED_MESSAGES_PER_ROOM);
 
-    sanitized[roomId] = limitedMessages.map(msg => ({
+    sanitized[roomId] = limitedMessages.map((msg) => ({
       ...msg,
       // Remove sensitive media URIs
       audioUri: undefined,
       imageUri: undefined,
       videoUri: undefined,
       // Keep only essential metadata
-      content: msg.messageType === 'text' ? msg.content.substring(0, 100) : '[Media]',
+      content: msg.messageType === "text" ? msg.content.substring(0, 100) : "[Media]",
       // Anonymize sender info
-      senderName: msg.senderName ? msg.senderName.substring(0, 1) + '***' : 'Anonymous',
+      senderName: msg.senderName ? msg.senderName.substring(0, 1) + "***" : "Anonymous",
     }));
   });
 
@@ -41,17 +43,19 @@ const sanitizeMessagesForPersistence = (messages: { [roomId: string]: ChatMessag
 };
 
 // Sanitize members for persistence - remove detailed member information
-const sanitizeMembersForPersistence = (members: { [roomId: string]: ChatMember[] }): { [roomId: string]: ChatMember[] } => {
+const sanitizeMembersForPersistence = (members: {
+  [roomId: string]: ChatMember[];
+}): { [roomId: string]: ChatMember[] } => {
   const sanitized: { [roomId: string]: ChatMember[] } = {};
 
   Object.entries(members).forEach(([roomId, roomMembers]) => {
     // Limit number of members per room
     const limitedMembers = roomMembers.slice(0, MAX_PERSISTED_MEMBERS_PER_ROOM);
 
-    sanitized[roomId] = limitedMembers.map(member => ({
+    sanitized[roomId] = limitedMembers.map((member) => ({
       ...member,
       // Remove sensitive member data - use userName field
-      userName: member.userName ? member.userName.substring(0, 1) + '***' : 'Anonymous',
+      userName: member.userName ? member.userName.substring(0, 1) + "***" : "Anonymous",
       userAvatar: undefined, // Remove avatar URLs
       // Keep only essential fields
       userId: member.userId,

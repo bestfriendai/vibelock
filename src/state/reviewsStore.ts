@@ -22,22 +22,28 @@ const sanitizeReviewsForPersistence = (reviews: Review[]): Partial<Review>[] => 
   // Limit number of reviews
   const limitedReviews = reviews.slice(0, MAX_PERSISTED_REVIEWS);
 
-  return limitedReviews.map(review => ({
+  return limitedReviews.map((review) => ({
     ...review,
     // Remove or anonymize sensitive author information
-    authorId: review.authorId ? 'anon_' + review.authorId.substring(0, 8) : 'anonymous',
-    reviewerAnonymousId: review.reviewerAnonymousId ? 'anon_' + review.reviewerAnonymousId.substring(0, 8) : review.reviewerAnonymousId,
+    authorId: review.authorId ? "anon_" + review.authorId.substring(0, 8) : "anonymous",
+    reviewerAnonymousId: review.reviewerAnonymousId
+      ? "anon_" + review.reviewerAnonymousId.substring(0, 8)
+      : review.reviewerAnonymousId,
     // Limit media items and remove large media objects
-    media: review.media ? review.media.slice(0, MAX_MEDIA_ITEMS_PER_REVIEW).map(mediaItem => ({
-      ...mediaItem,
-      // Keep only essential media metadata, remove actual URIs for security
-      uri: mediaItem.type === 'image' ? '[Image]' : mediaItem.type === 'video' ? '[Video]' : mediaItem.uri,
-      thumbnailUri: undefined,
-    })) : [],
+    media: review.media
+      ? review.media.slice(0, MAX_MEDIA_ITEMS_PER_REVIEW).map((mediaItem) => ({
+          ...mediaItem,
+          // Keep only essential media metadata, remove actual URIs for security
+          uri: mediaItem.type === "image" ? "[Image]" : mediaItem.type === "video" ? "[Video]" : mediaItem.uri,
+          thumbnailUri: undefined,
+        }))
+      : [],
     // Remove sensitive social media information
     socialMedia: undefined,
     // Keep essential review data but limit text length
-    reviewText: review.reviewText ? review.reviewText.substring(0, 200) + (review.reviewText.length > 200 ? '...' : '') : review.reviewText,
+    reviewText: review.reviewText
+      ? review.reviewText.substring(0, 200) + (review.reviewText.length > 200 ? "..." : "")
+      : review.reviewText,
   }));
 };
 

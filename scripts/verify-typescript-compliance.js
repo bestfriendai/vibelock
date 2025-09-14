@@ -5,20 +5,20 @@
  * Ensures the codebase maintains strict TypeScript compliance for production reliability
  */
 
-const fs = require('fs');
-const path = require('path');
-const { execSync } = require('child_process');
+const fs = require("fs");
+const path = require("path");
+const { execSync } = require("child_process");
 
 // ANSI color codes for console output
 const colors = {
-  reset: '\x1b[0m',
-  bright: '\x1b[1m',
-  red: '\x1b[31m',
-  green: '\x1b[32m',
-  yellow: '\x1b[33m',
-  blue: '\x1b[34m',
-  magenta: '\x1b[35m',
-  cyan: '\x1b[36m',
+  reset: "\x1b[0m",
+  bright: "\x1b[1m",
+  red: "\x1b[31m",
+  green: "\x1b[32m",
+  yellow: "\x1b[33m",
+  blue: "\x1b[34m",
+  magenta: "\x1b[35m",
+  cyan: "\x1b[36m",
 };
 
 class TypeScriptComplianceVerifier {
@@ -41,8 +41,8 @@ class TypeScriptComplianceVerifier {
    * Main verification process
    */
   async verify() {
-    this.log('🔍 Starting TypeScript Compliance Verification', 'cyan', true);
-    this.log('=' .repeat(60), 'cyan');
+    this.log("🔍 Starting TypeScript Compliance Verification", "cyan", true);
+    this.log("=".repeat(60), "cyan");
 
     try {
       // Core verification steps
@@ -58,7 +58,6 @@ class TypeScriptComplianceVerifier {
 
       // Generate final report
       this.generateReport();
-      
     } catch (error) {
       this.error(`Critical error during verification: ${error.message}`);
       process.exit(1);
@@ -69,28 +68,28 @@ class TypeScriptComplianceVerifier {
    * Verify TypeScript configuration
    */
   async verifyTsConfig() {
-    this.log('\n📋 Verifying TypeScript Configuration...', 'blue', true);
+    this.log("\n📋 Verifying TypeScript Configuration...", "blue", true);
 
     try {
-      if (!fs.existsSync('tsconfig.json')) {
-        this.error('tsconfig.json not found');
+      if (!fs.existsSync("tsconfig.json")) {
+        this.error("tsconfig.json not found");
         return;
       }
 
-      const tsConfig = JSON.parse(fs.readFileSync('tsconfig.json', 'utf8'));
+      const tsConfig = JSON.parse(fs.readFileSync("tsconfig.json", "utf8"));
       const compilerOptions = tsConfig.compilerOptions || {};
 
       // Check strict mode settings
       const strictSettings = {
-        strict: 'Strict mode',
-        noImplicitAny: 'No implicit any',
-        strictNullChecks: 'Strict null checks',
-        strictFunctionTypes: 'Strict function types',
-        strictBindCallApply: 'Strict bind/call/apply',
-        strictPropertyInitialization: 'Strict property initialization',
-        noImplicitReturns: 'No implicit returns',
-        noFallthroughCasesInSwitch: 'No fallthrough cases in switch',
-        noUncheckedIndexedAccess: 'No unchecked indexed access',
+        strict: "Strict mode",
+        noImplicitAny: "No implicit any",
+        strictNullChecks: "Strict null checks",
+        strictFunctionTypes: "Strict function types",
+        strictBindCallApply: "Strict bind/call/apply",
+        strictPropertyInitialization: "Strict property initialization",
+        noImplicitReturns: "No implicit returns",
+        noFallthroughCasesInSwitch: "No fallthrough cases in switch",
+        noUncheckedIndexedAccess: "No unchecked indexed access",
       };
 
       for (const [setting, description] of Object.entries(strictSettings)) {
@@ -98,7 +97,7 @@ class TypeScriptComplianceVerifier {
           this.pass(`${description} enabled`);
         } else if (compilerOptions[setting] === false) {
           this.warning(`${description} explicitly disabled`);
-        } else if (setting === 'strict' && !compilerOptions[setting]) {
+        } else if (setting === "strict" && !compilerOptions[setting]) {
           this.error(`${description} not enabled (required for production)`);
         } else if (!compilerOptions[setting] && compilerOptions.strict !== true) {
           this.warning(`${description} not explicitly set`);
@@ -107,23 +106,22 @@ class TypeScriptComplianceVerifier {
 
       // Check other important settings
       if (compilerOptions.skipLibCheck !== true) {
-        this.warning('skipLibCheck not enabled (may cause build issues)');
+        this.warning("skipLibCheck not enabled (may cause build issues)");
       } else {
-        this.pass('skipLibCheck enabled');
+        this.pass("skipLibCheck enabled");
       }
 
       if (!compilerOptions.esModuleInterop) {
-        this.warning('esModuleInterop not enabled');
+        this.warning("esModuleInterop not enabled");
       } else {
-        this.pass('esModuleInterop enabled');
+        this.pass("esModuleInterop enabled");
       }
 
       if (!compilerOptions.allowSyntheticDefaultImports) {
-        this.warning('allowSyntheticDefaultImports not enabled');
+        this.warning("allowSyntheticDefaultImports not enabled");
       } else {
-        this.pass('allowSyntheticDefaultImports enabled');
+        this.pass("allowSyntheticDefaultImports enabled");
       }
-
     } catch (error) {
       this.error(`TypeScript config verification failed: ${error.message}`);
     }
@@ -133,7 +131,7 @@ class TypeScriptComplianceVerifier {
    * Scan all source files
    */
   async scanSourceFiles() {
-    this.log('\n📁 Scanning Source Files...', 'blue', true);
+    this.log("\n📁 Scanning Source Files...", "blue", true);
 
     try {
       const sourceFiles = this.findSourceFiles();
@@ -144,7 +142,7 @@ class TypeScriptComplianceVerifier {
       let badNaming = 0;
       for (const file of sourceFiles) {
         const basename = path.basename(file);
-        
+
         // Check for proper extensions
         if (!basename.match(/\.(ts|tsx)$/)) {
           this.warning(`File should use .ts or .tsx extension: ${file}`);
@@ -152,18 +150,17 @@ class TypeScriptComplianceVerifier {
         }
 
         // Check for camelCase naming (except index files)
-        if (!basename.startsWith('index.') && !basename.match(/^[a-z][a-zA-Z0-9]*\.(ts|tsx)$/)) {
+        if (!basename.startsWith("index.") && !basename.match(/^[a-z][a-zA-Z0-9]*\.(ts|tsx)$/)) {
           this.warning(`File should use camelCase naming: ${file}`);
           badNaming++;
         }
       }
 
       if (badNaming === 0) {
-        this.pass('All files follow naming conventions');
+        this.pass("All files follow naming conventions");
       } else {
         this.warning(`${badNaming} files have naming issues`);
       }
-
     } catch (error) {
       this.error(`Source file scanning failed: ${error.message}`);
     }
@@ -173,29 +170,28 @@ class TypeScriptComplianceVerifier {
    * Run TypeScript compiler
    */
   async runTypeScriptCompiler() {
-    this.log('\n🔨 Running TypeScript Compiler...', 'blue', true);
+    this.log("\n🔨 Running TypeScript Compiler...", "blue", true);
 
     try {
       // Run tsc with noEmit to check for errors
       try {
-        execSync('npx tsc --noEmit', { stdio: 'pipe' });
-        this.pass('TypeScript compilation successful');
+        execSync("npx tsc --noEmit", { stdio: "pipe" });
+        this.pass("TypeScript compilation successful");
       } catch (error) {
-        const output = error.stdout?.toString() || error.stderr?.toString() || '';
-        const errorLines = output.split('\n').filter(line => line.includes('error TS'));
-        
+        const output = error.stdout?.toString() || error.stderr?.toString() || "";
+        const errorLines = output.split("\n").filter((line) => line.includes("error TS"));
+
         this.error(`TypeScript compilation failed with ${errorLines.length} errors`);
-        
+
         // Show first few errors
-        errorLines.slice(0, 5).forEach(line => {
-          this.log(`    ${line.trim()}`, 'red');
+        errorLines.slice(0, 5).forEach((line) => {
+          this.log(`    ${line.trim()}`, "red");
         });
-        
+
         if (errorLines.length > 5) {
-          this.log(`    ... and ${errorLines.length - 5} more errors`, 'red');
+          this.log(`    ... and ${errorLines.length - 5} more errors`, "red");
         }
       }
-
     } catch (error) {
       this.error(`TypeScript compiler check failed: ${error.message}`);
     }
@@ -205,22 +201,17 @@ class TypeScriptComplianceVerifier {
    * Check for explicit 'any' types
    */
   async checkForAnyTypes() {
-    this.log('\n🔍 Checking for Explicit Any Types...', 'blue', true);
+    this.log("\n🔍 Checking for Explicit Any Types...", "blue", true);
 
     try {
       const sourceFiles = this.findSourceFiles();
-      const anyPatterns = [
-        /:\s*any\b/g,
-        /<any>/g,
-        /as\s+any\b/g,
-        /\bany\[\]/g,
-      ];
+      const anyPatterns = [/:\s*any\b/g, /<any>/g, /as\s+any\b/g, /\bany\[\]/g];
 
       let totalAnyTypes = 0;
       const filesWithAny = [];
 
       for (const file of sourceFiles) {
-        const content = fs.readFileSync(file, 'utf8');
+        const content = fs.readFileSync(file, "utf8");
         let fileAnyCount = 0;
 
         for (const pattern of anyPatterns) {
@@ -237,19 +228,18 @@ class TypeScriptComplianceVerifier {
       this.stats.anyTypesFound = totalAnyTypes;
 
       if (totalAnyTypes === 0) {
-        this.pass('No explicit any types found');
+        this.pass("No explicit any types found");
       } else {
         this.warning(`Found ${totalAnyTypes} explicit any types in ${filesWithAny.length} files`);
-        
+
         // Show files with most any types
         filesWithAny
           .sort((a, b) => b.count - a.count)
           .slice(0, 5)
           .forEach(({ file, count }) => {
-            this.log(`    ${path.relative(process.cwd(), file)}: ${count} any types`, 'yellow');
+            this.log(`    ${path.relative(process.cwd(), file)}: ${count} any types`, "yellow");
           });
       }
-
     } catch (error) {
       this.error(`Any type checking failed: ${error.message}`);
     }
@@ -259,32 +249,29 @@ class TypeScriptComplianceVerifier {
    * Check for implicit any (requires compilation)
    */
   async checkForImplicitAny() {
-    this.log('\n🔍 Checking for Implicit Any Types...', 'blue', true);
+    this.log("\n🔍 Checking for Implicit Any Types...", "blue", true);
 
     try {
       // Run tsc with specific flags to catch implicit any
       try {
-        execSync('npx tsc --noEmit --noImplicitAny', { stdio: 'pipe' });
-        this.pass('No implicit any types found');
+        execSync("npx tsc --noEmit --noImplicitAny", { stdio: "pipe" });
+        this.pass("No implicit any types found");
         this.stats.implicitAnyFound = 0;
       } catch (error) {
-        const output = error.stdout?.toString() || error.stderr?.toString() || '';
-        const implicitAnyErrors = output.split('\n').filter(line => 
-          line.includes('implicitly has an \'any\' type')
-        );
-        
+        const output = error.stdout?.toString() || error.stderr?.toString() || "";
+        const implicitAnyErrors = output.split("\n").filter((line) => line.includes("implicitly has an 'any' type"));
+
         this.stats.implicitAnyFound = implicitAnyErrors.length;
-        
+
         if (implicitAnyErrors.length > 0) {
           this.warning(`Found ${implicitAnyErrors.length} implicit any types`);
-          
+
           // Show first few errors
-          implicitAnyErrors.slice(0, 3).forEach(line => {
-            this.log(`    ${line.trim()}`, 'yellow');
+          implicitAnyErrors.slice(0, 3).forEach((line) => {
+            this.log(`    ${line.trim()}`, "yellow");
           });
         }
       }
-
     } catch (error) {
       this.error(`Implicit any checking failed: ${error.message}`);
     }
@@ -294,15 +281,15 @@ class TypeScriptComplianceVerifier {
    * Check for missing return types
    */
   async checkReturnTypes() {
-    this.log('\n🔍 Checking Return Types...', 'blue', true);
+    this.log("\n🔍 Checking Return Types...", "blue", true);
 
     try {
       const sourceFiles = this.findSourceFiles();
       let missingReturnTypes = 0;
 
       for (const file of sourceFiles) {
-        const content = fs.readFileSync(file, 'utf8');
-        
+        const content = fs.readFileSync(file, "utf8");
+
         // Look for function declarations without return types
         const functionPatterns = [
           /function\s+\w+\s*\([^)]*\)\s*{/g,
@@ -314,7 +301,7 @@ class TypeScriptComplianceVerifier {
           const matches = content.match(pattern) || [];
           for (const match of matches) {
             // Skip if it already has a return type
-            if (!match.includes(':') || !match.includes('=>')) {
+            if (!match.includes(":") || !match.includes("=>")) {
               missingReturnTypes++;
             }
           }
@@ -324,11 +311,10 @@ class TypeScriptComplianceVerifier {
       this.stats.missingReturnTypes = missingReturnTypes;
 
       if (missingReturnTypes === 0) {
-        this.pass('All functions have return types');
+        this.pass("All functions have return types");
       } else {
         this.warning(`${missingReturnTypes} functions may be missing return types`);
       }
-
     } catch (error) {
       this.error(`Return type checking failed: ${error.message}`);
     }
@@ -338,33 +324,34 @@ class TypeScriptComplianceVerifier {
    * Check for unused variables
    */
   async checkUnusedVariables() {
-    this.log('\n🔍 Checking for Unused Variables...', 'blue', true);
+    this.log("\n🔍 Checking for Unused Variables...", "blue", true);
 
     try {
       // Run tsc with noUnusedLocals and noUnusedParameters
       try {
-        execSync('npx tsc --noEmit --noUnusedLocals --noUnusedParameters', { stdio: 'pipe' });
-        this.pass('No unused variables found');
+        execSync("npx tsc --noEmit --noUnusedLocals --noUnusedParameters", { stdio: "pipe" });
+        this.pass("No unused variables found");
         this.stats.unusedVariables = 0;
       } catch (error) {
-        const output = error.stdout?.toString() || error.stderr?.toString() || '';
-        const unusedErrors = output.split('\n').filter(line => 
-          line.includes('is declared but never used') || 
-          line.includes('is declared but its value is never read')
-        );
-        
+        const output = error.stdout?.toString() || error.stderr?.toString() || "";
+        const unusedErrors = output
+          .split("\n")
+          .filter(
+            (line) =>
+              line.includes("is declared but never used") || line.includes("is declared but its value is never read"),
+          );
+
         this.stats.unusedVariables = unusedErrors.length;
-        
+
         if (unusedErrors.length > 0) {
           this.warning(`Found ${unusedErrors.length} unused variables/parameters`);
-          
+
           // Show first few errors
-          unusedErrors.slice(0, 3).forEach(line => {
-            this.log(`    ${line.trim()}`, 'yellow');
+          unusedErrors.slice(0, 3).forEach((line) => {
+            this.log(`    ${line.trim()}`, "yellow");
           });
         }
       }
-
     } catch (error) {
       this.error(`Unused variable checking failed: ${error.message}`);
     }
@@ -374,15 +361,15 @@ class TypeScriptComplianceVerifier {
    * Check strict null checks compliance
    */
   async checkStrictNullChecks() {
-    this.log('\n🔍 Checking Strict Null Checks...', 'blue', true);
+    this.log("\n🔍 Checking Strict Null Checks...", "blue", true);
 
     try {
       const sourceFiles = this.findSourceFiles();
       let nullCheckIssues = 0;
 
       for (const file of sourceFiles) {
-        const content = fs.readFileSync(file, 'utf8');
-        
+        const content = fs.readFileSync(file, "utf8");
+
         // Look for potential null/undefined issues
         const nullPatterns = [
           /\.\w+\s*\(/g, // Method calls without null checks
@@ -390,17 +377,17 @@ class TypeScriptComplianceVerifier {
         ];
 
         // This is a simplified check - in practice, you'd want more sophisticated analysis
-        const lines = content.split('\n');
+        const lines = content.split("\n");
         for (let i = 0; i < lines.length; i++) {
           const line = lines[i];
-          
+
           // Skip comments and strings
-          if (line.trim().startsWith('//') || line.trim().startsWith('*')) {
+          if (line.trim().startsWith("//") || line.trim().startsWith("*")) {
             continue;
           }
-          
+
           // Look for potential null reference issues
-          if (line.includes('!') && (line.includes('.') || line.includes('['))) {
+          if (line.includes("!") && (line.includes(".") || line.includes("["))) {
             // Non-null assertion operator usage
             nullCheckIssues++;
           }
@@ -410,11 +397,10 @@ class TypeScriptComplianceVerifier {
       this.stats.strictNullChecks = nullCheckIssues;
 
       if (nullCheckIssues === 0) {
-        this.pass('No obvious null check issues found');
+        this.pass("No obvious null check issues found");
       } else {
         this.warning(`${nullCheckIssues} potential null check issues found`);
       }
-
     } catch (error) {
       this.error(`Strict null check verification failed: ${error.message}`);
     }
@@ -424,7 +410,7 @@ class TypeScriptComplianceVerifier {
    * Generate compliance report
    */
   async generateComplianceReport() {
-    this.log('\n📊 Generating Compliance Report...', 'blue', true);
+    this.log("\n📊 Generating Compliance Report...", "blue", true);
 
     try {
       const report = {
@@ -436,22 +422,23 @@ class TypeScriptComplianceVerifier {
       };
 
       // Write report to file
-      const reportPath = 'typescript-compliance-report.json';
+      const reportPath = "typescript-compliance-report.json";
       fs.writeFileSync(reportPath, JSON.stringify(report, null, 2));
       this.pass(`Compliance report written to ${reportPath}`);
 
       // Generate summary
-      this.log('\n📈 COMPLIANCE SUMMARY:', 'magenta', true);
+      this.log("\n📈 COMPLIANCE SUMMARY:", "magenta", true);
       this.log(`  Files Scanned: ${this.stats.filesScanned}`);
       this.log(`  Explicit Any Types: ${this.stats.anyTypesFound}`);
       this.log(`  Implicit Any Types: ${this.stats.implicitAnyFound}`);
       this.log(`  Missing Return Types: ${this.stats.missingReturnTypes}`);
       this.log(`  Unused Variables: ${this.stats.unusedVariables}`);
       this.log(`  Null Check Issues: ${this.stats.strictNullChecks}`);
-      this.log(`  Compliance Score: ${report.complianceScore}%`, 
-        report.complianceScore >= 90 ? 'green' : 
-        report.complianceScore >= 70 ? 'yellow' : 'red', true);
-
+      this.log(
+        `  Compliance Score: ${report.complianceScore}%`,
+        report.complianceScore >= 90 ? "green" : report.complianceScore >= 70 ? "yellow" : "red",
+        true,
+      );
     } catch (error) {
       this.error(`Report generation failed: ${error.message}`);
     }
@@ -483,45 +470,45 @@ class TypeScriptComplianceVerifier {
     const files = [];
     const searchDir = (dir) => {
       if (!fs.existsSync(dir)) return;
-      
+
       const items = fs.readdirSync(dir);
       for (const item of items) {
         const fullPath = path.join(dir, item);
         const stat = fs.statSync(fullPath);
-        
-        if (stat.isDirectory() && !item.startsWith('.') && item !== 'node_modules') {
+
+        if (stat.isDirectory() && !item.startsWith(".") && item !== "node_modules") {
           searchDir(fullPath);
-        } else if (item.endsWith('.ts') || item.endsWith('.tsx')) {
+        } else if (item.endsWith(".ts") || item.endsWith(".tsx")) {
           files.push(fullPath);
         }
       }
     };
-    
-    searchDir('src');
+
+    searchDir("src");
     return files;
   }
 
   /**
    * Logging methods
    */
-  log(message, color = 'reset', bold = false) {
+  log(message, color = "reset", bold = false) {
     const colorCode = colors[color] || colors.reset;
-    const style = bold ? colors.bright : '';
+    const style = bold ? colors.bright : "";
     console.log(`${style}${colorCode}${message}${colors.reset}`);
   }
 
   pass(message) {
-    this.log(`  ✅ ${message}`, 'green');
+    this.log(`  ✅ ${message}`, "green");
   }
 
   warning(message) {
     this.warnings.push(message);
-    this.log(`  ⚠️  ${message}`, 'yellow');
+    this.log(`  ⚠️  ${message}`, "yellow");
   }
 
   error(message) {
     this.issues.push(message);
-    this.log(`  ❌ ${message}`, 'red');
+    this.log(`  ❌ ${message}`, "red");
   }
 
   /**
@@ -530,63 +517,65 @@ class TypeScriptComplianceVerifier {
   generateReport() {
     const duration = ((Date.now() - this.startTime) / 1000).toFixed(2);
     const complianceScore = this.calculateComplianceScore();
-    
-    this.log('\n' + '='.repeat(60), 'cyan');
-    this.log('📋 TYPESCRIPT COMPLIANCE REPORT', 'cyan', true);
-    this.log('='.repeat(60), 'cyan');
-    
-    this.log(`\n📊 COMPLIANCE SCORE: ${complianceScore}%`, 
-      complianceScore >= 90 ? 'green' : 
-      complianceScore >= 70 ? 'yellow' : 'red', true);
-    
-    this.log(`\n✅ Files Scanned: ${this.stats.filesScanned}`, 'green');
-    this.log(`⚠️  Warnings: ${this.warnings.length}`, 'yellow');
-    this.log(`❌ Errors: ${this.issues.length}`, 'red');
-    this.log(`⏱️  Duration: ${duration}s`, 'blue');
+
+    this.log("\n" + "=".repeat(60), "cyan");
+    this.log("📋 TYPESCRIPT COMPLIANCE REPORT", "cyan", true);
+    this.log("=".repeat(60), "cyan");
+
+    this.log(
+      `\n📊 COMPLIANCE SCORE: ${complianceScore}%`,
+      complianceScore >= 90 ? "green" : complianceScore >= 70 ? "yellow" : "red",
+      true,
+    );
+
+    this.log(`\n✅ Files Scanned: ${this.stats.filesScanned}`, "green");
+    this.log(`⚠️  Warnings: ${this.warnings.length}`, "yellow");
+    this.log(`❌ Errors: ${this.issues.length}`, "red");
+    this.log(`⏱️  Duration: ${duration}s`, "blue");
 
     if (this.warnings.length > 0) {
-      this.log('\n⚠️  WARNINGS:', 'yellow', true);
-      this.warnings.slice(0, 10).forEach(warning => this.log(`  • ${warning}`, 'yellow'));
+      this.log("\n⚠️  WARNINGS:", "yellow", true);
+      this.warnings.slice(0, 10).forEach((warning) => this.log(`  • ${warning}`, "yellow"));
       if (this.warnings.length > 10) {
-        this.log(`  ... and ${this.warnings.length - 10} more warnings`, 'yellow');
+        this.log(`  ... and ${this.warnings.length - 10} more warnings`, "yellow");
       }
     }
 
     if (this.issues.length > 0) {
-      this.log('\n❌ ERRORS:', 'red', true);
-      this.issues.slice(0, 10).forEach(error => this.log(`  • ${error}`, 'red'));
+      this.log("\n❌ ERRORS:", "red", true);
+      this.issues.slice(0, 10).forEach((error) => this.log(`  • ${error}`, "red"));
       if (this.issues.length > 10) {
-        this.log(`  ... and ${this.issues.length - 10} more errors`, 'red');
+        this.log(`  ... and ${this.issues.length - 10} more errors`, "red");
       }
     }
 
-    this.log('\n' + '='.repeat(60), 'cyan');
-    
+    this.log("\n" + "=".repeat(60), "cyan");
+
     if (complianceScore >= 90) {
-      this.log('🎉 EXCELLENT TYPESCRIPT COMPLIANCE!', 'green', true);
-      this.log('Your codebase follows TypeScript best practices.', 'green');
+      this.log("🎉 EXCELLENT TYPESCRIPT COMPLIANCE!", "green", true);
+      this.log("Your codebase follows TypeScript best practices.", "green");
     } else if (complianceScore >= 70) {
-      this.log('👍 GOOD TYPESCRIPT COMPLIANCE', 'yellow', true);
-      this.log('Consider addressing the warnings above for better type safety.', 'yellow');
+      this.log("👍 GOOD TYPESCRIPT COMPLIANCE", "yellow", true);
+      this.log("Consider addressing the warnings above for better type safety.", "yellow");
     } else {
-      this.log('⚠️  TYPESCRIPT COMPLIANCE NEEDS IMPROVEMENT', 'red', true);
-      this.log('Please address the errors and warnings above for better type safety.', 'red');
+      this.log("⚠️  TYPESCRIPT COMPLIANCE NEEDS IMPROVEMENT", "red", true);
+      this.log("Please address the errors and warnings above for better type safety.", "red");
     }
 
-    this.log('\n💡 RECOMMENDATIONS:', 'blue', true);
-    this.log('  • Enable strict mode in tsconfig.json', 'blue');
-    this.log('  • Add explicit return types to all functions', 'blue');
-    this.log('  • Replace any types with specific types', 'blue');
-    this.log('  • Remove unused variables and imports', 'blue');
-    this.log('  • Use optional chaining (?.) for null safety', 'blue');
+    this.log("\n💡 RECOMMENDATIONS:", "blue", true);
+    this.log("  • Enable strict mode in tsconfig.json", "blue");
+    this.log("  • Add explicit return types to all functions", "blue");
+    this.log("  • Replace any types with specific types", "blue");
+    this.log("  • Remove unused variables and imports", "blue");
+    this.log("  • Use optional chaining (?.) for null safety", "blue");
   }
 }
 
 // Run verification if called directly
 if (require.main === module) {
   const verifier = new TypeScriptComplianceVerifier();
-  verifier.verify().catch(error => {
-    console.error('Verification failed:', error);
+  verifier.verify().catch((error) => {
+    console.error("Verification failed:", error);
     process.exit(1);
   });
 }

@@ -43,7 +43,10 @@ async function main() {
   }
 
   // 4) Ensure no TODOs in production src
-  const rg = require("child_process").spawnSync("bash", ["-lc", "rg -n --hidden --glob '!node_modules' 'TODO' src || true"]);
+  const rg = require("child_process").spawnSync("bash", [
+    "-lc",
+    "rg -n --hidden --glob '!node_modules' 'TODO' src || true",
+  ]);
   const todoOutput = rg.stdout?.toString() || "";
   if (todoOutput.trim().length > 0) {
     console.warn("TODOs found in source files:\n" + todoOutput);
@@ -56,4 +59,3 @@ main().catch((err) => {
   console.error("Pre-submission checks failed:", err.message || err);
   process.exit(1);
 });
-

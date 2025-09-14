@@ -30,7 +30,7 @@ let authCleanupTracker: {
       console.log(`🧹 Executing ${this.cleanupFunctions.size} auth cleanup functions`);
     }
 
-    this.cleanupFunctions.forEach(fn => {
+    this.cleanupFunctions.forEach((fn) => {
       try {
         fn();
       } catch (error) {
@@ -40,7 +40,7 @@ let authCleanupTracker: {
 
     this.cleanupFunctions.clear();
     this.isCleaningUp = false;
-  }
+  },
 };
 
 interface AuthState {
@@ -85,15 +85,19 @@ const sanitizeUserForPersistence = (user: User | null): User | null => {
   return {
     ...user,
     // Remove or hash sensitive data (keep type as string)
-    email: user.email ? `${user.email.substring(0, 3)}***@${user.email.split('@')[1]}` : user.email,
+    email: user.email ? `${user.email.substring(0, 3)}***@${user.email.split("@")[1]}` : user.email,
     // Reduce precision of coordinates for privacy
-    location: user.location ? {
-      ...user.location,
-      coordinates: user.location.coordinates ? {
-        latitude: Math.round(user.location.coordinates.latitude * 100) / 100, // 2 decimal places
-        longitude: Math.round(user.location.coordinates.longitude * 100) / 100,
-      } : undefined,
-    } : user.location,
+    location: user.location
+      ? {
+          ...user.location,
+          coordinates: user.location.coordinates
+            ? {
+                latitude: Math.round(user.location.coordinates.latitude * 100) / 100, // 2 decimal places
+                longitude: Math.round(user.location.coordinates.longitude * 100) / 100,
+              }
+            : undefined,
+        }
+      : user.location,
   };
 };
 
@@ -229,7 +233,11 @@ const useAuthStore = create<AuthStore>()(
             throw new AppError("Password is required", ErrorType.VALIDATION, "PASSWORD_REQUIRED");
           }
           if (password.length < 6) {
-            throw new AppError("Password must be at least 6 characters long", ErrorType.VALIDATION, "PASSWORD_TOO_SHORT");
+            throw new AppError(
+              "Password must be at least 6 characters long",
+              ErrorType.VALIDATION,
+              "PASSWORD_TOO_SHORT",
+            );
           }
 
           // Sanitize email for safety (remove hidden chars, lowercase)

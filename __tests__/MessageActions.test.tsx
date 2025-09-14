@@ -23,4 +23,3 @@ describe("MessageActionsModal", () => {
     expect(onDelete).toHaveBeenCalled();
   });
 });
-

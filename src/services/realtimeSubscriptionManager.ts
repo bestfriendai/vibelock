@@ -113,26 +113,14 @@ class RealtimeSubscriptionManager {
 
       // Production rate limiting check
       if (!checkRateLimit()) {
-        const error = new AppError(
-          "Rate limit exceeded",
-          ErrorType.SERVER,
-          "RATE_LIMIT_EXCEEDED",
-          429,
-          true
-        );
+        const error = new AppError("Rate limit exceeded", ErrorType.SERVER, "RATE_LIMIT_EXCEEDED", 429, true);
         callbacks.onError?.(error);
         return false;
       }
 
       // Circuit breaker check
       if (this.config.enableCircuitBreaker && this.isCircuitBreakerOpen(subscriptionKey)) {
-        const error = new AppError(
-          "Circuit breaker is open",
-          ErrorType.SERVER,
-          "CIRCUIT_BREAKER_OPEN",
-          503,
-          true
-        );
+        const error = new AppError("Circuit breaker is open", ErrorType.SERVER, "CIRCUIT_BREAKER_OPEN", 503, true);
         callbacks.onError?.(error);
         return false;
       }
@@ -147,7 +135,7 @@ class RealtimeSubscriptionManager {
             ErrorType.SERVER,
             "MAX_SUBSCRIPTIONS_REACHED",
             503,
-            true
+            true,
           );
           console.warn("Maximum concurrent subscriptions reached");
           callbacks.onError?.(error);
@@ -552,8 +540,7 @@ class RealtimeSubscriptionManager {
       totalErrors += subscription.performanceMetrics.errorCount;
     }
 
-    this.performanceMetrics.averageLatency = this.subscriptions.size > 0 ?
-      totalLatency / this.subscriptions.size : 0;
+    this.performanceMetrics.averageLatency = this.subscriptions.size > 0 ? totalLatency / this.subscriptions.size : 0;
     this.performanceMetrics.totalMessages = totalMessages;
     this.performanceMetrics.totalErrors = totalErrors;
 
@@ -568,13 +555,16 @@ class RealtimeSubscriptionManager {
 
     // Estimate memory usage (rough calculation)
     const subscriptionMemory = this.subscriptions.size * 1024; // ~1KB per subscription
-    const callbackMemory = Array.from(this.subscriptions.values())
-      .reduce((total, sub) => total + sub.callbacks.size * 100, 0); // ~100 bytes per callback
+    const callbackMemory = Array.from(this.subscriptions.values()).reduce(
+      (total, sub) => total + sub.callbacks.size * 100,
+      0,
+    ); // ~100 bytes per callback
 
     const totalMemoryKB = (subscriptionMemory + callbackMemory) / 1024;
     this.performanceMetrics.memoryUsage = totalMemoryKB;
 
-    if (totalMemoryKB > this.config.memoryThreshold * 1024) { // Convert MB to KB
+    if (totalMemoryKB > this.config.memoryThreshold * 1024) {
+      // Convert MB to KB
       console.warn(`[RealtimeManager] High memory usage: ${totalMemoryKB.toFixed(2)}KB`);
 
       // Trigger aggressive cleanup

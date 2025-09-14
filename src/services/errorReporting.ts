@@ -3,13 +3,13 @@
  * Integrates with existing AppError system for production-ready error monitoring
  */
 
-import * as Sentry from '@sentry/react-native';
-import { AppError, ErrorType } from '../utils/errorHandling';
-import Constants from 'expo-constants';
+import * as Sentry from "@sentry/react-native";
+import { AppError, ErrorType } from "../utils/errorHandling";
+import Constants from "expo-constants";
 
 interface ErrorReportingConfig {
   dsn: string;
-  environment: 'development' | 'staging' | 'production';
+  environment: "development" | "staging" | "production";
   enableInExpoDevelopment: boolean;
   sampleRate: number;
   tracesSampleRate: number;
@@ -51,19 +51,19 @@ class ErrorReportingService {
    */
   async initialize(): Promise<void> {
     if (this.isInitialized) {
-      console.warn('[ErrorReporting] Already initialized');
+      console.warn("[ErrorReporting] Already initialized");
       return;
     }
 
     try {
       // Skip initialization in Expo Go unless explicitly enabled
       if (this.isExpoGo() && !this.config.enableInExpoDevelopment) {
-        console.log('[ErrorReporting] Skipping initialization in Expo Go');
+        console.log("[ErrorReporting] Skipping initialization in Expo Go");
         return;
       }
 
       if (!this.config.dsn) {
-        console.warn('[ErrorReporting] No DSN provided, error reporting disabled');
+        console.warn("[ErrorReporting] No DSN provided, error reporting disabled");
         return;
       }
 
@@ -77,20 +77,13 @@ class ErrorReportingService {
         maxBreadcrumbs: this.config.maxBreadcrumbs,
         attachStacktrace: this.config.attachStacktrace,
         enableUserInteractionTracing: this.config.enableUserInteractionTracing,
-        
+
         // Production-specific configurations
-        beforeSend: (event: Sentry.Event, hint: Sentry.EventHint) => this.beforeSend(event, hint),
+        beforeSend: (event: any, hint: any) => this.beforeSend(event, hint),
         beforeBreadcrumb: (breadcrumb: Sentry.Breadcrumb) => this.beforeBreadcrumb(breadcrumb),
-        
+
         // Performance monitoring
-        integrations: [
-          new Sentry.ReactNativeTracing({
-            enableUserInteractionTracing: this.config.enableUserInteractionTracing,
-            enableNativeFramesTracking: true,
-            enableStallTracking: true,
-            enableAppStartTracking: true,
-          }),
-        ],
+        integrations: [Sentry.reactNativeTracingIntegration()],
 
         // Release and distribution info
         release: this.getRelease(),
@@ -101,9 +94,9 @@ class ErrorReportingService {
       this.setInitialContext();
       this.isInitialized = true;
 
-      console.log('[ErrorReporting] Initialized successfully');
+      console.log("[ErrorReporting] Initialized successfully");
     } catch (error) {
-      console.error('[ErrorReporting] Failed to initialize:', error);
+      console.error("[ErrorReporting] Failed to initialize:", error);
     }
   }
 
@@ -112,41 +105,37 @@ class ErrorReportingService {
    */
   reportError(error: AppError | Error, context?: Record<string, any>): void {
     if (!this.isInitialized) {
-      console.warn('[ErrorReporting] Not initialized, error not reported');
+      console.warn("[ErrorReporting] Not initialized, error not reported");
       return;
     }
 
     try {
       const appError = error instanceof AppError ? error : this.convertToAppError(error);
-      
+
       // Set error context
       Sentry.withScope((scope: Sentry.Scope) => {
         // Set error level based on type
         scope.setLevel(this.getErrorLevel(appError));
-        
+
         // Set error tags
-        scope.setTag('error.type', appError.type);
-        scope.setTag('error.retryable', appError.retryable);
-        
+        scope.setTag("error.type", appError.type);
+        scope.setTag("error.retryable", appError.retryable);
+
         if (appError.code) {
-          scope.setTag('error.code', appError.code);
+          scope.setTag("error.code", appError.code);
         }
-        
+
         if (appError.statusCode) {
-          scope.setTag('error.statusCode', appError.statusCode);
+          scope.setTag("error.statusCode", appError.statusCode);
         }
 
         // Set additional context
         if (context) {
-          scope.setContext('additional', context);
+          scope.setContext("additional", context);
         }
 
         // Set fingerprint for better grouping
-        scope.setFingerprint([
-          appError.type,
-          appError.code || 'unknown',
-          appError.message,
-        ]);
+        scope.setFingerprint([appError.type, appError.code || "unknown", appError.message]);
 
         // Report the error
         Sentry.captureException(appError);
@@ -155,36 +144,38 @@ class ErrorReportingService {
       // Add breadcrumb for error reporting
       this.addBreadcrumb({
         message: `Error reported: ${appError.type}`,
-        category: 'error',
-        level: 'error',
+        category: "error",
+        level: "error",
         data: {
           type: appError.type,
           code: appError.code,
           retryable: appError.retryable,
         },
       });
-
     } catch (reportingError) {
-      console.error('[ErrorReporting] Failed to report error:', reportingError);
+      console.error("[ErrorReporting] Failed to report error:", reportingError);
     }
   }
 
   /**
    * Start a performance transaction
    */
-  startTransaction(name: string, operation: string): Sentry.Transaction | null {
+  startTransaction(name: string, operation: string): any | null {
     if (!this.isInitialized) return null;
 
     try {
-      return Sentry.startTransaction({
-        name,
-        op: operation,
-        tags: {
-          'transaction.source': 'custom',
+      return Sentry.startSpan(
+        {
+          name,
+          op: operation,
         },
-      });
+        () => {
+          // Transaction callback
+          return null;
+        },
+      );
     } catch (error) {
-      console.warn('[ErrorReporting] Failed to start transaction:', error);
+      console.warn("[ErrorReporting] Failed to start transaction:", error);
       return null;
     }
   }
@@ -197,7 +188,7 @@ class ErrorReportingService {
 
     try {
       this.userContext = user;
-      
+
       Sentry.setUser({
         id: user.id,
         email: user.email,
@@ -207,9 +198,9 @@ class ErrorReportingService {
       });
 
       this.addBreadcrumb({
-        message: 'User context updated',
-        category: 'user',
-        level: 'info',
+        message: "User context updated",
+        category: "user",
+        level: "info",
         data: {
           userId: user.id,
           hasEmail: !!user.email,
@@ -217,7 +208,7 @@ class ErrorReportingService {
         },
       });
     } catch (error) {
-      console.warn('[ErrorReporting] Failed to set user context:', error);
+      console.warn("[ErrorReporting] Failed to set user context:", error);
     }
   }
 
@@ -230,14 +221,14 @@ class ErrorReportingService {
     try {
       this.userContext = null;
       Sentry.setUser(null);
-      
+
       this.addBreadcrumb({
-        message: 'User context cleared',
-        category: 'user',
-        level: 'info',
+        message: "User context cleared",
+        category: "user",
+        level: "info",
       });
     } catch (error) {
-      console.warn('[ErrorReporting] Failed to clear user context:', error);
+      console.warn("[ErrorReporting] Failed to clear user context:", error);
     }
   }
 
@@ -247,7 +238,7 @@ class ErrorReportingService {
   addBreadcrumb(breadcrumb: {
     message: string;
     category: string;
-    level: 'debug' | 'info' | 'warning' | 'error' | 'fatal';
+    level: "debug" | "info" | "warning" | "error" | "fatal";
     data?: Record<string, any>;
   }): void {
     if (!this.isInitialized) return;
@@ -261,7 +252,7 @@ class ErrorReportingService {
         timestamp: Date.now() / 1000,
       });
     } catch (error) {
-      console.warn('[ErrorReporting] Failed to add breadcrumb:', error);
+      console.warn("[ErrorReporting] Failed to add breadcrumb:", error);
     }
   }
 
@@ -272,22 +263,22 @@ class ErrorReportingService {
     if (!this.isInitialized) return;
 
     try {
-      Sentry.setContext(key, context);
+      Sentry.setContext(key, context as any);
     } catch (error) {
-      console.warn('[ErrorReporting] Failed to set context:', error);
+      console.warn("[ErrorReporting] Failed to set context:", error);
     }
   }
 
   /**
    * Capture a message with context
    */
-  captureMessage(message: string, level: 'debug' | 'info' | 'warning' | 'error' | 'fatal' = 'info'): void {
+  captureMessage(message: string, level: "debug" | "info" | "warning" | "error" | "fatal" = "info"): void {
     if (!this.isInitialized) return;
 
     try {
       Sentry.captureMessage(message, level);
     } catch (error) {
-      console.warn('[ErrorReporting] Failed to capture message:', error);
+      console.warn("[ErrorReporting] Failed to capture message:", error);
     }
   }
 
@@ -295,11 +286,11 @@ class ErrorReportingService {
    * Get configuration based on environment
    */
   private getConfiguration(): ErrorReportingConfig {
-    const isProduction = this.getEnvironment() === 'production';
-    const isDevelopment = this.getEnvironment() === 'development';
+    const isProduction = this.getEnvironment() === "production";
+    const isDevelopment = this.getEnvironment() === "development";
 
     return {
-      dsn: process.env.EXPO_PUBLIC_SENTRY_DSN || '',
+      dsn: process.env.EXPO_PUBLIC_SENTRY_DSN || "",
       environment: this.getEnvironment(),
       enableInExpoDevelopment: false, // Disable in Expo Go by default
       sampleRate: isProduction ? 0.1 : 1.0, // Sample 10% in production, 100% in dev
@@ -315,14 +306,14 @@ class ErrorReportingService {
   /**
    * Get current environment
    */
-  private getEnvironment(): 'development' | 'staging' | 'production' {
-    if (__DEV__) return 'development';
-    
+  private getEnvironment(): "development" | "staging" | "production" {
+    if (__DEV__) return "development";
+
     const buildProfile = Constants.expoConfig?.extra?.buildEnvironment?.buildProfile;
-    if (buildProfile === 'production') return 'production';
-    if (buildProfile === 'preview') return 'staging';
-    
-    return 'development';
+    if (buildProfile === "production") return "production";
+    if (buildProfile === "preview") return "staging";
+
+    return "development";
   }
 
   /**
@@ -336,9 +327,9 @@ class ErrorReportingService {
    * Get release version
    */
   private getRelease(): string {
-    const version = Constants.expoConfig?.version || '1.0.0';
-    const buildNumber = Constants.expoConfig?.ios?.buildNumber || 
-                       Constants.expoConfig?.android?.versionCode?.toString() || '1';
+    const version = Constants.expoConfig?.version || "1.0.0";
+    const buildNumber =
+      Constants.expoConfig?.ios?.buildNumber || Constants.expoConfig?.android?.versionCode?.toString() || "1";
     return `${version}+${buildNumber}`;
   }
 
@@ -346,8 +337,8 @@ class ErrorReportingService {
    * Get distribution identifier
    */
   private getDistribution(): string {
-    const buildProfile = Constants.expoConfig?.extra?.buildEnvironment?.buildProfile || 'development';
-    const platform = Constants.platform?.ios ? 'ios' : 'android';
+    const buildProfile = Constants.expoConfig?.extra?.buildEnvironment?.buildProfile || "development";
+    const platform = Constants.platform?.ios ? "ios" : "android";
     return `${buildProfile}-${platform}`;
   }
 
@@ -359,23 +350,23 @@ class ErrorReportingService {
     this.sessionContext = {
       sessionId: this.generateSessionId(),
       startTime: Date.now(),
-      platform: Constants.platform?.ios ? 'ios' : 'android',
-      appVersion: Constants.expoConfig?.version || '1.0.0',
-      buildNumber: Constants.expoConfig?.ios?.buildNumber || 
-                  Constants.expoConfig?.android?.versionCode?.toString() || '1',
+      platform: Constants.platform?.ios ? "ios" : "android",
+      appVersion: Constants.expoConfig?.version || "1.0.0",
+      buildNumber:
+        Constants.expoConfig?.ios?.buildNumber || Constants.expoConfig?.android?.versionCode?.toString() || "1",
     };
 
-    Sentry.setContext('session', this.sessionContext);
-    
+    Sentry.setContext("session", this.sessionContext as any);
+
     // Set device context
-    Sentry.setContext('device', {
+    Sentry.setContext("device", {
       platform: Constants.platform,
       isDevice: Constants.isDevice,
       expoVersion: Constants.expoVersion,
     });
 
     // Set build context
-    Sentry.setContext('build', {
+    Sentry.setContext("build", {
       environment: this.config.environment,
       buildProfile: Constants.expoConfig?.extra?.buildEnvironment?.buildProfile,
       isExpoGo: this.isExpoGo(),
@@ -393,44 +384,37 @@ class ErrorReportingService {
    * Convert regular Error to AppError
    */
   private convertToAppError(error: Error): AppError {
-    return new AppError(
-      error.message,
-      ErrorType.UNKNOWN,
-      'UNKNOWN_ERROR',
-      undefined,
-      false
-    );
+    return new AppError(error.message, ErrorType.UNKNOWN, "UNKNOWN_ERROR", undefined, false);
   }
 
   /**
    * Get Sentry error level from AppError type
    */
-  private getErrorLevel(error: AppError): 'debug' | 'info' | 'warning' | 'error' | 'fatal' {
+  private getErrorLevel(error: AppError): "debug" | "info" | "warning" | "error" | "fatal" {
     switch (error.type) {
       case ErrorType.NETWORK:
-        return error.retryable ? 'warning' : 'error';
+        return error.retryable ? "warning" : "error";
       case ErrorType.AUTH:
-        return 'warning';
+        return "warning";
       case ErrorType.PERMISSION:
-        return 'warning';
+        return "warning";
       case ErrorType.VALIDATION:
-        return 'info';
+        return "info";
       case ErrorType.SERVER:
-        return error.statusCode && error.statusCode >= 500 ? 'error' : 'warning';
+        return error.statusCode && error.statusCode >= 500 ? "error" : "warning";
       default:
-        return 'error';
+        return "error";
     }
   }
 
   /**
    * Filter events before sending to Sentry
    */
-  private beforeSend(event: Sentry.Event, hint: Sentry.EventHint): Sentry.Event | null {
+  private beforeSend(event: any, hint: any): any | null {
     // Filter out development-only errors in production
-    if (this.config.environment === 'production') {
+    if (this.config.environment === "production") {
       // Skip certain error types in production
-      if (event.tags?.['error.type'] === ErrorType.VALIDATION && 
-          event.level === 'info') {
+      if (event.tags?.["error.type"] === ErrorType.VALIDATION && event.level === "info") {
         return null;
       }
     }
@@ -438,7 +422,7 @@ class ErrorReportingService {
     // Add session context to all events
     if (this.sessionContext) {
       event.contexts = event.contexts || {};
-      event.contexts.session = this.sessionContext;
+      event.contexts.session = this.sessionContext as any;
     }
 
     return event;
@@ -449,8 +433,8 @@ class ErrorReportingService {
    */
   private beforeBreadcrumb(breadcrumb: Sentry.Breadcrumb): Sentry.Breadcrumb | null {
     // Filter out noisy breadcrumbs in production
-    if (this.config.environment === 'production') {
-      if (breadcrumb.category === 'console' && breadcrumb.level === 'debug') {
+    if (this.config.environment === "production") {
+      if (breadcrumb.category === "console" && breadcrumb.level === "debug") {
         return null;
       }
     }

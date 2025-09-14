@@ -12,19 +12,22 @@ const sanitizeLocationForStorage = (location: LocationData): LocationData => {
   return {
     ...location,
     // Reduce coordinate precision to ~100m accuracy for privacy
-    coordinates: location.coordinates ? {
-      latitude: Math.round(location.coordinates.latitude * 1000) / 1000,
-      longitude: Math.round(location.coordinates.longitude * 1000) / 1000,
-    } : undefined,
+    coordinates: location.coordinates
+      ? {
+          latitude: Math.round(location.coordinates.latitude * 1000) / 1000,
+          longitude: Math.round(location.coordinates.longitude * 1000) / 1000,
+        }
+      : undefined,
   };
 };
 
 // Validate cached location data
 const isValidCachedLocation = (location: any): boolean => {
-  if (!location || typeof location !== 'object') return false;
-  if (typeof location.city !== 'string' || typeof location.state !== 'string') return false;
+  if (!location || typeof location !== "object") return false;
+  if (typeof location.city !== "string" || typeof location.state !== "string") return false;
   if (location.coordinates) {
-    if (typeof location.coordinates.latitude !== 'number' || typeof location.coordinates.longitude !== 'number') return false;
+    if (typeof location.coordinates.latitude !== "number" || typeof location.coordinates.longitude !== "number")
+      return false;
   }
   return true;
 };
@@ -321,14 +324,14 @@ class LocationService {
       if (!cacheData) return;
 
       const cache = JSON.parse(cacheData);
-      if (!cache || typeof cache !== 'object') {
+      if (!cache || typeof cache !== "object") {
         await AsyncStorage.removeItem(LocationService.LOCATION_CACHE_KEY);
         return;
       }
 
       // Check if cache is expired
       const now = Date.now();
-      if (cache.timestamp && (now - cache.timestamp) > LocationService.CACHE_DURATION) {
+      if (cache.timestamp && now - cache.timestamp > LocationService.CACHE_DURATION) {
         await AsyncStorage.removeItem(LocationService.LOCATION_CACHE_KEY);
 
         if (__DEV__) {

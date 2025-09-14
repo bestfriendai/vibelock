@@ -27,26 +27,26 @@ export const useInterstitialAds = () => {
 
   // Enhanced error classification for SDK 54 compatibility
   const isSDK54CompatibilityError = (error: any): boolean => {
-    const errorMessage = error?.message?.toLowerCase() || '';
+    const errorMessage = error?.message?.toLowerCase() || "";
     return (
-      errorMessage.includes('expo sdk 54') ||
-      errorMessage.includes('module not found') ||
-      errorMessage.includes('native module') ||
-      errorMessage.includes('admob') ||
-      errorMessage.includes('google-mobile-ads')
+      errorMessage.includes("expo sdk 54") ||
+      errorMessage.includes("module not found") ||
+      errorMessage.includes("native module") ||
+      errorMessage.includes("admob") ||
+      errorMessage.includes("google-mobile-ads")
     );
   };
 
   // Enhanced ad show function with retry logic
   const showAdWithRetry = async (
     placement: "postCreation" | "chatExit" | "general",
-    maxRetries: number = 2
+    maxRetries: number = 2,
   ): Promise<boolean> => {
     let attempts = 0;
 
     while (attempts <= maxRetries) {
       try {
-        setAdMetrics(prev => ({ ...prev, totalAttempts: prev.totalAttempts + 1 }));
+        setAdMetrics((prev) => ({ ...prev, totalAttempts: prev.totalAttempts + 1 }));
 
         let result: boolean;
         if (placement === "general") {
@@ -56,10 +56,10 @@ export const useInterstitialAds = () => {
         }
 
         if (result) {
-          setAdMetrics(prev => ({
+          setAdMetrics((prev) => ({
             ...prev,
             successfulShows: prev.successfulShows + 1,
-            lastError: null
+            lastError: null,
           }));
           return true;
         }
@@ -67,26 +67,25 @@ export const useInterstitialAds = () => {
         attempts++;
         if (attempts <= maxRetries) {
           console.log(`Retrying ${placement} ad (attempt ${attempts + 1}/${maxRetries + 1})`);
-          await new Promise(resolve => setTimeout(resolve, 1000 * attempts));
+          await new Promise((resolve) => setTimeout(resolve, 1000 * attempts));
         }
-
       } catch (error) {
         attempts++;
         const errorMessage = error instanceof Error ? error.message : String(error);
         console.warn(`Failed to show ${placement} interstitial ad (attempt ${attempts}/${maxRetries + 1}):`, error);
 
-        setAdMetrics(prev => ({
+        setAdMetrics((prev) => ({
           ...prev,
           failures: prev.failures + 1,
-          lastError: errorMessage
+          lastError: errorMessage,
         }));
 
         // Apply SDK 54 specific workarounds
         if (isSDK54CompatibilityError(error) && attempts <= maxRetries) {
           console.log("Applying SDK 54 compatibility workaround for interstitial ad...");
-          await new Promise(resolve => setTimeout(resolve, 2000 * attempts));
+          await new Promise((resolve) => setTimeout(resolve, 2000 * attempts));
         } else if (attempts <= maxRetries) {
-          await new Promise(resolve => setTimeout(resolve, 1000 * attempts));
+          await new Promise((resolve) => setTimeout(resolve, 1000 * attempts));
         }
       }
     }
@@ -126,7 +125,7 @@ export const useInterstitialAds = () => {
 
   // Cleanup function for timeouts
   const cleanup = useCallback(() => {
-    retryTimeouts.current.forEach(timeout => clearTimeout(timeout));
+    retryTimeouts.current.forEach((timeout) => clearTimeout(timeout));
     retryTimeouts.current.clear();
   }, []);
 

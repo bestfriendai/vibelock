@@ -22,8 +22,15 @@ jest.mock("../src/services/notificationService", () => ({
 
 // Mock EnhancedMessageBubble to expose simple text for order checks
 jest.mock("../src/components/EnhancedMessageBubble", () => {
+  const React = require("react");
+  const { Text } = require("react-native");
   return ({ message }: any) => {
-    return <>{/* eslint-disable-next-line react/jsx-no-undef */}<Text testID={`bubble-${message.id}`}>{message.content}</Text></>;
+    return (
+      <>
+        {}
+        <Text testID={`bubble-${message.id}`}>{message.content}</Text>
+      </>
+    );
   };
 });
 
@@ -59,8 +66,24 @@ describe("Chat message ordering", () => {
     useChatStore.setState({
       messages: {
         "test-room": [
-          { id: "m1", chatRoomId: "test-room", senderId: "u1", senderName: "A", content: "old", messageType: "text", timestamp: new Date(1000) },
-          { id: "m2", chatRoomId: "test-room", senderId: "u2", senderName: "B", content: "new", messageType: "text", timestamp: new Date(2000) },
+          {
+            id: "m1",
+            chatRoomId: "test-room",
+            senderId: "u1",
+            senderName: "A",
+            content: "old",
+            messageType: "text",
+            timestamp: new Date(1000),
+          },
+          {
+            id: "m2",
+            chatRoomId: "test-room",
+            senderId: "u2",
+            senderName: "B",
+            content: "new",
+            messageType: "text",
+            timestamp: new Date(2000),
+          },
         ],
       },
       members: { "test-room": [] },
@@ -78,4 +101,3 @@ describe("Chat message ordering", () => {
     expect(second).toBeTruthy();
   });
 });
-
