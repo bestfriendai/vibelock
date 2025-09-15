@@ -63,7 +63,7 @@ export default function ProfileScreen() {
         text: "Email Us",
         onPress: () => {
           const { Linking } = require("react-native");
-          Linking.openURL("mailto:contact@lockerroomapp.com");
+          Linking.openURL("mailto:Contact@lockerroomapp.com");
         },
       },
       { text: "Cancel", style: "cancel" },

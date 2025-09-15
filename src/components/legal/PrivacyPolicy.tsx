@@ -11,7 +11,7 @@ interface PrivacyPolicyProps {
 
 export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onClose, showNavigation = false, onNavigateToTerms }) => {
   const openEmail = () => {
-    Linking.openURL("mailto:contact@lockerroomapp.com");
+    Linking.openURL("mailto:Contact@lockerroomapp.com");
   };
 
   return (
@@ -379,7 +379,7 @@ export const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onClose, showNavig
             <Text className="text-text-primary font-medium mb-2">Privacy Officer</Text>
             <Text className="text-text-secondary text-sm mb-1">Locker Room Talk</Text>
             <Pressable onPress={openEmail}>
-              <Text className="text-brand-red text-sm">contact@lockerroomapp.com</Text>
+              <Text className="text-brand-red text-sm">Contact@lockerroomapp.com</Text>
             </Pressable>
             <Text className="text-text-secondary text-sm mt-2">We will respond to your inquiry within 30 days.</Text>
           </View>

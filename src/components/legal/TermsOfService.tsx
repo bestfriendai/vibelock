@@ -15,7 +15,7 @@ export const TermsOfService: React.FC<TermsOfServiceProps> = ({
   onNavigateToPrivacy,
 }) => {
   const openEmail = () => {
-    Linking.openURL("mailto:contact@lockerroomapp.com");
+    Linking.openURL("mailto:Contact@lockerroomapp.com");
   };
 
   return (
@@ -243,7 +243,7 @@ export const TermsOfService: React.FC<TermsOfServiceProps> = ({
           <Text className="text-text-secondary text-sm leading-6 mb-3">
             We comply with the Digital Millennium Copyright Act (DMCA) and maintain safe harbor protections. If you
             believe content infringes your copyright, submit a DMCA notice to our designated agent at
-            contact@lockerroomapp.com with:
+            Contact@lockerroomapp.com with:
           </Text>
           <View className="ml-4 mb-3">
             <Text className="text-text-secondary text-sm leading-6">• Identification of the copyrighted work</Text>
@@ -265,7 +265,7 @@ export const TermsOfService: React.FC<TermsOfServiceProps> = ({
           <Text className="text-text-primary text-base font-medium mb-2">7.3 Counter-Notice Procedure</Text>
           <Text className="text-text-secondary text-sm leading-6 mb-3">
             If your content was removed due to a DMCA notice and you believe it was wrongfully removed, you may submit a
-            counter-notice including the required legal statements to contact@lockerroomapp.com.
+            counter-notice including the required legal statements to Contact@lockerroomapp.com.
           </Text>
         </View>
 
@@ -497,7 +497,7 @@ export const TermsOfService: React.FC<TermsOfServiceProps> = ({
             <Text className="text-text-primary font-medium mb-2">Legal Department</Text>
             <Text className="text-text-secondary text-sm mb-1">Locker Room Talk</Text>
             <Pressable onPress={openEmail}>
-              <Text className="text-brand-red text-sm">contact@lockerroomapp.com</Text>
+              <Text className="text-brand-red text-sm">Contact@lockerroomapp.com</Text>
             </Pressable>
             <Text className="text-text-secondary text-sm mt-2">We will respond to your inquiry within 30 days.</Text>
           </View>

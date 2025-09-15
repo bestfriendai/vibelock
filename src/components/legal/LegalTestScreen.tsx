@@ -95,7 +95,7 @@ export const LegalTestScreen: React.FC = () => {
               <Text className="text-text-secondary text-sm">• ✅ Acceptance component validates properly</Text>
               <Text className="text-text-secondary text-sm">• ✅ Modal closes correctly</Text>
               <Text className="text-text-secondary text-sm">• ✅ Scrolling works on all screen sizes</Text>
-              <Text className="text-text-secondary text-sm">• ✅ Contact email is contact@lockerroomapp.com</Text>
+              <Text className="text-text-secondary text-sm">• ✅ Contact email is Contact@lockerroomapp.com</Text>
             </View>
           </View>
         </View>
@@ -110,7 +110,7 @@ export const LegalTestScreen: React.FC = () => {
             <Text className="text-text-secondary text-sm mb-2">
               <Text className="font-semibold">Updated Contact Email:</Text>
             </Text>
-            <Text className="text-brand-red text-sm">contact@lockerroomapp.com</Text>
+            <Text className="text-brand-red text-sm">Contact@lockerroomapp.com</Text>
 
             <Text className="text-text-secondary text-xs mt-3">
               This email address is now used in both Privacy Policy and Terms of Service documents.
