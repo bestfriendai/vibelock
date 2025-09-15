@@ -104,6 +104,16 @@ export class AppError extends Error {
     this.timestamp = Date.now();
     this.context = context;
 
+    // Fix prototype chain for proper instanceof checks in React Native
+    try {
+      if (typeof Object.setPrototypeOf === 'function') {
+        Object.setPrototypeOf(this, AppError.prototype);
+      }
+    } catch (error) {
+      // Ignore prototype errors in React Native environments
+      console.warn('AppError: Could not set prototype, instanceof checks may not work correctly');
+    }
+
     // Automatically report to Sentry in production
     this.reportToSentry();
   }

@@ -64,6 +64,7 @@ interface SubscriptionState {
   // Actions
   setPremium: (v: boolean) => void;
   initializeRevenueCat: (userId?: string) => Promise<void>;
+  identifyRevenueCatUser: (userId: string) => Promise<void>;
   checkSubscriptionStatus: () => Promise<void>;
   updateCustomerInfo: (info: CustomerInfo) => void;
   loadOfferings: () => Promise<void>;
@@ -140,6 +141,41 @@ const useSubscriptionStore = create<SubscriptionState>()(
         } catch (error) {
           console.warn("RevenueCat initialization failed:", error);
           set({ isLoading: false });
+        }
+      },
+
+      identifyRevenueCatUser: async (userId: string) => {
+        if (!canUseRevenueCat()) {
+          console.log("RevenueCat not available - skipping user identification");
+          return;
+        }
+
+        try {
+          const RevenueCatModule = (await import("react-native-purchases")) as RevenueCatModule;
+          const Purchases = RevenueCatModule.default;
+
+          if (!Purchases) {
+            console.warn("RevenueCat module not available for user identification");
+            return;
+          }
+
+          // Set user ID for RevenueCat
+          if (typeof Purchases.logIn === "function") {
+            await Purchases.logIn(userId);
+            console.log("RevenueCat user identified:", userId);
+          } else if (typeof Purchases.setAttributes === "function") {
+            // Fallback to setting attributes if logIn is not available
+            Purchases.setAttributes({
+              user_id: userId,
+              identified_at: new Date().toISOString(),
+            });
+            console.log("RevenueCat user attributes set:", userId);
+          }
+
+          // Refresh customer info after identification
+          await get().checkSubscriptionStatus();
+        } catch (error) {
+          console.warn("Failed to identify RevenueCat user:", error);
         }
       },
 
