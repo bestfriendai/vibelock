@@ -26,6 +26,7 @@ import SignInScreen from "../screens/SignInScreen";
 import SignUpScreen from "../screens/SignUpScreen";
 import ForgotPasswordScreen from "../screens/ForgotPasswordScreen";
 import ResetPasswordScreen from "../screens/ResetPasswordScreen";
+import AuthTestScreen from "../screens/AuthTestScreen";
 import ChatRoomScreen from "../screens/ChatRoomScreen";
 import ReviewDetailScreen from "../screens/ReviewDetailScreen";
 // Screens (new)
@@ -429,6 +430,16 @@ export default function AppNavigator() {
               animation: "slide_from_right",
             }}
           />
+          {__DEV__ && (
+            <Stack.Screen
+              name="AuthTest"
+              component={AuthTestScreen}
+              options={{
+                animation: "slide_from_right",
+                title: "Auth Tests"
+              }}
+            />
+          )}
         </>
       ) : (
         <>

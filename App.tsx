@@ -83,6 +83,7 @@ const linking = {
       ForgotPassword: "forgot-password",
       ResetPassword: "reset-password",
       Onboarding: "onboarding",
+      AuthTest: "auth-test",
     },
   },
 };

@@ -336,6 +336,20 @@ export default function ProfileScreen() {
           </View>
 
           {/* Account Actions */}
+          {/* Auth Tests (Development Only) */}
+          {__DEV__ && (
+            <Pressable
+              className="rounded-lg p-4 mb-3"
+              style={{ backgroundColor: colors.surface[800] }}
+              onPress={() => navigation.navigate("AuthTest" as any)}
+            >
+              <View className="flex-row items-center justify-center">
+                <Ionicons name="flask-outline" size={20} color="#60A5FA" />
+                <Text className="text-blue-400 font-medium ml-3">Auth Tests</Text>
+              </View>
+            </Pressable>
+          )}
+
           <Pressable
             className="rounded-lg p-4 mb-3"
             style={{ backgroundColor: colors.surface[800] }}

@@ -87,7 +87,7 @@ export class AuthService {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: provider as any,
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: 'lockerroom://auth/callback',
       },
     });
 
