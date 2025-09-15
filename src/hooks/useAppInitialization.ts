@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { buildEnv } from '../utils/buildEnvironment';
 import { isWeb } from '../utils/platform';
 import { withRetry } from '../utils/retryLogic';
+import { errorReportingService } from '../services/errorReporting';
 
 interface InitializationState {
   isLoading: boolean;
@@ -55,6 +56,13 @@ export function useAppInitialization() {
             },
           }
         );
+
+        // Initialize error reporting service
+        try {
+          await errorReportingService.initialize();
+        } catch (error) {
+          console.warn('Failed to initialize error reporting:', error);
+        }
 
         if (!mounted) return;
 

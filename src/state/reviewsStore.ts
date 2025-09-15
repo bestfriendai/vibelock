@@ -259,41 +259,64 @@ const useReviewsStore = create<ReviewsStore>()(
             const worldwideSet = worldwideResult.data;
 
             // Ensure user location has coordinates for distance filtering
-            let locationWithCoords = userLocation;
-            if (!userLocation.coordinates) {
-              console.log("🔍 User location missing coordinates, attempting to geocode...");
-              const { geocodeCityStateCached } = await import("../utils/location");
-              const coords = await geocodeCityStateCached(userLocation.city, userLocation.state);
-              if (coords) {
-                locationWithCoords = { ...userLocation, coordinates: coords };
-                console.log("✅ Successfully geocoded user location:", coords);
-              } else {
-                console.warn("❌ Failed to geocode user location, falling back to server-filtered results");
-              }
-            }
-
-            // Filter by distance first, then sort by creation date
-            const distanceFiltered = await filterReviewsByDistanceAsync(
-              worldwideSet,
-              locationWithCoords,
-              filters.radius!,
-            );
-
-            // Sort by creation date (most recent first) after distance filtering
-            newReviews = distanceFiltered.sort(
-              (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-            );
-
-            if (__DEV__) {
-              console.log("📏 Location-first distance filtering:", {
-                worldwideReviews: worldwideSet.length,
-                withinRadius: distanceFiltered.length,
-                finalResults: newReviews.length,
-                radius: filters.radius,
-                location: `${locationWithCoords.city}, ${locationWithCoords.state}`,
-                hasCoordinates: !!locationWithCoords.coordinates,
-                coordinates: locationWithCoords.coordinates,
+            if (!userLocation) {
+              console.warn("❌ User location is undefined, cannot perform radius filtering");
+              // Fall back to non-radius filtering
+              const offset = refresh ? 0 : currentState.reviews.length;
+              const result = await reviewsService.getReviews({
+                category: serverFilters.category,
+                limit: 20,
+                offset,
               });
+              newReviews = result.data;
+            } else {
+              let locationWithCoords = userLocation;
+              if (!userLocation.coordinates) {
+                console.log("🔍 User location missing coordinates, attempting to geocode...");
+                const { geocodeCityStateCached } = await import("../utils/location");
+                const coords = await geocodeCityStateCached(userLocation.city, userLocation.state);
+                if (coords) {
+                  locationWithCoords = { ...userLocation, coordinates: coords };
+                  console.log("✅ Successfully geocoded user location:", coords);
+                } else {
+                  console.warn("❌ Failed to geocode user location, falling back to server-filtered results");
+                  // Fall back to non-radius filtering
+                  const offset = refresh ? 0 : currentState.reviews.length;
+                  const result = await reviewsService.getReviews({
+                    category: serverFilters.category,
+                    limit: 20,
+                    offset,
+                  });
+                  newReviews = result.data;
+                }
+              }
+
+              // Only proceed with distance filtering if we have coordinates and haven't already loaded reviews
+              if (locationWithCoords.coordinates && newReviews.length === 0) {
+                // Filter by distance first, then sort by creation date
+                const distanceFiltered = await filterReviewsByDistanceAsync(
+                  worldwideSet,
+                  locationWithCoords,
+                  filters.radius!,
+                );
+
+                // Sort by creation date (most recent first) after distance filtering
+                newReviews = distanceFiltered.sort(
+                  (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+                );
+
+                if (__DEV__) {
+                  console.log("📏 Location-first distance filtering:", {
+                    worldwideReviews: worldwideSet.length,
+                    withinRadius: distanceFiltered.length,
+                    finalResults: newReviews.length,
+                    radius: filters.radius,
+                    location: `${locationWithCoords.city}, ${locationWithCoords.state}`,
+                    hasCoordinates: !!locationWithCoords.coordinates,
+                    coordinates: locationWithCoords.coordinates,
+                  });
+                }
+              }
             }
 
             // Note: No fallback needed since we're prioritizing location over recency
