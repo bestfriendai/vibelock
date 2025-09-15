@@ -204,7 +204,11 @@ const useAuthStore = create<AuthStore>()(
             id: supabaseUser.id,
             email: supabaseUser.email || email,
             anonymousId: uuidv4(),
-            location,
+            city: location.city,
+            state: location.state,
+            latitude: location.coordinates?.latitude,
+            longitude: location.coordinates?.longitude,
+            locationFullName: `${location.city}, ${location.state}`,
             genderPreference: opts?.genderPreference || "all",
             gender: opts?.gender,
           };
@@ -317,14 +321,15 @@ const useAuthStore = create<AuthStore>()(
         try {
           const { usersService } = await import("../services/users");
           await usersService.updateProfile(currentState.user.id, {
-            location: {
-              city: location.city,
-              state: location.state,
-              coordinates: location.coordinates,
-              type: location.type,
-              fullName: location.fullName,
-              institutionType: location.institutionType,
-            },
+            city: location.city,
+            state: location.state,
+            latitude: location.coordinates?.latitude,
+            longitude: location.coordinates?.longitude,
+            locationFullName: location.fullName,
+            locationName: location.fullName,
+            locationType: location.type,
+            institutionType: location.institutionType,
+            locationUpdatedAt: new Date(),
           });
           console.log("✅ Location saved to database successfully");
         } catch (error) {

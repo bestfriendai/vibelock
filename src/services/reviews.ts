@@ -22,8 +22,8 @@ export class ReviewsService {
   async getReviews(filter: ReviewsFilter = {}): Promise<PaginatedResponse<Review>> {
     return withRetry(async () => {
       let query = supabase
-        .from('reviews')
-        .select('*, user:users(*), comments(count)', { count: 'exact' });
+        .from('reviews_firebase')
+        .select('*, user:users(*), comments_firebase(count)', { count: 'exact' });
 
       if (filter.userId) {
         query = query.eq('user_id', filter.userId);
@@ -67,7 +67,7 @@ export class ReviewsService {
 
   async getReview(reviewId: string): Promise<Review | null> {
     const { data, error } = await supabase
-      .from('reviews')
+      .from('reviews_firebase')
       .select('*, user:users(*)')
       .eq('id', reviewId)
       .single();
@@ -84,7 +84,7 @@ export class ReviewsService {
     const snakeCaseReview = mapFieldsToSnakeCase(review);
 
     const { data, error } = await supabase
-      .from('reviews')
+      .from('reviews_firebase')
       .insert(snakeCaseReview)
       .select('*, user:users(*)')
       .single();
@@ -97,7 +97,7 @@ export class ReviewsService {
     const snakeCaseUpdates = mapFieldsToSnakeCase(updates);
 
     const { data, error } = await supabase
-      .from('reviews')
+      .from('reviews_firebase')
       .update(snakeCaseUpdates)
       .eq('id', reviewId)
       .select('*, user:users(*)')
@@ -109,7 +109,7 @@ export class ReviewsService {
 
   async deleteReview(reviewId: string): Promise<void> {
     const { error } = await supabase
-      .from('reviews')
+      .from('reviews_firebase')
       .delete()
       .eq('id', reviewId);
 
@@ -139,7 +139,7 @@ export class ReviewsService {
 
   async getReviewComments(reviewId: string, limit: number = 50): Promise<Comment[]> {
     const { data, error } = await supabase
-      .from('comments')
+      .from('comments_firebase')
       .select('*, user:users(*)')
       .eq('review_id', reviewId)
       .order('created_at', { ascending: false })
@@ -153,7 +153,7 @@ export class ReviewsService {
     const snakeCaseComment = mapFieldsToSnakeCase(comment);
 
     const { data, error } = await supabase
-      .from('comments')
+      .from('comments_firebase')
       .insert(snakeCaseComment)
       .select('*, user:users(*)')
       .single();
@@ -164,7 +164,7 @@ export class ReviewsService {
 
   async deleteComment(commentId: string): Promise<void> {
     const { error } = await supabase
-      .from('comments')
+      .from('comments_firebase')
       .delete()
       .eq('id', commentId);
 
