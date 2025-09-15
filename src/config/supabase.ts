@@ -155,7 +155,10 @@ export const handleSupabaseError = (error: any): string => {
     }
 
     // Registration errors
-    if (message.includes("user already registered")) {
+    if (message.includes("user already registered") ||
+        message.includes("email address already registered") ||
+        message.includes("user with this email already exists") ||
+        message.includes("email already in use")) {
       return "An account with this email already exists. Please sign in instead";
     }
     if (message.includes("user not found")) {

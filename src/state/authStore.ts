@@ -222,11 +222,25 @@ const useAuthStore = create<AuthStore>()(
             error: null,
           }));
         } catch (error) {
-          console.warn("Registration error:", error);
+          console.error("Registration error details:", error);
+          console.error("Error type:", typeof error);
+          console.error("Error message:", error?.message);
+          console.error("Error stack:", error?.stack);
+
           const appError = error instanceof AppError ? error : parseSupabaseError(error);
 
-          // Show specific error dialog
-          Alert.alert("Registration Failed", appError.userMessage, [{ text: "OK", style: "default" }]);
+          console.error("Parsed error:", {
+            userMessage: appError.userMessage,
+            type: appError.type,
+            code: appError.code
+          });
+
+          // Show specific error dialog with more details in development
+          const errorMessage = __DEV__
+            ? `${appError.userMessage}\n\nDev Info: ${error?.message || 'Unknown error'}`
+            : appError.userMessage;
+
+          Alert.alert("Registration Failed", errorMessage, [{ text: "OK", style: "default" }]);
 
           set((state) => ({
             ...state,
