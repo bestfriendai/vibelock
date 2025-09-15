@@ -1,14 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, Pressable, Dimensions, Image } from "react-native";
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  withTiming,
-  runOnJS,
-  interpolate,
-} from "react-native-reanimated";
-import * as Haptics from "expo-haptics";
+import { View, Text, Pressable, Image } from "react-native";
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming } from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
 import { ChatMessage } from "../types";
 import { useTheme } from "../providers/ThemeProvider";
@@ -36,7 +28,6 @@ interface Props {
   onShowReactionPicker?: (messageId: string) => void;
 }
 
-const { width: screenWidth } = Dimensions.get("window");
 const REACTIONS = ["❤️", "😂", "😮", "😢", "😡", "👍"];
 
 const EnhancedMessageBubble = React.forwardRef<View, Props>(
@@ -69,7 +60,6 @@ const EnhancedMessageBubble = React.forwardRef<View, Props>(
     const prevTime = previousMessage ? new Date(previousMessage.timestamp).getTime() : 0;
     const nextTime = nextMessage ? new Date(nextMessage.timestamp).getTime() : 0;
     const thisTime = new Date(message.timestamp).getTime();
-    const tightThreshold = 60 * 1000; // 1 minute
     const looseThreshold = 5 * 60 * 1000; // 5 minutes
 
     const sameSenderAsPrev = !!previousMessage && previousMessage.senderId === message.senderId;
@@ -86,12 +76,11 @@ const EnhancedMessageBubble = React.forwardRef<View, Props>(
     useEffect(() => {
       opacity.value = withTiming(1, { duration: 300 });
       translateY.value = withSpring(0, { damping: 15, stiffness: 150 });
-    }, []);
+    }, [opacity, translateY]);
 
     // Bubble styling with improved grouping and tails
     const getBubbleStyle = () => {
       const baseRadius = 20;
-      const tightRadius = 8;
       const connectorRadius = 6;
 
       if (isOwn) {
@@ -268,7 +257,6 @@ const EnhancedMessageBubble = React.forwardRef<View, Props>(
       }
     };
 
-
     return (
       <SwipeToReply onReply={handleReply} isOwnMessage={isOwn}>
         <View className={`mb-1 ${isOwn ? "items-end" : "items-start"}`}>
@@ -346,9 +334,9 @@ const EnhancedMessageBubble = React.forwardRef<View, Props>(
             {message.reactions && message.reactions.length > 0 && (
               <MessageReactions
                 messageId={message.id}
-                reactions={(message.reactions || []).map(r => ({
+                reactions={(message.reactions || []).map((r) => ({
                   ...r,
-                  hasReacted: user ? r.users.includes(user.id) : false
+                  hasReacted: user ? r.users.includes(user.id) : false,
                 }))}
                 onReact={onReact || (() => {})}
                 onShowReactionPicker={onShowReactionPicker || (() => {})}

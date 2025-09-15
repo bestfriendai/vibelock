@@ -22,7 +22,7 @@ export function useScreenErrorBoundary(screenName: string) {
 
   const handleError = (error: Error) => {
     console.warn(`Error in ${screenName}:`, error);
-    navigation.navigate('MainTabs' as any, { screen: 'Browse' });
+    navigation.navigate("MainTabs" as any, { screen: "Browse" });
   };
 
   return { handleError };
@@ -60,25 +60,29 @@ class ScreenErrorBoundaryComponent extends Component<Props & { navigation: any; 
         <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.colors.background }]}>
           <View style={styles.container}>
             <View style={styles.content}>
-              <View style={[styles.iconContainer, { backgroundColor: theme.colors.primary + '33' }]}>
+              <View style={[styles.iconContainer, { backgroundColor: theme.colors.primary + "33" }]}>
                 <Ionicons name="warning" size={32} color={theme.colors.primary} />
               </View>
 
-              <Text style={[styles.title, { color: theme.colors.text }]}>
-                {this.props.screenName} Error
-              </Text>
+              <Text style={[styles.title, { color: theme.colors.text }]}>{this.props.screenName} Error</Text>
 
               <Text style={[styles.message, { color: theme.colors.textSecondary }]}>
                 Something went wrong while loading this screen. You can try again or go back to the home screen.
               </Text>
 
               <View style={styles.buttonContainer}>
-                <Pressable style={[styles.button, { backgroundColor: theme.colors.primary }]} onPress={this.handleRetry}>
+                <Pressable
+                  style={[styles.button, { backgroundColor: theme.colors.primary }]}
+                  onPress={this.handleRetry}
+                >
                   <Text style={styles.buttonText}>Try Again</Text>
                 </Pressable>
 
                 <Pressable
-                  style={[styles.secondaryButton, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
+                  style={[
+                    styles.secondaryButton,
+                    { backgroundColor: theme.colors.surface, borderColor: theme.colors.border },
+                  ]}
                   onPress={this.handleGoHome}
                 >
                   <Text style={[styles.secondaryButtonText, { color: theme.colors.text }]}>Go to Home</Text>
@@ -108,67 +112,67 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     paddingHorizontal: 24,
   },
   content: {
-    alignItems: 'center',
+    alignItems: "center",
   },
   iconContainer: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginBottom: 24,
   },
   title: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 8,
-    textAlign: 'center',
+    textAlign: "center",
   },
   message: {
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 32,
     lineHeight: 24,
   },
   buttonContainer: {
-    width: '100%',
+    width: "100%",
     maxWidth: 320,
   },
   button: {
     borderRadius: 12,
     paddingVertical: 16,
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 12,
   },
   buttonText: {
-    color: '#fff',
-    fontWeight: '600',
+    color: "#fff",
+    fontWeight: "600",
     fontSize: 18,
   },
   secondaryButton: {
     borderRadius: 12,
     paddingVertical: 16,
-    alignItems: 'center',
+    alignItems: "center",
     borderWidth: 1,
   },
   secondaryButtonText: {
-    fontWeight: '500',
+    fontWeight: "500",
     fontSize: 16,
   },
   errorDetails: {
     marginTop: 32,
     padding: 16,
     borderRadius: 12,
-    width: '100%',
+    width: "100%",
     maxHeight: 128,
   },
   errorText: {
     fontSize: 12,
-    fontFamily: 'monospace',
+    fontFamily: "monospace",
   },
 });
 

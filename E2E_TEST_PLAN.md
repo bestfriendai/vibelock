@@ -1,6 +1,7 @@
 # LockerRoom App - End-to-End Testing Plan
 
 ## 🎯 Testing Objectives
+
 - Verify all authentication flows work with Supabase
 - Test all CRUD operations with database
 - Validate real-time features (chat, notifications)
@@ -9,6 +10,7 @@
 - Verify monetization features (RevenueCat, AdMob)
 
 ## 📱 Test Environment Setup
+
 - Device: iOS Simulator/Android Emulator
 - Network: WiFi + Cellular simulation
 - Database: Remote Supabase instance
@@ -17,6 +19,7 @@
 ## 🔐 Authentication Tests
 
 ### 1. Sign Up Flow
+
 - [ ] Navigate to Sign Up screen
 - [ ] Test form validation (empty fields, invalid email)
 - [ ] Create new account with valid email
@@ -24,7 +27,8 @@
 - [ ] Check user creation in Supabase database
 - [ ] Test duplicate email handling
 
-### 2. Sign In Flow  
+### 2. Sign In Flow
+
 - [ ] Navigate to Sign In screen
 - [ ] Test form validation
 - [ ] Sign in with valid credentials
@@ -33,6 +37,7 @@
 - [ ] Test "Remember Me" functionality
 
 ### 3. Password Reset
+
 - [ ] Access Forgot Password screen
 - [ ] Submit valid email
 - [ ] Check email delivery
@@ -41,6 +46,7 @@
 - [ ] Verify login with new password
 
 ### 4. Session Management
+
 - [ ] Test auto-refresh before expiry
 - [ ] Test session timeout handling
 - [ ] Test offline/online session sync
@@ -49,6 +55,7 @@
 ## 📝 Reviews System Tests
 
 ### 1. Browse Reviews
+
 - [ ] Load reviews on Browse screen
 - [ ] Test infinite scroll/pagination
 - [ ] Verify location-based filtering
@@ -57,6 +64,7 @@
 - [ ] Verify review display (images, text, flags)
 
 ### 2. Create Review
+
 - [ ] Access Create Review screen
 - [ ] Test form validation
 - [ ] Add photos/videos
@@ -67,6 +75,7 @@
 - [ ] Check media upload to Supabase Storage
 
 ### 3. Review Interactions
+
 - [ ] Like/unlike reviews
 - [ ] View review details
 - [ ] Report inappropriate content
@@ -74,6 +83,7 @@
 - [ ] Test review moderation
 
 ## 🔍 Search Functionality
+
 - [ ] Search by name
 - [ ] Search by location
 - [ ] Filter search results
@@ -83,6 +93,7 @@
 ## 💬 Chat System Tests
 
 ### 1. Chat Rooms
+
 - [ ] View available chat rooms
 - [ ] Join chat room
 - [ ] Leave chat room
@@ -90,6 +101,7 @@
 - [ ] Verify member list
 
 ### 2. Messaging
+
 - [ ] Send text messages
 - [ ] Send media messages (photos/videos)
 - [ ] Send voice messages
@@ -99,6 +111,7 @@
 - [ ] Test message replies
 
 ### 3. Real-time Features
+
 - [ ] Test typing indicators
 - [ ] Verify online/offline status
 - [ ] Test message read receipts
@@ -106,6 +119,7 @@
 - [ ] Test connection recovery
 
 ## 👤 Profile Management
+
 - [ ] View own profile
 - [ ] Edit profile information
 - [ ] Update location settings
@@ -114,6 +128,7 @@
 - [ ] Test privacy settings
 
 ## 🔔 Notifications
+
 - [ ] Test push notification setup
 - [ ] Verify chat message notifications
 - [ ] Test review interaction notifications
@@ -123,12 +138,14 @@
 ## 💰 Monetization Tests
 
 ### 1. AdMob Integration
+
 - [ ] Verify banner ads display
 - [ ] Test interstitial ads
 - [ ] Check ad targeting
 - [ ] Test ad-free experience for subscribers
 
 ### 2. RevenueCat Subscriptions
+
 - [ ] View subscription options
 - [ ] Test purchase flow
 - [ ] Verify subscription status
@@ -136,12 +153,14 @@
 - [ ] Check subscription management
 
 ## 🌐 Network & Offline Tests
+
 - [ ] Test app behavior offline
 - [ ] Verify data sync when back online
 - [ ] Test poor network conditions
 - [ ] Check error handling for network failures
 
 ## 🔧 Error Handling Tests
+
 - [ ] Test database connection errors
 - [ ] Verify authentication errors
 - [ ] Test media upload failures
@@ -149,6 +168,7 @@
 - [ ] Test crash recovery
 
 ## 📊 Performance Tests
+
 - [ ] App startup time
 - [ ] Screen transition performance
 - [ ] Image loading performance
@@ -156,6 +176,7 @@
 - [ ] Memory usage monitoring
 
 ## 🎨 UI/UX Tests
+
 - [ ] Test dark/light theme switching
 - [ ] Verify responsive design
 - [ ] Test accessibility features
@@ -164,6 +185,7 @@
 - [ ] Test empty states
 
 ## 🔒 Security Tests
+
 - [ ] Test RLS (Row Level Security) policies
 - [ ] Verify user data isolation
 - [ ] Test API endpoint security
@@ -171,6 +193,7 @@
 - [ ] Verify authentication tokens
 
 ## 📱 Platform-Specific Tests
+
 - [ ] iOS-specific features
 - [ ] Android-specific features
 - [ ] Deep linking functionality
@@ -178,6 +201,7 @@
 - [ ] Background app refresh
 
 ## 🧪 Edge Cases
+
 - [ ] Very long text inputs
 - [ ] Large media files
 - [ ] Rapid user interactions

@@ -1121,6 +1121,74 @@ export type Database = {
         };
         Relationships: [];
       };
+      subscription_events: {
+        Row: {
+          id: string;
+          user_id: string;
+          event_type:
+            | "subscription_started"
+            | "subscription_renewed"
+            | "subscription_canceled"
+            | "subscription_expired"
+            | "trial_started"
+            | "trial_converted"
+            | "purchase_failed"
+            | "billing_issue"
+            | "refund_issued";
+          subscription_tier: "free" | "premium" | "pro";
+          revenuecat_event_id: string | null;
+          event_data: Record<string, any>;
+          created_at: string;
+          processed_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          event_type:
+            | "subscription_started"
+            | "subscription_renewed"
+            | "subscription_canceled"
+            | "subscription_expired"
+            | "trial_started"
+            | "trial_converted"
+            | "purchase_failed"
+            | "billing_issue"
+            | "refund_issued";
+          subscription_tier: "free" | "premium" | "pro";
+          revenuecat_event_id?: string | null;
+          event_data?: Record<string, any>;
+          created_at?: string;
+          processed_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          event_type?:
+            | "subscription_started"
+            | "subscription_renewed"
+            | "subscription_canceled"
+            | "subscription_expired"
+            | "trial_started"
+            | "trial_converted"
+            | "purchase_failed"
+            | "billing_issue"
+            | "refund_issued";
+          subscription_tier?: "free" | "premium" | "pro";
+          revenuecat_event_id?: string | null;
+          event_data?: Record<string, any>;
+          created_at?: string;
+          processed_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "subscription_events_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       subscriptions: {
         Row: {
           cancel_at_period_end: boolean | null;

@@ -49,7 +49,7 @@ const sanitizeUserForPersistence = (user: User | null): User | null => {
   return {
     ...user,
     // Keep original email for functionality, add maskedEmail for display if needed
-    maskedEmail: user.email ? `${user.email.substring(0, 3)}***@${user.email.split('@')[1]}` : undefined,
+    maskedEmail: user.email ? `${user.email.substring(0, 3)}***@${user.email.split("@")[1]}` : undefined,
   };
 };
 
@@ -236,12 +236,12 @@ const useAuthStore = create<AuthStore>()(
           console.error("Parsed error:", {
             userMessage: appError.userMessage,
             type: appError.type,
-            code: appError.code
+            code: appError.code,
           });
 
           // Show specific error dialog with more details in development
           const errorMessage = __DEV__
-            ? `${appError.userMessage}\n\nDev Info: ${error?.message || 'Unknown error'}`
+            ? `${appError.userMessage}\n\nDev Info: ${error?.message || "Unknown error"}`
             : appError.userMessage;
 
           Alert.alert("Registration Failed", errorMessage, [{ text: "OK", style: "default" }]);

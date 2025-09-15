@@ -2,9 +2,9 @@ name: Production Readiness
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
 
 jobs:
@@ -42,4 +42,3 @@ jobs:
       #   run: npm install -g eas-cli
       # - name: EAS Build (Preview)
       #   run: eas build --platform all --profile preview --non-interactive
-

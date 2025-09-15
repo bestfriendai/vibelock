@@ -4,10 +4,10 @@
  * See src/state/README.md for details.
  */
 
-import { create } from 'zustand';
-import { Message } from '../types';
-import { chatService } from '../services/chat';
-import { createMessageDeduplicator } from '../utils/messageDeduplication';
+import { create } from "zustand";
+import { Message } from "../types";
+import { chatService } from "../services/chat";
+import { createMessageDeduplicator } from "../utils/messageDeduplication";
 
 interface MessagesState {
   messages: Map<string, Message[]>;
@@ -37,11 +37,9 @@ export const useMessagesStore = create<MessagesState>((set, get) => ({
 
   getMessages: (roomId: string) => {
     const roomMessages = get().messages.get(roomId) || [];
-    const optimistic = Array.from(get().optimisticMessages.values()).filter(
-      msg => msg.chatRoomId === roomId
-    );
+    const optimistic = Array.from(get().optimisticMessages.values()).filter((msg) => msg.chatRoomId === roomId);
     return [...roomMessages, ...optimistic].sort(
-      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
     );
   },
 
@@ -54,7 +52,7 @@ export const useMessagesStore = create<MessagesState>((set, get) => ({
 
     const roomMessages = messages.get(message.chatRoomId) || [];
     const updatedMessages = [...roomMessages, message].sort(
-      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
     );
 
     const newMessages = new Map(messages);
@@ -64,7 +62,7 @@ export const useMessagesStore = create<MessagesState>((set, get) => ({
   },
 
   addOptimisticMessage: (message: Message) => {
-    set(state => ({
+    set((state) => ({
       optimisticMessages: new Map(state.optimisticMessages).set(message.id, message),
     }));
   },
@@ -80,7 +78,7 @@ export const useMessagesStore = create<MessagesState>((set, get) => ({
   },
 
   removeOptimisticMessage: (tempId: string) => {
-    set(state => {
+    set((state) => {
       const newOptimistic = new Map(state.optimisticMessages);
       newOptimistic.delete(tempId);
       return { optimisticMessages: newOptimistic };
@@ -88,11 +86,11 @@ export const useMessagesStore = create<MessagesState>((set, get) => ({
   },
 
   updateMessage: (messageId: string, updates: Partial<Message>) => {
-    set(state => {
+    set((state) => {
       const newMessages = new Map(state.messages);
 
       for (const [roomId, roomMessages] of newMessages) {
-        const index = roomMessages.findIndex(msg => msg.id === messageId);
+        const index = roomMessages.findIndex((msg) => msg.id === messageId);
         if (index !== -1) {
           const updatedMessages = [...roomMessages];
           updatedMessages[index] = { ...updatedMessages[index], ...updates };
@@ -106,12 +104,12 @@ export const useMessagesStore = create<MessagesState>((set, get) => ({
   },
 
   deleteMessage: (messageId: string) => {
-    set(state => {
+    set((state) => {
       const newMessages = new Map(state.messages);
       state.deduplicator.removeMessage(messageId);
 
       for (const [roomId, roomMessages] of newMessages) {
-        const filtered = roomMessages.filter(msg => msg.id !== messageId);
+        const filtered = roomMessages.filter((msg) => msg.id !== messageId);
         if (filtered.length !== roomMessages.length) {
           newMessages.set(roomId, filtered);
           break;
@@ -127,7 +125,7 @@ export const useMessagesStore = create<MessagesState>((set, get) => ({
 
     if (loadingStates.get(roomId)) return;
 
-    set(state => ({
+    set((state) => ({
       loadingStates: new Map(state.loadingStates).set(roomId, true),
       errors: new Map(state.errors).set(roomId, undefined as any),
     }));
@@ -135,12 +133,9 @@ export const useMessagesStore = create<MessagesState>((set, get) => ({
     try {
       const newMessages = await chatService.getMessages(roomId, 50, before);
 
-      set(state => {
+      set((state) => {
         const existingMessages = state.messages.get(roomId) || [];
-        const deduplicatedMessages = state.deduplicator.deduplicateMessages([
-          ...newMessages,
-          ...existingMessages,
-        ]);
+        const deduplicatedMessages = state.deduplicator.deduplicateMessages([...newMessages, ...existingMessages]);
 
         return {
           messages: new Map(state.messages).set(roomId, deduplicatedMessages),
@@ -148,7 +143,7 @@ export const useMessagesStore = create<MessagesState>((set, get) => ({
         };
       });
     } catch (error) {
-      set(state => ({
+      set((state) => ({
         errors: new Map(state.errors).set(roomId, error as Error),
         loadingStates: new Map(state.loadingStates).set(roomId, false),
       }));
@@ -156,7 +151,7 @@ export const useMessagesStore = create<MessagesState>((set, get) => ({
   },
 
   clearRoomMessages: (roomId: string) => {
-    set(state => {
+    set((state) => {
       const newMessages = new Map(state.messages);
       newMessages.delete(roomId);
 

@@ -1,4 +1,4 @@
-import { Message } from '../types';
+import { Message } from "../types";
 
 interface DeduplicationOptions {
   maxCacheSize?: number;
@@ -8,7 +8,7 @@ interface DeduplicationOptions {
 
 const DEFAULT_OPTIONS: Required<DeduplicationOptions> = {
   maxCacheSize: 1000,
-  fingerprintFields: ['id', 'senderId', 'chatRoomId', 'content', 'timestamp'],
+  fingerprintFields: ["id", "senderId", "chatRoomId", "content", "timestamp"],
   ttl: 3600000, // 1 hour
 };
 
@@ -31,7 +31,7 @@ export class MessageDeduplicator {
       }
     }
 
-    return parts.join('|');
+    return parts.join("|");
   }
 
   private cleanupOldEntries() {
@@ -48,8 +48,7 @@ export class MessageDeduplicator {
     }
 
     if (this.fingerprints.size > this.options.maxCacheSize) {
-      const sortedEntries = Array.from(this.fingerprints.entries())
-        .sort((a, b) => a[1].timestamp - b[1].timestamp);
+      const sortedEntries = Array.from(this.fingerprints.entries()).sort((a, b) => a[1].timestamp - b[1].timestamp);
 
       const toRemove = sortedEntries.slice(0, this.fingerprints.size - this.options.maxCacheSize);
       for (const [fingerprint, entry] of toRemove) {
@@ -72,9 +71,7 @@ export class MessageDeduplicator {
     if (existing) {
       const messageTime = message.timestamp || (message as any).createdAt;
       const existingTime = existing.message.timestamp || (existing.message as any).createdAt;
-      const timeDiff = Math.abs(
-        new Date(messageTime).getTime() - new Date(existingTime).getTime()
-      );
+      const timeDiff = Math.abs(new Date(messageTime).getTime() - new Date(existingTime).getTime());
 
       if (timeDiff < 1000) {
         return true;

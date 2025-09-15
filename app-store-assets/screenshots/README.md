@@ -69,11 +69,13 @@ This directory contains screenshots required for App Store and Google Play Store
 ## Capture Tools
 
 ### iOS:
+
 - Use iPhone/iPad simulator with exact pixel dimensions
 - Xcode Simulator > Device > Screenshot
 - Or physical device screenshots via Xcode
 
 ### Android:
+
 - Use Android emulator with correct screen density
 - Android Studio AVD with matching resolution
 - Or physical device screenshots via ADB
@@ -81,6 +83,7 @@ This directory contains screenshots required for App Store and Google Play Store
 ## File Naming Convention
 
 Use descriptive names that indicate the screen shown:
+
 - `01_chat_room_list.png`
 - `02_active_conversation.png`
 - `03_profile_settings.png`
@@ -97,6 +100,7 @@ Use descriptive names that indicate the screen shown:
 ## Localization
 
 If supporting multiple languages:
+
 ```
 ios/
   iphone-6.7/

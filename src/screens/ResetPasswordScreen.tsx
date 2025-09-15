@@ -82,14 +82,14 @@ export default function ResetPasswordScreen() {
     try {
       await authService.updatePassword(password);
       setSuccess(true);
-      
+
       // Show success message and navigate to sign in after delay
       setTimeout(() => {
         navigation.navigate("SignIn");
       }, 2000);
     } catch (err: any) {
       const appError = err instanceof AppError ? err : parseSupabaseError(err);
-      
+
       if (appError.message.includes("Invalid refresh token") || appError.message.includes("expired")) {
         setError("Reset link has expired. Please request a new password reset");
       } else {
@@ -120,15 +120,11 @@ export default function ResetPasswordScreen() {
               <View className="w-20 h-20 bg-green-500/20 rounded-full items-center justify-center mb-6">
                 <Ionicons name="checkmark-circle" size={48} color="#10b981" />
               </View>
-              <Text className="text-white text-2xl font-bold text-center mb-4">
-                Password Reset Successfully!
-              </Text>
+              <Text className="text-white text-2xl font-bold text-center mb-4">Password Reset Successfully!</Text>
               <Text className="text-gray-400 text-center text-base mb-8">
                 Your password has been updated. You can now sign in with your new password.
               </Text>
-              <Text className="text-gray-500 text-center text-sm">
-                Redirecting to sign in...
-              </Text>
+              <Text className="text-gray-500 text-center text-sm">Redirecting to sign in...</Text>
             </Animated.View>
           </View>
         </SafeAreaView>
@@ -146,9 +142,7 @@ export default function ResetPasswordScreen() {
               <Animated.View style={logoAnimatedStyle} className="items-center mb-8">
                 <ThemeAwareLogo size={80} />
                 <Text className="text-white text-2xl font-bold mt-4 mb-2">Set New Password</Text>
-                <Text className="text-gray-400 text-center text-base">
-                  Enter your new password below
-                </Text>
+                <Text className="text-gray-400 text-center text-base">Enter your new password below</Text>
               </Animated.View>
 
               {/* Form */}
@@ -167,11 +161,7 @@ export default function ResetPasswordScreen() {
                   onSubmitEditing={() => confirmPasswordRef.current?.focus()}
                   rightIcon={
                     <TouchableWithoutFeedback onPress={() => setShowPassword(!showPassword)}>
-                      <Ionicons
-                        name={showPassword ? "eye-off" : "eye"}
-                        size={20}
-                        color="#9CA3AF"
-                      />
+                      <Ionicons name={showPassword ? "eye-off" : "eye"} size={20} color="#9CA3AF" />
                     </TouchableWithoutFeedback>
                   }
                   className="mb-4"
@@ -192,11 +182,7 @@ export default function ResetPasswordScreen() {
                   onSubmitEditing={handleResetPassword}
                   rightIcon={
                     <TouchableWithoutFeedback onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
-                      <Ionicons
-                        name={showConfirmPassword ? "eye-off" : "eye"}
-                        size={20}
-                        color="#9CA3AF"
-                      />
+                      <Ionicons name={showConfirmPassword ? "eye-off" : "eye"} size={20} color="#9CA3AF" />
                     </TouchableWithoutFeedback>
                   }
                   className="mb-6"
@@ -206,16 +192,16 @@ export default function ResetPasswordScreen() {
                 <View className="bg-gray-800/50 rounded-xl p-4 mb-6">
                   <Text className="text-white font-medium mb-2">Password Requirements:</Text>
                   <View className="space-y-1">
-                    <Text className={`text-sm ${password.length >= 8 ? 'text-green-400' : 'text-gray-400'}`}>
+                    <Text className={`text-sm ${password.length >= 8 ? "text-green-400" : "text-gray-400"}`}>
                       • At least 8 characters
                     </Text>
-                    <Text className={`text-sm ${/(?=.*[a-z])/.test(password) ? 'text-green-400' : 'text-gray-400'}`}>
+                    <Text className={`text-sm ${/(?=.*[a-z])/.test(password) ? "text-green-400" : "text-gray-400"}`}>
                       • One lowercase letter
                     </Text>
-                    <Text className={`text-sm ${/(?=.*[A-Z])/.test(password) ? 'text-green-400' : 'text-gray-400'}`}>
+                    <Text className={`text-sm ${/(?=.*[A-Z])/.test(password) ? "text-green-400" : "text-gray-400"}`}>
                       • One uppercase letter
                     </Text>
-                    <Text className={`text-sm ${/(?=.*\d)/.test(password) ? 'text-green-400' : 'text-gray-400'}`}>
+                    <Text className={`text-sm ${/(?=.*\d)/.test(password) ? "text-green-400" : "text-gray-400"}`}>
                       • One number
                     </Text>
                   </View>

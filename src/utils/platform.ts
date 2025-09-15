@@ -1,17 +1,17 @@
-import { Platform } from 'react-native';
+import { Platform } from "react-native";
 
 /**
  * Platform detection utilities
  */
 
 // Check if running on web platform
-export const isWeb = Platform.OS === 'web';
+export const isWeb = Platform.OS === "web";
 
 // Check if running on iOS
-export const isIOS = Platform.OS === 'ios';
+export const isIOS = Platform.OS === "ios";
 
 // Check if running on Android
-export const isAndroid = Platform.OS === 'android';
+export const isAndroid = Platform.OS === "android";
 
 // Check if running on native platform (iOS or Android)
 export const isNative = isIOS || isAndroid;

@@ -1,24 +1,24 @@
-import { supabase } from '../config/supabase';
-import { SearchResults, Profile } from '../types';
-import { mapFieldsToCamelCase } from '../utils/fieldMapping';
-import { withRetry } from '../utils/retryLogic';
+import { supabase } from "../config/supabase";
+import { SearchResults, Profile } from "../types";
+import { mapFieldsToCamelCase } from "../utils/fieldMapping";
+import { withRetry } from "../utils/retryLogic";
 
 export class SearchService {
   async searchProfiles(query: string, filters?: any): Promise<Profile[]> {
     return withRetry(async () => {
       let searchQuery = supabase
-        .from('users')
-        .select('*')
+        .from("users")
+        .select("*")
         .or(`first_name.ilike.%${query}%,display_name.ilike.%${query}%,username.ilike.%${query}%`);
 
       // Apply filters if provided
       if (filters?.location) {
-        searchQuery = searchQuery.eq('location->city', filters.location.city);
-        searchQuery = searchQuery.eq('location->state', filters.location.state);
+        searchQuery = searchQuery.eq("location->city", filters.location.city);
+        searchQuery = searchQuery.eq("location->state", filters.location.state);
       }
 
       if (filters?.category) {
-        searchQuery = searchQuery.eq('category', filters.category);
+        searchQuery = searchQuery.eq("category", filters.category);
       }
 
       if (filters?.limit) {
@@ -37,24 +37,24 @@ export class SearchService {
   async searchReviews(query: string): Promise<SearchResults> {
     return withRetry(async () => {
       const { data, error } = await supabase
-        .from('reviews')
-        .select('*, user:users(*)')
+        .from("reviews")
+        .select("*, user:users(*)")
         .or(`reviewed_person_name.ilike.%${query}%,review_text.ilike.%${query}%`)
-        .order('created_at', { ascending: false })
+        .order("created_at", { ascending: false })
         .limit(50);
 
       if (error) throw error;
 
-      const reviews = (data || []).map(item => ({
+      const reviews = (data || []).map((item) => ({
         id: item.id,
-        type: 'review' as const,
+        type: "review" as const,
         title: item.reviewed_person_name,
         content: item.review_text,
         snippet: item.review_text.substring(0, 150),
         createdAt: new Date(item.created_at),
         metadata: {
           reviewId: item.id,
-          authorName: item.user?.display_name || 'Anonymous',
+          authorName: item.user?.display_name || "Anonymous",
           location: `${item.reviewed_person_location?.city}, ${item.reviewed_person_location?.state}`,
         },
       }));
@@ -72,66 +72,66 @@ export class SearchService {
     return withRetry(async () => {
       // Search reviews
       const { data: reviewData, error: reviewError } = await supabase
-        .from('reviews')
-        .select('*, user:users(*)')
+        .from("reviews")
+        .select("*, user:users(*)")
         .or(`reviewed_person_name.ilike.%${query}%,review_text.ilike.%${query}%`)
-        .order('created_at', { ascending: false })
+        .order("created_at", { ascending: false })
         .limit(25);
 
       if (reviewError) throw reviewError;
 
       // Search comments
       const { data: commentData, error: commentError } = await supabase
-        .from('comments')
-        .select('*, user:users(*), review:reviews(*)')
-        .ilike('content', `%${query}%`)
-        .order('created_at', { ascending: false })
+        .from("comments")
+        .select("*, user:users(*), review:reviews(*)")
+        .ilike("content", `%${query}%`)
+        .order("created_at", { ascending: false })
         .limit(25);
 
       if (commentError) throw commentError;
 
       // Search messages
       const { data: messageData, error: messageError } = await supabase
-        .from('messages')
-        .select('*, user:users(*), chat_room:chat_rooms(*)')
-        .ilike('content', `%${query}%`)
-        .order('created_at', { ascending: false })
+        .from("messages")
+        .select("*, user:users(*), chat_room:chat_rooms(*)")
+        .ilike("content", `%${query}%`)
+        .order("created_at", { ascending: false })
         .limit(25);
 
       if (messageError) throw messageError;
 
-      const reviews = (reviewData || []).map(item => ({
+      const reviews = (reviewData || []).map((item) => ({
         id: item.id,
-        type: 'review' as const,
+        type: "review" as const,
         title: item.reviewed_person_name,
         content: item.review_text,
         snippet: item.review_text.substring(0, 150),
         createdAt: new Date(item.created_at),
         metadata: {
           reviewId: item.id,
-          authorName: item.user?.display_name || 'Anonymous',
+          authorName: item.user?.display_name || "Anonymous",
           location: `${item.reviewed_person_location?.city}, ${item.reviewed_person_location?.state}`,
         },
       }));
 
-      const comments = (commentData || []).map(item => ({
+      const comments = (commentData || []).map((item) => ({
         id: item.id,
-        type: 'comment' as const,
-        title: `Comment on ${item.review?.reviewed_person_name || 'Review'}`,
+        type: "comment" as const,
+        title: `Comment on ${item.review?.reviewed_person_name || "Review"}`,
         content: item.content,
         snippet: item.content.substring(0, 150),
         createdAt: new Date(item.created_at),
         metadata: {
           commentId: item.id,
           reviewId: item.review_id,
-          authorName: item.user?.display_name || 'Anonymous',
+          authorName: item.user?.display_name || "Anonymous",
         },
       }));
 
-      const messages = (messageData || []).map(item => ({
+      const messages = (messageData || []).map((item) => ({
         id: item.id,
-        type: 'message' as const,
-        title: `Message in ${item.chat_room?.name || 'Chat'}`,
+        type: "message" as const,
+        title: `Message in ${item.chat_room?.name || "Chat"}`,
         content: item.content,
         snippet: item.content.substring(0, 150),
         createdAt: new Date(item.created_at),
@@ -139,7 +139,7 @@ export class SearchService {
           messageId: item.id,
           roomId: item.room_id,
           roomName: item.chat_room?.name,
-          authorName: item.user?.display_name || 'Anonymous',
+          authorName: item.user?.display_name || "Anonymous",
         },
       }));
 
@@ -154,19 +154,19 @@ export class SearchService {
 
   async searchMessages(roomId: string, query: string, limit: number = 20): Promise<SearchResults> {
     const { data, error } = await supabase
-      .from('messages')
-      .select('*, user:users(*), chat_room:chat_rooms(*)')
-      .eq('room_id', roomId)
-      .ilike('content', `%${query}%`)
-      .order('created_at', { ascending: false })
+      .from("messages")
+      .select("*, user:users(*), chat_room:chat_rooms(*)")
+      .eq("room_id", roomId)
+      .ilike("content", `%${query}%`)
+      .order("created_at", { ascending: false })
       .limit(limit);
 
     if (error) throw error;
 
-    const messages = (data || []).map(item => ({
+    const messages = (data || []).map((item) => ({
       id: item.id,
-      type: 'message' as const,
-      title: `Message in ${item.chat_room?.name || 'Chat'}`,
+      type: "message" as const,
+      title: `Message in ${item.chat_room?.name || "Chat"}`,
       content: item.content,
       snippet: item.content.substring(0, 150),
       createdAt: new Date(item.created_at),
@@ -174,7 +174,7 @@ export class SearchService {
         messageId: item.id,
         roomId: item.room_id,
         roomName: item.chat_room?.name,
-        authorName: item.user?.display_name || 'Anonymous',
+        authorName: item.user?.display_name || "Anonymous",
       },
     }));
 

@@ -1,10 +1,6 @@
-import { FlatList, ScrollView, SectionList, VirtualizedList } from 'react-native';
+import { FlatList, ScrollView, SectionList, VirtualizedList } from "react-native";
 
-type ScrollableComponent =
-  | FlatList<any>
-  | ScrollView
-  | SectionList<any>
-  | VirtualizedList<any>;
+type ScrollableComponent = FlatList<any> | ScrollView | SectionList<any> | VirtualizedList<any>;
 
 interface ScrollToOptions {
   animated?: boolean;
@@ -38,9 +34,9 @@ export class ScrollManager {
 
       const component = this.scrollRef.current;
 
-      if ('scrollToEnd' in component) {
+      if ("scrollToEnd" in component) {
         component.scrollToEnd({ animated: options.animated });
-      } else if ('scrollTo' in component) {
+      } else if ("scrollTo" in component) {
         (component as ScrollView).scrollTo({ y: Number.MAX_SAFE_INTEGER, animated: options.animated });
       }
     };
@@ -58,7 +54,7 @@ export class ScrollManager {
 
       const component = this.scrollRef.current;
 
-      if ('scrollToIndex' in component) {
+      if ("scrollToIndex" in component) {
         try {
           component.scrollToIndex({
             index,
@@ -67,7 +63,7 @@ export class ScrollManager {
             viewOffset: options.viewOffset,
           });
         } catch (error) {
-          console.warn('ScrollToIndex failed:', error);
+          console.warn("ScrollToIndex failed:", error);
           this.scrollToOffset(index * 100, options);
         }
       } else {
@@ -88,12 +84,12 @@ export class ScrollManager {
 
       const component = this.scrollRef.current;
 
-      if ('scrollToOffset' in component) {
+      if ("scrollToOffset" in component) {
         component.scrollToOffset({
           offset,
           animated: options.animated ?? true,
         });
-      } else if ('scrollTo' in component) {
+      } else if ("scrollTo" in component) {
         (component as ScrollView).scrollTo({
           y: offset,
           animated: options.animated ?? true,
@@ -108,7 +104,10 @@ export class ScrollManager {
     }
   }
 
-  scrollToItem(item: any, getItemLayout?: (data: any, index: number) => { length: number; offset: number; index: number }) {
+  scrollToItem(
+    item: any,
+    getItemLayout?: (data: any, index: number) => { length: number; offset: number; index: number },
+  ) {
     if (!this.scrollRef?.current) {
       this.pendingScroll = () => this.scrollToItem(item, getItemLayout);
       return;
@@ -116,11 +115,11 @@ export class ScrollManager {
 
     const component = this.scrollRef.current;
 
-    if ('scrollToItem' in component && component.scrollToItem) {
+    if ("scrollToItem" in component && component.scrollToItem) {
       try {
         component.scrollToItem({ item, animated: true });
       } catch (error) {
-        console.warn('ScrollToItem failed:', error);
+        console.warn("ScrollToItem failed:", error);
       }
     }
   }

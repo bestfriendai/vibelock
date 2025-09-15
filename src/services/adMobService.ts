@@ -1,6 +1,8 @@
 import { Platform } from "react-native";
 import { canUseAdMob, buildEnv } from "../utils/buildEnvironment";
 import { ADMOB_CONFIG, getAdUnitId } from "../config/admobConfig";
+import { subscriptionService } from "./subscriptionService";
+import { supabase } from "../config/supabase";
 
 // Mock types for Expo Go
 interface MockInterstitialAd {
@@ -297,6 +299,22 @@ class AdMobService {
   }
 
   async showInterstitialAd(): Promise<boolean> {
+    // Check if user has premium subscription (no ads)
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user) {
+        const shouldShowAds = await subscriptionService.shouldShowAds(user.id);
+        if (!shouldShowAds) {
+          console.log("AdMob: User has premium subscription, skipping interstitial ad");
+          return false;
+        }
+      }
+    } catch (error) {
+      console.warn("AdMob: Failed to check subscription status, showing ad:", error);
+    }
+
     if (!canUseAdMob()) {
       // Enhanced mock implementation for Expo Go
       console.log("Mock: Showing interstitial ad");
@@ -407,6 +425,22 @@ class AdMobService {
    * Show App Open ad if conditions are met
    */
   async showAppOpenAd(): Promise<boolean> {
+    // Check if user has premium subscription (no ads)
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user) {
+        const shouldShowAds = await subscriptionService.shouldShowAds(user.id);
+        if (!shouldShowAds) {
+          console.log("AdMob: User has premium subscription, skipping app open ad");
+          return false;
+        }
+      }
+    } catch (error) {
+      console.warn("AdMob: Failed to check subscription status, showing ad:", error);
+    }
+
     if (!canUseAdMob()) {
       console.log("Mock: Showing App Open ad");
       return true;

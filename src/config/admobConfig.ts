@@ -14,24 +14,24 @@ export const ADMOB_CONFIG = {
     android: "ca-app-pub-9512493666273460~4548589138",
   }),
 
-  // Ad Unit IDs (platform-specific)
+  // Ad Unit IDs (platform-specific with environment variable support)
   AD_UNITS: {
     // Banner Ad Unit IDs
     BANNER: Platform.select({
-      ios: "ca-app-pub-9512493666273460/4655851607",
-      android: "ca-app-pub-9512493666273460/3837555963",
+      ios: process.env.EXPO_PUBLIC_ADMOB_BANNER_IOS || "ca-app-pub-9512493666273460/4655851607",
+      android: process.env.EXPO_PUBLIC_ADMOB_BANNER_ANDROID || "ca-app-pub-9512493666273460/3837555963",
     }),
 
     // Interstitial Ad Unit IDs
     INTERSTITIAL: Platform.select({
-      ios: "ca-app-pub-9512493666273460/4188909755",
-      android: "ca-app-pub-9512493666273460/2783494598",
+      ios: process.env.EXPO_PUBLIC_ADMOB_INTERSTITIAL_IOS || "ca-app-pub-9512493666273460/4188909755",
+      android: process.env.EXPO_PUBLIC_ADMOB_INTERSTITIAL_ANDROID || "ca-app-pub-9512493666273460/2783494598",
     }),
 
     // App Open Ad Unit IDs
     APP_OPEN: Platform.select({
-      ios: "ca-app-pub-9512493666273460/6722739608",
-      android: "ca-app-pub-9512493666273460/9249664748",
+      ios: process.env.EXPO_PUBLIC_ADMOB_APP_OPEN_IOS || "ca-app-pub-9512493666273460/6722739608",
+      android: process.env.EXPO_PUBLIC_ADMOB_APP_OPEN_ANDROID || "ca-app-pub-9512493666273460/9249664748",
     }),
 
     // TODO: Create rewarded ad unit if needed
@@ -58,12 +58,14 @@ export const ADMOB_CONFIG = {
     }),
   },
 
-  // Ad Configuration
+  // Ad Configuration with environment variable support
   SETTINGS: {
     maxAdContentRating: "PG" as const,
     tagForChildDirectedTreatment: false,
     tagForUnderAgeOfConsent: false,
     testDeviceIdentifiers: __DEV__ ? ["EMULATOR"] : [],
+    // Test mode can be controlled via environment variable
+    testMode: process.env.EXPO_PUBLIC_ADMOB_TEST_MODE === "true" || __DEV__,
   },
 
   // Ad Placement Configuration
@@ -111,7 +113,8 @@ export const ADMOB_CONFIG = {
  * Helper function to get the appropriate ad unit ID
  */
 export const getAdUnitId = (adType: keyof typeof ADMOB_CONFIG.AD_UNITS): string => {
-  if (__DEV__) {
+  // Use test ads if in test mode or development
+  if (ADMOB_CONFIG.SETTINGS.testMode || __DEV__) {
     return ADMOB_CONFIG.TEST_AD_UNITS[adType] || "";
   }
 

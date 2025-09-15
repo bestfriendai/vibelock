@@ -7,7 +7,17 @@ index 6ca80e091a336ebcd89b6360ee913b20c6ea31dc..e68403669fc6d81f39472ac8d9c21892
  import { requireNativeModule, requireOptionalNativeModule } from 'expo-modules-core';
  import { getManifestBaseUrl } from './AssetUris';
 -const ExpoUpdates = requireOptionalNativeModule('ExpoUpdates');
-+const VibecodeExpoModule = requireOptionalNativeModule('VibecodeExpoModule');
++// Safe loading of VibecodeExpoModule with fallback to ExpoUpdates
++let VibecodeExpoModule;
++try {
++  VibecodeExpoModule = requireOptionalNativeModule('VibecodeExpoModule');
++} catch (error) {
++  console.warn('[expo-asset] VibecodeExpoModule not available, using fallback:', error.message);
++  VibecodeExpoModule = null;
++}
++
++// Fallback to ExpoUpdates if VibecodeExpoModule is not available
++const ExpoUpdates = VibecodeExpoModule || requireOptionalNativeModule('ExpoUpdates');
  const NativeExpoGoModule = (() => {
      try {
          return requireNativeModule('ExpoGo');
@@ -26,12 +36,34 @@ index 6ca80e091a336ebcd89b6360ee913b20c6ea31dc..e68403669fc6d81f39472ac8d9c21892
  // Expo Go always uses the updates module for asset resolution (local assets) since it
  // overrides the expo-updates module.
 -export const IS_ENV_WITH_LOCAL_ASSETS = isRunningInExpoGo() || shouldUseUpdatesAssetResolution;
-+export const IS_ENV_WITH_LOCAL_ASSETS = VibecodeExpoModule && VibecodeExpoModule?.enableLocalAssets;
++// Safe property access with fallback logic
++export const IS_ENV_WITH_LOCAL_ASSETS = (() => {
++  try {
++    if (VibecodeExpoModule && typeof VibecodeExpoModule.enableLocalAssets !== 'undefined') {
++      return VibecodeExpoModule.enableLocalAssets;
++    }
++    // Fallback to original logic if VibecodeExpoModule is not available
++    return isRunningInExpoGo() || (ExpoUpdates?.isEnabled && !ExpoUpdates?.isUsingEmbeddedAssets);
++  } catch (error) {
++    console.warn('[expo-asset] Error accessing local assets configuration:', error.message);
++    return false;
++  }
++})();
  // Get the localAssets property from the ExpoUpdates native module so that we do
  // not need to include expo-updates as a dependency of expo-asset
  export function getLocalAssets() {
 -    return ExpoUpdates?.localAssets ?? {};
-+    return VibecodeExpoModule?.localAssets ?? {};
++    // Safe property access with fallback
++    try {
++      if (VibecodeExpoModule && VibecodeExpoModule.localAssets) {
++        return VibecodeExpoModule.localAssets;
++      }
++      // Fallback to ExpoUpdates if VibecodeExpoModule is not available
++      return ExpoUpdates?.localAssets ?? {};
++    } catch (error) {
++      console.warn('[expo-asset] Error accessing localAssets:', error.message);
++      return {};
++    }
  }
  export function getManifest2() {
      return Constants.__unsafeNoWarnManifest2;

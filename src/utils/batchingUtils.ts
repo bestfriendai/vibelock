@@ -20,7 +20,7 @@ export class Batcher<T> {
 
   constructor(
     private callback: BatchCallback<T>,
-    options: BatchingOptions = {}
+    options: BatchingOptions = {},
   ) {
     this.options = { ...DEFAULT_OPTIONS, ...options };
   }
@@ -55,7 +55,7 @@ export class Batcher<T> {
     try {
       await this.callback(items);
     } catch (error) {
-      console.error('Batch processing error:', error);
+      console.error("Batch processing error:", error);
       this.batch.unshift(...items);
     } finally {
       this.processing = false;
@@ -80,11 +80,7 @@ interface ThrottleOptions {
   trailing?: boolean;
 }
 
-export function throttle<T extends (...args: any[]) => any>(
-  fn: T,
-  wait: number,
-  options: ThrottleOptions = {}
-): T {
+export function throttle<T extends (...args: any[]) => any>(fn: T, wait: number, options: ThrottleOptions = {}): T {
   const { leading = true, trailing = true } = options;
   let timeout: NodeJS.Timeout | null = null;
   let lastArgs: Parameters<T> | null = null;
@@ -104,12 +100,7 @@ export function throttle<T extends (...args: any[]) => any>(
     const timeSinceLastCall = time - lastCallTime;
     const timeSinceLastInvoke = time - lastInvokeTime;
 
-    return (
-      lastCallTime === 0 ||
-      timeSinceLastCall >= wait ||
-      timeSinceLastCall < 0 ||
-      timeSinceLastInvoke >= wait
-    );
+    return lastCallTime === 0 || timeSinceLastCall >= wait || timeSinceLastCall < 0 || timeSinceLastInvoke >= wait;
   };
 
   const trailingEdge = (time: number) => {
@@ -156,10 +147,7 @@ export function throttle<T extends (...args: any[]) => any>(
   return throttled as T;
 }
 
-export function debounce<T extends (...args: any[]) => any>(
-  fn: T,
-  wait: number
-): T & { cancel: () => void } {
+export function debounce<T extends (...args: any[]) => any>(fn: T, wait: number): T & { cancel: () => void } {
   let timeout: NodeJS.Timeout | null = null;
 
   const debounced = (...args: Parameters<T>) => {
@@ -190,7 +178,7 @@ export class RateLimiter {
   constructor(
     private maxTokens: number,
     private refillRate: number,
-    private refillInterval: number = 1000
+    private refillInterval: number = 1000,
   ) {
     this.tokens = maxTokens;
     this.lastRefill = Date.now();
@@ -225,7 +213,7 @@ export class RateLimiter {
 
   async waitAndConsume(cost: number = 1): Promise<void> {
     while (!this.consume(cost)) {
-      await new Promise(resolve => setTimeout(resolve, this.refillInterval / 10));
+      await new Promise((resolve) => setTimeout(resolve, this.refillInterval / 10));
     }
   }
 

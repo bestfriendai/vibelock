@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import useSubscriptionStore from "../state/subscriptionStore";
 import { PaywallAdaptive } from "./subscription/PaywallAdaptive";
+import { supabase } from "../config/supabase";
 
 interface FeatureGateProps {
   feature: "premium" | "pro";
@@ -12,10 +13,32 @@ interface FeatureGateProps {
 }
 
 export const FeatureGate: React.FC<FeatureGateProps> = ({ feature, children, fallback, showUpgradePrompt = true }) => {
-  const { isPremium, isPro } = useSubscriptionStore();
+  const { isPremium, isPro, subscriptionTier, syncWithSupabase } = useSubscriptionStore();
   const [showPaywall, setShowPaywall] = useState(false);
 
-  const hasAccess = feature === "premium" ? isPremium || isPro : isPro;
+  // Sync subscription status on mount
+  useEffect(() => {
+    const syncSubscription = async () => {
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (user) {
+          await syncWithSupabase(user.id);
+        }
+      } catch (error) {
+        console.warn("Failed to sync subscription status:", error);
+      }
+    };
+
+    syncSubscription();
+  }, [syncWithSupabase]);
+
+  // Use Supabase-backed subscription status for more accurate access control
+  const hasAccess =
+    feature === "premium"
+      ? isPremium || isPro || ["premium", "pro"].includes(subscriptionTier)
+      : isPro || subscriptionTier === "pro";
 
   if (hasAccess) {
     return <>{children}</>;

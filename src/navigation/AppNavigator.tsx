@@ -44,11 +44,21 @@ const ChatRoomScreenWithErrorBoundary = React.memo((props: any) => {
   return (
     <ErrorBoundary
       fallback={
-        <SafeAreaView style={{ flex: 1, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24 }}>
-          <View style={{ alignItems: 'center' }}>
+        <SafeAreaView
+          style={{
+            flex: 1,
+            backgroundColor: colors.background,
+            justifyContent: "center",
+            alignItems: "center",
+            paddingHorizontal: 24,
+          }}
+        >
+          <View style={{ alignItems: "center" }}>
             <Ionicons name="chatbubble-outline" size={48} color={colors.text.muted} style={{ marginBottom: 16 }} />
-            <Text style={{ color: colors.text.primary, fontSize: 18, fontWeight: '600', marginBottom: 8 }}>Chat Unavailable</Text>
-            <Text style={{ color: colors.text.secondary, textAlign: 'center' }}>
+            <Text style={{ color: colors.text.primary, fontSize: 18, fontWeight: "600", marginBottom: 8 }}>
+              Chat Unavailable
+            </Text>
+            <Text style={{ color: colors.text.secondary, textAlign: "center" }}>
               There was an issue loading the chat. Please try again later.
             </Text>
           </View>
@@ -171,10 +181,7 @@ function CreateTabButtonWrapper() {
 
   return (
     <View style={{ flex: 1, alignItems: "center", justifyContent: "center", marginBottom: 8 }}>
-      <CreateTabButton
-        onPress={() => navigation.navigate(isGuestMode ? "SignUp" : "CreateReview")}
-        size={60}
-      />
+      <CreateTabButton onPress={() => navigation.navigate(isGuestMode ? "SignUp" : "CreateReview")} size={60} />
     </View>
   );
 }
@@ -182,13 +189,16 @@ function CreateTabButtonWrapper() {
 // Browse Stack Navigator
 function useStandardHeader() {
   const { colors } = useTheme();
-  return useMemo(() => ({
-    headerShown: true,
-    headerStyle: { backgroundColor: colors.surface[900] },
-    headerTintColor: colors.text.primary,
-    headerTitleStyle: { color: colors.text.primary },
-    headerBackTitle: "Back",
-  }), [colors]);
+  return useMemo(
+    () => ({
+      headerShown: true,
+      headerStyle: { backgroundColor: colors.surface[900] },
+      headerTintColor: colors.text.primary,
+      headerTitleStyle: { color: colors.text.primary },
+      headerBackTitle: "Back",
+    }),
+    [colors],
+  );
 }
 
 function BrowseStackNavigator() {
@@ -436,7 +446,7 @@ export default function AppNavigator() {
               component={AuthTestScreen}
               options={{
                 animation: "slide_from_right",
-                title: "Auth Tests"
+                title: "Auth Tests",
               }}
             />
           )}

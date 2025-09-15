@@ -2,6 +2,8 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { canUseRevenueCat, buildEnv } from "../utils/buildEnvironment";
+import { subscriptionService } from "../services/subscriptionService";
+import { supabase } from "../config/supabase";
 
 // Environment-configurable premium entitlements
 const PREMIUM_ENTITLEMENTS = (process.env.EXPO_PUBLIC_REVENUECAT_PREMIUM_ENTITLEMENTS || "premium,pro")
@@ -61,6 +63,11 @@ interface SubscriptionState {
   activeSubscription: any | null;
   offerings: PurchasesOffering[];
 
+  // Supabase integration state
+  shouldShowAds: boolean;
+  subscriptionTier: "free" | "premium" | "pro";
+  subscriptionExpiresAt: Date | null;
+
   // Actions
   setPremium: (v: boolean) => void;
   initializeRevenueCat: (userId?: string) => Promise<void>;
@@ -71,6 +78,10 @@ interface SubscriptionState {
   purchasePackage: (packageToPurchase: PurchasesPackage) => Promise<CustomerInfo | null>;
   restorePurchases: () => Promise<CustomerInfo>;
   setLoading: (loading: boolean) => void;
+
+  // Supabase integration actions
+  syncWithSupabase: (userId: string) => Promise<void>;
+  checkAdStatus: (userId: string) => Promise<void>;
 }
 
 const useSubscriptionStore = create<SubscriptionState>()(
@@ -85,6 +96,11 @@ const useSubscriptionStore = create<SubscriptionState>()(
       isPro: false,
       activeSubscription: null,
       offerings: [],
+
+      // Supabase integration state
+      shouldShowAds: true,
+      subscriptionTier: "free",
+      subscriptionExpiresAt: null,
 
       setPremium: (v: boolean) => set({ isPremium: v }),
       setLoading: (loading: boolean) => set({ isLoading: loading }),
@@ -136,6 +152,11 @@ const useSubscriptionStore = create<SubscriptionState>()(
 
           await get().checkSubscriptionStatus();
           await get().loadOfferings();
+
+          // Sync with Supabase after successful RevenueCat initialization
+          if (userId) {
+            await get().syncWithSupabase(userId);
+          }
 
           console.log("RevenueCat initialized successfully");
         } catch (error) {
@@ -197,6 +218,15 @@ const useSubscriptionStore = create<SubscriptionState>()(
           const customerInfo = await Purchases.getCustomerInfo();
           if (customerInfo && typeof customerInfo === "object") {
             get().updateCustomerInfo(customerInfo);
+
+            // Sync with Supabase when subscription status changes
+            const {
+              data: { user },
+            } = await supabase.auth.getUser();
+            if (user) {
+              await subscriptionService.syncSubscriptionStatus(user.id, customerInfo);
+              await get().syncWithSupabase(user.id);
+            }
           }
         } catch (error) {
           console.warn("Failed to check subscription status:", error);
@@ -313,6 +343,16 @@ const useSubscriptionStore = create<SubscriptionState>()(
           const result = await Purchases.purchasePackage(packageToPurchase as any);
           if (result?.customerInfo && typeof result.customerInfo === "object") {
             get().updateCustomerInfo(result.customerInfo);
+
+            // Sync purchase with Supabase
+            const {
+              data: { user },
+            } = await supabase.auth.getUser();
+            if (user) {
+              await subscriptionService.syncSubscriptionStatus(user.id, result.customerInfo);
+              await get().syncWithSupabase(user.id);
+            }
+
             return result.customerInfo;
           }
           throw new Error("Invalid purchase result");
@@ -347,6 +387,16 @@ const useSubscriptionStore = create<SubscriptionState>()(
           const customerInfo = await Purchases.restorePurchases();
           if (customerInfo && typeof customerInfo === "object") {
             get().updateCustomerInfo(customerInfo);
+
+            // Sync restored purchases with Supabase
+            const {
+              data: { user },
+            } = await supabase.auth.getUser();
+            if (user) {
+              await subscriptionService.syncSubscriptionStatus(user.id, customerInfo);
+              await get().syncWithSupabase(user.id);
+            }
+
             return customerInfo;
           }
           throw new Error("Invalid restore result");
@@ -356,6 +406,35 @@ const useSubscriptionStore = create<SubscriptionState>()(
           throw error;
         }
       },
+
+      // Supabase integration methods
+      syncWithSupabase: async (userId: string) => {
+        try {
+          const subscription = await subscriptionService.getUserSubscription(userId);
+          const shouldShowAds = await subscriptionService.shouldShowAds(userId);
+
+          set({
+            subscriptionTier: subscription.tier as "free" | "premium" | "pro",
+            subscriptionExpiresAt: subscription.expiresAt,
+            shouldShowAds,
+            isPremium: subscription.isActive && ["premium", "pro"].includes(subscription.tier),
+            isPro: subscription.isActive && subscription.tier === "pro",
+          });
+        } catch (error) {
+          console.warn("Failed to sync with Supabase:", error);
+        }
+      },
+
+      checkAdStatus: async (userId: string) => {
+        try {
+          const shouldShowAds = await subscriptionService.shouldShowAds(userId);
+          set({ shouldShowAds });
+        } catch (error) {
+          console.warn("Failed to check ad status:", error);
+          // Default to showing ads if check fails
+          set({ shouldShowAds: true });
+        }
+      },
     }),
     {
       name: "subscription-storage",
@@ -363,6 +442,9 @@ const useSubscriptionStore = create<SubscriptionState>()(
       partialize: (state) => ({
         isPremium: state.isPremium,
         isPro: state.isPro,
+        shouldShowAds: state.shouldShowAds,
+        subscriptionTier: state.subscriptionTier,
+        subscriptionExpiresAt: state.subscriptionExpiresAt,
       }),
     },
   ),

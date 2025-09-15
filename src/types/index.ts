@@ -216,13 +216,13 @@ export interface RoomMember {
   user?: User;
 }
 
-export type AuthProvider = 'google' | 'apple' | 'facebook' | 'email';
+export type AuthProvider = "google" | "apple" | "facebook" | "email";
 
 // Alias for backwards compatibility
 export type ChatMessage = Message;
 
 // Message event type for real-time updates
-export type MessageEventType = 'initial' | 'new' | 'update' | 'replace' | 'delete';
+export type MessageEventType = "initial" | "new" | "update" | "replace" | "delete";
 
 export interface MessageEvent {
   type: MessageEventType;
@@ -293,8 +293,8 @@ export interface ChatState {
   error: string | null;
 }
 
-// Comment-related types
-export interface Comment {
+// Comment-related types (enhanced version with more features)
+export interface ReviewComment {
   id: string;
   reviewId: string;
   authorId: string;
@@ -305,7 +305,7 @@ export interface Comment {
   isLiked?: boolean;
   isDisliked?: boolean;
   parentCommentId?: string; // For replies
-  replies?: Comment[];
+  replies?: ReviewComment[];
   mediaId?: string; // For image-specific comments
   createdAt: Date;
   updatedAt: Date;
@@ -314,16 +314,16 @@ export interface Comment {
 }
 
 export interface CommentThread {
-  parentComment: Comment;
-  replies: Comment[];
+  parentComment: ReviewComment;
+  replies: ReviewComment[];
   totalReplies: number;
   hasMoreReplies: boolean;
 }
 
 export interface CommentState {
-  comments: Record<string, Comment[]>; // reviewId -> comments
+  comments: Record<string, ReviewComment[]>; // reviewId -> comments
   commentThreads: Record<string, CommentThread>; // commentId -> thread
-  mediaComments: Record<string, Comment[]>; // mediaId -> comments
+  mediaComments: Record<string, ReviewComment[]>; // mediaId -> comments
   isLoading: boolean;
   isPosting: boolean;
   error: string | null;
@@ -333,7 +333,7 @@ export interface MediaCommentData {
   mediaId: string;
   mediaUri: string;
   commentCount: number;
-  comments: Comment[];
+  comments: ReviewComment[];
 }
 
 // Search result types

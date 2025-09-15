@@ -1,78 +1,458 @@
-import { supabase } from '../config/supabase';
+import { supabase, handleSupabaseError } from "../config/supabase";
+import type { StorageError, FileObject, SignedUrlResponse, UploadResponse } from "@supabase/supabase-js";
+
+// Enhanced types for v2.57.4 compatibility
+interface StorageResult<T = any> {
+  data: T | null;
+  error: StorageError | null;
+}
+
+interface UploadResult {
+  path: string;
+  id?: string;
+  fullPath?: string;
+}
+
+interface StorageFileInfo {
+  name: string;
+  id?: string;
+  updated_at?: string;
+  created_at?: string;
+  last_accessed_at?: string;
+  metadata?: Record<string, any>;
+  buckets?: string[];
+  size?: number;
+}
+
+// Validation helpers for v2.57.4
+const validateBucketName = (bucket: string): void => {
+  if (!bucket || typeof bucket !== "string") {
+    throw new Error("Bucket name is required and must be a string");
+  }
+
+  if (!/^[a-z0-9][a-z0-9\-_]{1,62}$/.test(bucket)) {
+    throw new Error("Invalid bucket name format. Must be lowercase alphanumeric with hyphens/underscores");
+  }
+};
+
+const validateFilePath = (path: string): void => {
+  if (!path || typeof path !== "string") {
+    throw new Error("File path is required and must be a string");
+  }
+
+  if (path.startsWith("/") || path.includes("..")) {
+    throw new Error("Invalid file path. Cannot start with '/' or contain '..'");
+  }
+};
+
+const handleStorageError = (error: any, operation: string): never => {
+  console.warn(`Storage ${operation} failed:`, error);
+  const message = handleSupabaseError(error);
+  throw new Error(`${operation} failed: ${message}`);
+};
+
+const validateStorageResponse = <T>(response: StorageResult<T>, operation: string): T => {
+  if (response.error) {
+    handleStorageError(response.error, operation);
+  }
+
+  if (response.data === null) {
+    throw new Error(`${operation} returned null data`);
+  }
+
+  return response.data;
+};
 
 export class StorageService {
-  async uploadFile(bucket: string, path: string, file: any): Promise<string> {
-    const { data, error } = await supabase.storage
-      .from(bucket)
-      .upload(path, file, {
-        upsert: true,
-      });
+  // Enhanced file upload with v2.57.4 validation and error handling
+  async uploadFile(
+    bucket: string,
+    path: string,
+    file: any,
+    options?: { upsert?: boolean; metadata?: Record<string, any>; contentType?: string },
+  ): Promise<{ url: string; path: string; id?: string }> {
+    validateBucketName(bucket);
+    validateFilePath(path);
 
-    if (error) throw error;
-
-    const { data: urlData } = supabase.storage
-      .from(bucket)
-      .getPublicUrl(data.path);
-
-    return urlData.publicUrl;
-  }
-
-  async deleteFile(bucket: string, path: string): Promise<void> {
-    const { error } = await supabase.storage
-      .from(bucket)
-      .remove([path]);
-
-    if (error) throw error;
-  }
-
-  getPublicUrl(bucket: string, path: string): string {
-    const { data } = supabase.storage
-      .from(bucket)
-      .getPublicUrl(path);
-
-    return data.publicUrl;
-  }
-
-  async createSignedUrl(bucket: string, path: string, expiresIn: number = 3600): Promise<string | null> {
-    const { data, error } = await supabase.storage
-      .from(bucket)
-      .createSignedUrl(path, expiresIn);
-
-    if (error) {
-      console.error('Error creating signed URL:', error);
-      return null;
+    if (!file) {
+      throw new Error("File is required for upload");
     }
 
-    return data.signedUrl;
-  }
+    try {
+      // Check if bucket exists
+      await this.validateBucket(bucket);
 
-  async listFiles(bucket: string, folder?: string, limit: number = 100): Promise<any[]> {
-    const { data, error } = await supabase.storage
-      .from(bucket)
-      .list(folder, {
-        limit,
-        offset: 0,
+      const uploadResponse = await supabase.storage.from(bucket).upload(path, file, {
+        upsert: options?.upsert ?? true,
+        metadata: options?.metadata,
+        contentType: options?.contentType,
       });
 
-    if (error) throw error;
-    return data || [];
+      if (uploadResponse.error) {
+        handleStorageError(uploadResponse.error, "Upload");
+      }
+
+      const uploadData = validateStorageResponse(uploadResponse, "Upload");
+
+      // Get public URL using v2.57.4 API
+      const urlResponse = supabase.storage.from(bucket).getPublicUrl(uploadData.path);
+
+      if (!urlResponse.data?.publicUrl) {
+        throw new Error("Failed to generate public URL after upload");
+      }
+
+      return {
+        url: urlResponse.data.publicUrl,
+        path: uploadData.path,
+        id: uploadData.id,
+      };
+    } catch (error: any) {
+      console.error(`Failed to upload file to ${bucket}/${path}:`, error);
+      throw error;
+    }
   }
 
+  // Enhanced file deletion with v2.57.4 validation and existence check
+  async deleteFile(bucket: string, path: string): Promise<void> {
+    validateBucketName(bucket);
+    validateFilePath(path);
+
+    try {
+      // Check if file exists before attempting deletion
+      const exists = await this.fileExists(bucket, path);
+      if (!exists) {
+        console.warn(`File ${path} does not exist in bucket ${bucket}`);
+        return; // Don't throw error for non-existent files
+      }
+
+      const response = await supabase.storage.from(bucket).remove([path]);
+
+      if (response.error) {
+        handleStorageError(response.error, "Delete");
+      }
+    } catch (error: any) {
+      console.error(`Failed to delete file from ${bucket}/${path}:`, error);
+      throw error;
+    }
+  }
+
+  // Enhanced batch file deletion
+  async deleteFiles(bucket: string, paths: string[]): Promise<void> {
+    validateBucketName(bucket);
+
+    if (!paths || paths.length === 0) {
+      throw new Error("Paths array is required and must not be empty");
+    }
+
+    // Validate all paths
+    paths.forEach((path) => validateFilePath(path));
+
+    try {
+      const response = await supabase.storage.from(bucket).remove(paths);
+
+      if (response.error) {
+        handleStorageError(response.error, "Batch Delete");
+      }
+    } catch (error: any) {
+      console.error(`Failed to delete files from bucket ${bucket}:`, error);
+      throw error;
+    }
+  }
+
+  // Enhanced public URL generation with v2.57.4 validation
+  getPublicUrl(
+    bucket: string,
+    path: string,
+    transform?: { width?: number; height?: number; quality?: number },
+  ): string {
+    validateBucketName(bucket);
+    validateFilePath(path);
+
+    try {
+      const response = supabase.storage.from(bucket).getPublicUrl(path, {
+        transform: transform,
+      });
+
+      if (!response.data?.publicUrl) {
+        throw new Error("Failed to generate public URL");
+      }
+
+      return response.data.publicUrl;
+    } catch (error: any) {
+      console.error(`Failed to get public URL for ${bucket}/${path}:`, error);
+      throw error;
+    }
+  }
+
+  // Enhanced signed URL creation with v2.57.4 validation and options
+  async createSignedUrl(
+    bucket: string,
+    path: string,
+    expiresIn: number = 3600,
+    options?: { download?: boolean | string; transform?: { width?: number; height?: number; quality?: number } },
+  ): Promise<string> {
+    validateBucketName(bucket);
+    validateFilePath(path);
+
+    if (expiresIn <= 0 || expiresIn > 604800) {
+      // Max 7 days
+      throw new Error("expiresIn must be between 1 second and 7 days (604800 seconds)");
+    }
+
+    try {
+      // Check if file exists before creating signed URL
+      const exists = await this.fileExists(bucket, path);
+      if (!exists) {
+        throw new Error(`File ${path} not found in bucket ${bucket}`);
+      }
+
+      const response = await supabase.storage.from(bucket).createSignedUrl(path, expiresIn, options);
+
+      if (response.error) {
+        handleStorageError(response.error, "Create Signed URL");
+      }
+
+      const signedData = validateStorageResponse(response, "Create Signed URL");
+
+      if (!signedData.signedUrl) {
+        throw new Error("Signed URL not returned in response");
+      }
+
+      return signedData.signedUrl;
+    } catch (error: any) {
+      console.error(`Failed to create signed URL for ${bucket}/${path}:`, error);
+      throw error;
+    }
+  }
+
+  // Enhanced batch signed URLs creation
+  async createSignedUrls(
+    bucket: string,
+    paths: string[],
+    expiresIn: number = 3600,
+  ): Promise<{ path: string; signedUrl: string | null; error?: string }[]> {
+    validateBucketName(bucket);
+
+    if (!paths || paths.length === 0) {
+      throw new Error("Paths array is required and must not be empty");
+    }
+
+    const results = await Promise.allSettled(
+      paths.map(async (path) => {
+        try {
+          const signedUrl = await this.createSignedUrl(bucket, path, expiresIn);
+          return { path, signedUrl };
+        } catch (error: any) {
+          return { path, signedUrl: null, error: error.message };
+        }
+      }),
+    );
+
+    return results.map((result, index) => {
+      if (result.status === "fulfilled") {
+        return result.value;
+      } else {
+        return { path: paths[index], signedUrl: null, error: result.reason.message };
+      }
+    });
+  }
+
+  // Enhanced file listing with v2.57.4 pagination and filtering
+  async listFiles(
+    bucket: string,
+    folder?: string,
+    options?: {
+      limit?: number;
+      offset?: number;
+      sortBy?: { column: string; order: "asc" | "desc" };
+      search?: string;
+    },
+  ): Promise<FileObject[]> {
+    validateBucketName(bucket);
+
+    if (folder) {
+      validateFilePath(folder);
+    }
+
+    const limit = Math.min(options?.limit || 100, 1000); // Max 1000 per request
+    const offset = Math.max(options?.offset || 0, 0);
+
+    try {
+      const response = await supabase.storage.from(bucket).list(folder, {
+        limit,
+        offset,
+        sortBy: options?.sortBy,
+        search: options?.search,
+      });
+
+      if (response.error) {
+        handleStorageError(response.error, "List Files");
+      }
+
+      return validateStorageResponse(response, "List Files") || [];
+    } catch (error: any) {
+      console.error(`Failed to list files in bucket ${bucket}:`, error);
+      throw error;
+    }
+  }
+
+  // Enhanced method to get all files with pagination
+  async getAllFiles(bucket: string, folder?: string, batchSize: number = 100): Promise<FileObject[]> {
+    const allFiles: FileObject[] = [];
+    let offset = 0;
+    let hasMore = true;
+
+    while (hasMore) {
+      const files = await this.listFiles(bucket, folder, { limit: batchSize, offset });
+
+      if (files.length === 0) {
+        hasMore = false;
+      } else {
+        allFiles.push(...files);
+        offset += files.length;
+        hasMore = files.length === batchSize;
+      }
+    }
+
+    return allFiles;
+  }
+
+  // Enhanced file move with v2.57.4 validation and existence checks
   async moveFile(bucket: string, fromPath: string, toPath: string): Promise<void> {
-    const { error } = await supabase.storage
-      .from(bucket)
-      .move(fromPath, toPath);
+    validateBucketName(bucket);
+    validateFilePath(fromPath);
+    validateFilePath(toPath);
 
-    if (error) throw error;
+    if (fromPath === toPath) {
+      throw new Error("Source and destination paths cannot be the same");
+    }
+
+    try {
+      // Check if source file exists
+      const sourceExists = await this.fileExists(bucket, fromPath);
+      if (!sourceExists) {
+        throw new Error(`Source file ${fromPath} not found in bucket ${bucket}`);
+      }
+
+      // Check if destination already exists
+      const destExists = await this.fileExists(bucket, toPath);
+      if (destExists) {
+        throw new Error(`Destination file ${toPath} already exists in bucket ${bucket}`);
+      }
+
+      const response = await supabase.storage.from(bucket).move(fromPath, toPath);
+
+      if (response.error) {
+        handleStorageError(response.error, "Move File");
+      }
+    } catch (error: any) {
+      console.error(`Failed to move file from ${fromPath} to ${toPath} in bucket ${bucket}:`, error);
+      throw error;
+    }
   }
 
+  // Enhanced file copy with v2.57.4 validation and existence checks
   async copyFile(bucket: string, fromPath: string, toPath: string): Promise<void> {
-    const { error } = await supabase.storage
-      .from(bucket)
-      .copy(fromPath, toPath);
+    validateBucketName(bucket);
+    validateFilePath(fromPath);
+    validateFilePath(toPath);
 
-    if (error) throw error;
+    if (fromPath === toPath) {
+      throw new Error("Source and destination paths cannot be the same");
+    }
+
+    try {
+      // Check if source file exists
+      const sourceExists = await this.fileExists(bucket, fromPath);
+      if (!sourceExists) {
+        throw new Error(`Source file ${fromPath} not found in bucket ${bucket}`);
+      }
+
+      const response = await supabase.storage.from(bucket).copy(fromPath, toPath);
+
+      if (response.error) {
+        handleStorageError(response.error, "Copy File");
+      }
+    } catch (error: any) {
+      console.error(`Failed to copy file from ${fromPath} to ${toPath} in bucket ${bucket}:`, error);
+      throw error;
+    }
+  }
+
+  // Utility method to check if file exists
+  async fileExists(bucket: string, path: string): Promise<boolean> {
+    try {
+      validateBucketName(bucket);
+      validateFilePath(path);
+
+      const folder = path.includes("/") ? path.substring(0, path.lastIndexOf("/")) : undefined;
+      const fileName = path.includes("/") ? path.substring(path.lastIndexOf("/") + 1) : path;
+
+      const files = await this.listFiles(bucket, folder, { search: fileName });
+      return files.some((file) => file.name === fileName);
+    } catch (error) {
+      console.warn(`Error checking file existence for ${bucket}/${path}:`, error);
+      return false;
+    }
+  }
+
+  // Utility method to get file info
+  async getFileInfo(bucket: string, path: string): Promise<FileObject | null> {
+    try {
+      const folder = path.includes("/") ? path.substring(0, path.lastIndexOf("/")) : undefined;
+      const fileName = path.includes("/") ? path.substring(path.lastIndexOf("/") + 1) : path;
+
+      const files = await this.listFiles(bucket, folder, { search: fileName });
+      return files.find((file) => file.name === fileName) || null;
+    } catch (error) {
+      console.warn(`Error getting file info for ${bucket}/${path}:`, error);
+      return null;
+    }
+  }
+
+  // Utility method to validate bucket exists and is accessible
+  async validateBucket(bucket: string): Promise<void> {
+    try {
+      const { data: buckets, error } = await supabase.storage.listBuckets();
+
+      if (error) {
+        handleStorageError(error, "List Buckets");
+      }
+
+      const bucketExists = buckets?.some((b) => b.name === bucket);
+      if (!bucketExists) {
+        throw new Error(`Bucket '${bucket}' does not exist or is not accessible`);
+      }
+    } catch (error: any) {
+      console.error(`Bucket validation failed for ${bucket}:`, error);
+      throw error;
+    }
+  }
+
+  // Utility method to get bucket info
+  async getBucketInfo(bucket: string): Promise<any> {
+    try {
+      const { data: buckets, error } = await supabase.storage.listBuckets();
+
+      if (error) {
+        handleStorageError(error, "Get Bucket Info");
+      }
+
+      const bucketInfo = buckets?.find((b) => b.name === bucket);
+      if (!bucketInfo) {
+        throw new Error(`Bucket '${bucket}' not found`);
+      }
+
+      return bucketInfo;
+    } catch (error: any) {
+      console.error(`Failed to get bucket info for ${bucket}:`, error);
+      throw error;
+    }
   }
 }
 
+// Export singleton instance
 export const storageService = new StorageService();
+
+// Export for direct usage
+export default storageService;

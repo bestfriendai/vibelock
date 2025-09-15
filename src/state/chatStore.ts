@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { v4 as uuidv4 } from "uuid";
 import { ChatRoom, ChatMessage, ChatMember, TypingUser, ConnectionStatus, ChatState, MessageEvent } from "../types";
 import { enhancedRealtimeChatService } from "../services/realtimeChat";
 import useAuthStore from "./authStore";
@@ -290,86 +289,84 @@ const useChatStore = create<ChatStore>()(
           await enhancedRealtimeChatService.joinRoom(roomId, supabaseUser.id, getUserDisplayName(user));
 
           // Subscribe to messages with typed events
-          enhancedRealtimeChatService.subscribeToMessages(
-            roomId,
-            (event: MessageEvent) => {
-              console.log(
-                `🔍 Received ${event.type} event with ${event.items.length} messages for room ${roomId}`,
-              );
+          enhancedRealtimeChatService.subscribeToMessages(roomId, (event: MessageEvent) => {
+            console.log(`🔍 Received ${event.type} event with ${event.items.length} messages for room ${roomId}`);
 
-              set((state) => {
-                let allMessages: ChatMessage[];
+            set((state) => {
+              let allMessages: ChatMessage[];
 
-                switch (event.type) {
-                  case 'initial':
-                    // Service now returns ascending (oldest->newest)
-                    allMessages = [...event.items];
-                    break;
+              switch (event.type) {
+                case "initial":
+                  // Service now returns ascending (oldest->newest)
+                  allMessages = [...event.items];
+                  break;
 
-                  case 'replace':
-                    // Replace optimistic message with real one
-                    const existingMessages = state.messages[roomId] || [];
-                    allMessages = [...existingMessages];
+                case "replace":
+                  // Replace optimistic message with real one
+                  const existingMessages = state.messages[roomId] || [];
+                  allMessages = [...existingMessages];
 
-                    if (event.tempId) {
-                      const optimisticIndex = allMessages.findIndex(msg => msg.id === event.tempId);
-                      if (optimisticIndex !== -1 && event.items[0]) {
-                        allMessages[optimisticIndex] = { ...event.items[0], status: event.items[0].isRead ? "read" : "sent" } as any;
-                      }
+                  if (event.tempId) {
+                    const optimisticIndex = allMessages.findIndex((msg) => msg.id === event.tempId);
+                    if (optimisticIndex !== -1 && event.items[0]) {
+                      allMessages[optimisticIndex] = {
+                        ...event.items[0],
+                        status: event.items[0].isRead ? "read" : "sent",
+                      } as any;
                     }
-                    break;
+                  }
+                  break;
 
-                  case 'new':
-                    // Add new messages
-                    const existing = state.messages[roomId] || [];
-                    allMessages = [...existing];
+                case "new":
+                  // Add new messages
+                  const existing = state.messages[roomId] || [];
+                  allMessages = [...existing];
 
-                    event.items.forEach((newMsg) => {
-                      const isDuplicate = allMessages.some((msg) => msg.id === newMsg.id);
-                      if (!isDuplicate) {
-                        allMessages.push(newMsg);
-                      }
-                    });
-                    break;
+                  event.items.forEach((newMsg) => {
+                    const isDuplicate = allMessages.some((msg) => msg.id === newMsg.id);
+                    if (!isDuplicate) {
+                      allMessages.push(newMsg);
+                    }
+                  });
+                  break;
 
-                  case 'update':
-                    // Update existing messages
-                    const current = state.messages[roomId] || [];
-                    allMessages = [...current];
+                case "update":
+                  // Update existing messages
+                  const current = state.messages[roomId] || [];
+                  allMessages = [...current];
 
-                    event.items.forEach((updatedMsg) => {
-                      const index = allMessages.findIndex((m) => m.id === updatedMsg.id);
-                      if (index !== -1) {
-                        allMessages[index] = { ...allMessages[index], ...updatedMsg };
-                      }
-                    });
-                    break;
+                  event.items.forEach((updatedMsg) => {
+                    const index = allMessages.findIndex((m) => m.id === updatedMsg.id);
+                    if (index !== -1) {
+                      allMessages[index] = { ...allMessages[index], ...updatedMsg };
+                    }
+                  });
+                  break;
 
-                  case 'delete':
-                    // Remove deleted messages
-                    const beforeDelete = state.messages[roomId] || [];
-                    const deletedIds = new Set(event.items.map(m => m.id));
-                    allMessages = beforeDelete.filter(m => !deletedIds.has(m.id));
-                    break;
+                case "delete":
+                  // Remove deleted messages
+                  const beforeDelete = state.messages[roomId] || [];
+                  const deletedIds = new Set(event.items.map((m) => m.id));
+                  allMessages = beforeDelete.filter((m) => !deletedIds.has(m.id));
+                  break;
 
-                  default:
-                    return state;
-                }
+                default:
+                  return state;
+              }
 
-                // Keep ascending order for display (oldest->newest)
-                if (event.type === 'initial' || event.items.length > 0) {
-                  allMessages.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-                }
+              // Keep ascending order for display (oldest->newest)
+              if (event.type === "initial" || event.items.length > 0) {
+                allMessages.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+              }
 
-                return {
-                  messages: {
-                    ...state.messages,
-                    [roomId]: allMessages,
-                  },
-                };
-              });
-            },
-          );
+              return {
+                messages: {
+                  ...state.messages,
+                  [roomId]: allMessages,
+                },
+              };
+            });
+          });
 
           // Subscribe to presence for this room
           enhancedRealtimeChatService.subscribeToPresence(roomId, (members: ChatMember[]) => {
@@ -685,10 +682,14 @@ const useChatStore = create<ChatStore>()(
                 if (m.id !== messageId) return m;
 
                 // Work with aggregated reactions format
-                const currentReactions = (m.reactions || []) as Array<{ emoji: string; count: number; users: string[] }>;
-                const existingReaction = currentReactions.find(r => r.emoji === reaction);
+                const currentReactions = (m.reactions || []) as {
+                  emoji: string;
+                  count: number;
+                  users: string[];
+                }[];
+                const existingReaction = currentReactions.find((r) => r.emoji === reaction);
 
-                let updatedReactions: Array<{ emoji: string; count: number; users: string[] }>;
+                let updatedReactions: { emoji: string; count: number; users: string[] }[];
 
                 if (existingReaction) {
                   const userIndex = existingReaction.users.indexOf(userId);
@@ -696,38 +697,41 @@ const useChatStore = create<ChatStore>()(
                     // User is removing their reaction
                     if (existingReaction.count === 1) {
                       // Remove the reaction entirely
-                      updatedReactions = currentReactions.filter(r => r.emoji !== reaction);
+                      updatedReactions = currentReactions.filter((r) => r.emoji !== reaction);
                     } else {
                       // Decrease count and remove user
-                      updatedReactions = currentReactions.map(r =>
+                      updatedReactions = currentReactions.map((r) =>
                         r.emoji === reaction
                           ? {
                               ...r,
                               count: r.count - 1,
-                              users: r.users.filter(u => u !== userId)
+                              users: r.users.filter((u) => u !== userId),
                             }
-                          : r
+                          : r,
                       );
                     }
                   } else {
                     // User is adding their reaction
-                    updatedReactions = currentReactions.map(r =>
+                    updatedReactions = currentReactions.map((r) =>
                       r.emoji === reaction
                         ? {
                             ...r,
                             count: r.count + 1,
-                            users: [...r.users, userId]
+                            users: [...r.users, userId],
                           }
-                        : r
+                        : r,
                     );
                   }
                 } else {
                   // New reaction type
-                  updatedReactions = [...currentReactions, {
-                    emoji: reaction,
-                    count: 1,
-                    users: [userId]
-                  }];
+                  updatedReactions = [
+                    ...currentReactions,
+                    {
+                      emoji: reaction,
+                      count: 1,
+                      users: [userId],
+                    },
+                  ];
                 }
 
                 return { ...m, reactions: updatedReactions };

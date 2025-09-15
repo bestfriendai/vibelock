@@ -148,6 +148,26 @@ export default {
       "expo-sqlite",
       "expo-video",
       "expo-web-browser",
+      // Conditional RevenueCat plugin loading based on build environment
+      ...(isExpoGo
+        ? []
+        : [
+            [
+              "react-native-purchases",
+              {
+                // RevenueCat configuration for subscription management
+                apiKey: process.env.EXPO_PUBLIC_REVENUECAT_API_KEY,
+                // Enable debug logging in development
+                enableDebugLogging: isDevelopmentBuild,
+                // Enhanced configuration for better integration
+                enableAmazonLogging: false,
+                enableProxyMode: false,
+                // Subscription management settings
+                enablePendingPurchases: true,
+                enableObserverMode: false,
+              },
+            ],
+          ]),
       // Conditional AdMob plugin loading based on build environment
       ...(isExpoGo
         ? []

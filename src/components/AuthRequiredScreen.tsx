@@ -1,15 +1,8 @@
-import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-  SafeAreaView,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '../providers/ThemeProvider';
-import { useNavigation } from '@react-navigation/native';
+import React from "react";
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { useTheme } from "../providers/ThemeProvider";
+import { useNavigation } from "@react-navigation/native";
 
 interface AuthRequiredScreenProps {
   title?: string;
@@ -20,8 +13,8 @@ interface AuthRequiredScreenProps {
 }
 
 export const AuthRequiredScreen: React.FC<AuthRequiredScreenProps> = ({
-  title = 'Authentication Required',
-  message = 'Please sign in to access this feature',
+  title = "Authentication Required",
+  message = "Please sign in to access this feature",
   showSignUpButton = true,
   onSignIn,
   onSignUp,
@@ -33,7 +26,7 @@ export const AuthRequiredScreen: React.FC<AuthRequiredScreenProps> = ({
     if (onSignIn) {
       onSignIn();
     } else {
-      navigation.navigate('SignIn');
+      navigation.navigate("SignIn");
     }
   };
 
@@ -41,32 +34,21 @@ export const AuthRequiredScreen: React.FC<AuthRequiredScreenProps> = ({
     if (onSignUp) {
       onSignUp();
     } else {
-      navigation.navigate('SignUp');
+      navigation.navigate("SignUp");
     }
   };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
           <View style={[styles.iconContainer, { backgroundColor: colors.brand.redLight }]}>
-            <Ionicons
-              name="lock-closed"
-              size={48}
-              color={colors.brand.red}
-            />
+            <Ionicons name="lock-closed" size={48} color={colors.brand.red} />
           </View>
 
-          <Text style={[styles.title, { color: colors.text.primary }]}>
-            {title}
-          </Text>
+          <Text style={[styles.title, { color: colors.text.primary }]}>{title}</Text>
 
-          <Text style={[styles.message, { color: colors.text.secondary }]}>
-            {message}
-          </Text>
+          <Text style={[styles.message, { color: colors.text.secondary }]}>{message}</Text>
 
           <View style={styles.buttonContainer}>
             <TouchableOpacity
@@ -74,24 +56,16 @@ export const AuthRequiredScreen: React.FC<AuthRequiredScreenProps> = ({
               onPress={handleSignIn}
               activeOpacity={0.8}
             >
-              <Text style={[styles.buttonText, { color: colors.background }]}>
-                Sign In
-              </Text>
+              <Text style={[styles.buttonText, { color: colors.background }]}>Sign In</Text>
             </TouchableOpacity>
 
             {showSignUpButton && (
               <TouchableOpacity
-                style={[
-                  styles.button,
-                  styles.secondaryButton,
-                  { borderColor: colors.brand.red },
-                ]}
+                style={[styles.button, styles.secondaryButton, { borderColor: colors.brand.red }]}
                 onPress={handleSignUp}
                 activeOpacity={0.8}
               >
-                <Text style={[styles.buttonText, { color: colors.brand.red }]}>
-                  Create Account
-                </Text>
+                <Text style={[styles.buttonText, { color: colors.brand.red }]}>Create Account</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -107,10 +81,10 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   content: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingHorizontal: 32,
     paddingVertical: 48,
   },
@@ -118,39 +92,39 @@ const styles = StyleSheet.create({
     width: 96,
     height: 96,
     borderRadius: 48,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 24,
   },
   title: {
     fontSize: 24,
-    fontWeight: '600',
+    fontWeight: "600",
     marginBottom: 12,
-    textAlign: 'center',
+    textAlign: "center",
   },
   message: {
     fontSize: 16,
     lineHeight: 24,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 32,
   },
   buttonContainer: {
-    width: '100%',
+    width: "100%",
     maxWidth: 320,
   },
   button: {
     paddingVertical: 14,
     paddingHorizontal: 24,
     borderRadius: 8,
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 12,
   },
   secondaryButton: {
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
     borderWidth: 2,
   },
   buttonText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 });

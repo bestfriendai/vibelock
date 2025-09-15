@@ -1,23 +1,23 @@
 import React, { useState } from "react";
 import { View, Text, Pressable, ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { Comment } from "../types";
+import { Comment, ReviewComment } from "../types";
 import { useTheme } from "../providers/ThemeProvider";
 
 interface CommentSectionProps {
-  comments: Comment[];
+  comments: ReviewComment[];
   isLoading?: boolean;
   onLikeComment: (commentId: string) => void;
   onDislikeComment: (commentId: string) => void;
-  onReplyToComment: (comment: Comment) => void;
+  onReplyToComment: (comment: ReviewComment) => void;
   onReportComment: (commentId: string) => void;
 }
 
 interface CommentItemProps {
-  comment: Comment;
+  comment: ReviewComment;
   onLike: (commentId: string) => void;
   onDislike: (commentId: string) => void;
-  onReply: (comment: Comment) => void;
+  onReply: (comment: ReviewComment) => void;
   onReport: (commentId: string) => void;
   isReply?: boolean;
 }

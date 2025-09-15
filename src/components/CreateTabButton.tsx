@@ -1,7 +1,7 @@
-import React from 'react';
-import { TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '../providers/ThemeProvider';
+import React from "react";
+import { TouchableOpacity, StyleSheet, ViewStyle } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { useTheme } from "../providers/ThemeProvider";
 
 interface CreateTabButtonProps {
   onPress: () => void;
@@ -14,7 +14,7 @@ export const CreateTabButton: React.FC<CreateTabButtonProps> = ({
   onPress,
   style,
   size = 50,
-  testID = 'create-tab-button',
+  testID = "create-tab-button",
 }) => {
   const { colors } = useTheme();
 
@@ -37,19 +37,15 @@ export const CreateTabButton: React.FC<CreateTabButtonProps> = ({
       accessibilityLabel="Create new post"
       accessibilityRole="button"
     >
-      <Ionicons
-        name="add"
-        size={size * 0.6}
-        color={colors.background}
-      />
+      <Ionicons name="add" size={size * 0.6} color={colors.background} />
     </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
   button: {
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     shadowOffset: {
       width: 0,
       height: 2,

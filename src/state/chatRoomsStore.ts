@@ -4,9 +4,9 @@
  * See src/state/README.md for details.
  */
 
-import { create } from 'zustand';
-import { ChatRoom, RoomMember } from '../types';
-import { chatService } from '../services/chat';
+import { create } from "zustand";
+import { ChatRoom, RoomMember } from "../types";
+import { chatService } from "../services/chat";
 
 interface ChatRoomsState {
   rooms: Map<string, ChatRoom>;
@@ -36,8 +36,7 @@ export const useChatRoomsStore = create<ChatRoomsState>((set, get) => ({
 
   getRooms: () => {
     return Array.from(get().rooms.values()).sort(
-      (a, b) => new Date(b.lastActivity || b.createdAt).getTime() -
-               new Date(a.lastActivity || a.createdAt).getTime()
+      (a, b) => new Date(b.lastActivity || b.createdAt).getTime() - new Date(a.lastActivity || a.createdAt).getTime(),
     );
   },
 
@@ -56,30 +55,30 @@ export const useChatRoomsStore = create<ChatRoomsState>((set, get) => ({
       const rooms = await chatService.getRooms(userId);
 
       const roomsMap = new Map<string, ChatRoom>();
-      rooms.forEach(room => {
+      rooms.forEach((room) => {
         roomsMap.set(room.id, room);
       });
 
       set({
         rooms: roomsMap,
-        loadingRooms: false
+        loadingRooms: false,
       });
     } catch (error) {
       set({
         error: error as Error,
-        loadingRooms: false
+        loadingRooms: false,
       });
     }
   },
 
   addRoom: (room: ChatRoom) => {
-    set(state => ({
+    set((state) => ({
       rooms: new Map(state.rooms).set(room.id, room),
     }));
   },
 
   updateRoom: (roomId: string, updates: Partial<ChatRoom>) => {
-    set(state => {
+    set((state) => {
       const room = state.rooms.get(roomId);
       if (!room) return state;
 
@@ -91,7 +90,7 @@ export const useChatRoomsStore = create<ChatRoomsState>((set, get) => ({
   },
 
   deleteRoom: (roomId: string) => {
-    set(state => {
+    set((state) => {
       const newRooms = new Map(state.rooms);
       newRooms.delete(roomId);
 
@@ -110,11 +109,11 @@ export const useChatRoomsStore = create<ChatRoomsState>((set, get) => ({
     try {
       const members = await chatService.getRoomMembers(roomId);
 
-      set(state => ({
+      set((state) => ({
         roomMembers: new Map(state.roomMembers).set(roomId, members),
       }));
     } catch (error) {
-      console.error('Failed to load room members:', error);
+      console.error("Failed to load room members:", error);
     }
   },
 
