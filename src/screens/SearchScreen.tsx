@@ -6,7 +6,7 @@ import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { SearchStackParamList } from "../navigation/AppNavigator";
 import { useNavigation, NavigationProp } from "@react-navigation/native";
 import { RootStackParamList } from "../navigation/AppNavigator";
-import { supabaseSearch } from "../services/supabase";
+import { searchService } from "../services/search";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useTheme } from "../providers/ThemeProvider";
 import { validateSearchQuery, searchLimiter } from "../utils/inputValidation";
@@ -231,7 +231,7 @@ export default function SearchScreen({ navigation, route }: Props) {
     setShowSuggestions(false);
 
     try {
-      const results = await supabaseSearch.searchAll(queryValidation.sanitized);
+      const results = await searchService.searchAll(queryValidation.sanitized);
       setContentResults(results);
 
       // Save to search history (use sanitized query)

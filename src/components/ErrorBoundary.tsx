@@ -1,33 +1,41 @@
 import React, { Component, ReactNode } from "react";
-import { View, Text, Pressable } from "react-native";
+import { View, Text, Pressable, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useTheme } from "../providers/ThemeProvider";
+
+interface ThemeColors {
+  background: string;
+  surface: string;
+  primary: string;
+  text: string;
+  textSecondary: string;
+}
 
 interface Props {
   children: ReactNode;
   fallback?: ReactNode;
-  onError?: (error: Error, errorInfo: any) => void;
+  onError?: (error: Error, errorInfo: React.ErrorInfo) => void;
+  theme?: { colors: ThemeColors };
 }
 
 interface State {
   hasError: boolean;
   error: Error | null;
   resetCount: number;
-  isResetting: boolean;
   errorType: "general" | "component_registration" | "view_config" | null;
 }
 
-export default class ErrorBoundary extends Component<Props, State> {
+class ErrorBoundaryClass extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = { hasError: false, error: null, resetCount: 0, isResetting: false, errorType: null };
+    this.state = { hasError: false, error: null, resetCount: 0, errorType: null };
   }
 
   static getDerivedStateFromError(error: Error): Partial<State> {
-    // Detect specific error types
     const errorMessage = error.message || error.toString();
-    let errorType: "general" | "component_registration" | "view_config" = "general";
+    let errorType: State['errorType'] = "general";
 
-    if (errorMessage.includes("View config not found") || errorMessage.includes("AutoLayoutView")) {
+    if (errorMessage.includes("View config") || errorMessage.includes("AutoLayout")) {
       errorType = "view_config";
     } else if (errorMessage.includes("component") && errorMessage.includes("not found")) {
       errorType = "component_registration";
@@ -36,94 +44,76 @@ export default class ErrorBoundary extends Component<Props, State> {
     return { hasError: true, error, errorType };
   }
 
-  override componentDidCatch(error: Error, errorInfo: any) {
-    // Enhanced logging for component registration errors
+  override componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     if (__DEV__) {
       console.warn("ErrorBoundary caught an error:", error, errorInfo);
 
-      // Special handling for view config errors
       if (this.state.errorType === "view_config") {
-        console.warn(
-          "View config error detected. This is likely due to React Native new architecture compatibility issues.",
-        );
-        console.warn("Consider disabling newArchEnabled in app.json or updating incompatible dependencies.");
+        console.warn("View config error detected. Check React Native architecture compatibility.");
       }
 
       if (this.state.errorType === "component_registration") {
-        console.warn("Component registration error detected. Check for missing or incompatible native dependencies.");
+        console.warn("Component registration error detected. Check for missing native dependencies.");
       }
     }
     this.props.onError?.(error, errorInfo);
   }
 
   handleRetry = () => {
-    // First set resetting state to prevent immediate re-render
-    this.setState({ isResetting: true }, () => {
-      // Longer delay for component registration errors to allow recovery
-      const delay =
-        this.state.errorType === "view_config" || this.state.errorType === "component_registration" ? 500 : 100;
-
-      setTimeout(() => {
-        this.setState({
-          hasError: false,
-          error: null,
-          resetCount: this.state.resetCount + 1,
-          isResetting: false,
-          errorType: null,
-        });
-      }, delay);
+    this.setState({
+      hasError: false,
+      error: null,
+      resetCount: this.state.resetCount + 1,
+      errorType: null,
     });
   };
 
   override render() {
-    if (this.state.isResetting) {
-      // Return null while resetting to prevent flickering
-      return null;
-    }
-
     if (this.state.hasError) {
       if (this.props.fallback) {
         return this.props.fallback;
       }
 
+      const theme = this.props.theme || {
+        colors: {
+          background: '#000',
+          surface: '#1a1a1a',
+          primary: '#ff0000',
+          text: '#fff',
+          textSecondary: '#999',
+        },
+      };
+
       return (
-        <View className="flex-1 items-center justify-center px-6 bg-surface-900">
-          <View className="items-center">
-            <View className="w-20 h-20 bg-brand-red/20 rounded-full items-center justify-center mb-6">
-              <Ionicons name="warning" size={32} color="#FFFFFF" />
+        <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+          <View style={styles.content}>
+            <View style={[styles.iconContainer, { backgroundColor: theme.colors.primary + '33' }]}>
+              <Ionicons name="warning" size={32} color={theme.colors.text} />
             </View>
 
-            <Text className="text-text-primary text-xl font-bold mb-2 text-center">
+            <Text style={[styles.title, { color: theme.colors.text }]}>
               {this.state.errorType === "view_config" ? "Component Error" : "Something went wrong"}
             </Text>
 
-            <Text className="text-text-secondary text-center mb-8 leading-6">
+            <Text style={[styles.message, { color: theme.colors.textSecondary }]}>
               {this.state.errorType === "view_config"
-                ? "A component failed to load due to compatibility issues. This may resolve automatically."
+                ? "A component failed to load. This may resolve automatically."
                 : this.state.errorType === "component_registration"
                   ? "A component registration error occurred. Try restarting the app."
-                  : "We encountered an unexpected error. Please try again or restart the app."}
+                  : "We encountered an unexpected error. Please try again."}
             </Text>
 
-            <View className="space-y-3 w-full max-w-xs">
-              <Pressable className="bg-brand-red rounded-xl py-4 items-center" onPress={this.handleRetry}>
-                <Text className="text-black font-semibold text-lg">Try Again</Text>
-              </Pressable>
-
-              <Pressable
-                className="bg-surface-800 border border-surface-700 rounded-xl py-4 items-center"
-                onPress={() => {
-                  // In a real app, this could restart the app or navigate to home
-                  this.handleRetry();
-                }}
-              >
-                <Text className="text-text-primary font-medium">Go to Home</Text>
+            <View style={styles.buttonContainer}>
+              <Pressable style={[styles.button, { backgroundColor: theme.colors.primary }]} onPress={this.handleRetry}>
+                <Text style={styles.buttonText}>Try Again</Text>
               </Pressable>
             </View>
 
             {__DEV__ && this.state.error && (
-              <View className="mt-8 p-4 bg-surface-800 rounded-xl w-full">
-                <Text className="text-text-secondary text-xs font-mono">{this.state.error.toString()}</Text>
+              <View style={[styles.errorDetails, { backgroundColor: theme.colors.surface }]}>
+                <Text style={[styles.errorText, { color: theme.colors.textSecondary }]}>
+                  {this.state.error.toString()}
+                </Text>
               </View>
             )}
           </View>
@@ -131,18 +121,101 @@ export default class ErrorBoundary extends Component<Props, State> {
       );
     }
 
-    // Use resetCount as key to force remount of children when retrying
-    if (React.Children.count(this.props.children) === 1) {
-      return React.cloneElement(this.props.children as React.ReactElement, {
-        key: this.state.resetCount,
-      });
-    }
-
-    // Handle multiple children
     return React.createElement(
       React.Fragment,
       { key: this.state.resetCount },
-      ...React.Children.toArray(this.props.children),
+      this.props.children,
     );
   }
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  content: {
+    alignItems: 'center',
+  },
+  iconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  message: {
+    textAlign: 'center',
+    marginBottom: 32,
+    lineHeight: 24,
+  },
+  buttonContainer: {
+    width: '100%',
+    maxWidth: 320,
+  },
+  button: {
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: '#000',
+    fontWeight: '600',
+    fontSize: 18,
+  },
+  errorDetails: {
+    marginTop: 32,
+    padding: 16,
+    borderRadius: 12,
+    width: '100%',
+  },
+  errorText: {
+    fontSize: 12,
+    fontFamily: 'monospace',
+  },
+});
+
+export default function ErrorBoundary(props: Omit<Props, 'theme'>) {
+  // Try to use theme from context, but provide a fallback
+  let themeObject: { colors: ThemeColors } | undefined;
+
+  try {
+    const theme = useTheme();
+    // Extract colors from the theme
+    if (theme && typeof theme === 'object') {
+      const themeValue = (theme as any).theme;
+      if (themeValue && typeof themeValue === 'object' && themeValue.colors) {
+        themeObject = { colors: themeValue.colors };
+      } else if ((theme as any).colors) {
+        themeObject = { colors: (theme as any).colors };
+      }
+    }
+  } catch (error) {
+    // If useTheme fails (e.g., not in ThemeProvider), use default theme
+    console.log('ErrorBoundary: Using default theme as ThemeProvider not available');
+  }
+
+  // If no theme available, use default
+  if (!themeObject) {
+    themeObject = {
+      colors: {
+        background: '#000',
+        surface: '#1a1a1a',
+        primary: '#ff0000',
+        text: '#fff',
+        textSecondary: '#999',
+      }
+    };
+  }
+
+  return <ErrorBoundaryClass {...props} theme={themeObject} />;
 }

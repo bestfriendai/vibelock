@@ -1,6 +1,6 @@
 // Unified authentication utilities to ensure consistent auth state across the app
 import { supabase } from "../config/supabase";
-import { supabaseAuth } from "../services/supabase";
+import { authService } from "../services/auth";
 import useAuthStore from "../state/authStore";
 import { User } from "../types";
 import { AppError, ErrorType, parseSupabaseError } from "./errorHandling";
@@ -13,7 +13,7 @@ export const getAuthenticatedUser = async (): Promise<{ user: User | null; supab
   try {
     // Get both store state and Supabase state
     const storeState = useAuthStore.getState();
-    const supabaseUser = await supabaseAuth.getCurrentUser();
+    const supabaseUser = await authService.getCurrentUser();
 
     // If store says authenticated but Supabase doesn't, DON'T auto-clear
     // This could be a temporary network issue or session refresh timing
@@ -189,7 +189,7 @@ export const refreshSessionIfNeeded = async (): Promise<boolean> => {
 export const syncAuthState = async (): Promise<void> => {
   try {
     const storeState = useAuthStore.getState();
-    const supabaseUser = await supabaseAuth.getCurrentUser();
+    const supabaseUser = await authService.getCurrentUser();
 
     console.log("🔄 Syncing auth state:");
     console.log("  Store authenticated:", storeState.isAuthenticated);

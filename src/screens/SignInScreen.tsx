@@ -190,7 +190,7 @@ export default function SignInScreen() {
                   variant="ghost"
                   size="small"
                   onPress={() => {
-                    // Handle forgot password
+                    navigation.navigate("ForgotPassword");
                   }}
                 />
               </View>

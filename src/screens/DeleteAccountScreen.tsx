@@ -3,7 +3,8 @@ import { View, Text, Pressable, Alert, ActivityIndicator, Linking } from "react-
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import useAuthStore from "../state/authStore";
-import { supabaseUsers, supabaseAuth } from "../services/supabase";
+import { usersService } from "../services/users";
+import { authService } from "../services/auth";
 import { notificationService } from "../services/notificationService";
 
 export default function DeleteAccountScreen() {
@@ -27,8 +28,7 @@ export default function DeleteAccountScreen() {
     try {
       setIsDeleting(true);
       await notificationService.removePushToken();
-      await supabaseUsers.deleteUserProfile(user.id);
-      await supabaseAuth.signOut();
+      await authService.deleteAccount();
       await logout();
       Alert.alert(
         "Account Deleted",

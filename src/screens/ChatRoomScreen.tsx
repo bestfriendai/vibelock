@@ -18,6 +18,7 @@ import { useTheme } from "../providers/ThemeProvider";
 import { notificationService } from "../services/notificationService";
 import OfflineBanner from "../components/OfflineBanner";
 import LoadingSpinner from "../components/LoadingSpinner";
+import { useScrollManager } from "../utils/scrollUtils";
 
 export type ChatRoomRouteProp = RouteProp<RootStackParamList, "ChatRoom">;
 
@@ -47,7 +48,6 @@ export default function ChatRoomScreen() {
 
   const [isLoadingOlderMessages, setIsLoadingOlderMessages] = useState(false);
   const mountedRef = useRef(true);
-  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const {
     messages,
@@ -71,21 +71,13 @@ export default function ChatRoomScreen() {
   const [isActionsModalVisible, setIsActionsModalVisible] = useState(false);
   const hasAutoScrolledRef = useRef(false);
 
-  const scrollToBottom = (animated: boolean = true) => {
-    const ref: any = listRef.current;
-    if (!ref || roomMessages.length === 0) return;
-    try {
-      if (typeof ref.scrollToIndex === "function") {
-        ref.scrollToIndex({ index: Math.max(0, roomMessages.length - 1), animated });
-        return;
-      }
-    } catch {}
-    try {
-      if (typeof ref.scrollToOffset === "function") {
-        ref.scrollToOffset({ offset: Number.MAX_SAFE_INTEGER, animated });
-      }
-    } catch {}
-  };
+  // Create ScrollManager instance
+  const scrollManager = useScrollManager();
+
+  // Set ref for ScrollManager
+  useEffect(() => {
+    scrollManager.setRef(listRef.current);
+  }, [listRef.current]);
 
   useEffect(() => {
     if (canAccessChat && !needsSignIn && user) {
@@ -93,11 +85,7 @@ export default function ChatRoomScreen() {
     }
     return () => {
       mountedRef.current = false;
-      // Clear any pending scroll timeout
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
-        scrollTimeoutRef.current = null;
-      }
+      // ScrollManager handles cleanup automatically
       if (canAccessChat && !needsSignIn && user) {
         leaveChatRoom(roomId);
       }
@@ -128,7 +116,7 @@ export default function ChatRoomScreen() {
   // Ensure we start at the bottom (newest message visible) once on initial load
   useEffect(() => {
     if (!hasAutoScrolledRef.current && roomMessages.length > 0 && listRef.current) {
-      scrollToBottom(false);
+      scrollManager.scrollToIndex(Math.max(0, roomMessages.length - 1), { animated: false });
       hasAutoScrolledRef.current = true;
     }
   }, [roomMessages.length]);
@@ -137,18 +125,8 @@ export default function ChatRoomScreen() {
     sendMessage(roomId, text, replyingTo?.id);
     setReplyingTo(null);
 
-    // Clear any existing scroll timeout
-    if (scrollTimeoutRef.current) {
-      clearTimeout(scrollTimeoutRef.current);
-    }
-
-    // Scroll to bottom so newest message remains visible
-    scrollTimeoutRef.current = setTimeout(() => {
-      if (mountedRef.current && listRef.current) {
-        scrollToBottom(true);
-      }
-      scrollTimeoutRef.current = null;
-    }, 100);
+    // Use ScrollManager's safe scroll with built-in delay
+    scrollManager.safeScrollToEnd();
   };
 
   const handleReply = (message: ChatMessage) => {

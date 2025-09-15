@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { NavigationContainer } from "@react-navigation/native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { AppState } from "react-native";
+import { AppState, View, Text, Pressable } from "react-native";
 import * as Linking from "expo-linking";
 import AppNavigator from "./src/navigation/AppNavigator";
 import ErrorBoundary from "./src/components/ErrorBoundary";
@@ -17,6 +17,7 @@ import { buildEnv } from "./src/utils/buildEnvironment";
 import { AdProvider } from "./src/contexts/AdContext";
 import { ThemeProvider } from "./src/providers/ThemeProvider";
 import AppOpenAdHandler from "./src/components/AppOpenAdHandler";
+import { useAppInitialization } from "./src/hooks/useAppInitialization";
 
 /*
 IMPORTANT NOTICE: DO NOT REMOVE
@@ -47,14 +48,31 @@ const linking = {
       MainTabs: {
         path: "main",
         screens: {
-          Browse: "main",
-          ReviewDetail: "review/:reviewId",
-          Search: "search",
-          Chatrooms: "chatrooms",
-          Settings: "settings",
-          Notifications: "notifications",
-          DeleteAccount: "delete-account",
-          LocationSettings: "location-settings",
+          BrowseStack: {
+            screens: {
+              Browse: "browse",
+              ReviewDetail: "review/:reviewId",
+            },
+          },
+          SearchStack: {
+            screens: {
+              Search: "search",
+              ReviewDetail: "search/review/:reviewId",
+            },
+          },
+          ChatroomsStack: {
+            screens: {
+              Chatrooms: "chatrooms",
+            },
+          },
+          SettingsStack: {
+            screens: {
+              Settings: "settings",
+              Notifications: "notifications",
+              DeleteAccount: "delete-account",
+              LocationSettings: "location-settings",
+            },
+          },
         },
       },
       PersonProfile: "profile/:firstName/:city/:state",
@@ -62,6 +80,8 @@ const linking = {
       CreateReview: "create",
       SignIn: "signin",
       SignUp: "signup",
+      ForgotPassword: "forgot-password",
+      ResetPassword: "reset-password",
       Onboarding: "onboarding",
     },
   },
@@ -70,113 +90,92 @@ const linking = {
 export default function App() {
   const { initializeAuthListener } = useAuthStore();
   const { cleanup: cleanupChat } = useChatStore();
-  const { initializeRevenueCat } = useSubscriptionStore();
+  const { initializeRevenueCat, identifyRevenueCatUser } = useSubscriptionStore();
+  const { isLoading, error, retry } = useAppInitialization();
 
   useEffect(() => {
-    const initializeApp = async () => {
+    const unsubscribe = initializeAuthListener();
+
+    const initializeServices = async () => {
       try {
-        console.log("🚀 App Environment:", {
-          isExpoGo: buildEnv.isExpoGo,
-          isDevelopmentBuild: buildEnv.isDevelopmentBuild,
-          hasNativeModules: buildEnv.hasNativeModules,
-        });
-
-        // Initialize Supabase auth state listener (always available)
-        const unsubscribe = initializeAuthListener();
-
-        // Initialize monetization services conditionally
-        if (buildEnv.hasNativeModules) {
-          console.log("💰 Initializing native monetization services...");
-          await Promise.all([adMobService.initialize(), initializeRevenueCat()]);
-        } else {
-          console.log("🎭 Using mock monetization services for Expo Go...");
-          await Promise.all([
-            adMobService.initialize(), // Will use mock implementation
-            initializeRevenueCat(), // Will use mock implementation
-          ]);
-        }
-
-        console.log("✅ App initialization complete");
-        return unsubscribe;
+        await Promise.all([
+          adMobService.initialize(),
+          initializeRevenueCat(),
+        ]);
       } catch (error) {
-        console.error("❌ App initialization error:", error);
-        // Don't crash the app, continue with limited functionality
-        return initializeAuthListener();
+        console.error("Service initialization error:", error);
       }
     };
 
-    let unsubscribe: (() => void) | null = null;
+    initializeServices();
 
-    initializeApp().then((unsub) => {
-      unsubscribe = unsub;
-    });
-
-    // Handle app state changes for cleanup
     const handleAppStateChange = (nextAppState: string) => {
       if (nextAppState === "background" || nextAppState === "inactive") {
-        console.log("🧹 App backgrounded, cleaning up resources");
-        // Don't fully cleanup on background, just reduce activity
+        console.log("App backgrounded");
       }
     };
 
     const appStateSubscription = AppState.addEventListener("change", handleAppStateChange);
 
-    // Cleanup listener on unmount
     return () => {
-      console.log("🧹 App unmounting, cleaning up all resources");
       unsubscribe?.();
       appStateSubscription?.remove();
-
-      // Cleanup all services
       cleanupChat();
       notificationService.cleanup();
       enhancedRealtimeChatService.cleanup();
     };
   }, [initializeAuthListener, cleanupChat, initializeRevenueCat]);
 
-  // Initialize RevenueCat with user ID when authenticated
+  // Identify RevenueCat user when authenticated
   useEffect(() => {
     const unsubscribe = useAuthStore.subscribe((state) => {
       if (state.user?.id) {
-        console.log("👤 User authenticated, initializing RevenueCat with user ID");
-        initializeRevenueCat(state.user.id);
+        console.log("👤 User authenticated, identifying RevenueCat user");
+        identifyRevenueCatUser(state.user.id);
       }
     });
 
     return unsubscribe;
-  }, [initializeRevenueCat]);
+  }, [identifyRevenueCatUser]);
+
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
+
+  if (error && !__DEV__) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+        <Text style={{ fontSize: 18, marginBottom: 20 }}>Initialization Error</Text>
+        <Text style={{ marginBottom: 20, textAlign: 'center' }}>{error.message}</Text>
+        <Pressable
+          onPress={() => retry()}
+          style={{ padding: 12, backgroundColor: '#007AFF', borderRadius: 8 }}
+        >
+          <Text style={{ color: 'white' }}>Retry</Text>
+        </Pressable>
+      </View>
+    );
+  }
 
   return (
     <ErrorBoundary>
-      {buildEnv.hasNativeModules ? (
-        <GestureHandlerRootView className="flex-1">
-          <SafeAreaProvider>
-            <ThemeProvider>
-              <AdProvider>
-                <NavigationContainer linking={linking}>
-                  <AppNavigator />
-                  <OfflineBanner />
-                  <AppOpenAdHandler />
-                </NavigationContainer>
-              </AdProvider>
-            </ThemeProvider>
-          </SafeAreaProvider>
-        </GestureHandlerRootView>
-      ) : (
-        <GestureHandlerRootView className="flex-1">
-          <SafeAreaProvider>
-            <ThemeProvider>
-              <AdProvider>
-                <NavigationContainer linking={linking}>
-                  <AppNavigator />
-                  <OfflineBanner />
-                  <AppOpenAdHandler />
-                </NavigationContainer>
-              </AdProvider>
-            </ThemeProvider>
-          </SafeAreaProvider>
-        </GestureHandlerRootView>
-      )}
+      <GestureHandlerRootView className="flex-1">
+        <SafeAreaProvider>
+          <ThemeProvider>
+            <AdProvider>
+              <NavigationContainer linking={linking}>
+                <AppNavigator />
+                <OfflineBanner />
+                <AppOpenAdHandler />
+              </NavigationContainer>
+            </AdProvider>
+          </ThemeProvider>
+        </SafeAreaProvider>
+      </GestureHandlerRootView>
     </ErrorBoundary>
   );
 }

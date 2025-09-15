@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { v4 as uuidv4 } from "uuid";
-import { ChatRoom, ChatMessage, ChatMember, TypingUser, ConnectionStatus, ChatState } from "../types";
+import { ChatRoom, ChatMessage, ChatMember, TypingUser, ConnectionStatus, ChatState, MessageEvent } from "../types";
 import { enhancedRealtimeChatService } from "../services/realtimeChat";
 import useAuthStore from "./authStore";
 import { requireAuthentication, getUserDisplayName } from "../utils/authUtils";
@@ -289,56 +289,75 @@ const useChatStore = create<ChatStore>()(
           // Join room with enhanced real-time service
           await enhancedRealtimeChatService.joinRoom(roomId, supabaseUser.id, getUserDisplayName(user));
 
-          // Subscribe to messages with simplified deduplication (trust service)
+          // Subscribe to messages with typed events
           enhancedRealtimeChatService.subscribeToMessages(
             roomId,
-            (newMessages: ChatMessage[], isInitialLoad = false) => {
+            (event: MessageEvent) => {
               console.log(
-                `🔍 Received ${newMessages.length} ${isInitialLoad ? "initial" : "new"} messages for room ${roomId}`,
+                `🔍 Received ${event.type} event with ${event.items.length} messages for room ${roomId}`,
               );
 
               set((state) => {
                 let allMessages: ChatMessage[];
 
-                if (isInitialLoad) {
-                  // Service now returns ascending (oldest->newest)
-                  allMessages = [...newMessages];
-                } else {
-                  // Merge new messages into existing (keep ascending order)
-                  const existingMessages = state.messages[roomId] || [];
-                  allMessages = [...existingMessages];
+                switch (event.type) {
+                  case 'initial':
+                    // Service now returns ascending (oldest->newest)
+                    allMessages = [...event.items];
+                    break;
 
-                  newMessages.forEach((newMsg: any) => {
-                    if (newMsg.isReplacement) {
-                      const optimisticPrefix = "optimistic_";
-                      const optimisticIndex = allMessages.findIndex(
-                        (msg) =>
-                          msg.id.startsWith(optimisticPrefix) &&
-                          msg.senderId === newMsg.senderId &&
-                          msg.content === newMsg.content,
-                      );
+                  case 'replace':
+                    // Replace optimistic message with real one
+                    const existingMessages = state.messages[roomId] || [];
+                    allMessages = [...existingMessages];
 
-                      if (optimisticIndex !== -1) {
-                        allMessages[optimisticIndex] = { ...newMsg, status: newMsg.isRead ? "read" : "sent" } as any;
-                      } else {
-                        const isDuplicate = allMessages.some((msg) => msg.id === newMsg.id);
-                        if (!isDuplicate) {
-                          allMessages.push({ ...newMsg, status: newMsg.isRead ? "read" : "sent" } as any);
-                        }
-                      }
-                    } else {
-                      const existingIndex = allMessages.findIndex((m) => m.id === newMsg.id);
-                      if (existingIndex !== -1) {
-                        allMessages[existingIndex] = { ...allMessages[existingIndex], ...newMsg } as any;
-                      } else {
-                        allMessages.push(newMsg);
+                    if (event.tempId) {
+                      const optimisticIndex = allMessages.findIndex(msg => msg.id === event.tempId);
+                      if (optimisticIndex !== -1 && event.items[0]) {
+                        allMessages[optimisticIndex] = { ...event.items[0], status: event.items[0].isRead ? "read" : "sent" } as any;
                       }
                     }
-                  });
+                    break;
+
+                  case 'new':
+                    // Add new messages
+                    const existing = state.messages[roomId] || [];
+                    allMessages = [...existing];
+
+                    event.items.forEach((newMsg) => {
+                      const isDuplicate = allMessages.some((msg) => msg.id === newMsg.id);
+                      if (!isDuplicate) {
+                        allMessages.push(newMsg);
+                      }
+                    });
+                    break;
+
+                  case 'update':
+                    // Update existing messages
+                    const current = state.messages[roomId] || [];
+                    allMessages = [...current];
+
+                    event.items.forEach((updatedMsg) => {
+                      const index = allMessages.findIndex((m) => m.id === updatedMsg.id);
+                      if (index !== -1) {
+                        allMessages[index] = { ...allMessages[index], ...updatedMsg };
+                      }
+                    });
+                    break;
+
+                  case 'delete':
+                    // Remove deleted messages
+                    const beforeDelete = state.messages[roomId] || [];
+                    const deletedIds = new Set(event.items.map(m => m.id));
+                    allMessages = beforeDelete.filter(m => !deletedIds.has(m.id));
+                    break;
+
+                  default:
+                    return state;
                 }
 
                 // Keep ascending order for display (oldest->newest)
-                if (isInitialLoad || newMessages.length > 0) {
+                if (event.type === 'initial' || event.items.length > 0) {
                   allMessages.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
                 }
 
@@ -658,21 +677,60 @@ const useChatStore = create<ChatStore>()(
           const { user } = await requireAuthentication("react to messages");
           const userId = user.id;
 
-          // Optimistic local update (assumes raw reactions array shape [{ user_id, emoji }])
+          // Optimistic local update with aggregated reactions
           set((state) => ({
             messages: {
               ...state.messages,
               [roomId]: (state.messages[roomId] || []).map((m) => {
                 if (m.id !== messageId) return m;
-                const raw = ((m as any).reactions || []) as any[];
-                const idx = raw.findIndex((r) => (r.user_id || r.userId) === userId && r.emoji === reaction);
-                let next: any[];
-                if (idx > -1) {
-                  next = raw.slice(0, idx).concat(raw.slice(idx + 1));
+
+                // Work with aggregated reactions format
+                const currentReactions = (m.reactions || []) as Array<{ emoji: string; count: number; users: string[] }>;
+                const existingReaction = currentReactions.find(r => r.emoji === reaction);
+
+                let updatedReactions: Array<{ emoji: string; count: number; users: string[] }>;
+
+                if (existingReaction) {
+                  const userIndex = existingReaction.users.indexOf(userId);
+                  if (userIndex > -1) {
+                    // User is removing their reaction
+                    if (existingReaction.count === 1) {
+                      // Remove the reaction entirely
+                      updatedReactions = currentReactions.filter(r => r.emoji !== reaction);
+                    } else {
+                      // Decrease count and remove user
+                      updatedReactions = currentReactions.map(r =>
+                        r.emoji === reaction
+                          ? {
+                              ...r,
+                              count: r.count - 1,
+                              users: r.users.filter(u => u !== userId)
+                            }
+                          : r
+                      );
+                    }
+                  } else {
+                    // User is adding their reaction
+                    updatedReactions = currentReactions.map(r =>
+                      r.emoji === reaction
+                        ? {
+                            ...r,
+                            count: r.count + 1,
+                            users: [...r.users, userId]
+                          }
+                        : r
+                    );
+                  }
                 } else {
-                  next = raw.concat([{ user_id: userId, emoji: reaction }]);
+                  // New reaction type
+                  updatedReactions = [...currentReactions, {
+                    emoji: reaction,
+                    count: 1,
+                    users: [userId]
+                  }];
                 }
-                return { ...m, reactions: next } as any;
+
+                return { ...m, reactions: updatedReactions };
               }),
             },
           }));

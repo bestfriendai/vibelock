@@ -16,6 +16,7 @@ import { formatTime } from "../utils/dateUtils";
 import SwipeToReply from "./SwipeToReply";
 import MessageReactions from "./MessageReactions";
 import VoiceMessage from "./VoiceMessage";
+import useAuthStore from "../state/authStore";
 
 interface Reaction {
   emoji: string;
@@ -54,6 +55,7 @@ const EnhancedMessageBubble = React.forwardRef<View, Props>(
     ref,
   ) => {
     const { colors } = useTheme();
+    const { user } = useAuthStore();
     const [showReactions, setShowReactions] = useState(false);
     const [showTimestamp, setShowTimestamp] = useState(false);
 
@@ -266,19 +268,6 @@ const EnhancedMessageBubble = React.forwardRef<View, Props>(
       }
     };
 
-    // Aggregate reactions by emoji and compute hasReacted for current user from raw entries
-    const aggregateReactions = (): Reaction[] => {
-      const raw = (message as any).reactions || [];
-      const map = new Map<string, { emoji: string; users: string[] }>();
-      raw.forEach((r: any) => {
-        const emoji = r.emoji;
-        const userId = r.user_id || r.userId;
-        if (!emoji || !userId) return;
-        if (!map.has(emoji)) map.set(emoji, { emoji, users: [] });
-        map.get(emoji)!.users.push(userId);
-      });
-      return Array.from(map.values()).map((v) => ({ emoji: v.emoji, count: v.users.length, users: v.users }));
-    };
 
     return (
       <SwipeToReply onReply={handleReply} isOwnMessage={isOwn}>
@@ -354,10 +343,13 @@ const EnhancedMessageBubble = React.forwardRef<View, Props>(
             )}
 
             {/* Existing reactions */}
-            {(message as any).reactions && (message as any).reactions.length > 0 && (
+            {message.reactions && message.reactions.length > 0 && (
               <MessageReactions
                 messageId={message.id}
-                reactions={aggregateReactions().map((r) => ({ ...r, hasReacted: false }))}
+                reactions={(message.reactions || []).map(r => ({
+                  ...r,
+                  hasReacted: user ? r.users.includes(user.id) : false
+                }))}
                 onReact={onReact || (() => {})}
                 onShowReactionPicker={onShowReactionPicker || (() => {})}
               />

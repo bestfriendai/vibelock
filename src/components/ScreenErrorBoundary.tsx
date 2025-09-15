@@ -1,14 +1,15 @@
 import React, { Component, ReactNode } from "react";
-import { View, Text, Pressable } from "react-native";
+import { View, Text, Pressable, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
+import { useTheme } from "../providers/ThemeProvider";
 
 interface Props {
   children: ReactNode;
   screenName: string;
   fallbackAction?: () => void;
-  onError?: (error: Error, errorInfo: any) => void;
+  onError?: (error: Error, errorInfo: React.ErrorInfo) => void;
 }
 
 interface State {
@@ -16,16 +17,19 @@ interface State {
   error: Error | null;
 }
 
-// HOC to provide navigation to class component
-const withNavigation = (WrappedComponent: any) => {
-  return (props: any) => {
-    const navigation = useNavigation();
-    return <WrappedComponent {...props} navigation={navigation} />;
-  };
-};
+export function useScreenErrorBoundary(screenName: string) {
+  const navigation = useNavigation();
 
-class ScreenErrorBoundaryComponent extends Component<Props & { navigation: any }, State> {
-  constructor(props: Props & { navigation: any }) {
+  const handleError = (error: Error) => {
+    console.warn(`Error in ${screenName}:`, error);
+    navigation.navigate('MainTabs' as any, { screen: 'Browse' });
+  };
+
+  return { handleError };
+}
+
+class ScreenErrorBoundaryComponent extends Component<Props & { navigation: any; theme: any }, State> {
+  constructor(props: Props & { navigation: any; theme: any }) {
     super(props);
     this.state = { hasError: false, error: null };
   }
@@ -34,7 +38,7 @@ class ScreenErrorBoundaryComponent extends Component<Props & { navigation: any }
     return { hasError: true, error };
   }
 
-  override componentDidCatch(error: Error, errorInfo: any) {
+  override componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.warn(`ScreenErrorBoundary caught error in ${this.props.screenName}:`, error, errorInfo);
     this.props.onError?.(error, errorInfo);
   }
@@ -48,58 +52,42 @@ class ScreenErrorBoundaryComponent extends Component<Props & { navigation: any }
     this.setState({ hasError: false, error: null });
   };
 
-  handleCustomAction = () => {
-    if (this.props.fallbackAction) {
-      this.props.fallbackAction();
-    } else {
-      this.handleGoHome();
-    }
-    this.setState({ hasError: false, error: null });
-  };
-
   override render() {
     if (this.state.hasError) {
+      const { theme } = this.props;
+
       return (
-        <SafeAreaView className="flex-1 bg-surface-900">
-          <View className="flex-1 items-center justify-center px-6">
-            <View className="items-center">
-              <View className="w-20 h-20 bg-brand-red/20 rounded-full items-center justify-center mb-6">
-                <Ionicons name="warning" size={32} color="#EF4444" />
+        <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.colors.background }]}>
+          <View style={styles.container}>
+            <View style={styles.content}>
+              <View style={[styles.iconContainer, { backgroundColor: theme.colors.primary + '33' }]}>
+                <Ionicons name="warning" size={32} color={theme.colors.primary} />
               </View>
 
-              <Text className="text-text-primary text-xl font-bold mb-2 text-center">
+              <Text style={[styles.title, { color: theme.colors.text }]}>
                 {this.props.screenName} Error
               </Text>
 
-              <Text className="text-text-secondary text-center mb-8 leading-6">
+              <Text style={[styles.message, { color: theme.colors.textSecondary }]}>
                 Something went wrong while loading this screen. You can try again or go back to the home screen.
               </Text>
 
-              <View className="space-y-3 w-full max-w-xs">
-                <Pressable className="bg-brand-red rounded-xl py-4 items-center" onPress={this.handleRetry}>
-                  <Text className="text-white font-semibold text-lg">Try Again</Text>
+              <View style={styles.buttonContainer}>
+                <Pressable style={[styles.button, { backgroundColor: theme.colors.primary }]} onPress={this.handleRetry}>
+                  <Text style={styles.buttonText}>Try Again</Text>
                 </Pressable>
 
                 <Pressable
-                  className="bg-surface-800 border border-surface-700 rounded-xl py-4 items-center"
+                  style={[styles.secondaryButton, { backgroundColor: theme.colors.surface, borderColor: theme.colors.border }]}
                   onPress={this.handleGoHome}
                 >
-                  <Text className="text-text-primary font-medium">Go to Home</Text>
+                  <Text style={[styles.secondaryButtonText, { color: theme.colors.text }]}>Go to Home</Text>
                 </Pressable>
-
-                {this.props.fallbackAction && (
-                  <Pressable
-                    className="bg-surface-800 border border-surface-700 rounded-xl py-4 items-center"
-                    onPress={this.handleCustomAction}
-                  >
-                    <Text className="text-text-primary font-medium">Alternative Action</Text>
-                  </Pressable>
-                )}
               </View>
 
               {__DEV__ && this.state.error && (
-                <View className="mt-8 p-4 bg-surface-800 rounded-xl w-full max-h-32">
-                  <Text className="text-text-secondary text-xs font-mono" numberOfLines={6}>
+                <View style={[styles.errorDetails, { backgroundColor: theme.colors.surface }]}>
+                  <Text style={[styles.errorText, { color: theme.colors.textSecondary }]} numberOfLines={6}>
                     {this.state.error.toString()}
                   </Text>
                 </View>
@@ -114,6 +102,79 @@ class ScreenErrorBoundaryComponent extends Component<Props & { navigation: any }
   }
 }
 
-const ScreenErrorBoundary = withNavigation(ScreenErrorBoundaryComponent);
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+  },
+  container: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  content: {
+    alignItems: 'center',
+  },
+  iconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  message: {
+    textAlign: 'center',
+    marginBottom: 32,
+    lineHeight: 24,
+  },
+  buttonContainer: {
+    width: '100%',
+    maxWidth: 320,
+  },
+  button: {
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  buttonText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 18,
+  },
+  secondaryButton: {
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+  },
+  secondaryButtonText: {
+    fontWeight: '500',
+    fontSize: 16,
+  },
+  errorDetails: {
+    marginTop: 32,
+    padding: 16,
+    borderRadius: 12,
+    width: '100%',
+    maxHeight: 128,
+  },
+  errorText: {
+    fontSize: 12,
+    fontFamily: 'monospace',
+  },
+});
 
-export default ScreenErrorBoundary;
+export default function ScreenErrorBoundary(props: Props) {
+  const navigation = useNavigation();
+  const { colors } = useTheme();
+  const themeObject = { colors };
+  return <ScreenErrorBoundaryComponent {...props} navigation={navigation} theme={themeObject} />;
+}

@@ -33,7 +33,7 @@ import { Comment as ReviewComment } from "../types";
 import useReviewsStore from "../state/reviewsStore";
 import useCommentsStore from "../state/commentsStore";
 import useAuthStore from "../state/authStore";
-import { supabaseReviews } from "../services/supabase";
+import { reviewsService } from "../services/reviews";
 import { Review } from "../types";
 import { useTheme } from "../providers/ThemeProvider";
 
@@ -97,7 +97,7 @@ export default function ReviewDetailScreen() {
             updatedAt: new Date(raw.updatedAt),
           };
         } else if (params?.reviewId) {
-          finalReview = await supabaseReviews.getReview(params.reviewId);
+          finalReview = await reviewsService.getReview(params.reviewId);
         }
 
         if (finalReview) {

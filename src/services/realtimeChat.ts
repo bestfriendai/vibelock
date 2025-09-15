@@ -1,6 +1,6 @@
 // Enhanced Supabase Real-time Chat Service (2025) - Complete Rewrite
 import { supabase } from "../config/supabase";
-import { ChatMessage, ChatMember } from "../types";
+import { ChatMessage, ChatMember, MessageEvent } from "../types";
 import { RealtimeChannel, RealtimePresenceState } from "@supabase/supabase-js";
 import { AppError, ErrorType } from "../utils/errorHandling";
 
@@ -10,9 +10,6 @@ interface TypingUser {
   timestamp: number;
 }
 
-interface MessageCallback {
-  (messages: ChatMessage[], isInitialLoad?: boolean): void;
-}
 
 interface PresenceCallback {
   (members: ChatMember[]): void;
@@ -32,7 +29,7 @@ interface MessageCacheEntry {
 
 class EnhancedRealtimeChatService {
   private channels: Map<string, RealtimeChannel> = new Map();
-  private messageCallbacks: Map<string, MessageCallback> = new Map();
+  private messageCallbacks: Map<string, (event: MessageEvent) => void> = new Map();
   private presenceCallbacks: Map<string, PresenceCallback> = new Map();
   private typingCallbacks: Map<string, TypingCallback> = new Map();
 
@@ -228,7 +225,7 @@ class EnhancedRealtimeChatService {
         const callback = this.messageCallbacks.get(roomId);
         if (callback) {
           // For initial load, we need to replace all messages
-          callback(formattedMessages, true); // true indicates this is initial load
+          callback({ type: 'initial', items: formattedMessages });
         }
       }
     } catch (error) {
@@ -285,7 +282,7 @@ class EnhancedRealtimeChatService {
       }
 
       // Check if this is a real message replacing an optimistic one
-      let isReplacement = false;
+      let tempId: string | undefined;
       for (const [optimisticId, optimisticMsg] of optimisticMessages.entries()) {
         const optimisticFingerprint = this.generateMessageFingerprint(optimisticMsg);
         if (
@@ -294,11 +291,15 @@ class EnhancedRealtimeChatService {
             optimisticMsg.content === newMessage.content &&
             Math.abs(optimisticMsg.timestamp.getTime() - newMessage.timestamp.getTime()) < 5000)
         ) {
-          // Replace optimistic message with real one
-          this.replaceOptimisticMessage(roomId, optimisticId, newMessage);
-          isReplacement = true;
+          // Found matching optimistic message
+          tempId = optimisticId;
           break;
         }
+      }
+
+      if (tempId) {
+        // Replace optimistic message with real one
+        this.replaceOptimisticMessage(roomId, tempId, newMessage);
       }
 
       // Add to cache with metadata
@@ -315,7 +316,7 @@ class EnhancedRealtimeChatService {
       this.messageFingerprints.set(roomId, fingerprints);
 
       // Batch updates for better performance
-      if (!isReplacement) {
+      if (!tempId) {
         this.batchMessageUpdate(roomId, newMessage);
       }
 
@@ -348,7 +349,7 @@ class EnhancedRealtimeChatService {
       if (messages.length > 0) {
         const callback = this.messageCallbacks.get(roomId);
         if (callback) {
-          callback(messages, false); // false indicates these are new messages, not initial load
+          callback({ type: 'new', items: messages });
         }
         this.batchedUpdates.set(roomId, []);
       }
@@ -363,12 +364,12 @@ class EnhancedRealtimeChatService {
     try {
       if (!payload.new) return;
 
-      const updatedMessage = { ...this.formatMessage(payload.new), isUpdate: true } as any;
+      const updatedMessage = this.formatMessage(payload.new);
 
       // Notify about message update
       const callback = this.messageCallbacks.get(roomId);
       if (callback) {
-        callback([updatedMessage], false); // false indicates this is an update, not initial load
+        callback({ type: 'update', items: [updatedMessage] });
       }
     } catch (error) {
       console.warn("Error handling message update:", error);
@@ -596,7 +597,7 @@ class EnhancedRealtimeChatService {
   }
 
   // Subscribe to callbacks
-  subscribeToMessages(roomId: string, callback: MessageCallback): void {
+  subscribeToMessages(roomId: string, callback: (event: MessageEvent) => void): void {
     this.messageCallbacks.set(roomId, callback);
   }
 
@@ -745,6 +746,9 @@ class EnhancedRealtimeChatService {
 
   // Utility method to format messages
   private formatMessage(rawMessage: any): ChatMessage {
+    // Aggregate reactions from raw format to { emoji, count, users }[]
+    const aggregatedReactions = this.aggregateReactions(rawMessage.reactions || []);
+
     return {
       id: rawMessage.id,
       chatRoomId: rawMessage.chat_room_id,
@@ -756,10 +760,35 @@ class EnhancedRealtimeChatService {
       timestamp: new Date(rawMessage.timestamp),
       isRead: rawMessage.is_read || false,
       replyTo: rawMessage.reply_to,
-      reactions: rawMessage.reactions || [],
+      reactions: aggregatedReactions,
       audioUri: rawMessage.audio_uri,
       audioDuration: rawMessage.audio_duration,
     };
+  }
+
+  // Aggregate raw reactions into the expected format
+  private aggregateReactions(rawReactions: any[]): Array<{ emoji: string; count: number; users: string[] }> {
+    if (!rawReactions || !Array.isArray(rawReactions)) return [];
+
+    const reactionMap = new Map<string, Set<string>>();
+
+    // Group reactions by emoji
+    rawReactions.forEach(reaction => {
+      const emoji = reaction.emoji || reaction;
+      const userId = reaction.user_id || reaction.userId || 'unknown';
+
+      if (!reactionMap.has(emoji)) {
+        reactionMap.set(emoji, new Set());
+      }
+      reactionMap.get(emoji)!.add(userId);
+    });
+
+    // Convert to aggregated format
+    return Array.from(reactionMap.entries()).map(([emoji, users]) => ({
+      emoji,
+      count: users.size,
+      users: Array.from(users),
+    }));
   }
 
   // Generate unique fingerprint for message deduplication
@@ -768,17 +797,17 @@ class EnhancedRealtimeChatService {
   }
 
   // Replace optimistic message with real message
-  private replaceOptimisticMessage(roomId: string, optimisticId: string, realMessage: ChatMessage): void {
+  private replaceOptimisticMessage(roomId: string, tempId: string, realMessage: ChatMessage): void {
     const optimisticMessages = this.optimisticMessages.get(roomId);
     if (optimisticMessages) {
-      optimisticMessages.delete(optimisticId);
-      console.log(`✅ Replaced optimistic message ${optimisticId} with real message ${realMessage.id}`);
+      optimisticMessages.delete(tempId);
+      console.log(`✅ Replaced optimistic message ${tempId} with real message ${realMessage.id}`);
     }
 
-    // Notify callback about the replacement
+    // Notify callback about the replacement with proper event type
     const callback = this.messageCallbacks.get(roomId);
     if (callback) {
-      callback([{ ...realMessage, isReplacement: true } as any], false);
+      callback({ type: 'replace', items: [realMessage], tempId });
     }
   }
 

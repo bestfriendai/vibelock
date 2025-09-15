@@ -186,9 +186,51 @@ export interface ChatRoom {
   };
   createdAt: Date;
   updatedAt: Date;
+  lastActivity?: Date;
 }
 
-export interface ChatMessage {
+export interface UserProfile extends User {
+  followersCount?: number;
+  followingCount?: number;
+  bio?: string;
+  avatarUrl?: string;
+  isPrivate?: boolean;
+  isVerified?: boolean;
+}
+
+export interface Comment {
+  id: string;
+  reviewId: string;
+  userId: string;
+  content: string;
+  createdAt: Date;
+  updatedAt?: Date;
+  user?: User;
+}
+
+export interface RoomMember {
+  userId: string;
+  roomId: string;
+  role: UserRole;
+  joinedAt: Date;
+  user?: User;
+}
+
+export type AuthProvider = 'google' | 'apple' | 'facebook' | 'email';
+
+// Alias for backwards compatibility
+export type ChatMessage = Message;
+
+// Message event type for real-time updates
+export type MessageEventType = 'initial' | 'new' | 'update' | 'replace' | 'delete';
+
+export interface MessageEvent {
+  type: MessageEventType;
+  items: Message[];
+  tempId?: string; // For replacement events
+}
+
+export interface Message {
   id: string;
   chatRoomId: string;
   senderId: string;

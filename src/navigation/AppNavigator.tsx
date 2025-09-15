@@ -1,12 +1,13 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
-import { View, Pressable, Text } from "react-native";
+import { View, Text } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { useSafeAreaInsets, SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import CustomTabBar from "../components/CustomTabBar";
 import { useTheme } from "../providers/ThemeProvider";
+import { CreateTabButton } from "../components/CreateTabButton";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import type { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 
@@ -23,6 +24,8 @@ import ComponentErrorBoundary from "../components/ComponentErrorBoundary";
 
 import SignInScreen from "../screens/SignInScreen";
 import SignUpScreen from "../screens/SignUpScreen";
+import ForgotPasswordScreen from "../screens/ForgotPasswordScreen";
+import ResetPasswordScreen from "../screens/ResetPasswordScreen";
 import ChatRoomScreen from "../screens/ChatRoomScreen";
 import ReviewDetailScreen from "../screens/ReviewDetailScreen";
 // Screens (new)
@@ -35,23 +38,26 @@ import LocationSettingsScreen from "../screens/LocationSettingsScreen";
 import useAuthStore from "../state/authStore";
 
 // Stable wrapper components to prevent unnecessary re-renders
-const ChatRoomScreenWithErrorBoundary = React.memo((props: any) => (
-  <ErrorBoundary
-    fallback={
-      <SafeAreaView className="flex-1 bg-surface-900 justify-center items-center px-6">
-        <View className="items-center">
-          <Ionicons name="chatbubble-outline" size={48} color="#666" className="mb-4" />
-          <Text className="text-text-primary text-lg font-semibold mb-2">Chat Unavailable</Text>
-          <Text className="text-text-secondary text-center">
-            There was an issue loading the chat. Please try again later.
-          </Text>
-        </View>
-      </SafeAreaView>
-    }
-  >
-    <ChatRoomScreen {...props} />
-  </ErrorBoundary>
-));
+const ChatRoomScreenWithErrorBoundary = React.memo((props: any) => {
+  const { colors } = useTheme();
+  return (
+    <ErrorBoundary
+      fallback={
+        <SafeAreaView style={{ flex: 1, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24 }}>
+          <View style={{ alignItems: 'center' }}>
+            <Ionicons name="chatbubble-outline" size={48} color={colors.text.muted} style={{ marginBottom: 16 }} />
+            <Text style={{ color: colors.text.primary, fontSize: 18, fontWeight: '600', marginBottom: 8 }}>Chat Unavailable</Text>
+            <Text style={{ color: colors.text.secondary, textAlign: 'center' }}>
+              There was an issue loading the chat. Please try again later.
+            </Text>
+          </View>
+        </SafeAreaView>
+      }
+    >
+      <ChatRoomScreen {...props} />
+    </ErrorBoundary>
+  );
+});
 
 // Stable screen wrapper components
 const BrowseScreenWrapper = React.memo((props: any) => (
@@ -97,7 +103,8 @@ export type RootStackParamList = {
   MainTabs: undefined;
   PersonProfile: {
     firstName: string;
-    location: { city: string; state: string };
+    city: string;
+    state: string;
   };
   CreateReview: undefined;
   ChatRoom: { roomId: string };
@@ -157,68 +164,34 @@ const SearchStack = createNativeStackNavigator<SearchStackParamList>();
 const ChatroomsStack = createNativeStackNavigator<ChatroomsStackParamList>();
 const SettingsStack = createNativeStackNavigator<SettingsStackParamList>();
 
-function CreateTabButton() {
+function CreateTabButtonWrapper() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { isGuestMode } = useAuthStore();
-  const insets = useSafeAreaInsets();
 
   return (
-    <View
-      style={{
-        flex: 1,
-        alignItems: "center",
-        justifyContent: "center",
-        // Offset the button up slightly to make it more prominent
-        marginBottom: 8,
-      }}
-    >
-      <Pressable
+    <View style={{ flex: 1, alignItems: "center", justifyContent: "center", marginBottom: 8 }}>
+      <CreateTabButton
         onPress={() => navigation.navigate(isGuestMode ? "SignUp" : "CreateReview")}
-        hitSlop={16}
-        style={{
-          alignItems: "center",
-          justifyContent: "center",
-          width: 64,
-          height: 64,
-        }}
-        accessibilityRole="button"
-        accessibilityLabel="Create Review"
-      >
-        <View
-          style={{
-            width: 60,
-            height: 60,
-            borderRadius: 30,
-            backgroundColor: "#FFFFFF",
-            alignItems: "center",
-            justifyContent: "center",
-            shadowColor: "#000",
-            shadowOpacity: 0.3,
-            shadowRadius: 12,
-            shadowOffset: { width: 0, height: 6 },
-            elevation: 12,
-            // Add a subtle border for better definition
-            borderWidth: 1,
-            borderColor: "rgba(0,0,0,0.05)",
-          }}
-        >
-          <Ionicons name="add" size={32} color="#000000" />
-        </View>
-      </Pressable>
+        size={60}
+      />
     </View>
   );
 }
 
 // Browse Stack Navigator
-const standardHeader = {
-  headerShown: true,
-  headerStyle: { backgroundColor: "#000000" },
-  headerTintColor: "#FFFFFF",
-  headerTitleStyle: { color: "#FFFFFF" },
-  headerBackTitle: "Back",
-} as const;
+function useStandardHeader() {
+  const { colors } = useTheme();
+  return useMemo(() => ({
+    headerShown: true,
+    headerStyle: { backgroundColor: colors.surface[900] },
+    headerTintColor: colors.text.primary,
+    headerTitleStyle: { color: colors.text.primary },
+    headerBackTitle: "Back",
+  }), [colors]);
+}
 
 function BrowseStackNavigator() {
+  const standardHeader = useStandardHeader();
   return (
     <BrowseStack.Navigator
       screenOptions={{
@@ -240,6 +213,7 @@ function BrowseStackNavigator() {
 
 // Search Stack Navigator
 function SearchStackNavigator() {
+  const standardHeader = useStandardHeader();
   return (
     <SearchStack.Navigator
       screenOptions={{
@@ -274,6 +248,7 @@ function ChatroomsStackNavigator() {
 
 // Settings Stack Navigator
 function SettingsStackNavigator() {
+  const standardHeader = useStandardHeader();
   return (
     <SettingsStack.Navigator
       screenOptions={{
@@ -380,7 +355,7 @@ function TabNavigator() {
           component={View as any}
           options={{
             tabBarLabel: "",
-            tabBarButton: (props) => <CreateTabButton />,
+            tabBarButton: (props) => <CreateTabButtonWrapper />,
             tabBarIconStyle: { display: "none" },
             tabBarItemStyle: {
               flex: 1,
@@ -414,6 +389,7 @@ function TabNavigator() {
 export default function AppNavigator() {
   const { isAuthenticated, isGuestMode } = useAuthStore();
   const { colors } = useTheme();
+  const standardHeader = useStandardHeader();
 
   return (
     <Stack.Navigator
@@ -435,6 +411,20 @@ export default function AppNavigator() {
           <Stack.Screen
             name="SignUp"
             component={SignUpScreen}
+            options={{
+              animation: "slide_from_right",
+            }}
+          />
+          <Stack.Screen
+            name="ForgotPassword"
+            component={ForgotPasswordScreen}
+            options={{
+              animation: "slide_from_right",
+            }}
+          />
+          <Stack.Screen
+            name="ResetPassword"
+            component={ResetPasswordScreen}
             options={{
               animation: "slide_from_right",
             }}
@@ -471,7 +461,7 @@ export default function AppNavigator() {
           />
           <Stack.Screen
             name="ReviewDetail"
-            component={ReviewDetailScreen}
+            component={ReviewDetailScreenWrapper}
             options={{
               ...standardHeader,
               headerTitle: "Review",

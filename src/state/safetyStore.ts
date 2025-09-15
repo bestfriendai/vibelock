@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Report } from "../types";
-import { supabaseReports } from "../services/supabase";
+import { reportsService } from "../services/reports";
 import useAuthStore from "./authStore";
 import { AppError, parseSupabaseError } from "../utils/errorHandling";
 
@@ -105,14 +105,15 @@ const useSafetyStore = create<SafetyStore>()(
             throw new Error("Must be signed in to report content");
           }
 
-          // Create report in Supabase
-          const reportId = await supabaseReports.createReport({
+          // Create report in database
+          const reportResult = await reportsService.createReport({
             reporterId: user.id,
             reportedItemId: data.reportedItemId,
             reportedItemType: data.reportedItemType,
             reason: data.reason,
             description: data.description,
           });
+          const reportId = reportResult.id;
 
           // Create local report object for optimistic UI
           const newReport: Report = {

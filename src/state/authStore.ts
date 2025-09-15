@@ -4,44 +4,10 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Alert } from "react-native";
 import { v4 as uuidv4 } from "uuid";
 import { User } from "../types";
-import { supabaseAuth, supabaseUsers } from "../services/supabase";
+import { authService } from "../services/auth";
+import { usersService } from "../services/users";
 import { AppError, ErrorType, parseSupabaseError } from "../utils/errorHandling";
-
-// Cleanup tracker for auth listeners
-let authCleanupTracker: {
-  cleanupFunctions: Set<() => void>;
-  isCleaningUp: boolean;
-  addCleanup: (fn: () => void) => void;
-  executeCleanup: () => void;
-} = {
-  cleanupFunctions: new Set(),
-  isCleaningUp: false,
-  addCleanup(fn: () => void) {
-    this.cleanupFunctions.add(fn);
-    if (__DEV__) {
-      console.log(`🧹 Added auth cleanup function. Total: ${this.cleanupFunctions.size}`);
-    }
-  },
-  executeCleanup() {
-    if (this.isCleaningUp) return;
-    this.isCleaningUp = true;
-
-    if (__DEV__) {
-      console.log(`🧹 Executing ${this.cleanupFunctions.size} auth cleanup functions`);
-    }
-
-    this.cleanupFunctions.forEach((fn) => {
-      try {
-        fn();
-      } catch (error) {
-        console.warn("Auth cleanup function failed:", error);
-      }
-    });
-
-    this.cleanupFunctions.clear();
-    this.isCleaningUp = false;
-  },
-};
+import { withRetry } from "../utils/retryLogic";
 
 interface AuthState {
   user: User | null;
@@ -65,6 +31,7 @@ interface AuthActions {
   ) => Promise<void>;
   logout: () => Promise<void>;
   clearError: () => void;
+  resetPassword: (email: string) => Promise<void>;
   updateUserLocation: (location: {
     city: string;
     state: string;
@@ -74,30 +41,15 @@ interface AuthActions {
     institutionType?: string;
   }) => Promise<void>;
   initializeAuthListener: () => () => void;
-  // Memory leak prevention
-  executeCleanup: () => void;
 }
 
-// Sanitize user data for persistence - remove sensitive information
+// Simplified sanitization
 const sanitizeUserForPersistence = (user: User | null): User | null => {
   if (!user) return null;
-
   return {
     ...user,
-    // Remove or hash sensitive data (keep type as string)
-    email: user.email ? `${user.email.substring(0, 3)}***@${user.email.split("@")[1]}` : user.email,
-    // Reduce precision of coordinates for privacy
-    location: user.location
-      ? {
-          ...user.location,
-          coordinates: user.location.coordinates
-            ? {
-                latitude: Math.round(user.location.coordinates.latitude * 100) / 100, // 2 decimal places
-                longitude: Math.round(user.location.coordinates.longitude * 100) / 100,
-              }
-            : undefined,
-        }
-      : user.location,
+    // Keep original email for functionality, add maskedEmail for display if needed
+    maskedEmail: user.email ? `${user.email.substring(0, 3)}***@${user.email.split('@')[1]}` : undefined,
   };
 };
 
@@ -174,11 +126,11 @@ const useAuthStore = create<AuthStore>()(
           const { sanitizeEmail } = await import("../utils/authUtils");
           const safeEmail = sanitizeEmail(email);
 
-          // Sign in with Supabase
-          const supabaseUser = await supabaseAuth.signIn(safeEmail, password);
+          // Sign in with auth service
+          const { user: supabaseUser } = await authService.signIn(safeEmail, password);
 
-          // Get user profile from Supabase
-          let userProfile = await supabaseUsers.getUserProfile(supabaseUser.id);
+          // Get user profile from users service
+          let userProfile = await usersService.getProfile(supabaseUser.id);
 
           // If no profile exists, create a basic one
           if (!userProfile) {
@@ -193,8 +145,8 @@ const useAuthStore = create<AuthStore>()(
               genderPreference: "all",
             };
 
-            await supabaseUsers.createUserProfile(supabaseUser.id, basicProfile);
-            userProfile = await supabaseUsers.getUserProfile(supabaseUser.id);
+            await usersService.createProfile({ ...basicProfile, id: supabaseUser.id } as any);
+            userProfile = await usersService.getProfile(supabaseUser.id);
           }
 
           set((state) => ({
@@ -244,8 +196,8 @@ const useAuthStore = create<AuthStore>()(
           const { sanitizeEmail } = await import("../utils/authUtils");
           const safeEmail = sanitizeEmail(email);
 
-          // Create Supabase user
-          const supabaseUser = await supabaseAuth.signUp(safeEmail, password);
+          // Create user with auth service
+          const { user: supabaseUser } = await authService.signUp(safeEmail, password);
 
           // Create user profile in Supabase
           const userProfile: Partial<User> = {
@@ -257,10 +209,10 @@ const useAuthStore = create<AuthStore>()(
             gender: opts?.gender,
           };
 
-          await supabaseUsers.createUserProfile(supabaseUser.id, userProfile);
+          await usersService.createProfile({ ...userProfile, id: supabaseUser.id } as any);
 
           // Get the created profile
-          const createdProfile = await supabaseUsers.getUserProfile(supabaseUser.id);
+          const createdProfile = await usersService.getProfile(supabaseUser.id);
 
           set((state) => ({
             ...state,
@@ -290,11 +242,8 @@ const useAuthStore = create<AuthStore>()(
         try {
           set({ isLoading: true });
 
-          // Execute cleanup before logout
-          authCleanupTracker.executeCleanup();
-
-          // Sign out from Supabase
-          await supabaseAuth.signOut();
+          // Sign out from auth service
+          await authService.signOut();
 
           set({
             user: null,
@@ -312,8 +261,19 @@ const useAuthStore = create<AuthStore>()(
         }
       },
 
-      executeCleanup: () => {
-        authCleanupTracker.executeCleanup();
+      resetPassword: async (email: string) => {
+        try {
+          set({ isLoading: true, error: null });
+          await authService.resetPassword(email);
+          set({ isLoading: false });
+        } catch (error) {
+          const appError = error instanceof AppError ? error : parseSupabaseError(error);
+          set({
+            error: appError.userMessage,
+            isLoading: false,
+          });
+          throw appError; // Re-throw so the component can handle it
+        }
       },
 
       updateUserLocation: async (location) => {
@@ -341,8 +301,8 @@ const useAuthStore = create<AuthStore>()(
 
         // Persist to database
         try {
-          const { supabaseUsers } = await import("../services/supabase");
-          await supabaseUsers.updateUserProfile(currentState.user.id, {
+          const { usersService } = await import("../services/users");
+          await usersService.updateProfile(currentState.user.id, {
             location: {
               city: location.city,
               state: location.state,
@@ -385,7 +345,7 @@ const useAuthStore = create<AuthStore>()(
 
             while (retries > 0 && !session) {
               try {
-                session = await supabaseAuth.getCurrentSession();
+                session = await authService.getSession();
                 break;
               } catch (error) {
                 console.warn(`Session fetch attempt ${4 - retries} failed:`, error);
@@ -403,7 +363,7 @@ const useAuthStore = create<AuthStore>()(
 
               while (retries > 0 && !userProfile) {
                 try {
-                  userProfile = await supabaseUsers.getUserProfile(session.user.id);
+                  userProfile = await usersService.getProfile(session.user.id);
                   break;
                 } catch (error) {
                   console.warn(`Profile fetch attempt ${4 - retries} failed:`, error);
@@ -462,9 +422,8 @@ const useAuthStore = create<AuthStore>()(
         initializeSession();
 
         // Set up the auth state change listener with proper synchronization
-        const {
-          data: { subscription },
-        } = supabaseAuth.onAuthStateChanged(async (supabaseUser) => {
+        const subscription = authService.onAuthStateChange(async (session) => {
+          const supabaseUser = session?.user;
           // Prevent concurrent auth state processing
           if (isProcessingAuthChange || isInitializing) {
             console.log("🔄 Auth change ignored - already processing");
@@ -484,8 +443,8 @@ const useAuthStore = create<AuthStore>()(
             isProcessingAuthChange = true;
             try {
               if (supabaseUser) {
-                // Get user profile from Supabase
-                const userProfile = await supabaseUsers.getUserProfile(supabaseUser.id);
+                // Get user profile from users service
+                const userProfile = await usersService.getProfile(supabaseUser.id);
                 if (userProfile) {
                   set((state) => ({
                     ...state,
@@ -561,9 +520,6 @@ const useAuthStore = create<AuthStore>()(
             console.log("✅ Auth listener cleanup completed");
           }
         };
-
-        // Register cleanup function with tracker
-        authCleanupTracker.addCleanup(cleanup);
 
         return cleanup;
       },

@@ -7,7 +7,8 @@ import { v4 as uuidv4 } from "uuid";
 import * as VideoThumbnails from "expo-video-thumbnails";
 import { Review, FilterOptions, GreenFlag, RedFlag, MediaItem, SocialMediaHandles, Sentiment } from "../types";
 import { filterReviewsByDistanceAsync } from "../utils/location";
-import { supabaseReviews, supabaseStorage } from "../services/supabase";
+import { reviewsService } from "../services/reviews";
+import { storageService } from "../services/storage";
 import useAuthStore from "./authStore";
 import { notificationService } from "../services/notificationService";
 import { AppError, parseSupabaseError } from "../utils/errorHandling";
@@ -236,7 +237,8 @@ const useReviewsStore = create<ReviewsStore>()(
             // "Show all" mode: get reviews from anywhere without location filtering
             const offset = refresh ? 0 : currentState.reviews.length;
             const globalFilters = { category: serverFilters.category };
-            newReviews = await supabaseReviews.getReviews(50, offset, globalFilters);
+            const result = await reviewsService.getReviews({ ...globalFilters, limit: 50, offset });
+            newReviews = result.data;
 
             if (__DEV__) {
               console.log("🌐 Show all reviews loaded:", newReviews.length);
@@ -249,9 +251,12 @@ const useReviewsStore = create<ReviewsStore>()(
             const fetchOffset = 0;
 
             // Get all reviews with coordinates (no location filters to ensure we get everything)
-            const worldwideSet = await supabaseReviews.getReviews(fetchLimit, fetchOffset, {
+            const worldwideResult = await reviewsService.getReviews({
               category: serverFilters.category, // Only apply category filter, not location
+              limit: fetchLimit,
+              offset: fetchOffset,
             });
+            const worldwideSet = worldwideResult.data;
 
             // Ensure user location has coordinates for distance filtering
             let locationWithCoords = userLocation;
@@ -297,7 +302,8 @@ const useReviewsStore = create<ReviewsStore>()(
             const offset = refresh ? 0 : currentState.reviews.length;
 
             // Strategy 1: Try exact city+state match first
-            newReviews = await supabaseReviews.getReviews(20, offset, serverFilters);
+            const result = await reviewsService.getReviews({ ...serverFilters, limit: 20, offset });
+            newReviews = result.data;
 
             // Strategy 2: If no results with city+state, try state-only
             if (newReviews.length === 0 && refresh && serverFilters.city && serverFilters.state) {
@@ -305,7 +311,8 @@ const useReviewsStore = create<ReviewsStore>()(
               const stateOnlyFilters = { ...serverFilters };
               delete stateOnlyFilters.city;
 
-              newReviews = await supabaseReviews.getReviews(20, offset, stateOnlyFilters);
+              const stateResult = await reviewsService.getReviews({ ...stateOnlyFilters, limit: 20, offset });
+              newReviews = stateResult.data;
 
               if (__DEV__) {
                 console.log("📍 State-only filtered reviews:", newReviews.length);
@@ -316,7 +323,8 @@ const useReviewsStore = create<ReviewsStore>()(
             if (newReviews.length === 0 && refresh) {
               console.log("🌍 No local results found, showing reviews from anywhere...");
               const globalFilters = { category: serverFilters.category };
-              newReviews = await supabaseReviews.getReviews(20, offset, globalFilters);
+              const globalResult = await reviewsService.getReviews({ ...globalFilters, limit: 20, offset });
+              newReviews = globalResult.data;
 
               if (__DEV__) {
                 console.log("🌐 Global fallback reviews:", newReviews.length);
@@ -441,10 +449,7 @@ const useReviewsStore = create<ReviewsStore>()(
                 }
 
                 const filename = `reviews/${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`;
-                const downloadURL = await supabaseStorage.uploadFile("review-images", filename, arrayBuffer, {
-                  contentType: "image/jpeg",
-                  upsert: true,
-                });
+                const downloadURL = await storageService.uploadFile("review-images", filename, arrayBuffer);
 
                 uploadedMedia.push({
                   ...mediaItem,
@@ -484,10 +489,7 @@ const useReviewsStore = create<ReviewsStore>()(
                   const thumbBuf = await thumbResp.arrayBuffer();
                   if (thumbBuf && thumbBuf.byteLength > 0) {
                     const thumbName = `reviews/${Date.now()}_${Math.random().toString(36).substring(7)}_thumb.jpg`;
-                    thumbnailUrl = await supabaseStorage.uploadFile("review-images", thumbName, thumbBuf, {
-                      contentType: "image/jpeg",
-                      upsert: true,
-                    });
+                    thumbnailUrl = await storageService.uploadFile("review-images", thumbName, thumbBuf);
                   }
                 } catch (thumbErr) {
                   console.warn("⚠️ Failed to generate/upload video thumbnail:", thumbErr);
@@ -496,10 +498,7 @@ const useReviewsStore = create<ReviewsStore>()(
                 const ext = mime === "video/quicktime" ? "mov" : "mp4";
                 const filename = `reviews/${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
                 // Use review-images bucket (unrestricted MIME types)
-                const downloadURL = await supabaseStorage.uploadFile("review-images", filename, arrayBuffer, {
-                  contentType: mime,
-                  upsert: true,
-                });
+                const downloadURL = await storageService.uploadFile("review-images", filename, arrayBuffer);
 
                 uploadedMedia.push({
                   ...mediaItem,
@@ -571,9 +570,9 @@ const useReviewsStore = create<ReviewsStore>()(
           get().addReview(newReview);
           set({ isLoading: false });
 
-          // Try to save to Supabase in background (don't wait for it)
-          supabaseReviews.createReview(reviewData).catch((error) => {
-            console.warn("Failed to save review to Supabase (but it's still visible locally):", error);
+          // Try to save to database in background (don't wait for it)
+          reviewsService.createReview(reviewData).catch((error) => {
+            console.warn("Failed to save review to database (but it's still visible locally):", error);
           });
         } catch (error) {
           set({
@@ -589,8 +588,8 @@ const useReviewsStore = create<ReviewsStore>()(
           if (review) {
             const newLikeCount = review.likeCount + 1;
 
-            // Update in Supabase
-            await supabaseReviews.updateReview(id, { likeCount: newLikeCount });
+            // Update in database
+            await reviewsService.updateReview(id, { likeCount: newLikeCount });
 
             // Update local state
             get().updateReview(id, { likeCount: newLikeCount });
