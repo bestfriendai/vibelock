@@ -37,7 +37,7 @@ interface SessionContext {
 }
 
 class ErrorReportingService {
-  private isInitialized = false;
+  private _isInitialized = false;
   private config: ErrorReportingConfig;
   private sessionContext: SessionContext | null = null;
   private userContext: UserContext | null = null;
@@ -50,7 +50,7 @@ class ErrorReportingService {
    * Initialize Sentry with production-ready configuration
    */
   async initialize(): Promise<void> {
-    if (this.isInitialized) {
+    if (this._isInitialized) {
       console.warn("[ErrorReporting] Already initialized");
       return;
     }
@@ -59,11 +59,13 @@ class ErrorReportingService {
       // Skip initialization in Expo Go unless explicitly enabled
       if (this.isExpoGo() && !this.config.enableInExpoDevelopment) {
         console.log("[ErrorReporting] Skipping initialization in Expo Go");
+        this._isInitialized = true; // Mark as initialized even when skipped
         return;
       }
 
       if (!this.config.dsn) {
         console.warn("[ErrorReporting] No DSN provided, error reporting disabled");
+        this._isInitialized = true; // Mark as initialized even when disabled
         return;
       }
 
@@ -92,7 +94,7 @@ class ErrorReportingService {
 
       // Set initial context
       this.setInitialContext();
-      this.isInitialized = true;
+      this._isInitialized = true;
 
       console.log("[ErrorReporting] Initialized successfully");
     } catch (error) {
@@ -101,10 +103,17 @@ class ErrorReportingService {
   }
 
   /**
+   * Check if the service is initialized
+   */
+  isInitialized(): boolean {
+    return this._isInitialized;
+  }
+
+  /**
    * Report an AppError to Sentry with proper categorization
    */
   reportError(error: AppError | Error, context?: Record<string, any>): void {
-    if (!this.isInitialized) {
+    if (!this._isInitialized) {
       console.warn("[ErrorReporting] Not initialized, error not reported");
       return;
     }
@@ -161,7 +170,7 @@ class ErrorReportingService {
    * Start a performance transaction
    */
   startTransaction(name: string, operation: string): any | null {
-    if (!this.isInitialized) return null;
+    if (!this._isInitialized) return null;
 
     try {
       return Sentry.startSpan(
@@ -184,7 +193,7 @@ class ErrorReportingService {
    * Set user context for error reporting
    */
   setUserContext(user: UserContext): void {
-    if (!this.isInitialized) return;
+    if (!this._isInitialized) return;
 
     try {
       this.userContext = user;
@@ -216,7 +225,7 @@ class ErrorReportingService {
    * Clear user context (on logout)
    */
   clearUserContext(): void {
-    if (!this.isInitialized) return;
+    if (!this._isInitialized) return;
 
     try {
       this.userContext = null;
@@ -241,7 +250,7 @@ class ErrorReportingService {
     level: "debug" | "info" | "warning" | "error" | "fatal";
     data?: Record<string, any>;
   }): void {
-    if (!this.isInitialized) return;
+    if (!this._isInitialized) return;
 
     try {
       Sentry.addBreadcrumb({
@@ -260,7 +269,7 @@ class ErrorReportingService {
    * Set custom context for debugging
    */
   setContext(key: string, context: Record<string, any>): void {
-    if (!this.isInitialized) return;
+    if (!this._isInitialized) return;
 
     try {
       Sentry.setContext(key, context as any);
@@ -273,7 +282,7 @@ class ErrorReportingService {
    * Capture a message with context
    */
   captureMessage(message: string, level: "debug" | "info" | "warning" | "error" | "fatal" = "info"): void {
-    if (!this.isInitialized) return;
+    if (!this._isInitialized) return;
 
     try {
       Sentry.captureMessage(message, level);

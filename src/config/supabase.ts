@@ -461,7 +461,7 @@ export const performHealthCheck = async (): Promise<{ healthy: boolean; details:
 
     // Test database connection with a simple query
     try {
-      const { error: dbError } = await supabase.from("profiles").select("count").limit(1);
+      const { error: dbError } = await supabase.from("users").select("count").limit(1);
       healthDetails.database = !dbError;
     } catch (error) {
       console.warn("Database health check failed:", error);

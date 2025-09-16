@@ -37,8 +37,8 @@ export class SearchService {
   async searchReviews(query: string): Promise<SearchResults> {
     return withRetry(async () => {
       const { data, error } = await supabase
-        .from("reviews")
-        .select("*, user:users(*)")
+        .from("reviews_firebase")
+        .select("*, author:users!author_id(id, username)")
         .or(`reviewed_person_name.ilike.%${query}%,review_text.ilike.%${query}%`)
         .order("created_at", { ascending: false })
         .limit(50);
@@ -54,7 +54,7 @@ export class SearchService {
         createdAt: new Date(item.created_at),
         metadata: {
           reviewId: item.id,
-          authorName: item.user?.display_name || "Anonymous",
+          authorName: item.author?.username || "Anonymous",
           location: `${item.reviewed_person_location?.city}, ${item.reviewed_person_location?.state}`,
         },
       }));

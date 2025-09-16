@@ -21,14 +21,15 @@ interface PaginatedResponse<T> {
 export class ReviewsService {
   async getReviews(filter: ReviewsFilter = {}): Promise<PaginatedResponse<Review>> {
     return withRetry(async () => {
-      let query = supabase.from("reviews_firebase").select("*, user:users(*)", { count: "exact" });
+      let query = supabase.from("reviews_firebase").select("*, author:users!author_id(id, username)", { count: "exact" });
 
       if (filter.userId) {
-        query = query.eq("user_id", filter.userId);
+        query = query.eq("author_id", filter.userId);
       }
 
       if (filter.roomId) {
-        query = query.eq("room_id", filter.roomId);
+        // reviews_firebase doesn't have room_id, skip this filter
+        console.warn("Room filtering not supported for reviews_firebase table");
       }
 
       if (filter.category) {
@@ -36,7 +37,7 @@ export class ReviewsService {
       }
 
       if (filter.searchQuery) {
-        query = query.or(`title.ilike.%${filter.searchQuery}%,content.ilike.%${filter.searchQuery}%`);
+        query = query.or(`reviewed_person_name.ilike.%${filter.searchQuery}%,review_text.ilike.%${filter.searchQuery}%`);
       }
 
       const limit = filter.limit || 20;
@@ -65,7 +66,7 @@ export class ReviewsService {
   async getReview(reviewId: string): Promise<Review | null> {
     const { data, error } = await supabase
       .from("reviews_firebase")
-      .select("*, user:users(*)")
+      .select("*, author:users!author_id(id, username)")
       .eq("id", reviewId)
       .single();
 
@@ -83,7 +84,7 @@ export class ReviewsService {
     const { data, error } = await supabase
       .from("reviews_firebase")
       .insert(snakeCaseReview)
-      .select("*, user:users(*)")
+      .select("*, author:users!author_id(id, username)")
       .single();
 
     if (error) throw error;
@@ -97,7 +98,7 @@ export class ReviewsService {
       .from("reviews_firebase")
       .update(snakeCaseUpdates)
       .eq("id", reviewId)
-      .select("*, user:users(*)")
+      .select("*, author:users!author_id(id, username)")
       .single();
 
     if (error) throw error;
@@ -128,7 +129,7 @@ export class ReviewsService {
   async getReviewComments(reviewId: string, limit: number = 50): Promise<Comment[]> {
     const { data, error } = await supabase
       .from("comments_firebase")
-      .select("*, user:users(*)")
+      .select("*, author:users!author_id(id, username)")
       .eq("review_id", reviewId)
       .order("created_at", { ascending: false })
       .limit(limit);
@@ -143,7 +144,7 @@ export class ReviewsService {
     const { data, error } = await supabase
       .from("comments_firebase")
       .insert(snakeCaseComment)
-      .select("*, user:users(*)")
+      .select("*, author:users!author_id(id, username)")
       .single();
 
     if (error) throw error;

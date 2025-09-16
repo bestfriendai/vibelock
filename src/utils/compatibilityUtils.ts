@@ -7,7 +7,6 @@
  */
 
 import { Platform, Dimensions, NativeModules } from "react-native";
-import { getExpoPlatformVersion } from "expo-modules-core";
 import Constants from "expo-constants";
 import * as Device from "expo-device";
 
@@ -514,7 +513,7 @@ class CompatibilityChecker {
         sdkVersion: Constants.expoConfig?.sdkVersion,
         appOwnership: Constants.appOwnership,
         isDevice: Constants.isDevice,
-        platform: getExpoPlatformVersion(),
+        platform: Platform.OS,
       },
       features: this.detectFeatures(),
       compatibility: this.checkCompatibility(),
