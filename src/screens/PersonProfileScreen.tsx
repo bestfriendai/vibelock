@@ -2,19 +2,17 @@ import React, { useState } from "react";
 import { View, Text, ScrollView, Pressable, RefreshControl } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { RouteProp, useRoute, useNavigation } from "@react-navigation/native";
-import { RootStackParamList } from "../navigation/AppNavigator";
+import { useRoute, useNavigation } from "@react-navigation/native";
+import type { PersonProfileRouteProp, RootStackNavigationProp } from "../navigation/AppNavigator";
 import { LinearGradient } from "expo-linear-gradient";
 import ReportModal from "../components/ReportModal";
 import MediaGallery from "../components/MediaGallery";
 import MediaViewer from "../components/MediaViewer";
 import { MediaItem } from "../types";
 
-type PersonProfileRouteProp = RouteProp<RootStackParamList, "PersonProfile">;
-
 export default function PersonProfileScreen() {
   const route = useRoute<PersonProfileRouteProp>();
-  const navigation = useNavigation<any>();
+  const navigation = useNavigation<RootStackNavigationProp>();
   const { firstName, location } = route.params;
   const [showReportModal, setShowReportModal] = useState(false);
   const [showMediaViewer, setShowMediaViewer] = useState(false);

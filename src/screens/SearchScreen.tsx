@@ -231,7 +231,15 @@ export default function SearchScreen({ navigation, route }: Props) {
     setShowSuggestions(false);
 
     try {
-      const results = await searchService.searchAll(queryValidation.sanitized);
+      // Use enhanced search with filters
+      const results = await searchService.searchAll(queryValidation.sanitized, {
+        useAdvancedSearch: true,
+        filters: {
+          dateRange: filters.dateRange,
+          location: filters.location,
+          category: 'dating', // Default to dating category for this app
+        }
+      });
       setContentResults(results);
 
       // Save to search history (use sanitized query)

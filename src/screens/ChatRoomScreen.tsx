@@ -2,12 +2,12 @@ import React, { useEffect, useRef, useState } from "react";
 import { View, Text, Pressable, Modal } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRoute, RouteProp, useNavigation } from "@react-navigation/native";
+import { useRoute, useNavigation } from "@react-navigation/native";
 import { FlashList } from "@shopify/flash-list";
 import * as Clipboard from "expo-clipboard";
 import useChatStore from "../state/chatStore";
 import { useAuthState } from "../utils/authUtils";
-import { RootStackParamList, RootStackNavigationProp } from "../navigation/AppNavigator";
+import type { ChatRoomRouteProp, RootStackNavigationProp } from "../navigation/AppNavigator";
 import EnhancedMessageBubble from "../components/EnhancedMessageBubble";
 import EnhancedMessageInput from "../components/EnhancedMessageInput";
 import SmartChatFeatures from "../components/SmartChatFeatures";
@@ -20,7 +20,7 @@ import OfflineBanner from "../components/OfflineBanner";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { useScrollManager } from "../utils/scrollUtils";
 
-export type ChatRoomRouteProp = RouteProp<RootStackParamList, "ChatRoom">;
+// ChatRoomRouteProp is now exported from AppNavigator for consistency
 
 function toDateSafe(value: any): Date {
   try {

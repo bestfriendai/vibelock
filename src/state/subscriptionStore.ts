@@ -38,18 +38,16 @@ interface PurchasesOffering {
   [key: string]: any; // Additional properties
 }
 
-// Type for dynamic RevenueCat import
-type RevenueCatModule = {
-  default: {
-    configure: (config: { apiKey: string; appUserID?: string }) => void | Promise<void>;
-    setDebugLogsEnabled: (enabled: boolean) => void;
-    getCustomerInfo: () => Promise<CustomerInfo>;
-    getOfferings: () => Promise<{ all: Record<string, any> }>;
-    purchasePackage: (pkg: any) => Promise<{ customerInfo: CustomerInfo }>;
-    restorePurchases: () => Promise<CustomerInfo>;
-    setAttributes: (attributes: Record<string, string>) => void;
-    [key: string]: any;
-  };
+// Stub implementation for RevenueCat functionality
+type RevenueCatStub = {
+  configure: (config: { apiKey: string; appUserID?: string }) => Promise<void>;
+  setDebugLogsEnabled: (enabled: boolean) => void;
+  getCustomerInfo: () => Promise<CustomerInfo>;
+  getOfferings: () => Promise<{ all: Record<string, any> }>;
+  purchasePackage: (pkg: any) => Promise<{ customerInfo: CustomerInfo }>;
+  restorePurchases: () => Promise<CustomerInfo>;
+  setAttributes: (attributes: Record<string, string>) => void;
+  logIn: (userId: string) => Promise<void>;
 };
 
 interface SubscriptionState {
@@ -116,9 +114,8 @@ const useSubscriptionStore = create<SubscriptionState>()(
         try {
           set({ isLoading: true });
 
-          // Dynamic import for development builds only with better type safety
-          const RevenueCatModule = (await import("react-native-purchases")) as RevenueCatModule;
-          const Purchases = RevenueCatModule.default;
+          // Use stub implementation instead of react-native-purchases
+          const Purchases = createRevenueCatStub();
           const { Platform } = await import("react-native");
 
           if (!Purchases || typeof Purchases.configure !== "function") {
@@ -172,8 +169,7 @@ const useSubscriptionStore = create<SubscriptionState>()(
         }
 
         try {
-          const RevenueCatModule = (await import("react-native-purchases")) as RevenueCatModule;
-          const Purchases = RevenueCatModule.default;
+          const Purchases = createRevenueCatStub();
 
           if (!Purchases) {
             console.warn("RevenueCat module not available for user identification");
@@ -208,8 +204,7 @@ const useSubscriptionStore = create<SubscriptionState>()(
         }
 
         try {
-          const RevenueCatModule = (await import("react-native-purchases")) as RevenueCatModule;
-          const Purchases = RevenueCatModule.default;
+          const Purchases = createRevenueCatStub();
 
           if (!Purchases || typeof Purchases.getCustomerInfo !== "function") {
             throw new Error("RevenueCat getCustomerInfo not available");
@@ -296,8 +291,7 @@ const useSubscriptionStore = create<SubscriptionState>()(
         }
 
         try {
-          const RevenueCatModule = (await import("react-native-purchases")) as RevenueCatModule;
-          const Purchases = RevenueCatModule.default;
+          const Purchases = createRevenueCatStub();
 
           if (!Purchases || typeof Purchases.getOfferings !== "function") {
             throw new Error("RevenueCat getOfferings not available");
@@ -333,8 +327,7 @@ const useSubscriptionStore = create<SubscriptionState>()(
 
         try {
           set({ isLoading: true });
-          const RevenueCatModule = (await import("react-native-purchases")) as RevenueCatModule;
-          const Purchases = RevenueCatModule.default;
+          const Purchases = createRevenueCatStub();
 
           if (!Purchases || typeof Purchases.purchasePackage !== "function") {
             throw new Error("RevenueCat purchasePackage not available");
@@ -377,8 +370,7 @@ const useSubscriptionStore = create<SubscriptionState>()(
 
         try {
           set({ isLoading: true });
-          const RevenueCatModule = (await import("react-native-purchases")) as RevenueCatModule;
-          const Purchases = RevenueCatModule.default;
+          const Purchases = createRevenueCatStub();
 
           if (!Purchases || typeof Purchases.restorePurchases !== "function") {
             throw new Error("RevenueCat restorePurchases not available");
@@ -449,5 +441,87 @@ const useSubscriptionStore = create<SubscriptionState>()(
     },
   ),
 );
+
+// Stub implementation to replace react-native-purchases
+function createRevenueCatStub(): RevenueCatStub {
+  return {
+    configure: async (config: { apiKey: string; appUserID?: string }) => {
+      console.log("[STUB] RevenueCat configure called with:", { apiKey: config.apiKey?.substring(0, 10) + "...", appUserID: config.appUserID });
+      // Simulate async operation
+      await new Promise(resolve => setTimeout(resolve, 100));
+    },
+    setDebugLogsEnabled: (enabled: boolean) => {
+      console.log("[STUB] RevenueCat setDebugLogsEnabled:", enabled);
+    },
+    getCustomerInfo: async (): Promise<CustomerInfo> => {
+      console.log("[STUB] RevenueCat getCustomerInfo called");
+      await new Promise(resolve => setTimeout(resolve, 200));
+      return {
+        entitlements: {
+          active: {}, // No active subscriptions in stub
+        },
+      };
+    },
+    getOfferings: async () => {
+      console.log("[STUB] RevenueCat getOfferings called");
+      await new Promise(resolve => setTimeout(resolve, 200));
+      return {
+        all: {
+          default: {
+            identifier: "default",
+            availablePackages: [
+              {
+                identifier: "monthly",
+                packageType: "MONTHLY",
+                storeProduct: {
+                  title: "Monthly Premium (STUB)",
+                  description: "Premium features monthly (demo)",
+                  priceString: "$4.99",
+                  price: "4.99",
+                },
+              },
+              {
+                identifier: "annual",
+                packageType: "ANNUAL",
+                storeProduct: {
+                  title: "Annual Premium (STUB)",
+                  description: "Premium features yearly (demo)",
+                  priceString: "$29.99",
+                  price: "29.99",
+                },
+              },
+            ],
+          },
+        },
+      };
+    },
+    purchasePackage: async (pkg: any): Promise<{ customerInfo: CustomerInfo }> => {
+      console.log("[STUB] RevenueCat purchasePackage called with:", pkg?.identifier);
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate purchase flow
+      const mockCustomerInfo: CustomerInfo = {
+        entitlements: {
+          active: { premium: {} }, // Simulate successful purchase
+        },
+      };
+      return { customerInfo: mockCustomerInfo };
+    },
+    restorePurchases: async (): Promise<CustomerInfo> => {
+      console.log("[STUB] RevenueCat restorePurchases called");
+      await new Promise(resolve => setTimeout(resolve, 500));
+      return {
+        entitlements: {
+          active: {}, // No purchases to restore in stub
+        },
+      };
+    },
+    setAttributes: (attributes: Record<string, string>) => {
+      console.log("[STUB] RevenueCat setAttributes called with:", attributes);
+    },
+    logIn: async (userId: string) => {
+      console.log("[STUB] RevenueCat logIn called with:", userId);
+      await new Promise(resolve => setTimeout(resolve, 100));
+    },
+  };
+}
 
 export default useSubscriptionStore;

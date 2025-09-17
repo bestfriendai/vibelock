@@ -2,9 +2,8 @@ import React from "react";
 import { View, Text, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Review } from "../types";
-import { RootStackParamList } from "../navigation/AppNavigator";
+import type { RootStackNavigationProp } from "../navigation/AppNavigator";
 import useReviewsStore from "../state/reviewsStore";
 import { useTheme } from "../providers/ThemeProvider";
 import { socialSharingService } from "../services/socialSharingService";
@@ -13,17 +12,16 @@ interface ReviewCardProps {
   review: Review;
 }
 
-type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
-
 export default function ReviewCard({ review }: ReviewCardProps) {
-  const navigation = useNavigation<NavigationProp>();
+  const navigation = useNavigation<RootStackNavigationProp>();
   const { likeReview } = useReviewsStore();
   const { theme, colors, isDarkMode } = useTheme();
 
   const handlePersonPress = () => {
     navigation.navigate("PersonProfile", {
       firstName: review.reviewedPersonName,
-      location: review.reviewedPersonLocation,
+      city: review.reviewedPersonLocation.city,
+      state: review.reviewedPersonLocation.state,
     });
   };
 

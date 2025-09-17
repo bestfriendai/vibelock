@@ -1,61 +1,68 @@
+
 <!doctype html>
 <html lang="en">
-  <head>
+
+<head>
     <title>Code coverage report for config/admobConfig.ts</title>
     <meta charset="utf-8" />
     <link rel="stylesheet" href="../prettify.css" />
     <link rel="stylesheet" href="../base.css" />
     <link rel="shortcut icon" type="image/x-icon" href="../favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <style type="text/css">
-      .coverage-summary .sorter {
-        background-image: url(../sort-arrow-sprite.png);
-      }
+    <style type='text/css'>
+        .coverage-summary .sorter {
+            background-image: url(../sort-arrow-sprite.png);
+        }
     </style>
-  </head>
-
-  <body>
-    <div class="wrapper">
-      <div class="pad1">
+</head>
+    
+<body>
+<div class='wrapper'>
+    <div class='pad1'>
         <h1><a href="../index.html">All files</a> / <a href="index.html">config</a> admobConfig.ts</h1>
-        <div class="clearfix">
-          <div class="fl pad1y space-right2">
-            <span class="strong">0% </span>
-            <span class="quiet">Statements</span>
-            <span class="fraction">0/9</span>
-          </div>
-
-          <div class="fl pad1y space-right2">
-            <span class="strong">0% </span>
-            <span class="quiet">Branches</span>
-            <span class="fraction">0/10</span>
-          </div>
-
-          <div class="fl pad1y space-right2">
-            <span class="strong">0% </span>
-            <span class="quiet">Functions</span>
-            <span class="fraction">0/2</span>
-          </div>
-
-          <div class="fl pad1y space-right2">
-            <span class="strong">0% </span>
-            <span class="quiet">Lines</span>
-            <span class="fraction">0/9</span>
-          </div>
+        <div class='clearfix'>
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Statements</span>
+                <span class='fraction'>0/9</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Branches</span>
+                <span class='fraction'>0/26</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Functions</span>
+                <span class='fraction'>0/2</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Lines</span>
+                <span class='fraction'>0/9</span>
+            </div>
+        
+            
         </div>
         <p class="quiet">
-          Press <em>n</em> or <em>j</em> to go to the next uncovered block, <em>b</em>, <em>p</em> or <em>k</em> for the
-          previous block.
+            Press <em>n</em> or <em>j</em> to go to the next uncovered block, <em>b</em>, <em>p</em> or <em>k</em> for the previous block.
         </p>
         <template id="filterTemplate">
-          <div class="quiet">
-            Filter:
-            <input type="search" id="fileSearch" />
-          </div>
+            <div class="quiet">
+                Filter:
+                <input type="search" id="fileSearch">
+            </div>
         </template>
-      </div>
-      <div class="status-line low"></div>
-      <pre><table class="coverage">
+    </div>
+    <div class='status-line low'></div>
+    <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
 <a name='L3'></a><a href='#L3'>3</a>
@@ -233,7 +240,10 @@
 <a name='L175'></a><a href='#L175'>175</a>
 <a name='L176'></a><a href='#L176'>176</a>
 <a name='L177'></a><a href='#L177'>177</a>
-<a name='L178'></a><a href='#L178'>178</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L178'></a><a href='#L178'>178</a>
+<a name='L179'></a><a href='#L179'>179</a>
+<a name='L180'></a><a href='#L180'>180</a>
+<a name='L181'></a><a href='#L181'>181</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -345,7 +355,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -426,24 +439,24 @@ export const ADMOB_CONFIG = <span class="cstat-no" title="statement not covered"
     android: "ca-app-pub-9512493666273460~4548589138",
   }),
 &nbsp;
-  // Ad Unit IDs (platform-specific)
+  // Ad Unit IDs (platform-specific with environment variable support)
   AD_UNITS: {
     // Banner Ad Unit IDs
     BANNER: Platform.select({
-      ios: "ca-app-pub-9512493666273460/4655851607",
-      android: "ca-app-pub-9512493666273460/3837555963",
+      ios: process.env.EXPO_PUBLIC_ADMOB_BANNER_IOS || "ca-app-pub-9512493666273460/4655851607",
+      android: process.env.EXPO_PUBLIC_ADMOB_BANNER_ANDROID || "ca-app-pub-9512493666273460/3837555963",
     }),
 &nbsp;
     // Interstitial Ad Unit IDs
     INTERSTITIAL: Platform.select({
-      ios: "ca-app-pub-9512493666273460/4188909755",
-      android: "ca-app-pub-9512493666273460/2783494598",
+      ios: process.env.EXPO_PUBLIC_ADMOB_INTERSTITIAL_IOS || "ca-app-pub-9512493666273460/4188909755",
+      android: process.env.EXPO_PUBLIC_ADMOB_INTERSTITIAL_ANDROID || "ca-app-pub-9512493666273460/2783494598",
     }),
 &nbsp;
     // App Open Ad Unit IDs
     APP_OPEN: Platform.select({
-      ios: "ca-app-pub-9512493666273460/6722739608",
-      android: "ca-app-pub-9512493666273460/9249664748",
+      ios: process.env.EXPO_PUBLIC_ADMOB_APP_OPEN_IOS || "ca-app-pub-9512493666273460/6722739608",
+      android: process.env.EXPO_PUBLIC_ADMOB_APP_OPEN_ANDROID || "ca-app-pub-9512493666273460/9249664748",
     }),
 &nbsp;
     // TODO: Create rewarded ad unit if needed
@@ -470,12 +483,14 @@ export const ADMOB_CONFIG = <span class="cstat-no" title="statement not covered"
     }),
   },
 &nbsp;
-  // Ad Configuration
+  // Ad Configuration with environment variable support
   SETTINGS: {
     maxAdContentRating: "PG" as const,
     tagForChildDirectedTreatment: false,
     tagForUnderAgeOfConsent: false,
     testDeviceIdentifiers: __DEV__ ? ["EMULATOR"] : [],
+    // Test mode can be controlled via environment variable
+    testMode: process.env.EXPO_PUBLIC_ADMOB_TEST_MODE === "true" || __DEV__,
   },
 &nbsp;
   // Ad Placement Configuration
@@ -523,7 +538,8 @@ export const ADMOB_CONFIG = <span class="cstat-no" title="statement not covered"
  * Helper function to get the appropriate ad unit ID
  */
 export const getAdUnitId = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(a</span>dType: keyof typeof ADMOB_CONFIG.AD_UNITS): string =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >  if (__DEV__) {</span>
+  // Use test ads if in test mode or development
+<span class="cstat-no" title="statement not covered" >  if (ADMOB_CONFIG.SETTINGS.testMode || __DEV__) {</span>
 <span class="cstat-no" title="statement not covered" >    return ADMOB_CONFIG.TEST_AD_UNITS[adType] || "";</span>
   }
 &nbsp;
@@ -589,22 +605,21 @@ export const isAdPlacementEnabled = <span class="cstat-no" title="statement not 
  */
 &nbsp;</pre></td></tr></table></pre>
 
-      <div class="push"></div>
-      <!-- for sticky footer -->
-    </div>
-    <!-- /wrapper -->
-    <div class="footer quiet pad2 space-top1 center small">
-      Code coverage generated by
-      <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-      at 2025-09-14T06:22:45.247Z
-    </div>
-    <script src="../prettify.js"></script>
-    <script>
-      window.onload = function () {
-        prettyPrint();
-      };
-    </script>
-    <script src="../sorter.js"></script>
-    <script src="../block-navigation.js"></script>
-  </body>
+                <div class='push'></div><!-- for sticky footer -->
+            </div><!-- /wrapper -->
+            <div class='footer quiet pad2 space-top1 center small'>
+                Code coverage generated by
+                <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
+                at 2025-09-17T06:43:59.759Z
+            </div>
+        <script src="../prettify.js"></script>
+        <script>
+            window.onload = function () {
+                prettyPrint();
+            };
+        </script>
+        <script src="../sorter.js"></script>
+        <script src="../block-navigation.js"></script>
+    </body>
 </html>
+    

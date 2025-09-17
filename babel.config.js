@@ -10,7 +10,8 @@ module.exports = function (api) {
       [
         "babel-preset-expo",
         {
-          jsxImportSource: "nativewind",
+          // Use automatic JSX runtime for React 19 compatibility
+          jsxRuntime: "automatic",
           // Enhanced Hermes compatibility
           ...(isHermes && {
             unstable_transformProfile: "hermes-stable",
@@ -20,25 +21,8 @@ module.exports = function (api) {
       "nativewind/babel",
     ],
     plugins: [
-      // Property definition safety transforms for Hermes
-      ...(isHermes
-        ? [
-            // Transform Object.defineProperty calls to be safer in Hermes
-            [
-              require.resolve("./babel-plugins/hermes-property-safety.js"),
-              {
-                // Options for property safety transformation
-                wrapDefineProperty: true,
-                addConfigurabilityChecks: true,
-                enableLogging: process.env.NODE_ENV === "development",
-              },
-            ],
-          ]
-        : []),
-
-      // Use only the Worklets plugin (Reanimated v4+ integrates via worklets)
-      // This plugin MUST be listed last!
-      "react-native-worklets/plugin",
+      // Reanimated plugin is automatically configured by babel-preset-expo for SDK 54
+      // Do not manually add react-native-reanimated/plugin or react-native-worklets/plugin
     ],
   };
 

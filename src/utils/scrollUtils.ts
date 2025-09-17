@@ -1,3 +1,4 @@
+import React from "react";
 import { FlatList, ScrollView, SectionList, VirtualizedList } from "react-native";
 
 type ScrollableComponent = FlatList<any> | ScrollView | SectionList<any> | VirtualizedList<any>;

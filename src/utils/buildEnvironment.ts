@@ -29,8 +29,8 @@ export const getBuildEnvironment = (): BuildEnvironment => {
 
 export const buildEnv = getBuildEnvironment();
 
-// Helper functions
-export const canUseRevenueCat = () => buildEnv.hasNativeModules && !buildEnv.isExpoGo;
+// Helper functions - RevenueCat disabled since module was removed
+export const canUseRevenueCat = () => false;
 export const canUseAdMob = () => buildEnv.hasNativeModules && !buildEnv.isExpoGo;
 export const shouldShowMonetization = () => !buildEnv.isExpoGo;
 

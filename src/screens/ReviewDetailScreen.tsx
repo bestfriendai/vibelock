@@ -14,14 +14,19 @@ import {
   StyleSheet,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { RouteProp, useRoute, useNavigation } from "@react-navigation/native";
+import { useRoute, useNavigation } from "@react-navigation/native";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
   useAnimatedScrollHandler,
 } from "react-native-reanimated";
-import { BrowseStackParamList, RootStackParamList, SearchStackParamList } from "../navigation/AppNavigator";
+import type {
+  ReviewDetailRouteProp,
+  BrowseStackReviewDetailRouteProp,
+  SearchStackReviewDetailRouteProp,
+  RootStackNavigationProp
+} from "../navigation/AppNavigator";
 import ImageCarousel from "../components/ImageCarousel";
 import LikeDislikeButtons from "../components/LikeDislikeButtons";
 import ExpandableText from "../components/ExpandableText";
@@ -37,14 +42,15 @@ import { reviewsService } from "../services/reviews";
 import { Review } from "../types";
 import { useTheme } from "../providers/ThemeProvider";
 
-type ReviewDetailRouteProp =
-  | RouteProp<BrowseStackParamList, "ReviewDetail">
-  | RouteProp<SearchStackParamList, "ReviewDetail">
-  | RouteProp<RootStackParamList, "ReviewDetail">;
+// Union type to handle multiple navigation sources
+type CombinedReviewDetailRouteProp =
+  | ReviewDetailRouteProp
+  | BrowseStackReviewDetailRouteProp
+  | SearchStackReviewDetailRouteProp;
 
 export default function ReviewDetailScreen() {
-  const route = useRoute<ReviewDetailRouteProp>();
-  const navigation = useNavigation<any>();
+  const route = useRoute<CombinedReviewDetailRouteProp>();
+  const navigation = useNavigation<RootStackNavigationProp>();
   const { colors, isDarkMode } = useTheme();
 
   // Get route params

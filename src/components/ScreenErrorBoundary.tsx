@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { useTheme } from "../providers/ThemeProvider";
+import type { RootStackNavigationProp } from "../navigation/AppNavigator";
 
 interface Props {
   children: ReactNode;
@@ -18,11 +19,11 @@ interface State {
 }
 
 export function useScreenErrorBoundary(screenName: string) {
-  const navigation = useNavigation();
+  const navigation = useNavigation<RootStackNavigationProp>();
 
   const handleError = (error: Error) => {
     console.warn(`Error in ${screenName}:`, error);
-    navigation.navigate("MainTabs" as any, { screen: "Browse" });
+    navigation.navigate("MainTabs");
   };
 
   return { handleError };

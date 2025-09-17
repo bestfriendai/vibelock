@@ -168,6 +168,25 @@ export type SearchStackNavigationProp = NativeStackNavigationProp<SearchStackPar
 export type ChatroomsStackNavigationProp = NativeStackNavigationProp<ChatroomsStackParamList>;
 export type SettingsStackNavigationProp = NativeStackNavigationProp<SettingsStackParamList>;
 
+// Route prop types for React Navigation v7 (for useRoute hook)
+export type ChatRoomRouteProp = import('@react-navigation/native').RouteProp<RootStackParamList, 'ChatRoom'>;
+export type PersonProfileRouteProp = import('@react-navigation/native').RouteProp<RootStackParamList, 'PersonProfile'>;
+export type ReviewDetailRouteProp = import('@react-navigation/native').RouteProp<RootStackParamList, 'ReviewDetail'>;
+export type BrowseStackReviewDetailRouteProp = import('@react-navigation/native').RouteProp<BrowseStackParamList, 'ReviewDetail'>;
+export type SearchStackReviewDetailRouteProp = import('@react-navigation/native').RouteProp<SearchStackParamList, 'ReviewDetail'>;
+
+// Combined screen props (navigation + route)
+export type ChatRoomScreenProps = import('@react-navigation/native-stack').NativeStackScreenProps<RootStackParamList, 'ChatRoom'>;
+export type PersonProfileScreenProps = import('@react-navigation/native-stack').NativeStackScreenProps<RootStackParamList, 'PersonProfile'>;
+export type ReviewDetailScreenProps = import('@react-navigation/native-stack').NativeStackScreenProps<RootStackParamList, 'ReviewDetail'>;
+
+// Global navigation type declaration for React Navigation v7
+declare global {
+  namespace ReactNavigation {
+    interface RootParamList extends RootStackParamList {}
+  }
+}
+
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<TabParamList>();
 const BrowseStack = createNativeStackNavigator<BrowseStackParamList>();

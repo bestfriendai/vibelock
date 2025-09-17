@@ -329,7 +329,7 @@ export class SubscriptionService {
       const subscription = await this.getUserSubscription(userId);
 
       // Update user's subscription status in Supabase
-      const { error } = await this.supabase
+      const { error } = await supabase
         .from("users")
         .update({
           subscription_tier: subscription.tier,
