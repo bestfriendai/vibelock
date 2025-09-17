@@ -160,7 +160,7 @@ function checkPolyfillCompatibility(): HermesCompatibilityIssue[] {
   }
 
   // Check crypto polyfill conflicts
-  if ((global as any).crypto) {
+  if (typeof crypto !== "undefined" && (global as any).crypto) {
     const cryptoDescriptor = Object.getOwnPropertyDescriptor(global, "crypto");
     if (cryptoDescriptor && cryptoDescriptor.configurable === false) {
       issues.push({

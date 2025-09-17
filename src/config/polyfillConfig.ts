@@ -33,6 +33,11 @@ export const POLYFILL_CONFIGS: PolyfillConfig[] = [
     name: "react-native-get-random-values",
     modulePath: "react-native-get-random-values",
     preLoadCheck: () => {
+      // Ensure crypto is defined before accessing it
+      if (typeof crypto === "undefined") {
+        // crypto doesn't exist yet, safe to define
+        return true;
+      }
       // Check if crypto.getRandomValues already exists and is configurable
       if (hasOwnPropertySafe(global, "crypto") && (global as any).crypto?.getRandomValues) {
         const cryptoDescriptor = Object.getOwnPropertyDescriptor(global, "crypto");
@@ -46,7 +51,7 @@ export const POLYFILL_CONFIGS: PolyfillConfig[] = [
     },
     loadCondition: () => {
       // Only load if crypto.getRandomValues is not available
-      return !(global as any).crypto?.getRandomValues;
+      return typeof crypto === "undefined" || !(global as any).crypto?.getRandomValues;
     },
     postLoadValidation: () => {
       return !!(global as any).crypto?.getRandomValues;

@@ -255,6 +255,12 @@ export class AppError extends Error {
 export const parseSupabaseError = (error: any): AppError => {
   console.warn("Parsing Supabase error:", error);
 
+  // Handle RetryError - extract the actual error
+  if (error?.name === "RetryError" && error?.lastError) {
+    console.warn("RetryError detected, extracting last error:", error.lastError);
+    return parseSupabaseError(error.lastError);
+  }
+
   // Handle network/timeout errors
   if (error?.name === "AbortError" || error?.message?.includes("timeout")) {
     return new AppError("Request timed out", ErrorType.NETWORK, "TIMEOUT", undefined, true);

@@ -22,7 +22,7 @@ module.exports = function (api) {
     ],
     plugins: [
       // Reanimated plugin is automatically configured by babel-preset-expo for SDK 54
-      // Do not manually add react-native-reanimated/plugin or react-native-worklets/plugin
+      // Do not manually add react-native-reanimated/plugin
     ],
   };
 

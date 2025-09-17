@@ -297,8 +297,11 @@ export default function ReviewDetailScreen() {
     setShowReportModal(true);
   };
 
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString("en-US", {
+  const formatDate = (date: Date | string | undefined) => {
+    if (!date) return "Unknown date";
+    const dateObj = date instanceof Date ? date : new Date(date);
+    if (isNaN(dateObj.getTime())) return "Invalid date";
+    return dateObj.toLocaleDateString("en-US", {
       weekday: "long",
       year: "numeric",
       month: "long",
@@ -306,9 +309,12 @@ export default function ReviewDetailScreen() {
     });
   };
 
-  const formatTimeAgo = (date: Date) => {
+  const formatTimeAgo = (date: Date | string | undefined) => {
+    if (!date) return "Unknown";
+    const dateObj = date instanceof Date ? date : new Date(date);
+    if (isNaN(dateObj.getTime())) return "Unknown";
     const now = new Date();
-    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+    const diffInHours = Math.floor((now.getTime() - dateObj.getTime()) / (1000 * 60 * 60));
 
     if (diffInHours < 24) {
       return `${diffInHours}h ago`;
@@ -500,7 +506,7 @@ export default function ReviewDetailScreen() {
               {/* Review Date */}
               <View className="items-center">
                 <Text className="text-xs" style={{ color: colors.text.muted }}>
-                  Posted on {formatDate(review.createdAt)}
+                  Posted on {formatDate(review?.createdAt)}
                 </Text>
               </View>
             </View>
