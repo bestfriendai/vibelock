@@ -100,6 +100,7 @@
     "expo-linear-gradient": "~15.0.7",
     "expo-linking": "~8.0.8",
     "expo-live-photo": "~1.0.7",
+    "expo-local-authentication": "~14.0.7",
     "expo-location": "~19.0.7",
     "expo-mail-composer": "~15.0.7",
     "expo-manifests": "~1.0.8",

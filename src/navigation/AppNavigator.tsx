@@ -26,6 +26,7 @@ import SignInScreen from "../screens/SignInScreen";
 import SignUpScreen from "../screens/SignUpScreen";
 import ForgotPasswordScreen from "../screens/ForgotPasswordScreen";
 import ResetPasswordScreen from "../screens/ResetPasswordScreen";
+import OnboardingScreen from "../screens/OnboardingScreen";
 import AuthTestScreen from "../screens/AuthTestScreen";
 import ChatRoomScreen from "../screens/ChatRoomScreen";
 import ReviewDetailScreen from "../screens/ReviewDetailScreen";
@@ -111,6 +112,10 @@ type SerializedReview = Omit<import("../types").Review, "createdAt" | "updatedAt
 export type RootStackParamList = {
   SignIn: undefined;
   SignUp: undefined;
+  ForgotPassword: undefined;
+  ResetPassword: undefined;
+  Onboarding: undefined;
+  AuthTest: undefined;
   MainTabs: undefined;
   PersonProfile: {
     firstName: string;
@@ -358,6 +363,11 @@ function TabNavigator() {
               paddingBottom: Math.max(insets.bottom, 6),
               paddingTop: 4,
               height: 52 + (insets.bottom || 0),
+              // React Navigation v7 safe area optimizations
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
             },
             tabBarLabelStyle: { fontSize: 12, fontWeight: "500" },
             headerShown: false,
@@ -427,10 +437,21 @@ export default function AppNavigator() {
         headerShown: false,
         animation: "slide_from_right",
         animationDuration: 300,
+        // React Navigation v7 optimizations
+        gestureEnabled: true,
+        gestureDirection: "horizontal",
       }}
     >
       {!isAuthenticated && !isGuestMode ? (
         <>
+          <Stack.Screen
+            name="Onboarding"
+            component={OnboardingScreen}
+            options={{
+              animation: "fade",
+              headerShown: false,
+            }}
+          />
           <Stack.Screen
             name="SignIn"
             component={SignInScreen}
@@ -480,6 +501,9 @@ export default function AppNavigator() {
               presentation: "modal",
               ...standardHeader,
               headerTitle: "Write Review",
+              // React Navigation v7 modal optimizations
+              gestureEnabled: true,
+              gestureDirection: "vertical",
             }}
           />
           <Stack.Screen
@@ -489,6 +513,9 @@ export default function AppNavigator() {
               presentation: "modal",
               ...standardHeader,
               headerTitle: "Profile",
+              // React Navigation v7 modal optimizations
+              gestureEnabled: true,
+              gestureDirection: "vertical",
             }}
           />
           <Stack.Screen

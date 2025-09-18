@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback, useRef } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { NavigationContainer } from "@react-navigation/native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { AppState, View, Text, Pressable, StyleSheet, ActivityIndicator, Platform } from "react-native";
+import { AppState, View, Text, Pressable, StyleSheet, ActivityIndicator, Platform, AppStateStatus } from "react-native";
 import * as Linking from "expo-linking";
 import AppNavigator from "./src/navigation/AppNavigator";
 import ErrorBoundary from "./src/components/ErrorBoundary";
@@ -46,7 +46,7 @@ const openai_api_key = Constants.expoConfig.extra.apikey;
 const linking = {
   prefixes: [Linking.createURL("/"), "locker-room-talk://", "https://lockerroom.app", "http://lockerroom.app"],
   config: {
-    initialRouteName: "MainTabs",
+    initialRouteName: "MainTabs" as const,
     screens: {
       MainTabs: {
         path: "main",
@@ -299,7 +299,7 @@ export default function App() {
     if (initializationCompleteRef.current) return;
     initializationCompleteRef.current = true;
 
-    PerformanceMonitor.startMeasurement("optional_services_init");
+    PerformanceMonitor?.startMeasurement?.("optional_services_init");
 
     try {
       // Initialize services that depend on app being ready
@@ -332,7 +332,7 @@ export default function App() {
       console.error("Optional services initialization error:", error);
       // Don't throw here as these are optional services
     } finally {
-      PerformanceMonitor.endMeasurement("optional_services_init");
+      PerformanceMonitor?.endMeasurement?.("optional_services_init");
     }
   }, [initializeRevenueCat]);
 
@@ -341,7 +341,7 @@ export default function App() {
     const unsubscribeAuth = initializeAuthListener();
 
     // Enhanced app state change handler
-    const handleAppStateChange = (nextAppState: string) => {
+    const handleAppStateChange = (nextAppState: AppStateStatus) => {
       const previousAppState = appStateRef.current;
       appStateRef.current = nextAppState;
 
@@ -504,7 +504,7 @@ export default function App() {
                 onReady={() => {
                   console.log("📱 Navigation ready");
                   setIsNavigationReady(true);
-                  PerformanceMonitor.endMeasurement("app_startup");
+                  PerformanceMonitor?.endMeasurement?.("app_startup");
                 }}
                 onStateChange={(state) => {
                   // Enhanced navigation state tracking

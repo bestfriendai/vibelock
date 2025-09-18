@@ -40,10 +40,15 @@ export default {
         NSUserTrackingUsageDescription:
           "This identifier will be used to deliver personalized ads to you and improve your app experience.",
         NSLocationWhenInUseUsageDescription: "This app uses location to show nearby reviews and content.",
+        // Uncomment if background location is needed in the future
+        // NSLocationAlwaysAndWhenInUseUsageDescription: "This app uses location to provide location-based features even when not actively using the app.",
         NSCameraUsageDescription: "This app uses the camera to take photos for reviews and share images in chat.",
         NSPhotoLibraryUsageDescription:
           "This app accesses your photo library to select images for reviews and chat messages.",
+        NSPhotoLibraryAddUsageDescription:
+          "This app can save photos to your photo library when sharing or downloading content.",
         NSMicrophoneUsageDescription: "This app uses the microphone to record voice messages in chat.",
+        NSVideoRecordingUsageDescription: "This app uses the camera to record videos for reviews and chat messages.",
         CFBundleURLTypes: [
           {
             CFBundleURLName: "com.lockerroom.app",
@@ -51,6 +56,11 @@ export default {
           },
         ],
         ITSAppUsesNonExemptEncryption: false,
+        UIBackgroundModes: [
+          "background-fetch",
+          "remote-notification",
+          "background-processing",
+        ],
       },
       requireFullScreen: false,
       userInterfaceStyle: "automatic",
@@ -71,6 +81,24 @@ export default {
           {
             NSPrivacyAccessedAPIType: "NSPrivacyAccessedAPICategoryDiskSpace",
             NSPrivacyAccessedAPITypeReasons: ["E174.1"],
+          },
+          {
+            NSPrivacyAccessedAPIType: "NSPrivacyAccessedAPICategoryActiveKeyboards",
+            NSPrivacyAccessedAPITypeReasons: ["54BD.1"],
+          },
+        ],
+        NSPrivacyCollectedDataTypes: [
+          {
+            NSPrivacyCollectedDataType: "NSPrivacyCollectedDataTypeLocation",
+            NSPrivacyCollectedDataTypeLinked: false,
+            NSPrivacyCollectedDataTypeTracking: false,
+            NSPrivacyCollectedDataTypePurposes: ["NSPrivacyCollectedDataTypePurposeAppFunctionality"],
+          },
+          {
+            NSPrivacyCollectedDataType: "NSPrivacyCollectedDataTypePhotos",
+            NSPrivacyCollectedDataTypeLinked: false,
+            NSPrivacyCollectedDataTypeTracking: false,
+            NSPrivacyCollectedDataTypePurposes: ["NSPrivacyCollectedDataTypePurposeAppFunctionality"],
           },
         ],
       },
@@ -95,6 +123,14 @@ export default {
         "CAMERA",
         "RECORD_AUDIO",
         "POST_NOTIFICATIONS",
+        // Granular media permissions for Android 13+
+        "READ_MEDIA_IMAGES",
+        "READ_MEDIA_VIDEO",
+        "READ_MEDIA_AUDIO",
+        "READ_MEDIA_VISUAL_USER_SELECTED",
+        // Legacy storage permissions for older Android versions
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
       ],
       // Dynamic google-services.json handling via EAS secrets
       // Falls back to local file for development builds
@@ -141,6 +177,12 @@ export default {
       "expo-document-picker",
       "expo-font",
       "expo-image-picker",
+      [
+        "expo-local-authentication",
+        {
+          faceIDPermission: "Allow $(PRODUCT_NAME) to use Face ID for secure authentication."
+        }
+      ],
       "expo-mail-composer",
       "expo-media-library",
       "expo-notifications",

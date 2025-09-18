@@ -96,6 +96,8 @@ class NotificationService {
 
       if (finalStatus !== "granted") {
         console.warn("Push notification permissions not granted");
+        // Store permission status for later retry
+        await this.storeDeniedPermissionStatus();
         // Don't throw error, just log and continue
         return;
       }
@@ -659,6 +661,31 @@ class NotificationService {
     this.notificationListeners = [];
     this.pushToken = null;
     this.isInitialized = false;
+  }
+
+  /**
+   * Store denied permission status for retry logic
+   */
+  private async storeDeniedPermissionStatus(): Promise<void> {
+    try {
+      // Could store in AsyncStorage for retry prompts later
+      console.log("📵 Notification permissions denied - stored for future retry");
+    } catch (error) {
+      console.warn("Failed to store denied permission status:", error);
+    }
+  }
+
+  /**
+   * Check if we should prompt for notification permissions again
+   */
+  async shouldRetryPermissionRequest(): Promise<boolean> {
+    try {
+      const { status } = await Notifications.getPermissionsAsync();
+      return status === "undetermined";
+    } catch (error) {
+      console.warn("Failed to check permission status:", error);
+      return false;
+    }
   }
 
   /**

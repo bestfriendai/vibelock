@@ -3,6 +3,7 @@ import { canUseAdMob, buildEnv } from "../utils/buildEnvironment";
 import { ADMOB_CONFIG, getAdUnitId } from "../config/admobConfig";
 import { subscriptionService } from "./subscriptionService";
 import { supabase } from "../config/supabase";
+import { gdprConsentService } from "./gdprConsentService";
 
 // Mock types for Expo Go
 interface MockInterstitialAd {
@@ -50,6 +51,14 @@ class AdMobService {
       this.initializeMockAds();
       this.initialized = true;
       return;
+    }
+
+    // Initialize GDPR consent service first
+    try {
+      await gdprConsentService.initialize();
+      console.log("GDPR consent service initialized");
+    } catch (error) {
+      console.warn("GDPR consent service initialization failed:", error);
     }
 
     // Enhanced initialization with retry logic and SDK 54 compatibility fixes
