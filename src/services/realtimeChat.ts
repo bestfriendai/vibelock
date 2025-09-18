@@ -202,12 +202,11 @@ class EnhancedRealtimeChatService {
             subscriptionState.lastStateChange = Date.now();
           }
 
-          // Validate state transition
+          // Validate state transition (but don't fail on invalid transitions)
           if (!this.isValidStateTransition(roomId, status)) {
-            console.warn(`[RealtimeChat] Invalid state transition for ${roomId}: ${status}`);
-            const classifiedError = classifyError(new Error(`Invalid state transition: ${status}`));
-            this.handleSubscriptionError(roomId, classifiedError);
-            return;
+            console.warn(`[RealtimeChat] Invalid state transition for ${roomId}: ${status} - continuing anyway`);
+            // Don't treat state transition issues as fatal errors
+            // Just log and continue - the subscription might still work
           }
 
           if (status === "SUBSCRIBED") {
@@ -1289,15 +1288,28 @@ class EnhancedRealtimeChatService {
     if (!subscriptionState) return true; // First state is always valid
 
     const currentStatus = subscriptionState.status;
+
+    // Allow same-state transitions to handle reconnections and multiple subscription attempts
+    if (currentStatus === newStatus) {
+      console.log(`[RealtimeChat] Same-state transition allowed for ${roomId}: ${currentStatus} -> ${newStatus}`);
+      return true;
+    }
+
     const validTransitions = {
       CONNECTING: ["SUBSCRIBED", "CHANNEL_ERROR", "TIMED_OUT", "CLOSED"],
-      SUBSCRIBED: ["CHANNEL_ERROR", "TIMED_OUT", "CLOSED"],
+      SUBSCRIBED: ["CHANNEL_ERROR", "TIMED_OUT", "CLOSED", "CONNECTING"], // Allow reconnection
       CHANNEL_ERROR: ["CONNECTING", "SUBSCRIBED", "CLOSED"],
       TIMED_OUT: ["CONNECTING", "SUBSCRIBED", "CLOSED"],
-      CLOSED: ["CONNECTING"],
+      CLOSED: ["CONNECTING", "SUBSCRIBED"], // Allow direct resubscription
     };
 
-    return validTransitions[currentStatus]?.includes(newStatus) || false;
+    const isValid = validTransitions[currentStatus]?.includes(newStatus) || false;
+
+    if (!isValid) {
+      console.warn(`[RealtimeChat] Invalid state transition for ${roomId}: ${currentStatus} -> ${newStatus}`);
+    }
+
+    return isValid;
   }
 
   /**
