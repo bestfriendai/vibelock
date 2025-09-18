@@ -305,7 +305,7 @@ class EnhancedRealtimeChatService {
 
       if (messages && messages.length > 0) {
         // Convert to app-preferred order: oldest -> newest for bottom-anchored lists
-        const formattedMessages = messages.map(this.formatMessage).reverse();
+        const formattedMessages = messages.map((msg) => this.formatMessage(msg)).reverse();
 
         // Update enhanced cache with metadata
         const cache = this.messageCache.get(roomId) || new Map();
@@ -361,7 +361,7 @@ class EnhancedRealtimeChatService {
       if (error) throw error;
 
       // Return in ascending order (oldest -> newest) so caller can prepend
-      return messages ? messages.map(this.formatMessage).reverse() : [];
+      return messages ? messages.map((msg) => this.formatMessage(msg)).reverse() : [];
     } catch (error) {
       console.warn(`Failed to load older messages for room ${roomId}:`, error);
       return [];
