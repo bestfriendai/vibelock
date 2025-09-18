@@ -13,7 +13,18 @@ export const getAuthenticatedUser = async (): Promise<{ user: User | null; supab
   try {
     // Get both store state and Supabase state
     const storeState = useAuthStore.getState();
+    console.log(`🔍 getAuthenticatedUser - Store state:`, {
+      isAuthenticated: storeState.isAuthenticated,
+      hasUser: !!storeState.user,
+      isGuestMode: storeState.isGuestMode,
+      userId: storeState.user?.id?.slice(-4) || 'none'
+    });
+
     const supabaseUser = await authService.getCurrentUser();
+    console.log(`🔍 getAuthenticatedUser - Supabase user:`, {
+      hasSupabaseUser: !!supabaseUser,
+      supabaseUserId: supabaseUser?.id?.slice(-4) || 'none'
+    });
 
     // If store says authenticated but Supabase doesn't, DON'T auto-clear
     // This could be a temporary network issue or session refresh timing
@@ -87,17 +98,27 @@ export const useAuthState = () => {
 export const requireAuthentication = async (
   action: string = "perform this action",
 ): Promise<{ user: User; supabaseUser: any }> => {
+  console.log(`🔐 requireAuthentication called for: ${action}`);
+
   const { user, supabaseUser } = await getAuthenticatedUser();
+
+  console.log(`🔍 Auth check result:`, {
+    hasUser: !!user,
+    hasSupabaseUser: !!supabaseUser,
+    userId: user?.id?.slice(-4) || 'none',
+    supabaseUserId: supabaseUser?.id?.slice(-4) || 'none'
+  });
 
   // Be more lenient - if we have either a user OR supabaseUser, allow the action
   // The auth listener will eventually sync the states
   if (!user && !supabaseUser) {
+    console.error(`❌ Authentication failed for ${action}: No user or supabaseUser found`);
     throw new AppError(`Must be signed in to ${action}`, ErrorType.AUTH, "AUTHENTICATION_REQUIRED", 401, false);
   }
 
   // If we have store user but no supabase user, try to get supabase user again
   if (user && !supabaseUser) {
-    const freshSupabaseUser = await supabaseAuth.getCurrentUser();
+    const freshSupabaseUser = await authService.getCurrentUser();
     return { user, supabaseUser: freshSupabaseUser || null };
   }
 
