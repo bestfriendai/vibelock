@@ -14,9 +14,10 @@ import { useNavigation } from "@react-navigation/native";
 import { startTimer } from "../utils/performance";
 import OfflineBanner from "../components/OfflineBanner";
 import { useOffline } from "../hooks/useOffline";
+import type { RootStackNavigationProp } from "../navigation/AppNavigator";
 
 export default function ChatroomsScreen() {
-  const navigation = useNavigation<any>();
+  const navigation = useNavigation<RootStackNavigationProp>();
   const { colors } = useTheme();
   const {
     chatRooms,
@@ -74,7 +75,8 @@ export default function ChatroomsScreen() {
   };
 
   const openRoom = (room: ChatRoom) => {
-    navigation.navigate("ChatRoom", { roomId: room.id });
+    // Navigate to the parent stack's ChatRoom screen
+    navigation.getParent()?.navigate("ChatRoom", { roomId: room.id });
   };
 
   // Guest mode protection

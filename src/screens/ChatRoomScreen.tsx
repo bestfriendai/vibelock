@@ -42,6 +42,14 @@ export default function ChatRoomScreen() {
   const { colors } = useTheme();
 
   const { roomId } = params;
+
+  // Validate roomId parameter
+  if (!roomId) {
+    console.error("ChatRoomScreen: Missing roomId parameter");
+    navigation.goBack();
+    return null;
+  }
+
   const [showMemberList, setShowMemberList] = useState(false);
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
   const [isSubscribed, setIsSubscribed] = useState(false);
