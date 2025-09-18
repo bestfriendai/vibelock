@@ -22,9 +22,9 @@ jest.mock("../src/services/notificationService", () => ({
 
 // Mock EnhancedMessageBubble to expose simple text for order checks
 jest.mock("../src/components/EnhancedMessageBubble", () => {
-  const React = require("react");
-  const { Text } = require("react-native");
-  return ({ message }: any) => {
+  const React = jest.requireActual("react");
+  const { Text } = jest.requireActual("react-native");
+  const MockEnhancedMessageBubble = ({ message }: any) => {
     return (
       <>
         {}
@@ -32,10 +32,9 @@ jest.mock("../src/components/EnhancedMessageBubble", () => {
       </>
     );
   };
+  MockEnhancedMessageBubble.displayName = "MockEnhancedMessageBubble";
+  return MockEnhancedMessageBubble;
 });
-
-// Provide React Native Text for the mock above
-import { Text } from "react-native";
 
 describe("Chat message ordering", () => {
   beforeEach(() => {

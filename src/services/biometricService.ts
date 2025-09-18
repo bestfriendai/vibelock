@@ -80,12 +80,12 @@ class BiometricService {
    */
   async authenticate(
     promptMessage: string = "Authenticate to continue",
-    subtitle?: string
+    subtitle?: string,
   ): Promise<BiometricAuthResult> {
     if (!this.isSupported()) {
       return {
         success: false,
-        error: "Biometric authentication not available"
+        error: "Biometric authentication not available",
       };
     }
 
@@ -101,7 +101,7 @@ class BiometricService {
       if (result.success) {
         return {
           success: true,
-          biometricType: this.getBiometricTypeName()
+          biometricType: this.getBiometricTypeName(),
         };
       } else {
         let errorMessage = "Authentication failed";
@@ -124,14 +124,14 @@ class BiometricService {
 
         return {
           success: false,
-          error: errorMessage
+          error: errorMessage,
         };
       }
     } catch (error) {
       console.warn("Biometric authentication error:", error);
       return {
         success: false,
-        error: "Authentication system error"
+        error: "Authentication system error",
       };
     }
   }
@@ -142,7 +142,7 @@ class BiometricService {
   async quickAuth(action: string): Promise<boolean> {
     const result = await this.authenticate(
       `Use ${this.getBiometricTypeName()} to ${action}`,
-      "This action requires authentication"
+      "This action requires authentication",
     );
     return result.success;
   }

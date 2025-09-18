@@ -346,7 +346,7 @@ export function useAppInitialization() {
         // Report error to error reporting service if available
         try {
           if (errorReportingService.isInitialized()) {
-            await errorReportingService.reportError(errorObj, "initialization");
+            await errorReportingService.reportError(errorObj, { context: "initialization" });
           }
         } catch (reportingError) {
           console.warn("Failed to report initialization error:", reportingError);

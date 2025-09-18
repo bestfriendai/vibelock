@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { mmkvStorage } from "../utils/mmkvStorage";
 import { canUseRevenueCat, buildEnv } from "../utils/buildEnvironment";
 import { subscriptionService } from "../services/subscriptionService";
 import { supabase } from "../config/supabase";
@@ -430,7 +430,7 @@ const useSubscriptionStore = create<SubscriptionState>()(
     }),
     {
       name: "subscription-storage",
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => mmkvStorage),
       partialize: (state) => ({
         isPremium: state.isPremium,
         isPro: state.isPro,
@@ -446,16 +446,19 @@ const useSubscriptionStore = create<SubscriptionState>()(
 function createRevenueCatStub(): RevenueCatStub {
   return {
     configure: async (config: { apiKey: string; appUserID?: string }) => {
-      console.log("[STUB] RevenueCat configure called with:", { apiKey: config.apiKey?.substring(0, 10) + "...", appUserID: config.appUserID });
+      console.log("[STUB] RevenueCat configure called with:", {
+        apiKey: config.apiKey?.substring(0, 10) + "...",
+        appUserID: config.appUserID,
+      });
       // Simulate async operation
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
     },
     setDebugLogsEnabled: (enabled: boolean) => {
       console.log("[STUB] RevenueCat setDebugLogsEnabled:", enabled);
     },
     getCustomerInfo: async (): Promise<CustomerInfo> => {
       console.log("[STUB] RevenueCat getCustomerInfo called");
-      await new Promise(resolve => setTimeout(resolve, 200));
+      await new Promise((resolve) => setTimeout(resolve, 200));
       return {
         entitlements: {
           active: {}, // No active subscriptions in stub
@@ -464,7 +467,7 @@ function createRevenueCatStub(): RevenueCatStub {
     },
     getOfferings: async () => {
       console.log("[STUB] RevenueCat getOfferings called");
-      await new Promise(resolve => setTimeout(resolve, 200));
+      await new Promise((resolve) => setTimeout(resolve, 200));
       return {
         all: {
           default: {
@@ -497,7 +500,7 @@ function createRevenueCatStub(): RevenueCatStub {
     },
     purchasePackage: async (pkg: any): Promise<{ customerInfo: CustomerInfo }> => {
       console.log("[STUB] RevenueCat purchasePackage called with:", pkg?.identifier);
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate purchase flow
+      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate purchase flow
       const mockCustomerInfo: CustomerInfo = {
         entitlements: {
           active: { premium: {} }, // Simulate successful purchase
@@ -507,7 +510,7 @@ function createRevenueCatStub(): RevenueCatStub {
     },
     restorePurchases: async (): Promise<CustomerInfo> => {
       console.log("[STUB] RevenueCat restorePurchases called");
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
       return {
         entitlements: {
           active: {}, // No purchases to restore in stub
@@ -519,7 +522,7 @@ function createRevenueCatStub(): RevenueCatStub {
     },
     logIn: async (userId: string) => {
       console.log("[STUB] RevenueCat logIn called with:", userId);
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
     },
   };
 }

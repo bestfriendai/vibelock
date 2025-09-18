@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { mmkvStorage } from "../utils/mmkvStorage";
 import { Report } from "../types";
 import { reportsService } from "../services/reports";
 import useAuthStore from "./authStore";
@@ -154,7 +154,7 @@ const useSafetyStore = create<SafetyStore>()(
     }),
     {
       name: "safety-storage",
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => mmkvStorage),
       // Persist sanitized safety data, but not loading states
       partialize: (state) =>
         sanitizeSafetyDataForPersistence({

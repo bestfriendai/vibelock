@@ -13,7 +13,7 @@ import { MediaItem } from "../types";
 export default function PersonProfileScreen() {
   const route = useRoute<PersonProfileRouteProp>();
   const navigation = useNavigation<RootStackNavigationProp>();
-  const { firstName, location } = route.params;
+  const { firstName, city, state } = route.params;
   const [showReportModal, setShowReportModal] = useState(false);
   const [showMediaViewer, setShowMediaViewer] = useState(false);
   const [selectedMediaIndex, setSelectedMediaIndex] = useState(0);
@@ -26,7 +26,7 @@ export default function PersonProfileScreen() {
       id: "1",
       reviewerAnonymousId: "anon_123",
       reviewedPersonName: firstName,
-      reviewedPersonLocation: location,
+      reviewedPersonLocation: { city, state },
       greenFlags: ["good_communicator", "respectful"],
       redFlags: [],
       reviewText:
@@ -56,7 +56,7 @@ export default function PersonProfileScreen() {
       id: "2",
       reviewerAnonymousId: "anon_456",
       reviewedPersonName: firstName,
-      reviewedPersonLocation: location,
+      reviewedPersonLocation: { city, state },
       greenFlags: ["reliable", "fun"],
       redFlags: ["poor_communication"],
       reviewText: "Nice person but communication could be better. Still had a good time overall though!",
@@ -78,7 +78,7 @@ export default function PersonProfileScreen() {
       id: "3",
       reviewerAnonymousId: "anon_789",
       reviewedPersonName: firstName,
-      reviewedPersonLocation: location,
+      reviewedPersonLocation: { city, state },
       greenFlags: ["honest", "kind", "ambitious"],
       redFlags: [],
       reviewText:
@@ -133,7 +133,7 @@ export default function PersonProfileScreen() {
             <View className="flex-row items-center">
               <Ionicons name="location-outline" size={16} color="white" />
               <Text className="text-white/90 ml-1 text-lg">
-                {location.city}, {location.state}
+                {city}, {state}
               </Text>
             </View>
           </View>
@@ -240,9 +240,9 @@ export default function PersonProfileScreen() {
       <ReportModal
         visible={showReportModal}
         onClose={() => setShowReportModal(false)}
-        itemId={`profile_${firstName}_${location.city}_${location.state}`}
+        itemId={`profile_${firstName}_${city}_${state}`}
         itemType="profile"
-        itemName={`${firstName} from ${location.city}, ${location.state}`}
+        itemName={`${firstName} from ${city}, ${state}`}
       />
     </SafeAreaView>
   );

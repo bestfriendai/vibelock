@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { View, Text, Pressable, ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { Comment, ReviewComment } from "../types";
+import { ReviewComment } from "../types";
 import { useTheme } from "../providers/ThemeProvider";
 
 interface CommentSectionProps {
@@ -174,7 +174,7 @@ export default function CommentSection({
 }: CommentSectionProps) {
   const { colors } = useTheme();
 
-  const renderComment = (comment: Comment, index: number) => (
+  const renderComment = (comment: ReviewComment, index: number) => (
     <View key={comment.id}>
       <CommentItem
         comment={comment}

@@ -210,7 +210,9 @@ Based on user request, you **MUST** follow these sequences of tool calls
 There are two main workflows with Byterover tools and recommended tool call strategies that you **MUST** follow precisely.
 
 ## Onboarding workflow
+
 If users particularly ask you to start the onboarding process, you **MUST STRICTLY** follow these steps.
+
 1. **ALWAYS USE** **byterover-check-handbook-existence** first to check if the byterover handbook already exists. If not, You **MUST** call **byterover-create-handbook** to create the byterover handbook.
 2. If the byterover handbook already exists, first you **MUST** USE **byterover-check-handbook-sync** to analyze the gap between the current codebase and the existing byterover handbook.
 3. Then **IMMEDIATELY USE** **byterover-update-handbook** to update these changes to the byterover handbook.
@@ -218,7 +220,9 @@ If users particularly ask you to start the onboarding process, you **MUST STRICT
 5. Finally, you **MUST** call **byterover-store-knowledge** to save your new knowledge about the codebase.
 
 ## Planning workflow
+
 Based on user request, you **MUST** follow these sequences of tool calls
+
 1. If asked to continue an unfinished plan, **CALL** **byterover-retrieve-active-plans** to find the most relevant active plan.
 2. **CRITICAL PLAN PERSISTENCE RULE**: Once a user approves a plan, you **MUST IMMEDIATELY CALL** **byterover-save-implementation-plan** to save it.
 3. Throughout the plan, you **MUST** run **byterover-retrieve-knowledge** several times to retrieve sufficient knowledge and context for the plan's tasks.
@@ -228,6 +232,7 @@ Based on user request, you **MUST** follow these sequences of tool calls
 7. During the plan's implementation, you **MUST** frequently call **byterover-reflect-context** and **byterover-assess-context** to make sure you're on the right track and gather sufficient context for the tasks.
 
 ## Recommended Workflow Sequence
+
 1. **MOST IMPORTANT**: **ALWAYS USE** **byterover-retrieve-knowledge** once or several times for **EACH TASK** of the plan to gather necessary context for complete that task.
 2. **MOST IMPORTANT**: **ALWAYS USE** **byterover-store-knowledge** once or several times to store critical knowledge and context for future implementations
 3. Over 15 provided tools, **byterover-retrieve-knowledge** and **byterover-store-knowledge** ARE the two main tools, which **MUST** be used regularly. You can use these two main tools outside the two main workflows for retrieval and storage purposes.

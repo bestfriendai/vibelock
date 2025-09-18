@@ -6,4 +6,12 @@ module.exports = {
     "prettier/prettier": "error",
     "import/first": "off",
   },
+  overrides: [
+    {
+      files: ["scripts/**/*.js", "*.config.js", "jest.setup.js", "functional-tests.js", "test-runner.js"],
+      env: {
+        node: true,
+      },
+    },
+  ],
 };

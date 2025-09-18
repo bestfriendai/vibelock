@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { mmkvStorage } from "../utils/mmkvStorage";
 import { notificationService, NotificationData } from "../services/notificationService";
 
 export interface Notification {
@@ -220,7 +220,7 @@ const useNotificationStore = create<NotificationStore>()(
     }),
     {
       name: "notification-storage",
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => mmkvStorage),
       // Only persist notifications and unread count, not loading states
       partialize: (state) => ({
         notifications: state.notifications,

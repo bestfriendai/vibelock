@@ -242,34 +242,34 @@ export function applyHermesWorkarounds(): void {
   // Fix for React Native Reanimated _toString property issue
   try {
     // Check if _toString is missing (even without worklets flag)
-    if (typeof (global as any)._toString === 'undefined') {
+    if (typeof (global as any)._toString === "undefined") {
       console.log("[HermesCompatibility] Adding missing _toString property for Reanimated compatibility");
 
-      Object.defineProperty(global, '_toString', {
-        value: function(obj: any) {
-          if (obj === null) return 'null';
-          if (obj === undefined) return 'undefined';
-          if (typeof obj === 'string') return obj;
-          if (typeof obj.toString === 'function') return obj.toString();
+      Object.defineProperty(global, "_toString", {
+        value: function (obj: any) {
+          if (obj === null) return "null";
+          if (obj === undefined) return "undefined";
+          if (typeof obj === "string") return obj;
+          if (typeof obj.toString === "function") return obj.toString();
           return String(obj);
         },
         configurable: true,
         writable: true,
-        enumerable: false
+        enumerable: false,
       });
     }
 
     // Also ensure Function.prototype._toString exists for worklets
-    if (typeof Function.prototype._toString === 'undefined') {
+    if (typeof Function.prototype._toString === "undefined") {
       console.log("[HermesCompatibility] Adding Function.prototype._toString for worklets");
 
-      Object.defineProperty(Function.prototype, '_toString', {
-        value: function() {
+      Object.defineProperty(Function.prototype, "_toString", {
+        value: function () {
           return this.toString();
         },
         configurable: true,
         writable: true,
-        enumerable: false
+        enumerable: false,
       });
     }
   } catch (error) {

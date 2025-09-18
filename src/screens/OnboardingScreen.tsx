@@ -25,24 +25,19 @@ export default function OnboardingScreen() {
         backgroundColor: colors.background,
         justifyContent: "center",
         alignItems: "center",
-        paddingHorizontal: 24
+        paddingHorizontal: 24,
       }}
     >
       {/* App Logo */}
       <View style={{ alignItems: "center", marginBottom: 48 }}>
-        <Ionicons
-          name="chatbubbles"
-          size={80}
-          color={colors.brand.red}
-          style={{ marginBottom: 16 }}
-        />
+        <Ionicons name="chatbubbles" size={80} color={colors.brand.red} style={{ marginBottom: 16 }} />
         <Text
           style={{
             fontSize: 32,
             fontWeight: "bold",
             color: colors.text.primary,
             textAlign: "center",
-            marginBottom: 8
+            marginBottom: 8,
           }}
         >
           Welcome to{"\n"}Locker Room Talk
@@ -52,7 +47,7 @@ export default function OnboardingScreen() {
             fontSize: 16,
             color: colors.text.secondary,
             textAlign: "center",
-            lineHeight: 24
+            lineHeight: 24,
           }}
         >
           Connect with your community{"\n"}Share honest reviews and experiences
@@ -68,14 +63,14 @@ export default function OnboardingScreen() {
             paddingVertical: 16,
             paddingHorizontal: 32,
             borderRadius: 12,
-            alignItems: "center"
+            alignItems: "center",
           }}
         >
           <Text
             style={{
               color: colors.background,
               fontSize: 16,
-              fontWeight: "600"
+              fontWeight: "600",
             }}
           >
             Get Started
@@ -91,14 +86,14 @@ export default function OnboardingScreen() {
             paddingVertical: 14,
             paddingHorizontal: 32,
             borderRadius: 12,
-            alignItems: "center"
+            alignItems: "center",
           }}
         >
           <Text
             style={{
               color: colors.text.primary,
               fontSize: 16,
-              fontWeight: "600"
+              fontWeight: "600",
             }}
           >
             Sign In

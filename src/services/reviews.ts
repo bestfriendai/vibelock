@@ -20,57 +20,64 @@ interface PaginatedResponse<T> {
 
 export class ReviewsService {
   async getReviews(filter: ReviewsFilter = {}): Promise<PaginatedResponse<Review>> {
-    return withRetry(async () => {
-      try {
-        // Query with foreign key join (now that constraint is properly set up)
-        let query = supabase.from("reviews_firebase").select("*, author:users!author_id(id, username)", { count: "exact" });
+    return withRetry(
+      async () => {
+        try {
+          // Query with foreign key join (now that constraint is properly set up)
+          let query = supabase
+            .from("reviews_firebase")
+            .select("*, author:users!author_id(id, username)", { count: "exact" });
 
-        if (filter.userId) {
-          query = query.eq("author_id", filter.userId);
+          if (filter.userId) {
+            query = query.eq("author_id", filter.userId);
+          }
+
+          if (filter.roomId) {
+            // reviews_firebase doesn't have room_id, skip this filter
+            console.warn("Room filtering not supported for reviews_firebase table");
+          }
+
+          if (filter.category) {
+            query = query.eq("category", filter.category);
+          }
+
+          if (filter.searchQuery) {
+            query = query.or(
+              `reviewed_person_name.ilike.%${filter.searchQuery}%,review_text.ilike.%${filter.searchQuery}%`,
+            );
+          }
+
+          const limit = filter.limit || 20;
+          const offset = filter.offset || 0;
+
+          query = query.order("created_at", { ascending: false }).range(offset, offset + limit - 1);
+
+          const { data, error, count } = await query;
+
+          if (error) throw error;
+
+          // Get comments count for each review separately (for now, we'll set to 0)
+          const reviews = (data || []).map((item) => ({
+            ...mapFieldsToCamelCase(item),
+            commentsCount: 0, // TODO: Implement proper comments count
+          }));
+
+          return {
+            data: reviews,
+            count: count || 0,
+            hasMore: (count || 0) > offset + limit,
+          };
+        } catch (error: any) {
+          console.error("Error fetching reviews:", error);
+          throw error;
         }
-
-        if (filter.roomId) {
-          // reviews_firebase doesn't have room_id, skip this filter
-          console.warn("Room filtering not supported for reviews_firebase table");
-        }
-
-        if (filter.category) {
-          query = query.eq("category", filter.category);
-        }
-
-        if (filter.searchQuery) {
-          query = query.or(`reviewed_person_name.ilike.%${filter.searchQuery}%,review_text.ilike.%${filter.searchQuery}%`);
-        }
-
-        const limit = filter.limit || 20;
-        const offset = filter.offset || 0;
-
-        query = query.order("created_at", { ascending: false }).range(offset, offset + limit - 1);
-
-        const { data, error, count } = await query;
-
-        if (error) throw error;
-
-        // Get comments count for each review separately (for now, we'll set to 0)
-        const reviews = (data || []).map((item) => ({
-          ...mapFieldsToCamelCase(item),
-          commentsCount: 0, // TODO: Implement proper comments count
-        }));
-
-        return {
-          data: reviews,
-          count: count || 0,
-          hasMore: (count || 0) > offset + limit,
-        };
-      } catch (error: any) {
-        console.error("Error fetching reviews:", error);
-        throw error;
-      }
-    }, {
-      maxAttempts: 3,
-      baseDelay: 1000,
-      retryableErrors: ["NETWORK", "TIMEOUT", "SERVER_ERROR"],
-    });
+      },
+      {
+        maxAttempts: 3,
+        baseDelay: 1000,
+        retryableErrors: ["NETWORK", "TIMEOUT", "SERVER_ERROR"],
+      },
+    );
   }
 
   async getReview(reviewId: string): Promise<Review | null> {

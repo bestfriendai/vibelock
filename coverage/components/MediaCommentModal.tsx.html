@@ -25,14 +25,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/31</span>
+                <span class='fraction'>0/30</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/58</span>
+                <span class='fraction'>0/60</span>
             </div>
         
             
@@ -365,9 +365,7 @@
 <a name='L300'></a><a href='#L300'>300</a>
 <a name='L301'></a><a href='#L301'>301</a>
 <a name='L302'></a><a href='#L302'>302</a>
-<a name='L303'></a><a href='#L303'>303</a>
-<a name='L304'></a><a href='#L304'>304</a>
-<a name='L305'></a><a href='#L305'>305</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L303'></a><a href='#L303'>303</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -405,10 +403,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -676,30 +672,30 @@ import { View, Text, Modal, Pressable, ScrollView } from "react-native";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Comment, MediaItem } from "../types";
+import { ReviewComment, MediaItem } from "../types";
 import CommentInput from "./CommentInput";
 &nbsp;
 interface MediaCommentModalProps {
   visible: boolean;
   media: MediaItem;
-  comments: Comment[];
+  comments: ReviewComment[];
   isLoading?: boolean;
   isPosting?: boolean;
   onClose: () =&gt; void;
   onPostComment: (content: string) =&gt; Promise&lt;void&gt;;
   onLikeComment: (commentId: string) =&gt; void;
   onDislikeComment: (commentId: string) =&gt; void;
-  onReplyToComment: (comment: Comment) =&gt; void;
+  onReplyToComment: (comment: ReviewComment) =&gt; void;
   onReportComment: (commentId: string) =&gt; void;
-  replyToComment?: Comment | null;
+  replyToComment?: ReviewComment | null;
   onCancelReply?: () =&gt; void;
 }
 &nbsp;
 interface CommentItemProps {
-  comment: Comment;
+  comment: ReviewComment;
   onLike: (commentId: string) =&gt; void;
   onDislike: (commentId: string) =&gt; void;
-  onReply: (comment: Comment) =&gt; void;
+  onReply: (comment: ReviewComment) =&gt; void;
   onReport: (commentId: string) =&gt; void;
   isReply?: boolean;
 }
@@ -707,17 +703,15 @@ interface CommentItemProps {
 function <span class="fstat-no" title="function not covered" >CommentItem(</span>{ comment, onLike, onDislike, onReply, onReport, isReply = <span class="branch-0 cbranch-no" title="branch not covered" >false </span>}: CommentItemProps) {
   const [showReplies, setShowReplies] = <span class="cstat-no" title="statement not covered" >useState(false);</span>
 &nbsp;
-  const formatTimeAgo = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(d</span>ate: Date | string | undefined) =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >    if (!date) <span class="cstat-no" title="statement not covered" >return "Just now";</span></span>
-&nbsp;
-    const dateObj = <span class="cstat-no" title="statement not covered" >date instanceof Date ? date : new Date(date);</span>
-<span class="cstat-no" title="statement not covered" >    if (isNaN(dateObj.getTime())) <span class="cstat-no" title="statement not covered" >return "Just now";</span></span>
-&nbsp;
+  const formatTimeAgo = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(d</span>ateLike: Date | string | null | undefined) =&gt; {</span>
+    const date = <span class="cstat-no" title="statement not covered" >dateLike instanceof Date ? dateLike : dateLike ? new Date(dateLike) : null;</span>
+<span class="cstat-no" title="statement not covered" >    if (!date || isNaN(date.getTime())) <span class="cstat-no" title="statement not covered" >return "Just now";</span></span>
     const now = <span class="cstat-no" title="statement not covered" >new Date();</span>
-    const diffInHours = <span class="cstat-no" title="statement not covered" >Math.floor((now.getTime() - dateObj.getTime()) / (1000 * 60 * 60));</span>
+    const diffMs = <span class="cstat-no" title="statement not covered" >now.getTime() - date.getTime();</span>
+    const diffInHours = <span class="cstat-no" title="statement not covered" >Math.floor(diffMs / (1000 * 60 * 60));</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    if (diffInHours &lt; 1) {</span>
-      const diffInMinutes = <span class="cstat-no" title="statement not covered" >Math.floor((now.getTime() - dateObj.getTime()) / (1000 * 60));</span>
+      const diffInMinutes = <span class="cstat-no" title="statement not covered" >Math.floor(diffMs / (1000 * 60));</span>
 <span class="cstat-no" title="statement not covered" >      return diffInMinutes &lt; 1 ? "Just now" : `${diffInMinutes}m ago`;</span>
     } else <span class="cstat-no" title="statement not covered" >if (diffInHours &lt; 24) {</span>
 <span class="cstat-no" title="statement not covered" >      return `${diffInHours}h ago`;</span>
@@ -982,7 +976,7 @@ export default function <span class="fstat-no" title="function not covered" >Med
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-09-17T06:43:59.933Z
+                at 2025-09-18T01:08:11.967Z
             </div>
         <script src="../prettify.js"></script>
         <script>

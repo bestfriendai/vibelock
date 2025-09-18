@@ -105,7 +105,7 @@ class ErrorBoundaryClass extends Component<Props, State> {
     };
 
     // Check if error reporting is available
-    this.errorReportingEnabled = errorReportingService.isInitialized
+    this.errorReportingEnabled = errorReportingService.isInitialized();
   }
 
   override componentDidMount() {
@@ -312,7 +312,14 @@ class ErrorBoundaryClass extends Component<Props, State> {
         componentStack: errorInfo.componentStack,
       };
 
-      await errorReportingService.reportError(enhancedError as Error, "error_boundary");
+      await errorReportingService.reportError(error, {
+        context: "error_boundary",
+        errorType: this.state.errorType,
+        recoverable: this.state.canRecover,
+        resetCount: this.state.resetCount,
+        ...this.state.errorContext,
+        componentStack: errorInfo.componentStack,
+      });
     } catch (reportingError) {
       console.warn("Failed to report error:", reportingError);
     }
@@ -433,6 +440,11 @@ class ErrorBoundaryClass extends Component<Props, State> {
         message: "A component failed to load. This usually resolves automatically.",
         actionText: "Retry",
       },
+      component_registration: {
+        title: "Component Registration Error",
+        message: "A component failed to register properly. This usually resolves with a restart.",
+        actionText: "Restart",
+      },
       native_module: {
         title: "Module Error",
         message: "A native module failed to load. Try restarting the app.",
@@ -452,6 +464,11 @@ class ErrorBoundaryClass extends Component<Props, State> {
         title: "Permission Error",
         message: "The app needs certain permissions to work properly.",
         actionText: "Grant Permissions",
+      },
+      filesystem: {
+        title: "File System Error",
+        message: "There was an issue accessing the file system. Try restarting the app.",
+        actionText: "Restart",
       },
       general: {
         title: "Something went wrong",

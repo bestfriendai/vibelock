@@ -29,7 +29,8 @@ export default function ReviewGridCard({ review }: Props) {
       onPress={() =>
         navigation.navigate("PersonProfile", {
           firstName: review.reviewedPersonName,
-          location: review.reviewedPersonLocation,
+          city: review.reviewedPersonLocation.city,
+          state: review.reviewedPersonLocation.state,
         })
       }
     >

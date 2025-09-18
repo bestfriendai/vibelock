@@ -28,6 +28,22 @@ export default function ForgotPasswordScreen() {
   const footerOpacity = useSharedValue(0);
   const footerTranslateY = useSharedValue(30);
 
+  // Animated styles (must be before any early returns)
+  const logoAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: logoScale.value }],
+    opacity: logoOpacity.value,
+  }));
+
+  const formAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: formOpacity.value,
+    transform: [{ translateY: formTranslateY.value }],
+  }));
+
+  const footerAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: footerOpacity.value,
+    transform: [{ translateY: footerTranslateY.value }],
+  }));
+
   // Initialize entrance animations
   useEffect(() => {
     // Logo entrance
@@ -41,7 +57,7 @@ export default function ForgotPasswordScreen() {
     // Footer entrance
     footerOpacity.value = withDelay(600, withTiming(1, { duration: 600 }));
     footerTranslateY.value = withDelay(600, withSpring(0, { damping: 15, stiffness: 200 }));
-  }, []);
+  }, [footerOpacity, footerTranslateY, formOpacity, formTranslateY, logoOpacity, logoScale]);
 
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -103,22 +119,6 @@ export default function ForgotPasswordScreen() {
       </View>
     );
   }
-
-  // Animated styles
-  const logoAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: logoScale.value }],
-    opacity: logoOpacity.value,
-  }));
-
-  const formAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: formOpacity.value,
-    transform: [{ translateY: formTranslateY.value }],
-  }));
-
-  const footerAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: footerOpacity.value,
-    transform: [{ translateY: footerTranslateY.value }],
-  }));
 
   if (emailSent) {
     return (

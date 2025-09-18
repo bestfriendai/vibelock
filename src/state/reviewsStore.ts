@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { mmkvStorage } from "../utils/mmkvStorage";
 import { manipulateAsync, SaveFormat } from "expo-image-manipulator";
 import * as FileSystem from "expo-file-system/legacy";
 import { v4 as uuidv4 } from "uuid";
@@ -653,7 +653,7 @@ const useReviewsStore = create<ReviewsStore>()(
     }),
     {
       name: "reviews-storage",
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => mmkvStorage),
       // Only persist sanitized reviews and filters, not loading states
       partialize: (state) => ({
         reviews: sanitizeReviewsForPersistence(state.reviews),

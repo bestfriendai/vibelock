@@ -12,7 +12,6 @@ const SEARCH_CONFIG = {
 };
 
 export class SearchService {
-
   /**
    * Initialize search indexes and extensions if needed
    * This should be called once during app initialization
@@ -20,16 +19,13 @@ export class SearchService {
   async initializeSearchExtensions(): Promise<void> {
     try {
       // Check if pg_trgm extension is enabled
-      const { data: extensions } = await supabase
-        .from('pg_extension')
-        .select('extname')
-        .eq('extname', 'pg_trgm');
+      const { data: extensions } = await supabase.from("pg_extension").select("extname").eq("extname", "pg_trgm");
 
       if (!extensions || extensions.length === 0) {
-        console.warn('pg_trgm extension may not be enabled. Consider enabling it for better search performance.');
+        console.warn("pg_trgm extension may not be enabled. Consider enabling it for better search performance.");
       }
     } catch (error) {
-      console.warn('Could not check pg_trgm extension status:', error);
+      console.warn("Could not check pg_trgm extension status:", error);
     }
   }
 
@@ -37,13 +33,9 @@ export class SearchService {
    * Basic text search using ILIKE (case-insensitive LIKE)
    */
   async basicSearch(query: string, table: string, columns: string[]): Promise<any[]> {
-    const orConditions = columns.map(col => `${col}.ilike.%${query}%`).join(',');
+    const orConditions = columns.map((col) => `${col}.ilike.%${query}%`).join(",");
 
-    const { data, error } = await supabase
-      .from(table)
-      .select('*')
-      .or(orConditions)
-      .limit(SEARCH_CONFIG.maxResults);
+    const { data, error } = await supabase.from(table).select("*").or(orConditions).limit(SEARCH_CONFIG.maxResults);
 
     if (error) throw error;
     return data || [];
@@ -53,28 +45,33 @@ export class SearchService {
    * Similarity search using pg_trgm extension
    * Requires pg_trgm extension to be enabled
    */
-  async similaritySearch(query: string, table: string, column: string, threshold: number = SEARCH_CONFIG.similarityThreshold): Promise<any[]> {
+  async similaritySearch(
+    query: string,
+    table: string,
+    column: string,
+    threshold: number = SEARCH_CONFIG.similarityThreshold,
+  ): Promise<any[]> {
     try {
       // Use custom similarity_search function
-      const { data, error } = await supabase.rpc('similarity_search', {
+      const { data, error } = await supabase.rpc("similarity_search", {
         search_query: query,
         search_table: table,
         search_column: column,
-        similarity_threshold: threshold
+        similarity_threshold: threshold,
       });
 
       if (error) {
-        console.warn('Similarity search failed, falling back to basic search:', error);
+        console.warn("Similarity search failed, falling back to basic search:", error);
         return this.basicSearch(query, table, [column]);
       }
 
       // Transform the RPC response to match expected format
       return (data || []).map((item: any) => ({
         ...item.content,
-        similarity: item.similarity_score
+        similarity: item.similarity_score,
       }));
     } catch (error) {
-      console.warn('Similarity search not available, using basic search:', error);
+      console.warn("Similarity search not available, using basic search:", error);
       return this.basicSearch(query, table, [column]);
     }
   }
@@ -84,24 +81,24 @@ export class SearchService {
    */
   async enhancedFullTextSearch(query: string, table: string): Promise<any[]> {
     try {
-      const { data, error } = await supabase.rpc('enhanced_text_search', {
+      const { data, error } = await supabase.rpc("enhanced_text_search", {
         search_query: query,
         search_table: table,
-        limit_count: SEARCH_CONFIG.maxResults
+        limit_count: SEARCH_CONFIG.maxResults,
       });
 
       if (error) {
-        console.warn('Enhanced full-text search failed:', error);
+        console.warn("Enhanced full-text search failed:", error);
         return [];
       }
 
       // Transform the RPC response to match expected format
       return (data || []).map((item: any) => ({
         ...item.content,
-        rank_score: item.rank_score
+        rank_score: item.rank_score,
       }));
     } catch (error) {
-      console.warn('Enhanced full-text search not available:', error);
+      console.warn("Enhanced full-text search not available:", error);
       return [];
     }
   }
@@ -116,21 +113,21 @@ export class SearchService {
       similarityWeight?: number;
       ftsWeight?: number;
       limit?: number;
-    } = {}
+    } = {},
   ): Promise<any[]> {
     const { similarityWeight = 0.4, ftsWeight = 0.6, limit = SEARCH_CONFIG.maxResults } = options;
 
     try {
-      const { data, error } = await supabase.rpc('hybrid_search', {
+      const { data, error } = await supabase.rpc("hybrid_search", {
         search_query: query,
         search_table: table,
         similarity_weight: similarityWeight,
         fts_weight: ftsWeight,
-        limit_count: limit
+        limit_count: limit,
       });
 
       if (error) {
-        console.warn('Hybrid search failed:', error);
+        console.warn("Hybrid search failed:", error);
         return [];
       }
 
@@ -139,10 +136,10 @@ export class SearchService {
         ...item.content,
         combined_score: item.combined_score,
         similarity_score: item.similarity_score,
-        fts_score: item.fts_score
+        fts_score: item.fts_score,
       }));
     } catch (error) {
-      console.warn('Hybrid search not available:', error);
+      console.warn("Hybrid search not available:", error);
       return [];
     }
   }
@@ -155,21 +152,21 @@ export class SearchService {
       // Use PostgreSQL's full-text search
       const { data, error } = await supabase
         .from(table)
-        .select('*')
+        .select("*")
         .textSearch(textColumn, query, {
-          type: 'websearch',
-          config: 'english'
+          type: "websearch",
+          config: "english",
         })
         .limit(SEARCH_CONFIG.maxResults);
 
       if (error) {
-        console.warn('Full-text search failed, falling back to basic search:', error);
+        console.warn("Full-text search failed, falling back to basic search:", error);
         return this.basicSearch(query, table, [textColumn]);
       }
 
       return data || [];
     } catch (error) {
-      console.warn('Full-text search not available, using basic search:', error);
+      console.warn("Full-text search not available, using basic search:", error);
       return this.basicSearch(query, table, [textColumn]);
     }
   }
@@ -206,31 +203,34 @@ export class SearchService {
   /**
    * Enhanced review search with multiple search strategies
    */
-  async searchReviews(query: string, options: {
-    useFullText?: boolean;
-    useSimilarity?: boolean;
-    sortBy?: 'relevance' | 'date';
-  } = {}): Promise<SearchResults> {
+  async searchReviews(
+    query: string,
+    options: {
+      useFullText?: boolean;
+      useSimilarity?: boolean;
+      sortBy?: "relevance" | "date";
+    } = {},
+  ): Promise<SearchResults> {
     return withRetry(async () => {
-      const { useFullText = false, useSimilarity = false, sortBy = 'date' } = options;
+      const { useFullText = false, useSimilarity = false, sortBy = "date" } = options;
 
       let reviewData: any[] = [];
 
       if (useFullText) {
         // Try full-text search first
         try {
-          reviewData = await this.fullTextSearch(query, 'reviews_firebase', 'review_text');
+          reviewData = await this.fullTextSearch(query, "reviews_firebase", "review_text");
         } catch (error) {
-          console.warn('Full-text search failed:', error);
+          console.warn("Full-text search failed:", error);
         }
       }
 
       if (useSimilarity && reviewData.length === 0) {
         // Try similarity search
         try {
-          reviewData = await this.similaritySearch(query, 'reviews_firebase', 'review_text');
+          reviewData = await this.similaritySearch(query, "reviews_firebase", "review_text");
         } catch (error) {
-          console.warn('Similarity search failed:', error);
+          console.warn("Similarity search failed:", error);
         }
       }
 
@@ -252,14 +252,16 @@ export class SearchService {
         type: "review" as const,
         title: item.reviewed_person_name,
         content: item.review_text,
-        snippet: item.review_text?.substring(0, 150) || '',
+        snippet: item.review_text?.substring(0, 150) || "",
         createdAt: new Date(item.created_at),
         metadata: {
           reviewId: item.id,
           authorName: item.author?.display_name || item.author?.username || "Anonymous",
-          location: item.reviewed_person_location ?
-            `${item.reviewed_person_location?.city || ''}, ${item.reviewed_person_location?.state || ''}`.trim().replace(/^,|,$/, '') :
-            'Unknown location',
+          location: item.reviewed_person_location
+            ? `${item.reviewed_person_location?.city || ""}, ${item.reviewed_person_location?.state || ""}`
+                .trim()
+                .replace(/^,|,$/, "")
+            : "Unknown location",
           similarity: item.similarity || null,
           rankScore: item.rank_score || null,
           combinedScore: item.combined_score || null,
@@ -278,14 +280,17 @@ export class SearchService {
   /**
    * Enhanced search across all content types
    */
-  async searchAll(query: string, options: {
-    useAdvancedSearch?: boolean;
-    filters?: {
-      dateRange?: string;
-      location?: string;
-      category?: string;
-    };
-  } = {}): Promise<SearchResults> {
+  async searchAll(
+    query: string,
+    options: {
+      useAdvancedSearch?: boolean;
+      filters?: {
+        dateRange?: string;
+        location?: string;
+        category?: string;
+      };
+    } = {},
+  ): Promise<SearchResults> {
     return withRetry(async () => {
       const { useAdvancedSearch = false, filters = {} } = options;
 
@@ -297,11 +302,11 @@ export class SearchService {
 
       // Apply filters if provided
       if (filters.category) {
-        reviewQuery = reviewQuery.eq('category', filters.category);
+        reviewQuery = reviewQuery.eq("category", filters.category);
       }
 
       if (filters.location) {
-        reviewQuery = reviewQuery.ilike('reviewed_person_location->city', `%${filters.location}%`);
+        reviewQuery = reviewQuery.ilike("reviewed_person_location->city", `%${filters.location}%`);
       }
 
       if (filters.dateRange) {
@@ -309,21 +314,21 @@ export class SearchService {
         let startDate: Date;
 
         switch (filters.dateRange) {
-          case 'week':
+          case "week":
             startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
             break;
-          case 'month':
+          case "month":
             startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
             break;
-          case 'year':
+          case "year":
             startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
             break;
           default:
             startDate = new Date(0); // No date filter
         }
 
-        if (filters.dateRange !== 'all') {
-          reviewQuery = reviewQuery.gte('created_at', startDate.toISOString());
+        if (filters.dateRange !== "all") {
+          reviewQuery = reviewQuery.gte("created_at", startDate.toISOString());
         }
       }
 
@@ -446,19 +451,19 @@ export class SearchService {
     try {
       if (partialQuery.length < 2) return [];
 
-      const { data, error } = await supabase.rpc('get_search_suggestions', {
+      const { data, error } = await supabase.rpc("get_search_suggestions", {
         partial_query: partialQuery,
-        limit_count: limit
+        limit_count: limit,
       });
 
       if (error) {
-        console.warn('Search suggestions failed:', error);
+        console.warn("Search suggestions failed:", error);
         return [];
       }
 
       return (data || []).map((item: any) => item.suggestion);
     } catch (error) {
-      console.warn('Search suggestions not available:', error);
+      console.warn("Search suggestions not available:", error);
       return [];
     }
   }
@@ -466,22 +471,25 @@ export class SearchService {
   /**
    * Log search analytics for monitoring and improvement
    */
-  private async logSearchAnalytics(query: string, searchType: string, resultCount: number, executionTime: number): Promise<void> {
+  private async logSearchAnalytics(
+    query: string,
+    searchType: string,
+    resultCount: number,
+    executionTime: number,
+  ): Promise<void> {
     try {
       // Only log in production or when analytics is enabled
-      if (process.env.NODE_ENV !== 'production') return;
+      if (process.env.NODE_ENV !== "production") return;
 
-      await supabase
-        .from('search_analytics')
-        .insert({
-          search_query: query.substring(0, 100), // Truncate long queries
-          search_type: searchType,
-          results_count: resultCount,
-          execution_time_ms: executionTime,
-        });
+      await supabase.from("search_analytics").insert({
+        search_query: query.substring(0, 100), // Truncate long queries
+        search_type: searchType,
+        results_count: resultCount,
+        execution_time_ms: executionTime,
+      });
     } catch (error) {
       // Silently fail analytics logging to not impact user experience
-      console.warn('Failed to log search analytics:', error);
+      console.warn("Failed to log search analytics:", error);
     }
   }
 }

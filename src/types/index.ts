@@ -186,7 +186,6 @@ export interface ChatRoom {
   };
   createdAt: Date;
   updatedAt: Date;
-  lastActivity?: Date;
 }
 
 export interface UserProfile extends User {
@@ -291,6 +290,8 @@ export interface ChatState {
   roomCategoryFilter?: "all" | "men" | "women" | "lgbtq+";
   isLoading: boolean;
   error: string | null;
+  // Real-time subscriptions management
+  subscriptions: Record<string, any>;
 }
 
 // Comment-related types (enhanced version with more features)

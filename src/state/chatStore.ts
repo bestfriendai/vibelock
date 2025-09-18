@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { mmkvStorage } from "../utils/mmkvStorage";
+import { startTransition } from "react";
 import { ChatRoom, ChatMessage, ChatMember, TypingUser, ConnectionStatus, ChatState, MessageEvent } from "../types";
 import { enhancedRealtimeChatService } from "../services/realtimeChat";
 import useAuthStore from "./authStore";
@@ -121,6 +122,11 @@ interface ChatActions {
 
   // Pagination
   loadOlderMessages: (roomId: string) => Promise<void>;
+
+  // Real-time subscriptions
+  subscribeToChatRoom: (roomId: string) => void;
+  unsubscribeFromChatRoom: (roomId: string) => Promise<void>;
+  clearOldMessages: (daysToKeep?: number) => void;
 }
 
 type ChatStore = ChatState & ChatActions;
@@ -143,6 +149,7 @@ const useChatStore = create<ChatStore>()(
       connectionStatus: "disconnected",
       isLoading: false,
       error: null,
+      subscriptions: {},
 
       // Connection management
       connect: async (userId: string) => {
@@ -292,97 +299,104 @@ const useChatStore = create<ChatStore>()(
           enhancedRealtimeChatService.subscribeToMessages(roomId, (event: MessageEvent) => {
             console.log(`🔍 Received ${event.type} event with ${event.items.length} messages for room ${roomId}`);
 
-            set((state) => {
-              let allMessages: ChatMessage[];
+            // Use React 19 startTransition for non-urgent message updates
+            startTransition(() => {
+              set((state) => {
+                let allMessages: ChatMessage[];
 
-              switch (event.type) {
-                case "initial":
-                  // Service now returns ascending (oldest->newest)
-                  allMessages = [...event.items];
-                  break;
+                switch (event.type) {
+                  case "initial":
+                    // Service now returns ascending (oldest->newest)
+                    allMessages = [...event.items];
+                    break;
 
-                case "replace":
-                  // Replace optimistic message with real one
-                  const existingMessages = state.messages[roomId] || [];
-                  allMessages = [...existingMessages];
+                  case "replace":
+                    // Replace optimistic message with real one
+                    const existingMessages = state.messages[roomId] || [];
+                    allMessages = [...existingMessages];
 
-                  if (event.tempId) {
-                    const optimisticIndex = allMessages.findIndex((msg) => msg.id === event.tempId);
-                    if (optimisticIndex !== -1 && event.items[0]) {
-                      allMessages[optimisticIndex] = {
-                        ...event.items[0],
-                        status: event.items[0].isRead ? "read" : "sent",
-                      } as any;
+                    if (event.tempId) {
+                      const optimisticIndex = allMessages.findIndex((msg) => msg.id === event.tempId);
+                      if (optimisticIndex !== -1 && event.items[0]) {
+                        allMessages[optimisticIndex] = {
+                          ...event.items[0],
+                          status: event.items[0].isRead ? "read" : "sent",
+                        } as any;
+                      }
                     }
-                  }
-                  break;
+                    break;
 
-                case "new":
-                  // Add new messages
-                  const existing = state.messages[roomId] || [];
-                  allMessages = [...existing];
+                  case "new":
+                    // Add new messages
+                    const existing = state.messages[roomId] || [];
+                    allMessages = [...existing];
 
-                  event.items.forEach((newMsg) => {
-                    const isDuplicate = allMessages.some((msg) => msg.id === newMsg.id);
-                    if (!isDuplicate) {
-                      allMessages.push(newMsg);
-                    }
-                  });
-                  break;
+                    event.items.forEach((newMsg) => {
+                      const isDuplicate = allMessages.some((msg) => msg.id === newMsg.id);
+                      if (!isDuplicate) {
+                        allMessages.push(newMsg);
+                      }
+                    });
+                    break;
 
-                case "update":
-                  // Update existing messages
-                  const current = state.messages[roomId] || [];
-                  allMessages = [...current];
+                  case "update":
+                    // Update existing messages
+                    const current = state.messages[roomId] || [];
+                    allMessages = [...current];
 
-                  event.items.forEach((updatedMsg) => {
-                    const index = allMessages.findIndex((m) => m.id === updatedMsg.id);
-                    if (index !== -1) {
-                      allMessages[index] = { ...allMessages[index], ...updatedMsg };
-                    }
-                  });
-                  break;
+                    event.items.forEach((updatedMsg) => {
+                      const index = allMessages.findIndex((m) => m.id === updatedMsg.id);
+                      if (index !== -1) {
+                        allMessages[index] = { ...allMessages[index], ...updatedMsg };
+                      }
+                    });
+                    break;
 
-                case "delete":
-                  // Remove deleted messages
-                  const beforeDelete = state.messages[roomId] || [];
-                  const deletedIds = new Set(event.items.map((m) => m.id));
-                  allMessages = beforeDelete.filter((m) => !deletedIds.has(m.id));
-                  break;
+                  case "delete":
+                    // Remove deleted messages
+                    const beforeDelete = state.messages[roomId] || [];
+                    const deletedIds = new Set(event.items.map((m) => m.id));
+                    allMessages = beforeDelete.filter((m) => !deletedIds.has(m.id));
+                    break;
 
-                default:
-                  return state;
-              }
+                  default:
+                    return state;
+                }
 
-              // Keep ascending order for display (oldest->newest)
-              if (event.type === "initial" || event.items.length > 0) {
-                allMessages.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-              }
+                // Keep ascending order for display (oldest->newest)
+                if (event.type === "initial" || event.items.length > 0) {
+                  allMessages.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+                }
 
-              return {
-                messages: {
-                  ...state.messages,
-                  [roomId]: allMessages,
-                },
-              };
+                return {
+                  messages: {
+                    ...state.messages,
+                    [roomId]: allMessages,
+                  },
+                };
+              });
             });
           });
 
           // Subscribe to presence for this room
           enhancedRealtimeChatService.subscribeToPresence(roomId, (members: ChatMember[]) => {
-            set((state) => ({
-              members: {
-                ...state.members,
-                [roomId]: members,
-              },
-            }));
+            startTransition(() => {
+              set((state) => ({
+                members: {
+                  ...state.members,
+                  [roomId]: members,
+                },
+              }));
+            });
           });
 
           // Subscribe to typing indicators for this room
           enhancedRealtimeChatService.subscribeToTyping(roomId, (typingUsers: any[]) => {
-            set(() => ({
-              typingUsers: typingUsers.filter((user) => user.timestamp > 0), // Only active typing users
-            }));
+            startTransition(() => {
+              set(() => ({
+                typingUsers: typingUsers.filter((user) => user.timestamp > 0), // Only active typing users
+              }));
+            });
           });
 
           console.log(`✅ Successfully joined room: ${room.name}`);
@@ -957,9 +971,122 @@ const useChatStore = create<ChatStore>()(
 
       // Real-time message listening is now handled by enhanced service in joinChatRoom
 
+      // Real-time subscriptions management
+      subscribeToChatRoom: (roomId: string) => {
+        const { subscriptions } = get();
+
+        // Prevent duplicate subscriptions
+        if (subscriptions[roomId]) {
+          console.log(`Already subscribed to room ${roomId}`);
+          return;
+        }
+
+        try {
+          const subscription = supabase
+            .channel(`room:${roomId}`)
+            .on(
+              "postgres_changes",
+              {
+                event: "*",
+                schema: "public",
+                table: "chat_messages_firebase",
+                filter: `chat_room_id=eq.${roomId}`,
+              },
+              (payload) => {
+                console.log("Real-time message received:", payload);
+
+                if (payload.eventType === "INSERT") {
+                  const newMessage = payload.new as ChatMessage;
+
+                  // Use React 19 startTransition for non-urgent updates
+                  startTransition(() => {
+                    set((state) => ({
+                      messages: {
+                        ...state.messages,
+                        [roomId]: [...(state.messages[roomId] || []), newMessage].sort(
+                          (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
+                        ),
+                      },
+                    }));
+                  });
+                }
+              },
+            )
+            .subscribe((status) => {
+              if (status === "SUBSCRIBED") {
+                console.log(`Successfully subscribed to room ${roomId}`);
+              } else if (status === "CHANNEL_ERROR") {
+                console.error(`Failed to subscribe to room ${roomId}`);
+                // Retry logic
+                setTimeout(() => {
+                  get().subscribeToChatRoom(roomId);
+                }, 5000);
+              }
+            });
+
+          set((state) => ({
+            subscriptions: {
+              ...state.subscriptions,
+              [roomId]: subscription,
+            },
+          }));
+        } catch (error) {
+          console.error("Error subscribing to chat room:", error);
+        }
+      },
+
+      unsubscribeFromChatRoom: async (roomId: string) => {
+        const { subscriptions } = get();
+        const subscription = subscriptions[roomId];
+
+        if (subscription) {
+          try {
+            await subscription.unsubscribe();
+
+            set((state) => {
+              const newSubscriptions = { ...state.subscriptions };
+              delete newSubscriptions[roomId];
+              return { subscriptions: newSubscriptions };
+            });
+
+            console.log(`Unsubscribed from room ${roomId}`);
+          } catch (error) {
+            console.error("Error unsubscribing from chat room:", error);
+          }
+        }
+      },
+
+      clearOldMessages: (daysToKeep: number = 7) => {
+        const cutoffDate = new Date();
+        cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
+
+        set((state) => {
+          const newMessages: typeof state.messages = {};
+
+          Object.keys(state.messages).forEach((roomId) => {
+            newMessages[roomId] = state.messages[roomId].filter((msg) => new Date(msg.timestamp) > cutoffDate);
+          });
+
+          return { messages: newMessages };
+        });
+      },
+
       // Cleanup all subscriptions and connections
       cleanup: async () => {
         try {
+          // Cleanup all real-time subscriptions
+          const { subscriptions } = get();
+          const unsubscribePromises = Object.entries(subscriptions).map(async ([roomId, subscription]) => {
+            try {
+              await subscription.unsubscribe();
+              console.log(`Unsubscribed from room ${roomId}`);
+            } catch (error) {
+              console.warn(`Failed to unsubscribe from room ${roomId}:`, error);
+            }
+          });
+
+          await Promise.allSettled(unsubscribePromises);
+
           await enhancedRealtimeChatService.cleanup();
           set({
             connectionStatus: "disconnected",
@@ -967,6 +1094,7 @@ const useChatStore = create<ChatStore>()(
             typingUsers: [],
             onlineUsers: [],
             error: null,
+            subscriptions: {},
           });
           if (netUnsubscribe) {
             netUnsubscribe();
@@ -979,7 +1107,7 @@ const useChatStore = create<ChatStore>()(
     }),
     {
       name: "chat-storage",
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => mmkvStorage),
       // Only persist sanitized essential data, not real-time state
       partialize: (state) => ({
         chatRooms: state.chatRooms,

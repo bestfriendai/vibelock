@@ -32,7 +32,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/81</span>
+                <span class='fraction'>0/83</span>
             </div>
         
             
@@ -1013,7 +1013,7 @@ function <span class="fstat-no" title="function not covered" >checkPolyfillCompa
   }
 &nbsp;
   // Check crypto polyfill conflicts
-<span class="cstat-no" title="statement not covered" >  if ((global as any).crypto) {</span>
+<span class="cstat-no" title="statement not covered" >  if (typeof crypto !== "undefined" &amp;&amp; (global as any).crypto) {</span>
     const cryptoDescriptor = <span class="cstat-no" title="statement not covered" >Object.getOwnPropertyDescriptor(global, "crypto");</span>
 <span class="cstat-no" title="statement not covered" >    if (cryptoDescriptor &amp;&amp; cryptoDescriptor.configurable === false) {</span>
 <span class="cstat-no" title="statement not covered" >      issues.push({</span>
@@ -1095,34 +1095,34 @@ export function <span class="fstat-no" title="function not covered" >applyHermes
   // Fix for React Native Reanimated _toString property issue
 <span class="cstat-no" title="statement not covered" >  try {</span>
     // Check if _toString is missing (even without worklets flag)
-<span class="cstat-no" title="statement not covered" >    if (typeof (global as any)._toString === 'undefined') {</span>
+<span class="cstat-no" title="statement not covered" >    if (typeof (global as any)._toString === "undefined") {</span>
 <span class="cstat-no" title="statement not covered" >      console.log("[HermesCompatibility] Adding missing _toString property for Reanimated compatibility");</span>
 &nbsp;
-<span class="cstat-no" title="statement not covered" >      Object.defineProperty(global, '_toString', {</span>
-        value: <span class="fstat-no" title="function not covered" >fu</span>nction(obj: any) {
-<span class="cstat-no" title="statement not covered" >          if (obj === null) <span class="cstat-no" title="statement not covered" >return 'null';</span></span>
-<span class="cstat-no" title="statement not covered" >          if (obj === undefined) <span class="cstat-no" title="statement not covered" >return 'undefined';</span></span>
-<span class="cstat-no" title="statement not covered" >          if (typeof obj === 'string') <span class="cstat-no" title="statement not covered" >return obj;</span></span>
-<span class="cstat-no" title="statement not covered" >          if (typeof obj.toString === 'function') <span class="cstat-no" title="statement not covered" >return obj.toString();</span></span>
+<span class="cstat-no" title="statement not covered" >      Object.defineProperty(global, "_toString", {</span>
+        value: <span class="fstat-no" title="function not covered" >fu</span>nction (obj: any) {
+<span class="cstat-no" title="statement not covered" >          if (obj === null) <span class="cstat-no" title="statement not covered" >return "null";</span></span>
+<span class="cstat-no" title="statement not covered" >          if (obj === undefined) <span class="cstat-no" title="statement not covered" >return "undefined";</span></span>
+<span class="cstat-no" title="statement not covered" >          if (typeof obj === "string") <span class="cstat-no" title="statement not covered" >return obj;</span></span>
+<span class="cstat-no" title="statement not covered" >          if (typeof obj.toString === "function") <span class="cstat-no" title="statement not covered" >return obj.toString();</span></span>
 <span class="cstat-no" title="statement not covered" >          return String(obj);</span>
         },
         configurable: true,
         writable: true,
-        enumerable: false
+        enumerable: false,
       });
     }
 &nbsp;
     // Also ensure Function.prototype._toString exists for worklets
-<span class="cstat-no" title="statement not covered" >    if (typeof Function.prototype._toString === 'undefined') {</span>
+<span class="cstat-no" title="statement not covered" >    if (typeof Function.prototype._toString === "undefined") {</span>
 <span class="cstat-no" title="statement not covered" >      console.log("[HermesCompatibility] Adding Function.prototype._toString for worklets");</span>
 &nbsp;
-<span class="cstat-no" title="statement not covered" >      Object.defineProperty(Function.prototype, '_toString', {</span>
-        value: <span class="fstat-no" title="function not covered" >fu</span>nction() {
+<span class="cstat-no" title="statement not covered" >      Object.defineProperty(Function.prototype, "_toString", {</span>
+        value: <span class="fstat-no" title="function not covered" >fu</span>nction () {
 <span class="cstat-no" title="statement not covered" >          return this.toString();</span>
         },
         configurable: true,
         writable: true,
-        enumerable: false
+        enumerable: false,
       });
     }
   } catch (error) {
@@ -1252,7 +1252,7 @@ export function <span class="fstat-no" title="function not covered" >initializeH
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-09-17T06:43:59.933Z
+                at 2025-09-18T01:08:11.967Z
             </div>
         <script src="../prettify.js"></script>
         <script>

@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { mmkvStorage } from "../utils/mmkvStorage";
 import { Alert } from "react-native";
 import { v4 as uuidv4 } from "uuid";
 import { User } from "../types";
@@ -545,7 +545,7 @@ const useAuthStore = create<AuthStore>()(
     }),
     {
       name: "auth-storage",
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => mmkvStorage),
       // Only persist sanitized user data, not loading states
       partialize: (state) => ({
         user: sanitizeUserForPersistence(state.user),

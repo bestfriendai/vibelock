@@ -23,6 +23,8 @@ export enum ErrorType {
   VALIDATION = "VALIDATION",
   SERVER = "SERVER",
   UNKNOWN = "UNKNOWN",
+  INITIALIZATION = "INITIALIZATION",
+  COMPATIBILITY = "COMPATIBILITY",
 
   // File Download Errors
   INVALID_URL = "INVALID_URL",
@@ -130,6 +132,10 @@ export class AppError extends Error {
         return "Please check your input and try again.";
       case ErrorType.SERVER:
         return "Server error. Please try again in a few moments.";
+      case ErrorType.INITIALIZATION:
+        return "App initialization failed. Please restart the app.";
+      case ErrorType.COMPATIBILITY:
+        return "Compatibility issue detected. Please update the app.";
 
       // File operation error messages
       case ErrorType.FILE_TOO_LARGE:
@@ -487,6 +493,12 @@ export const createWorkletSafeError = (
       break;
     case ErrorType.SERVER:
       userMessage = "Server error. Please try again in a few moments.";
+      break;
+    case ErrorType.INITIALIZATION:
+      userMessage = "App initialization failed. Please restart the app.";
+      break;
+    case ErrorType.COMPATIBILITY:
+      userMessage = "Compatibility issue detected. Please update the app.";
       break;
     case ErrorType.FILE_TOO_LARGE:
       userMessage = "The file is too large. Please select a smaller file.";

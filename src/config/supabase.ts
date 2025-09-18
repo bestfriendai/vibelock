@@ -64,8 +64,8 @@ interface ProductionConfig {
   enableHealthChecks: boolean;
 }
 
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || "";
+const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || "";
 const projectId = process.env.EXPO_PUBLIC_PROJECT_ID;
 
 // Enhanced environment variable validation with comprehensive guidance

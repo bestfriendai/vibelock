@@ -25,7 +25,7 @@ import type {
   ReviewDetailRouteProp,
   BrowseStackReviewDetailRouteProp,
   SearchStackReviewDetailRouteProp,
-  RootStackNavigationProp
+  RootStackNavigationProp,
 } from "../navigation/AppNavigator";
 import ImageCarousel from "../components/ImageCarousel";
 import LikeDislikeButtons from "../components/LikeDislikeButtons";

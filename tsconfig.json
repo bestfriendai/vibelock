@@ -11,7 +11,22 @@
     "noUncheckedSideEffectImports": true,
     "allowUnusedLabels": false,
     "allowUnreachableCode": false,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@/components/*": ["src/components/*"],
+      "@/screens/*": ["src/screens/*"],
+      "@/services/*": ["src/services/*"],
+      "@/utils/*": ["src/utils/*"],
+      "@/types/*": ["src/types/*"],
+      "@/state/*": ["src/state/*"],
+      "@/providers/*": ["src/providers/*"],
+      "@/contexts/*": ["src/contexts/*"],
+      "@/constants/*": ["src/constants/*"],
+      "@/config/*": ["src/config/*"],
+      "@/navigation/*": ["src/navigation/*"]
+    }
   },
   "exclude": ["node_modules", "supabase/functions", "__tests__", "backup"]
 }

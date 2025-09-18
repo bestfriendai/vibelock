@@ -28,6 +28,7 @@ Execute the contents of `supabase-search-setup.sql` in your Supabase SQL Editor:
 4. Click "Run"
 
 This will:
+
 - Enable the `pg_trgm` extension
 - Create custom search functions
 - Set up GIN indexes for better performance
@@ -56,27 +57,27 @@ SELECT indexname FROM pg_indexes WHERE tablename = 'reviews_firebase';
 The updated `SearchService` class provides multiple search methods:
 
 ```typescript
-import { searchService } from '../services/search';
+import { searchService } from "../services/search";
 
 // Basic search (fallback)
 const basicResults = await searchService.searchReviews(query, {
-  searchMode: 'basic'
+  searchMode: "basic",
 });
 
 // Similarity search using pg_trgm
 const similarityResults = await searchService.searchReviews(query, {
-  searchMode: 'similarity'
+  searchMode: "similarity",
 });
 
 // Full-text search
 const ftsResults = await searchService.searchReviews(query, {
-  searchMode: 'fts'
+  searchMode: "fts",
 });
 
 // Hybrid search (recommended)
 const hybridResults = await searchService.searchReviews(query, {
-  searchMode: 'hybrid',
-  sortBy: 'relevance'
+  searchMode: "hybrid",
+  sortBy: "relevance",
 });
 ```
 
@@ -88,10 +89,10 @@ Enhanced search supports filtering:
 const results = await searchService.searchAll(query, {
   useAdvancedSearch: true,
   filters: {
-    dateRange: 'month',  // 'week', 'month', 'year', 'all'
-    location: 'New York',
-    category: 'dating'
-  }
+    dateRange: "month", // 'week', 'month', 'year', 'all'
+    location: "New York",
+    category: "dating",
+  },
 });
 ```
 
@@ -100,7 +101,7 @@ const results = await searchService.searchAll(query, {
 Get intelligent search suggestions:
 
 ```typescript
-const suggestions = await searchService.getSearchSuggestions('da', 10);
+const suggestions = await searchService.getSearchSuggestions("da", 10);
 // Returns: ['dating experience', 'date night', 'dating tips', ...]
 ```
 
@@ -155,10 +156,10 @@ Configure search behavior in your search service:
 
 ```typescript
 const SEARCH_CONFIG = {
-  similarityThreshold: 0.3,     // pg_trgm similarity threshold
+  similarityThreshold: 0.3, // pg_trgm similarity threshold
   wordSimilarityThreshold: 0.6, // Word similarity threshold
-  maxResults: 50,               // Maximum results per search
-  defaultResultsPerType: 25,    // Results per content type
+  maxResults: 50, // Maximum results per search
+  defaultResultsPerType: 25, // Results per content type
 };
 ```
 
@@ -177,14 +178,14 @@ Monitor search performance:
 
 ```typescript
 // Enable search analytics in production
-process.env.NODE_ENV = 'production';
+process.env.NODE_ENV = "production";
 
 // Test with various query types
 const testQueries = [
-  'dating experience',
-  'reltionship', // typo
-  'red flags toxic behavior',
-  'funny sweet personality'
+  "dating experience",
+  "reltionship", // typo
+  "red flags toxic behavior",
+  "funny sweet personality",
 ];
 ```
 
@@ -214,12 +215,8 @@ Implement custom ranking algorithms:
 // Custom ranking based on multiple factors
 const rankResults = (results: SearchResult[]) => {
   return results.sort((a, b) => {
-    const scoreA = (a.similarity * 0.4) +
-                   (a.rankScore * 0.4) +
-                   (a.recency * 0.2);
-    const scoreB = (b.similarity * 0.4) +
-                   (b.rankScore * 0.4) +
-                   (b.recency * 0.2);
+    const scoreA = a.similarity * 0.4 + a.rankScore * 0.4 + a.recency * 0.2;
+    const scoreB = b.similarity * 0.4 + b.rankScore * 0.4 + b.recency * 0.2;
     return scoreB - scoreA;
   });
 };

@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { mmkvStorage } from "../utils/mmkvStorage";
 import { Comment, CommentState } from "../types";
 import { supabaseReviews } from "../services/supabase";
 import { supabase } from "../config/supabase";
@@ -412,7 +412,7 @@ const useCommentsStore = create<CommentsStore>()(
     },
     {
       name: "comments-storage",
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => mmkvStorage),
       // Only persist sanitized comments, not loading states
       partialize: (state) => ({
         comments: sanitizeCommentsForPersistence(state.comments),

@@ -111,9 +111,7 @@ class PermissionValidationService {
   /**
    * Request all missing permissions with user-friendly explanations
    */
-  async requestMissingPermissions(
-    validationResult: PermissionValidationResult
-  ): Promise<PermissionValidationResult> {
+  async requestMissingPermissions(validationResult: PermissionValidationResult): Promise<PermissionValidationResult> {
     if (validationResult.allGranted) {
       return validationResult;
     }
@@ -208,7 +206,7 @@ class PermissionValidationService {
             text: "Continue",
             onPress: () => resolve(),
           },
-        ]
+        ],
       );
     });
   }
@@ -220,29 +218,24 @@ class PermissionValidationService {
     if (missingPermissions.length === 0) return;
 
     const permissionList = missingPermissions.join(", ");
-    const message =
-      `To use all features of Locker Room Talk, please enable the following permissions in Settings:\n\n• ${missingPermissions.join("\n• ")}\n\nYou can change these in your device settings.`;
+    const message = `To use all features of Locker Room Talk, please enable the following permissions in Settings:\n\n• ${missingPermissions.join("\n• ")}\n\nYou can change these in your device settings.`;
 
-    Alert.alert(
-      "Permissions Required",
-      message,
-      [
-        {
-          text: "Not Now",
-          style: "cancel",
+    Alert.alert("Permissions Required", message, [
+      {
+        text: "Not Now",
+        style: "cancel",
+      },
+      {
+        text: "Open Settings",
+        onPress: () => {
+          if (Linking.openSettings) {
+            Linking.openSettings();
+          } else {
+            console.warn("Cannot open settings on this platform");
+          }
         },
-        {
-          text: "Open Settings",
-          onPress: () => {
-            if (Linking.openSettings) {
-              Linking.openSettings();
-            } else {
-              console.warn("Cannot open settings on this platform");
-            }
-          },
-        },
-      ]
-    );
+      },
+    ]);
   }
 
   /**

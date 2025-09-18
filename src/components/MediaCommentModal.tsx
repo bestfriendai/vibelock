@@ -3,30 +3,30 @@ import { View, Text, Modal, Pressable, ScrollView } from "react-native";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Comment, MediaItem } from "../types";
+import { ReviewComment, MediaItem } from "../types";
 import CommentInput from "./CommentInput";
 
 interface MediaCommentModalProps {
   visible: boolean;
   media: MediaItem;
-  comments: Comment[];
+  comments: ReviewComment[];
   isLoading?: boolean;
   isPosting?: boolean;
   onClose: () => void;
   onPostComment: (content: string) => Promise<void>;
   onLikeComment: (commentId: string) => void;
   onDislikeComment: (commentId: string) => void;
-  onReplyToComment: (comment: Comment) => void;
+  onReplyToComment: (comment: ReviewComment) => void;
   onReportComment: (commentId: string) => void;
-  replyToComment?: Comment | null;
+  replyToComment?: ReviewComment | null;
   onCancelReply?: () => void;
 }
 
 interface CommentItemProps {
-  comment: Comment;
+  comment: ReviewComment;
   onLike: (commentId: string) => void;
   onDislike: (commentId: string) => void;
-  onReply: (comment: Comment) => void;
+  onReply: (comment: ReviewComment) => void;
   onReport: (commentId: string) => void;
   isReply?: boolean;
 }
@@ -34,12 +34,15 @@ interface CommentItemProps {
 function CommentItem({ comment, onLike, onDislike, onReply, onReport, isReply = false }: CommentItemProps) {
   const [showReplies, setShowReplies] = useState(false);
 
-  const formatTimeAgo = (date: Date) => {
+  const formatTimeAgo = (dateLike: Date | string | null | undefined) => {
+    const date = dateLike instanceof Date ? dateLike : dateLike ? new Date(dateLike) : null;
+    if (!date || isNaN(date.getTime())) return "Just now";
     const now = new Date();
-    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+    const diffMs = now.getTime() - date.getTime();
+    const diffInHours = Math.floor(diffMs / (1000 * 60 * 60));
 
     if (diffInHours < 1) {
-      const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
+      const diffInMinutes = Math.floor(diffMs / (1000 * 60));
       return diffInMinutes < 1 ? "Just now" : `${diffInMinutes}m ago`;
     } else if (diffInHours < 24) {
       return `${diffInHours}h ago`;

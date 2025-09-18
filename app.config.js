@@ -56,11 +56,7 @@ export default {
           },
         ],
         ITSAppUsesNonExemptEncryption: false,
-        UIBackgroundModes: [
-          "background-fetch",
-          "remote-notification",
-          "background-processing",
-        ],
+        UIBackgroundModes: ["background-fetch", "remote-notification", "background-processing"],
       },
       requireFullScreen: false,
       userInterfaceStyle: "automatic",
@@ -180,8 +176,8 @@ export default {
       [
         "expo-local-authentication",
         {
-          faceIDPermission: "Allow $(PRODUCT_NAME) to use Face ID for secure authentication."
-        }
+          faceIDPermission: "Allow $(PRODUCT_NAME) to use Face ID for secure authentication.",
+        },
       ],
       "expo-mail-composer",
       "expo-media-library",

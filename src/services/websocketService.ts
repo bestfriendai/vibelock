@@ -57,7 +57,7 @@ class SupabaseRealtimeService {
   private lastHeartbeat: number = 0;
 
   // Enhanced error tracking
-  private connectionErrors: Array<{ timestamp: number; error: string; attempts: number }> = [];
+  private connectionErrors: { timestamp: number; error: string; attempts: number }[] = [];
   private lastConnectionError: string | null = null;
 
   constructor() {
@@ -124,10 +124,7 @@ class SupabaseRealtimeService {
       await this.verifyNetworkConnectivity();
 
       // Connect to Supabase realtime with timeout
-      await Promise.race([
-        this.setupRealtimeChannels(),
-        this.createTimeoutPromise(15000, "Connection timeout")
-      ]);
+      await Promise.race([this.setupRealtimeChannels(), this.createTimeoutPromise(15000, "Connection timeout")]);
 
       this.updateConnectionStatus("connected");
       this.clearConnectionErrors();
@@ -171,27 +168,27 @@ class SupabaseRealtimeService {
 
       if (this.messagesChannel) {
         channelCleanupPromises.push(
-          supabase.removeChannel(this.messagesChannel).catch(err =>
-            console.warn("Error removing messages channel:", err)
-          )
+          supabase
+            .removeChannel(this.messagesChannel)
+            .catch((err) => console.warn("Error removing messages channel:", err)),
         );
         this.messagesChannel = null;
       }
 
       if (this.presenceChannel) {
         channelCleanupPromises.push(
-          supabase.removeChannel(this.presenceChannel).catch(err =>
-            console.warn("Error removing presence channel:", err)
-          )
+          supabase
+            .removeChannel(this.presenceChannel)
+            .catch((err) => console.warn("Error removing presence channel:", err)),
         );
         this.presenceChannel = null;
       }
 
       if (this.typingChannel) {
         channelCleanupPromises.push(
-          supabase.removeChannel(this.typingChannel).catch(err =>
-            console.warn("Error removing typing channel:", err)
-          )
+          supabase
+            .removeChannel(this.typingChannel)
+            .catch((err) => console.warn("Error removing typing channel:", err)),
         );
         this.typingChannel = null;
       }
@@ -199,7 +196,7 @@ class SupabaseRealtimeService {
       // Wait for all channel cleanup with timeout
       await Promise.race([
         Promise.all(channelCleanupPromises),
-        this.createTimeoutPromise(5000, "Channel cleanup timeout")
+        this.createTimeoutPromise(5000, "Channel cleanup timeout"),
       ]);
     } catch (error) {
       console.warn("Error during channel cleanup:", error);
@@ -446,72 +443,69 @@ class SupabaseRealtimeService {
           }
         }, 15000);
 
-        this.messagesChannel!
-          .on(
-            "postgres_changes",
-            {
-              event: "*",
-              schema: "public",
-              table: "chat_messages_firebase",
-            },
-            (payload) => this.handleMessageChange(payload)
-          )
-          .subscribe((status) => {
-            console.log("📨 Messages channel status:", status);
+        this.messagesChannel!.on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "chat_messages_firebase",
+          },
+          (payload) => this.handleMessageChange(payload),
+        ).subscribe((status) => {
+          console.log("📨 Messages channel status:", status);
 
-            switch (status) {
-              case "SUBSCRIBED":
-                if (!hasResolved) {
-                  hasResolved = true;
-                  clearTimeout(timeout);
-                  console.log("✅ Successfully subscribed to messages channel");
-                  this.updateConnectionStatus("connected");
-                  resolve();
-                }
-                break;
+          switch (status) {
+            case "SUBSCRIBED":
+              if (!hasResolved) {
+                hasResolved = true;
+                clearTimeout(timeout);
+                console.log("✅ Successfully subscribed to messages channel");
+                this.updateConnectionStatus("connected");
+                resolve();
+              }
+              break;
 
-              case "CHANNEL_ERROR":
-                if (!hasResolved) {
-                  hasResolved = true;
-                  clearTimeout(timeout);
-                  console.error("❌ Messages channel subscription error");
-                  this.updateConnectionStatus("error", "Failed to subscribe to messages channel");
-                  reject(new Error("Messages channel subscription failed"));
-                } else {
-                  // Handle runtime errors
-                  console.error("❌ Messages channel runtime error");
-                  this.handleChannelError("messages");
-                }
-                break;
+            case "CHANNEL_ERROR":
+              if (!hasResolved) {
+                hasResolved = true;
+                clearTimeout(timeout);
+                console.error("❌ Messages channel subscription error");
+                this.updateConnectionStatus("error", "Failed to subscribe to messages channel");
+                reject(new Error("Messages channel subscription failed"));
+              } else {
+                // Handle runtime errors
+                console.error("❌ Messages channel runtime error");
+                this.handleChannelError("messages");
+              }
+              break;
 
-              case "CLOSED":
-                console.log("📨 Messages channel closed");
-                if (this.connectionStatus === "connected") {
-                  this.updateConnectionStatus("disconnected");
-                  this.attemptReconnection();
-                }
-                break;
+            case "CLOSED":
+              console.log("📨 Messages channel closed");
+              if (this.connectionStatus === "connected") {
+                this.updateConnectionStatus("disconnected");
+                this.attemptReconnection();
+              }
+              break;
 
-              case "TIMED_OUT":
-                console.warn("⏰ Messages channel timed out");
-                if (!hasResolved) {
-                  hasResolved = true;
-                  clearTimeout(timeout);
-                  reject(new Error("Channel subscription timed out"));
-                } else {
-                  this.handleChannelError("messages");
-                }
-                break;
+            case "TIMED_OUT":
+              console.warn("⏰ Messages channel timed out");
+              if (!hasResolved) {
+                hasResolved = true;
+                clearTimeout(timeout);
+                reject(new Error("Channel subscription timed out"));
+              } else {
+                this.handleChannelError("messages");
+              }
+              break;
 
-              default:
-                console.log(`📨 Messages channel status: ${status}`);
-            }
-          });
+            default:
+              console.log(`📨 Messages channel status: ${status}`);
+          }
+        });
       });
 
       await subscriptionPromise;
       console.log("✅ Realtime channels setup completed");
-
     } catch (error: any) {
       console.error("❌ Failed to setup realtime channels:", error);
 
@@ -560,10 +554,9 @@ class SupabaseRealtimeService {
           }
         }, 10000);
 
-        this.presenceChannel!
-          .on("presence", { event: "sync" }, () => {
-            this.handlePresenceSync();
-          })
+        this.presenceChannel!.on("presence", { event: "sync" }, () => {
+          this.handlePresenceSync();
+        })
           .on("presence", { event: "join" }, ({ key, newPresences }) => {
             this.handlePresenceJoin(key, newPresences);
           })
@@ -617,51 +610,48 @@ class SupabaseRealtimeService {
           }
         }, 10000);
 
-        this.typingChannel!
-          .on("broadcast", { event: "typing" }, (payload) => {
-            this.handleTypingEvent(payload.payload as BroadcastPayload);
-          })
-          .subscribe((status) => {
-            console.log("⌨️ Typing channel status:", status);
+        this.typingChannel!.on("broadcast", { event: "typing" }, (payload) => {
+          this.handleTypingEvent(payload.payload as BroadcastPayload);
+        }).subscribe((status) => {
+          console.log("⌨️ Typing channel status:", status);
 
-            switch (status) {
-              case "SUBSCRIBED":
-                if (!hasResolved) {
-                  hasResolved = true;
-                  clearTimeout(timeout);
-                  console.log("✅ Typing channel subscribed");
-                  resolve();
-                }
-                break;
-              case "CHANNEL_ERROR":
-                if (!hasResolved) {
-                  hasResolved = true;
-                  clearTimeout(timeout);
-                  reject(new Error("Typing channel subscription failed"));
-                } else {
-                  this.handleChannelError("typing");
-                }
-                break;
-              case "CLOSED":
-                console.log("⌨️ Typing channel closed");
-                break;
-              case "TIMED_OUT":
-                if (!hasResolved) {
-                  hasResolved = true;
-                  clearTimeout(timeout);
-                  reject(new Error("Typing channel subscription timed out"));
-                } else {
-                  this.handleChannelError("typing");
-                }
-                break;
-            }
-          });
+          switch (status) {
+            case "SUBSCRIBED":
+              if (!hasResolved) {
+                hasResolved = true;
+                clearTimeout(timeout);
+                console.log("✅ Typing channel subscribed");
+                resolve();
+              }
+              break;
+            case "CHANNEL_ERROR":
+              if (!hasResolved) {
+                hasResolved = true;
+                clearTimeout(timeout);
+                reject(new Error("Typing channel subscription failed"));
+              } else {
+                this.handleChannelError("typing");
+              }
+              break;
+            case "CLOSED":
+              console.log("⌨️ Typing channel closed");
+              break;
+            case "TIMED_OUT":
+              if (!hasResolved) {
+                hasResolved = true;
+                clearTimeout(timeout);
+                reject(new Error("Typing channel subscription timed out"));
+              } else {
+                this.handleChannelError("typing");
+              }
+              break;
+          }
+        });
       });
 
       // Wait for both channels to be ready
       await Promise.all([presencePromise, typingPromise]);
       console.log("✅ Room channels setup completed");
-
     } catch (error: any) {
       console.error("❌ Failed to setup room channels:", error);
 
@@ -701,8 +691,9 @@ class SupabaseRealtimeService {
         if (newRecord && newRecord.chat_room_id === this.currentChatRoomId) {
           // Skip if this is our own pending message
           const isPending = Array.from(this.pendingMessages.values()).some(
-            msg => msg.senderId === newRecord.sender_id &&
-                   Math.abs(new Date(msg.timestamp).getTime() - new Date(newRecord.timestamp).getTime()) < 5000
+            (msg) =>
+              msg.senderId === newRecord.sender_id &&
+              Math.abs(new Date(msg.timestamp).getTime() - new Date(newRecord.timestamp).getTime()) < 5000,
           );
 
           if (!isPending || newRecord.sender_id !== this.currentUserId) {
@@ -735,7 +726,7 @@ class SupabaseRealtimeService {
     if (!this.presenceChannel || !this.callbacks) return;
 
     const state = this.presenceChannel.presenceState();
-    const onlineUsers = Object.keys(state).filter(key => key !== this.currentUserId);
+    const onlineUsers = Object.keys(state).filter((key) => key !== this.currentUserId);
 
     console.log("👥 Presence sync - online users:", onlineUsers);
     this.callbacks.onOnlineStatusChange(onlineUsers);
@@ -753,7 +744,7 @@ class SupabaseRealtimeService {
       this.callbacks.onUserJoin(
         presence.user_id,
         presence.user_name || `User_${presence.user_id.slice(0, 8)}`,
-        this.currentChatRoomId
+        this.currentChatRoomId,
       );
     }
   }
@@ -825,7 +816,9 @@ class SupabaseRealtimeService {
     const jitter = Math.random() * 1000; // Add jitter to prevent thundering herd
     const delay = Math.min(baseDelay + jitter, 30000);
 
-    console.log(`🔄 Attempting reconnection (${this.reconnectAttempts}/${this.maxReconnectAttempts}) in ${Math.round(delay)}ms...`);
+    console.log(
+      `🔄 Attempting reconnection (${this.reconnectAttempts}/${this.maxReconnectAttempts}) in ${Math.round(delay)}ms...`,
+    );
 
     // Clear any existing timeout
     if (this.reconnectTimeout) {
@@ -934,7 +927,10 @@ class SupabaseRealtimeService {
 
     while (attempts < maxAttempts) {
       try {
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        const {
+          data: { user },
+          error: authError,
+        } = await supabase.auth.getUser();
 
         if (authError && authError.message !== "Auth session missing!") {
           throw new Error(`Authentication error: ${authError.message}`);
@@ -942,7 +938,10 @@ class SupabaseRealtimeService {
 
         if (!user) {
           // Try to refresh the session
-          const { data: { session }, error: refreshError } = await supabase.auth.refreshSession();
+          const {
+            data: { session },
+            error: refreshError,
+          } = await supabase.auth.refreshSession();
 
           if (refreshError || !session?.user) {
             throw new Error("User must be authenticated to connect to realtime");
@@ -957,7 +956,7 @@ class SupabaseRealtimeService {
         }
 
         console.warn(`Authentication check failed (attempt ${attempts}/${maxAttempts}):`, error);
-        await new Promise(resolve => setTimeout(resolve, 1000 * attempts));
+        await new Promise((resolve) => setTimeout(resolve, 1000 * attempts));
       }
     }
   }
@@ -970,7 +969,8 @@ class SupabaseRealtimeService {
       // Simple connectivity check using Supabase's REST API
       const { error } = await supabase.from("users").select("count").limit(1);
 
-      if (error && error.code !== "PGRST116") { // Ignore RLS errors, they indicate connectivity
+      if (error && error.code !== "PGRST116") {
+        // Ignore RLS errors, they indicate connectivity
         throw new Error(`Network connectivity check failed: ${error.message}`);
       }
     } catch (error: any) {
@@ -1035,9 +1035,7 @@ class SupabaseRealtimeService {
 
       // Check channel states
       const channels = [this.messagesChannel, this.presenceChannel, this.typingChannel].filter(Boolean);
-      const unhealthyChannels = channels.filter(channel =>
-        channel && (channel as any).state === "CHANNEL_ERROR"
-      );
+      const unhealthyChannels = channels.filter((channel) => channel && (channel as any).state === "CHANNEL_ERROR");
 
       if (unhealthyChannels.length > 0) {
         console.warn("🚨 Unhealthy channels detected:", unhealthyChannels.length);
@@ -1063,7 +1061,7 @@ class SupabaseRealtimeService {
     const errorEntry = {
       timestamp: Date.now(),
       error,
-      attempts: this.reconnectAttempts
+      attempts: this.reconnectAttempts,
     };
 
     this.connectionErrors.push(errorEntry);
@@ -1071,7 +1069,7 @@ class SupabaseRealtimeService {
 
     // Keep only recent errors (last 10 minutes)
     const tenMinutesAgo = Date.now() - 10 * 60 * 1000;
-    this.connectionErrors = this.connectionErrors.filter(e => e.timestamp > tenMinutesAgo);
+    this.connectionErrors = this.connectionErrors.filter((e) => e.timestamp > tenMinutesAgo);
 
     console.warn(`[WebSocket] Error tracked:`, errorEntry);
   }
@@ -1079,9 +1077,9 @@ class SupabaseRealtimeService {
   /**
    * Get recent connection errors for analysis
    */
-  private getRecentConnectionErrors(): Array<{ timestamp: number; error: string; attempts: number }> {
+  private getRecentConnectionErrors(): { timestamp: number; error: string; attempts: number }[] {
     const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
-    return this.connectionErrors.filter(e => e.timestamp > fiveMinutesAgo);
+    return this.connectionErrors.filter((e) => e.timestamp > fiveMinutesAgo);
   }
 
   /**
@@ -1115,7 +1113,7 @@ class SupabaseRealtimeService {
 
     // If we're in a critical state (multiple channel errors), trigger reconnection
     const recentErrors = this.getRecentConnectionErrors();
-    const channelErrors = recentErrors.filter(e => e.error.includes("channel"));
+    const channelErrors = recentErrors.filter((e) => e.error.includes("channel"));
 
     if (channelErrors.length >= 2) {
       console.warn("🚨 Multiple channel errors detected, triggering reconnection");

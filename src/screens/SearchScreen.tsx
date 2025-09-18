@@ -237,8 +237,8 @@ export default function SearchScreen({ navigation, route }: Props) {
         filters: {
           dateRange: filters.dateRange,
           location: filters.location,
-          category: 'dating', // Default to dating category for this app
-        }
+          category: "dating", // Default to dating category for this app
+        },
       });
       setContentResults(results);
 

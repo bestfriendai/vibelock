@@ -321,8 +321,8 @@ export default function App() {
       );
 
       const failedServices = results
-        .map((result, index) => ({ result, name: services[index].name }))
-        .filter(({ result }) => result.status === "rejected")
+        .map((result, index) => ({ result, name: services[index]?.name }))
+        .filter(({ result, name }) => result.status === "rejected" && name)
         .map(({ name }) => name);
 
       if (failedServices.length > 0) {
