@@ -20,7 +20,7 @@ export const getAuthenticatedUser = async (): Promise<{ user: User | null; supab
       userId: storeState.user?.id?.slice(-4) || 'none'
     });
 
-    const supabaseUser = await authService.getCurrentUser();
+    const supabaseUser = await authService.getUser();
     console.log(`🔍 getAuthenticatedUser - Supabase user:`, {
       hasSupabaseUser: !!supabaseUser,
       supabaseUserId: supabaseUser?.id?.slice(-4) || 'none'
@@ -118,7 +118,7 @@ export const requireAuthentication = async (
 
   // If we have store user but no supabase user, try to get supabase user again
   if (user && !supabaseUser) {
-    const freshSupabaseUser = await authService.getCurrentUser();
+    const freshSupabaseUser = await authService.getUser();
     return { user, supabaseUser: freshSupabaseUser || null };
   }
 
