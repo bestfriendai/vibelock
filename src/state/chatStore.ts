@@ -292,12 +292,12 @@ const useChatStore = create<ChatStore>()(
 
           // Use unified authentication check
           const { user, supabaseUser } = await requireAuthentication("join chat room");
-          // Join room with enhanced real-time service
-          await enhancedRealtimeChatService.joinRoom(roomId, supabaseUser.id, getUserDisplayName(user));
 
-          // Subscribe to messages with typed events
+          // IMPORTANT: Register message callback BEFORE joining room
+          // This ensures the callback is available when loadInitialMessages is called
           enhancedRealtimeChatService.subscribeToMessages(roomId, (event: MessageEvent) => {
-            console.log(`🔍 Received ${event.type} event with ${event.items.length} messages for room ${roomId}`);
+            console.log(`🔍 ChatStore: Received ${event.type} event with ${event.items.length} messages for room ${roomId}`);
+            console.log(`🔍 ChatStore: Event items:`, event.items.map(m => ({ id: m.id, content: m.content?.slice(0, 30) })));
 
             // Use React 19 startTransition for non-urgent message updates
             startTransition(() => {
@@ -398,6 +398,10 @@ const useChatStore = create<ChatStore>()(
               }));
             });
           });
+
+          // Now join the room with enhanced real-time service
+          // This will trigger loadInitialMessages which will use the callback we just registered
+          await enhancedRealtimeChatService.joinRoom(roomId, supabaseUser.id, getUserDisplayName(user));
 
           console.log(`✅ Successfully joined room: ${room.name}`);
         } catch (error) {

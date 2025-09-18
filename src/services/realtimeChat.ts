@@ -324,9 +324,15 @@ class EnhancedRealtimeChatService {
 
         // Notify callback with initial messages (this replaces all messages)
         const callback = this.messageCallbacks.get(roomId);
+        console.log(`📨 loadInitialMessages: Found ${formattedMessages.length} messages for room ${roomId}`);
+        console.log(`📨 loadInitialMessages: Callback exists: ${!!callback}`);
+
         if (callback) {
+          console.log(`📨 loadInitialMessages: Calling callback with ${formattedMessages.length} messages`);
           // For initial load, we need to replace all messages
           callback({ type: "initial", items: formattedMessages });
+        } else {
+          console.warn(`📨 loadInitialMessages: No callback registered for room ${roomId}`);
         }
       }
     } catch (error) {
