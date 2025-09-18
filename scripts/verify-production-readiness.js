@@ -114,7 +114,7 @@ class ProductionReadinessVerifier {
       try {
         execSync("npm audit --audit-level=high", { stdio: "pipe" });
         this.pass("No high-severity security vulnerabilities found");
-      } catch (error) {
+      } catch (_error) {
         this.error("High-severity security vulnerabilities detected. Run: npm audit fix");
       }
 
@@ -131,7 +131,7 @@ class ProductionReadinessVerifier {
         } else {
           this.pass("Critical packages are up to date");
         }
-      } catch (error) {
+      } catch (_error) {
         this.pass("All packages are up to date");
       }
 
@@ -184,7 +184,7 @@ class ProductionReadinessVerifier {
       try {
         execSync("npx tsc --noEmit", { stdio: "pipe" });
         this.pass("TypeScript compilation successful");
-      } catch (error) {
+      } catch (_error) {
         this.error("TypeScript compilation errors detected. Run: npm run typecheck");
       }
 
@@ -268,7 +268,7 @@ class ProductionReadinessVerifier {
           try {
             execSync(`git check-ignore ${file}`, { stdio: "pipe" });
             this.pass(`Sensitive file ${file} is properly ignored`);
-          } catch (error) {
+          } catch (_error) {
             this.error(`Sensitive file ${file} is not in .gitignore`);
           }
         }
@@ -427,7 +427,7 @@ class ProductionReadinessVerifier {
         try {
           execSync("npm test -- --passWithNoTests --watchAll=false", { stdio: "pipe" });
           this.pass("All tests passing");
-        } catch (error) {
+        } catch (_error) {
           this.error("Some tests are failing");
         }
       }

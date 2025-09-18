@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { Pressable, Text, View, PressableProps } from "react-native";
+import { Pressable, Text, View, PressableProps, StyleProp, ViewStyle } from "react-native";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -19,6 +19,7 @@ interface AnimatedButtonProps extends Omit<PressableProps, "style"> {
   disabled?: boolean;
   className?: string;
   textClassName?: string;
+  style?: StyleProp<ViewStyle>;
 }
 
 const AnimatedButton = React.forwardRef<View, AnimatedButtonProps>(
@@ -31,6 +32,7 @@ const AnimatedButton = React.forwardRef<View, AnimatedButtonProps>(
       disabled = false,
       className,
       textClassName,
+      style,
       onPress,
       ...props
     },
@@ -140,7 +142,7 @@ const AnimatedButton = React.forwardRef<View, AnimatedButtonProps>(
     };
 
     return (
-      <Animated.View style={animatedStyle}>
+      <Animated.View style={[animatedStyle, style]}>
         <Pressable
           ref={ref}
           className={cn(

@@ -3,7 +3,7 @@
  */
 
 import { webSocketService } from "../websocketService";
-import type { WebSocketServiceCallbacks } from "../../types";
+import type { WebSocketServiceCallbacks } from "../websocketService";
 
 // Mock Supabase to avoid actual network calls in tests
 jest.mock("../../config/supabase", () => ({

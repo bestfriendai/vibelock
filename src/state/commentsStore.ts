@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { mmkvStorage } from "../utils/mmkvStorage";
-import { Comment, CommentState } from "../types";
+import { ReviewComment, CommentState } from "../types";
 import { supabaseReviews } from "../services/supabase";
 import { supabase } from "../config/supabase";
 import { RealtimeChannel } from "@supabase/supabase-js";
@@ -15,9 +15,9 @@ const MAX_PERSISTED_COMMENTS_PER_REVIEW = 20;
 
 // Sanitize comments for persistence - remove sensitive content
 const sanitizeCommentsForPersistence = (comments: {
-  [reviewId: string]: Comment[];
-}): { [reviewId: string]: Comment[] } => {
-  const sanitized: { [reviewId: string]: Comment[] } = {};
+  [reviewId: string]: ReviewComment[];
+}): { [reviewId: string]: ReviewComment[] } => {
+  const sanitized: { [reviewId: string]: ReviewComment[] } = {};
 
   Object.entries(comments).forEach(([reviewId, reviewComments]) => {
     // Limit number of comments per review
@@ -85,7 +85,7 @@ const useCommentsStore = create<CommentsStore>()(
             set((state) => ({
               comments: {
                 ...state.comments,
-                [reviewId]: comments,
+                [reviewId]: comments as unknown as ReviewComment[],
               },
               isLoading: false,
             }));
@@ -111,7 +111,7 @@ const useCommentsStore = create<CommentsStore>()(
             const user = storeState.user;
             console.log("💬 Creating comment for user:", user.id);
 
-            const commentData: Omit<Comment, "id" | "createdAt" | "updatedAt"> = {
+            const commentData: Omit<ReviewComment, "id" | "createdAt" | "updatedAt"> = {
               reviewId,
               authorId: user.id,
               authorName: getUserDisplayName(user),
@@ -122,7 +122,7 @@ const useCommentsStore = create<CommentsStore>()(
             };
 
             // Create the comment with timestamp for optimistic update
-            const optimisticComment: Comment = {
+            const optimisticComment: ReviewComment = {
               ...commentData,
               id: `temp_${Date.now()}`,
               createdAt: new Date(),
@@ -133,7 +133,7 @@ const useCommentsStore = create<CommentsStore>()(
             set((state) => ({
               comments: {
                 ...state.comments,
-                [reviewId]: [...(state.comments[reviewId] || []), optimisticComment],
+                [reviewId]: [...(state.comments[reviewId] || []), optimisticComment] as ReviewComment[],
               },
               isPosting: false,
             }));
@@ -141,15 +141,15 @@ const useCommentsStore = create<CommentsStore>()(
             // Save to Supabase and then create notifications
             try {
               const { reviewsService } = await import("../services/reviews");
-              const createdComment = await reviewsService.createComment(commentData);
+              const createdComment = await reviewsService.createComment(commentData as any);
 
               // Replace optimistic comment with server comment
               set((state) => ({
                 comments: {
                   ...state.comments,
                   [reviewId]: (state.comments[reviewId] || []).map((c) =>
-                    c.id === optimisticComment.id ? createdComment : c,
-                  ),
+                    c.id === optimisticComment.id ? createdComment as unknown as ReviewComment : c,
+                  ) as ReviewComment[],
                 },
               }));
 
@@ -161,7 +161,7 @@ const useCommentsStore = create<CommentsStore>()(
                   type: "new_comment",
                   title: "New comment on your review",
                   body: commentData.content.slice(0, 100),
-                  data: { reviewId, commentId: createdId },
+                  data: { reviewId, commentId: createdComment.id },
                 });
               }
 
@@ -182,7 +182,7 @@ const useCommentsStore = create<CommentsStore>()(
                     type: "new_comment",
                     title: "Someone replied to your comment",
                     body: commentData.content.slice(0, 100),
-                    data: { reviewId, parentCommentId: (commentData as any).parentCommentId, commentId: createdId },
+                    data: { reviewId, parentCommentId: (commentData as any).parentCommentId, commentId: createdComment.id },
                   });
                 }
               }
@@ -332,7 +332,7 @@ const useCommentsStore = create<CommentsStore>()(
             return subscriptions.get(reviewId)!.unsubscribe;
           }
 
-          const mapRowToComment = (row: any): Comment => ({
+          const mapRowToComment = (row: any): ReviewComment => ({
             id: row.id,
             reviewId: row.review_id,
             authorId: row.author_id,

@@ -1,4 +1,4 @@
-import React, { useState, forwardRef } from "react";
+import React, { useState, forwardRef, ReactNode } from "react";
 import { View, Text, TextInput, TextInputProps, Pressable } from "react-native";
 import Animated, {
   useSharedValue,
@@ -16,8 +16,8 @@ const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
 interface AnimatedInputProps extends TextInputProps {
   label?: string;
   error?: string;
-  leftIcon?: keyof typeof Ionicons.glyphMap;
-  rightIcon?: keyof typeof Ionicons.glyphMap;
+  leftIcon?: keyof typeof Ionicons.glyphMap | ReactNode;
+  rightIcon?: keyof typeof Ionicons.glyphMap | ReactNode;
   onRightIconPress?: () => void;
   containerClassName?: string;
   inputClassName?: string;
@@ -129,7 +129,7 @@ const AnimatedInput = forwardRef<TextInput, AnimatedInputProps>(
         >
           {leftIcon && (
             <View className="pl-4">
-              <Ionicons name={leftIcon} size={20} color="#9CA3AF" />
+              {typeof leftIcon === "string" ? <Ionicons name={leftIcon as keyof typeof Ionicons.glyphMap} size={20} color="#9CA3AF" /> : leftIcon}
             </View>
           )}
 
@@ -149,7 +149,7 @@ const AnimatedInput = forwardRef<TextInput, AnimatedInputProps>(
 
           {rightIcon && (
             <Pressable className="pr-4" onPress={onRightIconPress}>
-              <Ionicons name={rightIcon} size={20} color="#9CA3AF" />
+              {typeof rightIcon === "string" ? <Ionicons name={rightIcon as keyof typeof Ionicons.glyphMap} size={20} color="#9CA3AF" /> : rightIcon}
             </Pressable>
           )}
         </Animated.View>

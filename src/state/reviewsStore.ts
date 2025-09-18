@@ -472,7 +472,8 @@ const useReviewsStore = create<ReviewsStore>()(
                 }
 
                 const filename = `reviews/${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`;
-                const downloadURL = await storageService.uploadFile("review-images", filename, arrayBuffer);
+                const uploadResult = await storageService.uploadFile("review-images", filename, arrayBuffer);
+                const downloadURL = typeof uploadResult === 'string' ? uploadResult : uploadResult.url;
 
                 uploadedMedia.push({
                   ...mediaItem,
@@ -512,7 +513,8 @@ const useReviewsStore = create<ReviewsStore>()(
                   const thumbBuf = await thumbResp.arrayBuffer();
                   if (thumbBuf && thumbBuf.byteLength > 0) {
                     const thumbName = `reviews/${Date.now()}_${Math.random().toString(36).substring(7)}_thumb.jpg`;
-                    thumbnailUrl = await storageService.uploadFile("review-images", thumbName, thumbBuf);
+                    const thumbResult = await storageService.uploadFile("review-images", thumbName, thumbBuf);
+                    thumbnailUrl = typeof thumbResult === 'string' ? thumbResult : thumbResult.url;
                   }
                 } catch (thumbErr) {
                   console.warn("⚠️ Failed to generate/upload video thumbnail:", thumbErr);
@@ -521,7 +523,8 @@ const useReviewsStore = create<ReviewsStore>()(
                 const ext = mime === "video/quicktime" ? "mov" : "mp4";
                 const filename = `reviews/${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
                 // Use review-images bucket (unrestricted MIME types)
-                const downloadURL = await storageService.uploadFile("review-images", filename, arrayBuffer);
+                const uploadResult = await storageService.uploadFile("review-images", filename, arrayBuffer);
+                const downloadURL = typeof uploadResult === 'string' ? uploadResult : uploadResult.url;
 
                 uploadedMedia.push({
                   ...mediaItem,
@@ -551,7 +554,7 @@ const useReviewsStore = create<ReviewsStore>()(
 
           // Only keep successfully uploaded remote media (with https URLs)
           const remoteMedia = (uploadedMedia || []).filter(
-            (m) => typeof m?.uri === "string" && /^https?:\/\//.test(m.uri),
+            (m): m is MediaItem => m && typeof m.uri === "string" && /^https?:\/\//.test(m.uri),
           );
 
           // Create review data for backend
@@ -579,9 +582,15 @@ const useReviewsStore = create<ReviewsStore>()(
             ...reviewData,
             authorId: (() => {
               try {
-                return useAuthStore.getState().user?.id || "local_seed";
-              } catch {
-                return "local_seed";
+                const userId = useAuthStore.getState().user?.id;
+                if (!userId) {
+                  console.warn("No user ID available, using fallback");
+                  return "anonymous_user";
+                }
+                return userId;
+              } catch (error) {
+                console.warn("Error getting user from auth store:", error);
+                return "anonymous_user";
               }
             })(),
             id: uuidv4(),
@@ -594,7 +603,7 @@ const useReviewsStore = create<ReviewsStore>()(
           set({ isLoading: false });
 
           // Try to save to database in background (don't wait for it)
-          reviewsService.createReview(reviewData).catch((error) => {
+          reviewsService.createReview({ ...reviewData, authorId: newReview.authorId }).catch((error) => {
             console.warn("Failed to save review to database (but it's still visible locally):", error);
           });
         } catch (error) {

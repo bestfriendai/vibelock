@@ -104,7 +104,7 @@ function analyzeBundleForPropertyConflicts(bundlePath) {
   // Analyze Object.defineProperty calls
   let match;
   while ((match = patterns.defineProperty.exec(bundleContent)) !== null) {
-    const [fullMatch, target, propertyName, descriptor] = match;
+    const [, target, propertyName, descriptor] = match;
 
     // Check if this defines a non-configurable property
     if (descriptor.includes("configurable:false") || descriptor.includes("configurable: false")) {
@@ -122,7 +122,7 @@ function analyzeBundleForPropertyConflicts(bundlePath) {
   // Analyze global assignments
   patterns.globalAssignment.lastIndex = 0;
   while ((match = patterns.globalAssignment.exec(bundleContent)) !== null) {
-    const [fullMatch, globalObject, propertyName] = match;
+    const [, globalObject, propertyName] = match;
 
     conflicts.push({
       type: "global-assignment",
@@ -136,7 +136,7 @@ function analyzeBundleForPropertyConflicts(bundlePath) {
   // Analyze prototype modifications
   patterns.prototypeModification.lastIndex = 0;
   while ((match = patterns.prototypeModification.exec(bundleContent)) !== null) {
-    const [fullMatch, targetObject, propertyName] = match;
+    const [, targetObject, propertyName] = match;
 
     conflicts.push({
       type: "prototype-modification",

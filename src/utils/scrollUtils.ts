@@ -38,7 +38,7 @@ export class ScrollManager {
       if ("scrollToEnd" in component) {
         component.scrollToEnd({ animated: options.animated });
       } else if ("scrollTo" in component) {
-        (component as ScrollView).scrollTo({ y: Number.MAX_SAFE_INTEGER, animated: options.animated });
+        (component as unknown as ScrollView).scrollTo({ y: Number.MAX_SAFE_INTEGER, animated: options.animated });
       }
     };
 

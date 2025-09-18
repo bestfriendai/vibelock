@@ -713,7 +713,12 @@ class EnhancedRealtimeChatService {
       const subscriptionState = this.subscriptionStates.get(roomId);
       const activeChannel = this.channels.get(roomId);
 
-      console.log(`📤 sendMessage: Room ${roomId} - State:`, subscriptionState?.status, `Channel exists:`, !!activeChannel);
+      console.log(
+        `📤 sendMessage: Room ${roomId} - State:`,
+        subscriptionState?.status,
+        `Channel exists:`,
+        !!activeChannel,
+      );
 
       // If we have an active channel, allow sending regardless of state tracking
       // This handles cases where state tracking is out of sync with actual channel status
@@ -733,11 +738,7 @@ class EnhancedRealtimeChatService {
       } else {
         // No channel and no state - definitely not connected
         console.warn(`📤 sendMessage: No channel or subscription state for room ${roomId}`);
-        throw new AppError(
-          "Cannot send message: not connected to room",
-          ErrorType.NETWORK,
-          "NOT_CONNECTED",
-        );
+        throw new AppError("Cannot send message: not connected to room", ErrorType.NETWORK, "NOT_CONNECTED");
       }
 
       const messageData: any = {

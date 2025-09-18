@@ -209,28 +209,53 @@ export class SearchService {
       useFullText?: boolean;
       useSimilarity?: boolean;
       sortBy?: "relevance" | "date";
+      searchMode?: "basic" | "similarity" | "fts" | "hybrid";
     } = {},
   ): Promise<SearchResults> {
     return withRetry(async () => {
-      const { useFullText = false, useSimilarity = false, sortBy = "date" } = options;
+      const { useFullText = false, useSimilarity = false, sortBy = "date", searchMode } = options;
 
       let reviewData: any[] = [];
 
-      if (useFullText) {
-        // Try full-text search first
+      // Handle searchMode parameter
+      if (searchMode) {
         try {
-          reviewData = await this.fullTextSearch(query, "reviews_firebase", "review_text");
+          switch (searchMode) {
+            case "similarity":
+              reviewData = await this.similaritySearch(query, "reviews_firebase", "review_text");
+              break;
+            case "fts":
+              reviewData = await this.fullTextSearch(query, "reviews_firebase", "review_text");
+              break;
+            case "hybrid":
+              reviewData = await this.hybridSearch(query, "reviews_firebase");
+              break;
+            case "basic":
+            default:
+              reviewData = await this.basicSearch(query, "reviews_firebase", ["reviewed_person_name", "review_text"]);
+              break;
+          }
         } catch (error) {
-          console.warn("Full-text search failed:", error);
+          console.warn(`${searchMode} search failed:`, error);
         }
-      }
+      } else {
+        // Legacy behavior with useFullText and useSimilarity flags
+        if (useFullText) {
+          // Try full-text search first
+          try {
+            reviewData = await this.fullTextSearch(query, "reviews_firebase", "review_text");
+          } catch (error) {
+            console.warn("Full-text search failed:", error);
+          }
+        }
 
-      if (useSimilarity && reviewData.length === 0) {
-        // Try similarity search
-        try {
-          reviewData = await this.similaritySearch(query, "reviews_firebase", "review_text");
-        } catch (error) {
-          console.warn("Similarity search failed:", error);
+        if (useSimilarity && reviewData.length === 0) {
+          // Try similarity search
+          try {
+            reviewData = await this.similaritySearch(query, "reviews_firebase", "review_text");
+          } catch (error) {
+            console.warn("Similarity search failed:", error);
+          }
         }
       }
 

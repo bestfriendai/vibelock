@@ -4,7 +4,7 @@
 // Gesture Handler setup - only import, don't modify properties
 try {
   require("react-native-gesture-handler/jestSetup");
-} catch (error) {
+} catch (_error) {
   // Ignore if gesture handler setup fails
 }
 
@@ -13,7 +13,7 @@ jest.mock("react-native-reanimated", () => {
   try {
     const Reanimated = require("react-native-reanimated/mock");
     return Reanimated;
-  } catch (error) {
+  } catch (_error) {
     // Return a basic mock if the official mock fails
     return {
       default: {},

@@ -92,7 +92,6 @@ class BiometricService {
     try {
       const result = await LocalAuthentication.authenticateAsync({
         promptMessage,
-        subtitle,
         cancelLabel: "Cancel",
         fallbackLabel: "Use Passcode",
         disableDeviceFallback: false, // Allow device passcode as fallback
@@ -116,9 +115,9 @@ class BiometricService {
           errorMessage = "Authentication was cancelled by the system";
         } else if (result.error === "authentication_failed") {
           errorMessage = "Authentication failed after multiple attempts";
-        } else if (result.error === "biometry_not_available") {
+        } else if (result.error === "not_available") {
           errorMessage = "Biometric authentication is not available";
-        } else if (result.error === "biometry_not_enrolled") {
+        } else if (result.error === "not_enrolled") {
           errorMessage = "No biometrics enrolled on this device";
         }
 

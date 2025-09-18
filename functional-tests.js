@@ -89,7 +89,7 @@ class FunctionalTestSuite {
               data: parsed,
               headers: res.headers,
             });
-          } catch (error) {
+          } catch (_error) {
             resolve({
               status: res.statusCode,
               data: responseData,

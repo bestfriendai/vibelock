@@ -17,13 +17,13 @@ export const getAuthenticatedUser = async (): Promise<{ user: User | null; supab
       isAuthenticated: storeState.isAuthenticated,
       hasUser: !!storeState.user,
       isGuestMode: storeState.isGuestMode,
-      userId: storeState.user?.id?.slice(-4) || 'none'
+      userId: storeState.user?.id?.slice(-4) || "none",
     });
 
     const supabaseUser = await authService.getUser();
     console.log(`🔍 getAuthenticatedUser - Supabase user:`, {
       hasSupabaseUser: !!supabaseUser,
-      supabaseUserId: supabaseUser?.id?.slice(-4) || 'none'
+      supabaseUserId: supabaseUser?.id?.slice(-4) || "none",
     });
 
     // If store says authenticated but Supabase doesn't, DON'T auto-clear
@@ -105,8 +105,8 @@ export const requireAuthentication = async (
   console.log(`🔍 Auth check result:`, {
     hasUser: !!user,
     hasSupabaseUser: !!supabaseUser,
-    userId: user?.id?.slice(-4) || 'none',
-    supabaseUserId: supabaseUser?.id?.slice(-4) || 'none'
+    userId: user?.id?.slice(-4) || "none",
+    supabaseUserId: supabaseUser?.id?.slice(-4) || "none",
   });
 
   // Be more lenient - if we have either a user OR supabaseUser, allow the action
@@ -172,7 +172,7 @@ export const getUserDisplayName = (user?: User | null): string => {
  */
 export const refreshSessionIfNeeded = async (): Promise<boolean> => {
   try {
-    const session = await supabaseAuth.getCurrentSession();
+    const session = await authService.getSession();
 
     if (!session) {
       return false;
@@ -212,7 +212,7 @@ export const refreshSessionIfNeeded = async (): Promise<boolean> => {
 export const syncAuthState = async (): Promise<void> => {
   try {
     const storeState = useAuthStore.getState();
-    const supabaseUser = await authService.getCurrentUser();
+    const supabaseUser = await authService.getUser();
 
     console.log("🔄 Syncing auth state:");
     console.log("  Store authenticated:", storeState.isAuthenticated);

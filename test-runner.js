@@ -3,9 +3,7 @@
  * Tests all functionality including authentication, database operations, and UI components
  */
 
-const { execSync } = require("child_process");
 const fs = require("fs");
-const path = require("path");
 
 class E2ETestRunner {
   constructor() {

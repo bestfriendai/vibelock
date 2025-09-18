@@ -186,7 +186,7 @@ class PackageVerifier {
       } else {
         logSuccess("No peer dependency issues detected");
       }
-    } catch (parseError) {
+    } catch (_parseError) {
       // Fallback to text-based parsing if JSON is malformed
       logWarning("Could not parse npm ls JSON output, using fallback text analysis");
 
@@ -215,7 +215,7 @@ class PackageVerifier {
 
     try {
       const appJsonContent = fs.readFileSync(appJsonPath, "utf8");
-      const appJson = JSON.parse(appJsonContent);
+      JSON.parse(appJsonContent);
 
       logSuccess("app.json structure is valid");
 
@@ -252,11 +252,11 @@ class PackageVerifier {
           timeout: 10000,
         });
         logSuccess("Expo doctor check passed");
-      } catch (error) {
+      } catch (_error) {
         this.addWarning("Expo doctor found some issues");
         logInfo('Run "expo doctor" manually for details');
       }
-    } catch (error) {
+    } catch (_error) {
       this.addWarning("Expo CLI not available globally");
       logInfo("Consider installing: npm install -g @expo/cli");
     }

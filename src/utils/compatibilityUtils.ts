@@ -142,7 +142,7 @@ class CompatibilityChecker {
   private getVersionInfo() {
     return {
       reactNative: REACT_NATIVE_VERSION,
-      expo: Constants.expoVersion ? parseInt(Constants.expoVersion.split(".")[0]) : EXPO_SDK_VERSION,
+      expo: Constants.expoVersion ? parseInt(Constants.expoVersion.split(".")[0]!) : EXPO_SDK_VERSION,
       platform: Platform.OS,
       platformVersion: Platform.Version.toString(),
     };
@@ -306,7 +306,7 @@ class CompatibilityChecker {
    */
   private isHermesEnabled(): boolean {
     try {
-      return global.HermesInternal != null;
+      return (global as any).HermesInternal != null;
     } catch {
       return false;
     }
@@ -317,7 +317,7 @@ class CompatibilityChecker {
    */
   private isNewArchitectureEnabled(): boolean {
     try {
-      return global._IS_NEW_ARCHITECTURE_ENABLED === true;
+      return (global as any)._IS_NEW_ARCHITECTURE_ENABLED === true;
     } catch {
       return false;
     }
@@ -328,7 +328,7 @@ class CompatibilityChecker {
    */
   private isTurboModulesEnabled(): boolean {
     try {
-      return global.__turboModuleProxy != null;
+      return (global as any).__turboModuleProxy != null;
     } catch {
       return false;
     }
@@ -339,7 +339,7 @@ class CompatibilityChecker {
    */
   private isFabricEnabled(): boolean {
     try {
-      return global.nativeFabricUIManager != null;
+      return (global as any).nativeFabricUIManager != null;
     } catch {
       return false;
     }
@@ -350,7 +350,7 @@ class CompatibilityChecker {
    */
   private isJSIAvailable(): boolean {
     try {
-      return global._IS_JSI_AVAILABLE === true;
+      return (global as any)._IS_JSI_AVAILABLE === true;
     } catch {
       return false;
     }
@@ -372,7 +372,7 @@ class CompatibilityChecker {
    */
   private isFlipperAvailable(): boolean {
     try {
-      return __DEV__ && global._IS_FLIPPER_AVAILABLE === true;
+      return __DEV__ && (global as any)._IS_FLIPPER_AVAILABLE === true;
     } catch {
       return false;
     }
@@ -383,7 +383,7 @@ class CompatibilityChecker {
    */
   private isReanimated3Available(): boolean {
     try {
-      return global._REANIMATED !== undefined;
+      return (global as any)._REANIMATED !== undefined;
     } catch {
       return false;
     }
@@ -405,10 +405,10 @@ class CompatibilityChecker {
   private applyHermesOptimizations(): void {
     if (this.isHermesEnabled()) {
       // Enable Hermes-specific optimizations
-      if (global.HermesInternal) {
+      if ((global as any).HermesInternal) {
         try {
           // Configure Hermes for optimal performance
-          global.HermesInternal.setHeapTracking?.(false);
+          (global as any).HermesInternal.setHeapTracking?.(false);
         } catch (error) {
           console.warn("Failed to apply Hermes optimizations:", error);
         }
@@ -552,11 +552,11 @@ export class PerformanceMonitor {
   }
 
   static getMemoryUsage(): any {
-    if (global.performance?.memory) {
+    if ((global as any).performance?.memory) {
       return {
-        usedJSHeapSize: global.performance.memory.usedJSHeapSize,
-        totalJSHeapSize: global.performance.memory.totalJSHeapSize,
-        jsHeapSizeLimit: global.performance.memory.jsHeapSizeLimit,
+        usedJSHeapSize: (global as any).performance.memory.usedJSHeapSize,
+        totalJSHeapSize: (global as any).performance.memory.totalJSHeapSize,
+        jsHeapSizeLimit: (global as any).performance.memory.jsHeapSizeLimit,
       };
     }
     return null;
@@ -588,7 +588,7 @@ export class MigrationHelper {
     const warnings: string[] = [];
 
     // Check for common deprecated patterns
-    if (global.ViewPropTypes) {
+    if ((global as any).ViewPropTypes) {
       warnings.push("ViewPropTypes is deprecated - use ViewStyle instead");
     }
 

@@ -9,7 +9,7 @@ describe("MessageActionsModal", () => {
     const onCopy = jest.fn();
     const onDelete = jest.fn();
 
-    const { getByText, getByTestId } = render(
+    const { getByText } = render(
       <MessageActionsModal visible={true} onClose={onClose} onReply={onReply} onCopy={onCopy} onDelete={onDelete} />,
     );
 

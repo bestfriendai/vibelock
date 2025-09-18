@@ -26,7 +26,7 @@ export const ChatRoomListScreen: React.FC = () => {
   const { chatRooms, loadChatRooms } = useChatStore();
 
   // Transform global ChatRoom type to navigation-compatible type
-  const displayChatRooms: ChatRoomListItem[] = chatRooms.map(room => ({
+  const displayChatRooms: ChatRoomListItem[] = chatRooms.map((room) => ({
     id: room.id,
     name: room.name,
     type: room.type === "local" ? "private" : "group", // Map global types to navigation types

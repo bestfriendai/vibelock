@@ -259,11 +259,11 @@ export function applyHermesWorkarounds(): void {
       });
     }
 
-    // Also ensure Function.prototype._toString exists for worklets
-    if (typeof Function.prototype._toString === "undefined") {
-      console.log("[HermesCompatibility] Adding Function.prototype._toString for worklets");
+    // Also ensure Function.prototype.toString exists for worklets
+    if (typeof Function.prototype.toString === "undefined") {
+      console.log("[HermesCompatibility] Adding Function.prototype.toString for worklets");
 
-      Object.defineProperty(Function.prototype, "_toString", {
+      Object.defineProperty(Function.prototype, "toString", {
         value: function () {
           return this.toString();
         },

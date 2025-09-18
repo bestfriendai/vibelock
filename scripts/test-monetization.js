@@ -104,10 +104,10 @@ try {
       console.log("⚠️  Subscription events migration not applied");
       console.log("   Run: supabase db push");
     }
-  } catch (error) {
+  } catch (_error) {
     console.log("⚠️  Could not check migration status (this is okay if not using local Supabase)");
   }
-} catch (error) {
+} catch (_error) {
   console.log("⚠️  Supabase CLI not available (this is okay for remote-only setups)");
 }
 
@@ -117,7 +117,7 @@ console.log("\n🔍 Checking TypeScript compilation...");
 try {
   execSync("npx tsc --noEmit --skipLibCheck", { stdio: "pipe" });
   console.log("✅ TypeScript compilation successful");
-} catch (error) {
+} catch (_error) {
   console.log("❌ TypeScript compilation errors detected");
   console.log("   Please fix TypeScript errors before running integration tests");
   // Don't exit here, as some errors might not affect monetization

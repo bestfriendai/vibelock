@@ -40,14 +40,14 @@ export default function ChatroomsScreen() {
 
   // Debug logging for authentication state
   useEffect(() => {
-    console.log('🔍 ChatroomsScreen Auth Debug:', {
+    console.log("🔍 ChatroomsScreen Auth Debug:", {
       hasUser: !!user,
-      userId: user?.id?.slice(-4) || 'none',
+      userId: user?.id?.slice(-4) || "none",
       canAccessChat,
       needsSignIn,
       chatRoomsCount: chatRooms.length,
       isLoading,
-      error: error || 'none'
+      error: error || "none",
     });
   }, [user, canAccessChat, needsSignIn, chatRooms.length, isLoading, error]);
 

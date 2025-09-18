@@ -739,7 +739,7 @@ export function validateSupabaseCompatibility(): {
         if (
           typeof RealtimeChannel === "function" &&
           RealtimeChannel.prototype &&
-          typeof RealtimeChannel.prototype[method] !== "function"
+          typeof (RealtimeChannel.prototype as any)[method] !== "function"
         ) {
           issues.push(`Missing RealtimeChannel method: ${method}`);
           recommendations.push(`Update to Supabase v2.57.4 or later`);

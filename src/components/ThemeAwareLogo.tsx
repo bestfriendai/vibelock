@@ -5,6 +5,7 @@ import { useTheme } from "../providers/ThemeProvider";
 interface ThemeAwareLogoProps {
   width?: number;
   height?: number;
+  size?: number;
   style?: StyleProp<ImageStyle>;
   resizeMode?: "contain" | "cover" | "stretch" | "center" | "repeat";
 }
@@ -20,6 +21,7 @@ interface ThemeAwareLogoProps {
 export default function ThemeAwareLogo({
   width = 128,
   height = 128,
+  size,
   style,
   resizeMode = "contain",
 }: ThemeAwareLogoProps) {
@@ -30,5 +32,10 @@ export default function ThemeAwareLogo({
     ? require("../../assets/LockerRoomLogo.png") // Black background for dark theme
     : require("../../assets/LockerRoomTransparent1.png"); // Transparent for light theme
 
-  return <Image source={logoSource} style={[{ width, height }, style]} resizeMode={resizeMode} />;
+  const finalWidth = size || width;
+  const finalHeight = size || height;
+
+  return (
+    <Image source={logoSource} style={[{ width: finalWidth, height: finalHeight }, style]} resizeMode={resizeMode} />
+  );
 }

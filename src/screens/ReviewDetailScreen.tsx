@@ -34,7 +34,7 @@ import MediaViewer from "../components/MediaViewer";
 import CommentSection from "../components/CommentSection";
 import CommentInput from "../components/CommentInput";
 import ReportModal from "../components/ReportModal";
-import { Comment as ReviewComment } from "../types";
+import { ReviewComment } from "../types";
 import useReviewsStore from "../state/reviewsStore";
 import useCommentsStore from "../state/commentsStore";
 import useAuthStore from "../state/authStore";

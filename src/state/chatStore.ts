@@ -296,8 +296,13 @@ const useChatStore = create<ChatStore>()(
           // IMPORTANT: Register message callback BEFORE joining room
           // This ensures the callback is available when loadInitialMessages is called
           enhancedRealtimeChatService.subscribeToMessages(roomId, (event: MessageEvent) => {
-            console.log(`🔍 ChatStore: Received ${event.type} event with ${event.items.length} messages for room ${roomId}`);
-            console.log(`🔍 ChatStore: Event items:`, event.items.map(m => ({ id: m.id, content: m.content?.slice(0, 30) })));
+            console.log(
+              `🔍 ChatStore: Received ${event.type} event with ${event.items.length} messages for room ${roomId}`,
+            );
+            console.log(
+              `🔍 ChatStore: Event items:`,
+              event.items.map((m) => ({ id: m.id, content: m.content?.slice(0, 30) })),
+            );
 
             // Use React 19 startTransition for non-urgent message updates
             startTransition(() => {

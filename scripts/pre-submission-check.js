@@ -14,10 +14,6 @@ function checkFileExists(filePath, description) {
   }
 }
 
-function loadJSON(filePath) {
-  return JSON.parse(fs.readFileSync(filePath, "utf-8"));
-}
-
 async function main() {
   console.log("Running pre-submission checks...");
 

@@ -353,6 +353,9 @@ export interface SearchResult {
     roomName?: string;
     authorName?: string;
     location?: string;
+    similarity?: number;
+    rankScore?: number;
+    combinedScore?: number;
   };
 }
 

@@ -46,24 +46,29 @@ export const useMessagesStore = create<MessagesState>((set, get) => ({
   addMessage: (message: Message) => {
     const { messages, deduplicator } = get();
 
-    if (!deduplicator.addMessage(message)) {
+    // Ensure message has an ID
+    const messageWithId = message.id ? message : { ...message, id: `msg_${Date.now()}_${Math.random()}` };
+
+    if (!deduplicator.addMessage(messageWithId)) {
       return;
     }
 
-    const roomMessages = messages.get(message.chatRoomId) || [];
-    const updatedMessages = [...roomMessages, message].sort(
+    const roomMessages = messages.get(messageWithId.chatRoomId) || [];
+    const updatedMessages = [...roomMessages, messageWithId].sort(
       (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
     );
 
     const newMessages = new Map(messages);
-    newMessages.set(message.chatRoomId, updatedMessages);
+    newMessages.set(messageWithId.chatRoomId, updatedMessages);
 
     set({ messages: newMessages });
   },
 
   addOptimisticMessage: (message: Message) => {
+    // Ensure message has an ID for optimistic updates
+    const messageWithId = message.id ? message : { ...message, id: `temp_${Date.now()}_${Math.random()}` };
     set((state) => ({
-      optimisticMessages: new Map(state.optimisticMessages).set(message.id, message),
+      optimisticMessages: new Map(state.optimisticMessages).set(messageWithId.id, messageWithId),
     }));
   },
 
@@ -93,8 +98,24 @@ export const useMessagesStore = create<MessagesState>((set, get) => ({
         const index = roomMessages.findIndex((msg) => msg.id === messageId);
         if (index !== -1) {
           const updatedMessages = [...roomMessages];
-          updatedMessages[index] = { ...updatedMessages[index], ...updates };
-          newMessages.set(roomId, updatedMessages);
+          const currentMessage = updatedMessages[index];
+          if (currentMessage) {
+            const updatedMessage: Message = {
+              ...currentMessage,
+              ...updates,
+              // Ensure required fields are never undefined
+              id: messageId,
+              chatRoomId: currentMessage.chatRoomId,
+              senderId: currentMessage.senderId,
+              senderName: currentMessage.senderName,
+              content: updates.content ?? currentMessage.content,
+              messageType: updates.messageType ?? currentMessage.messageType,
+              timestamp: updates.timestamp ?? currentMessage.timestamp,
+              isRead: updates.isRead ?? currentMessage.isRead,
+            };
+            updatedMessages[index] = updatedMessage;
+            newMessages.set(roomId, updatedMessages);
+          }
           break;
         }
       }

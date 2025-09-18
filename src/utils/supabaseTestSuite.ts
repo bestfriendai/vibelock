@@ -99,7 +99,7 @@ class SupabaseTestSuite {
       ];
 
       for (const table of requiredTables) {
-        const { data, error } = await supabase.from(table).select("*").limit(1);
+        const { data, error } = await (supabase as any).from(table).select("*").limit(1);
         if (error) throw new Error(`Table ${table} not accessible: ${error.message}`);
       }
 
@@ -110,12 +110,12 @@ class SupabaseTestSuite {
   // Test authentication service
   private async testAuthService() {
     await this.runTest("Auth Service - Get Session", async () => {
-      const session = await supabaseAuth.getCurrentSession();
+      const session = await supabaseAuth.getSession();
       return session ? "Session found" : "No active session";
     });
 
     await this.runTest("Auth Service - Get User", async () => {
-      const user = await supabaseAuth.getCurrentUser();
+      const user = await supabaseAuth.getUser();
       return user ? `User found: ${user.email}` : "No authenticated user";
     });
   }
@@ -123,10 +123,10 @@ class SupabaseTestSuite {
   // Test user operations
   private async testUserOperations() {
     await this.runTest("User Operations - Get Profile", async () => {
-      const user = await supabaseAuth.getCurrentUser();
+      const user = await supabaseAuth.getUser();
       if (!user) return "No user to test with";
 
-      const profile = await supabaseUsers.getUserProfile(user.id);
+      const profile = await supabaseUsers.getProfile(user.id);
       return profile ? "Profile retrieved" : "No profile found";
     });
   }
@@ -134,22 +134,22 @@ class SupabaseTestSuite {
   // Test review operations
   private async testReviewOperations() {
     await this.runTest("Review Operations - Get Reviews", async () => {
-      const reviews = await supabaseReviews.getReviews(5, 0);
-      return `Retrieved ${reviews.length} reviews`;
+      const reviews = await supabaseReviews.getReviews();
+      return `Retrieved ${reviews.data?.length || 0} reviews`;
     });
 
     await this.runTest("Review Operations - Search Reviews", async () => {
       const results = await supabaseSearch.searchReviews("test", {});
-      return `Search returned ${results.length} results`;
+      return `Search returned ${(results as any).data?.length || 0} results`;
     });
 
     await this.runTest("Review Operations - Media Validation", async () => {
-      const reviews = await supabaseReviews.getReviews(5, 0);
+      const reviews = await supabaseReviews.getReviews();
       let validMediaCount = 0;
       let totalMediaCount = 0;
       let fileUriCount = 0;
 
-      for (const review of reviews) {
+      for (const review of reviews.data || []) {
         if (review.media && Array.isArray(review.media)) {
           for (const mediaItem of review.media) {
             totalMediaCount++;
@@ -169,7 +169,7 @@ class SupabaseTestSuite {
   // Test chat operations
   private async testChatOperations() {
     await this.runTest("Chat Operations - Get Rooms", async () => {
-      const rooms = await supabaseChat.getChatRooms();
+      const rooms = await supabaseChat.getRooms("test-user");
       return `Retrieved ${rooms.length} chat rooms`;
     });
   }
@@ -212,7 +212,7 @@ class SupabaseTestSuite {
         const filename = `test-images/test_${Date.now()}.png`;
         const uploadedUrl = await supabaseStorage.uploadFile("review-images", filename, blob);
 
-        if (uploadedUrl && uploadedUrl.startsWith("https://")) {
+        if (uploadedUrl && typeof uploadedUrl === 'string' && (uploadedUrl as string).startsWith("https://")) {
           return `Upload successful: ${uploadedUrl}`;
         } else {
           throw new Error("Invalid URL returned");
@@ -309,7 +309,7 @@ class SupabaseTestSuite {
       if (error) throw error;
 
       // Test auth service
-      await supabaseAuth.getCurrentSession();
+      await supabaseAuth.getSession();
 
       // Test real-time
       const testChannel = supabase.channel("health-check");

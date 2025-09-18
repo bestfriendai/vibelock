@@ -35,10 +35,10 @@ export function mapFieldsToCamelCase<T extends Record<string, any>>(obj: T): Cam
       const camelKey = toCamelCase(key);
       const value = obj[key];
 
-      if (value && typeof value === "object" && !Array.isArray(value) && !(value instanceof Date)) {
+      if (value && typeof value === "object" && !Array.isArray(value) && !((value as any) instanceof Date)) {
         result[camelKey] = mapFieldsToCamelCase(value);
       } else if (Array.isArray(value)) {
-        result[camelKey] = value.map((item) => (typeof item === "object" ? mapFieldsToCamelCase(item) : item));
+        result[camelKey] = value.map((item: any) => (typeof item === "object" ? mapFieldsToCamelCase(item) : item));
       } else {
         result[camelKey] = value;
       }
@@ -60,10 +60,10 @@ export function mapFieldsToSnakeCase<T extends Record<string, any>>(obj: T): Sna
       const snakeKey = toSnakeCase(key);
       const value = obj[key];
 
-      if (value && typeof value === "object" && !Array.isArray(value) && !(value instanceof Date)) {
+      if (value && typeof value === "object" && !Array.isArray(value) && !((value as any) instanceof Date)) {
         result[snakeKey] = mapFieldsToSnakeCase(value);
       } else if (Array.isArray(value)) {
-        result[snakeKey] = value.map((item) => (typeof item === "object" ? mapFieldsToSnakeCase(item) : item));
+        result[snakeKey] = value.map((item: any) => (typeof item === "object" ? mapFieldsToSnakeCase(item) : item));
       } else {
         result[snakeKey] = value;
       }

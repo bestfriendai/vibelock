@@ -135,7 +135,7 @@ export function safeDeleteProperty(obj: any, propertyName: string): boolean {
  * Create a property definition wrapper that logs attempts
  */
 export function createPropertyLogger(originalDefineProperty: typeof Object.defineProperty) {
-  return function loggedDefineProperty(obj: any, propertyName: string, descriptor: PropertyDescriptor) {
+  return function loggedDefineProperty(obj: any, propertyName: string, descriptor: PropertyDescriptor): any {
     const existingDescriptor = Object.getOwnPropertyDescriptor(obj, propertyName);
 
     console.log(
@@ -214,14 +214,14 @@ export function applyPropertyWorkarounds(): void {
     if (global.URL && !checkPropertyConfigurable(global, "URL")) {
       console.log("[PropertyGuards] URL property conflict detected, applying workaround");
       // Store reference before potential override
-      global.__originalURL = global.URL;
+      (global as any).__originalURL = global.URL;
     }
 
     // Workaround for crypto polyfill conflicts
     if (global.crypto && !checkPropertyConfigurable(global, "crypto")) {
       console.log("[PropertyGuards] Crypto property conflict detected, applying workaround");
       // Store reference before potential override
-      global.__originalCrypto = global.crypto;
+      (global as any).__originalCrypto = global.crypto;
     }
   } catch (error) {
     console.warn("[PropertyGuards] Error applying property workarounds:", error);

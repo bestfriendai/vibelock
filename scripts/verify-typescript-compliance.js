@@ -371,7 +371,7 @@ class TypeScriptComplianceVerifier {
         const content = fs.readFileSync(file, "utf8");
 
         // Look for potential null/undefined issues
-        const nullPatterns = [
+        [
           /\.\w+\s*\(/g, // Method calls without null checks
           /\[\w+\]/g, // Array access without null checks
         ];

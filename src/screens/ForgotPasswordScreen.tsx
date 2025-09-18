@@ -103,23 +103,6 @@ export default function ForgotPasswordScreen() {
     navigation.goBack();
   };
 
-  // Simple fallback for debugging
-  if (__DEV__ && false) {
-    return (
-      <View
-        style={{ flex: 1, backgroundColor: "#1a1a1a", justifyContent: "center", alignItems: "center", padding: 20 }}
-      >
-        <Text style={{ color: "white", fontSize: 24, marginBottom: 20 }}>Forgot Password</Text>
-        <Text style={{ color: "#9CA3AF", textAlign: "center", marginBottom: 20 }}>
-          Enter your email to reset your password
-        </Text>
-        <Pressable onPress={handleBackToSignIn} style={{ backgroundColor: "#3B82F6", padding: 12, borderRadius: 8 }}>
-          <Text style={{ color: "white" }}>Back to Sign In</Text>
-        </Pressable>
-      </View>
-    );
-  }
-
   if (emailSent) {
     return (
       <LinearGradient colors={["#1a1a1a", "#2d2d2d", "#1a1a1a"]} style={{ flex: 1 }}>

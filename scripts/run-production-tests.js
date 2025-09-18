@@ -418,7 +418,7 @@ class ProductionTestRunner {
         execSync("npm audit --audit-level=moderate", { stdio: "pipe" });
         this.results.securityTests.passed++;
         this.pass("No moderate+ security vulnerabilities found");
-      } catch (error) {
+      } catch (_error) {
         this.results.securityTests.failed++;
         this.error("Security vulnerabilities detected in dependencies");
       }

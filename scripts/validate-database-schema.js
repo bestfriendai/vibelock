@@ -267,7 +267,7 @@ async function validateTable(tableName) {
     }
 
     // Check RLS is enabled
-    const { data: rlsCheck } = await supabase
+    await supabase
       .from("information_schema.tables")
       .select("*")
       .eq("table_schema", "public")
@@ -615,7 +615,7 @@ async function generateTestData() {
     }
 
     // Create test user
-    const { data: testUser, error: userError } = await supabase
+    const { error: userError } = await supabase
       .from("users")
       .insert({
         id: "550e8400-e29b-41d4-a716-446655440000", // Fixed UUID for testing
@@ -727,7 +727,7 @@ async function validateDatabaseSchema() {
   try {
     // Check basic connectivity
     console.log("\n🔌 Testing Database Connectivity...");
-    const { data } = await supabase.from("users").select("count").limit(1);
+    await supabase.from("users").select("count").limit(1);
     logSuccess("Database connection successful");
 
     // Validate tables
