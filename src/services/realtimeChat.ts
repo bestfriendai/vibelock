@@ -709,25 +709,34 @@ class EnhancedRealtimeChatService {
         throw new AppError(`Cannot send message: ${quotaStatus.reason}`, ErrorType.SERVER, "QUOTA_EXCEEDED");
       }
 
-      // Check subscription health
+      // Check subscription health - verify both state and active channel
       const subscriptionState = this.subscriptionStates.get(roomId);
-      console.log(`📤 sendMessage: Subscription state for room ${roomId}:`, subscriptionState);
+      const activeChannel = this.channels.get(roomId);
 
-      if (subscriptionState && subscriptionState.status !== "SUBSCRIBED") {
-        console.warn(`📤 sendMessage: Subscription not active. Status: ${subscriptionState.status}`);
-        throw new AppError(
-          `Cannot send message: subscription not active (status: ${subscriptionState.status})`,
-          ErrorType.NETWORK,
-          "SUBSCRIPTION_NOT_ACTIVE",
-        );
-      }
+      console.log(`📤 sendMessage: Room ${roomId} - State:`, subscriptionState?.status, `Channel exists:`, !!activeChannel);
 
-      if (!subscriptionState) {
-        console.warn(`📤 sendMessage: No subscription state found for room ${roomId}`);
+      // If we have an active channel, allow sending regardless of state tracking
+      // This handles cases where state tracking is out of sync with actual channel status
+      if (activeChannel) {
+        console.log(`📤 sendMessage: Active channel found, allowing message send`);
+      } else if (subscriptionState) {
+        // If no active channel but we have state, check if it's in a valid state
+        const allowedStates = ["SUBSCRIBED", "CONNECTING"];
+        if (!allowedStates.includes(subscriptionState.status)) {
+          console.warn(`📤 sendMessage: No active channel and invalid state: ${subscriptionState.status}`);
+          throw new AppError(
+            `Cannot send message: not connected to room (status: ${subscriptionState.status})`,
+            ErrorType.NETWORK,
+            "NOT_CONNECTED",
+          );
+        }
+      } else {
+        // No channel and no state - definitely not connected
+        console.warn(`📤 sendMessage: No channel or subscription state for room ${roomId}`);
         throw new AppError(
-          "Cannot send message: no subscription found",
+          "Cannot send message: not connected to room",
           ErrorType.NETWORK,
-          "NO_SUBSCRIPTION",
+          "NOT_CONNECTED",
         );
       }
 
