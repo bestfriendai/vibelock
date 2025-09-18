@@ -3,6 +3,7 @@ import { View, Text, TextInput, FlatList, RefreshControl, Pressable } from "reac
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import useChatStore from "../state/chatStore";
+import useAuthStore from "../state/authStore";
 import { useAuthState } from "../utils/authUtils";
 import { useTheme } from "../providers/ThemeProvider";
 import SegmentedTabs from "../components/SegmentedTabs";
@@ -30,11 +31,25 @@ export default function ChatroomsScreen() {
     connectionStatus,
   } = useChatStore();
   const { user, canAccessChat, needsSignIn } = useAuthState();
+  const { setTestUser } = useAuthStore();
   const [category, setCategory] = useState<"all" | "men" | "women" | "lgbtq+">(user?.genderPreference || "all");
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const { isOnline, retryWithBackoff } = useOffline();
+
+  // Debug logging for authentication state
+  useEffect(() => {
+    console.log('🔍 ChatroomsScreen Auth Debug:', {
+      hasUser: !!user,
+      userId: user?.id?.slice(-4) || 'none',
+      canAccessChat,
+      needsSignIn,
+      chatRoomsCount: chatRooms.length,
+      isLoading,
+      error: error || 'none'
+    });
+  }, [user, canAccessChat, needsSignIn, chatRooms.length, isLoading, error]);
 
   useEffect(() => {
     const done = startTimer("chatrooms:initialLoad");
@@ -79,8 +94,12 @@ export default function ChatroomsScreen() {
     navigation.getParent()?.navigate("ChatRoom", { roomId: room.id });
   };
 
-  // Guest mode protection
-  if (!canAccessChat || needsSignIn) {
+  // Development bypass for testing (remove in production)
+  const isDevelopment = __DEV__;
+  const allowDevAccess = isDevelopment && chatRooms.length > 0; // Allow if we have data to show
+
+  // Guest mode protection (with development bypass)
+  if ((!canAccessChat || needsSignIn) && !allowDevAccess) {
     return (
       <SafeAreaView className="flex-1" style={{ backgroundColor: colors.background }}>
         <View className="flex-1 justify-center items-center px-6">
@@ -124,6 +143,22 @@ export default function ChatroomsScreen() {
                   Sign In
                 </Text>
               </Pressable>
+
+              {/* Development debug button */}
+              {__DEV__ && (
+                <Pressable
+                  className="rounded-lg py-2 items-center mt-4"
+                  style={{ backgroundColor: colors.brand.red + "20", borderWidth: 1, borderColor: colors.brand.red }}
+                  onPress={() => {
+                    console.log("🧪 Creating test user for development");
+                    setTestUser();
+                  }}
+                >
+                  <Text className="font-semibold text-sm" style={{ color: colors.brand.red }}>
+                    🧪 DEV: Create Test User
+                  </Text>
+                </Pressable>
+              )}
             </View>
           </View>
         </View>

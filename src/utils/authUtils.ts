@@ -54,7 +54,7 @@ export const getAuthenticatedUser = async (): Promise<{ user: User | null; supab
 export const useAuthState = () => {
   const { user, isAuthenticated, isGuestMode, isLoading } = useAuthStore();
 
-  // Debug logging - add null safety
+  // Enhanced debug logging for chatroom debugging
   if (__DEV__ && typeof __DEV__ !== "undefined") {
     console.log("🔍 useAuthState:", {
       hasUser: !!user,
@@ -62,6 +62,8 @@ export const useAuthState = () => {
       isGuestMode,
       isLoading,
       userId: user?.id?.slice(-4) || "undefined",
+      canAccessChat: isAuthenticated && !!user && !isGuestMode,
+      needsSignIn: !isAuthenticated || !user || isGuestMode,
     });
   }
 

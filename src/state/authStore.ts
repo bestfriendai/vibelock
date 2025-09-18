@@ -19,6 +19,7 @@ interface AuthState {
 
 interface AuthActions {
   setUser: (user: User | null) => void;
+  setTestUser: () => void; // Development helper
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   setGuestMode: (isGuest: boolean) => void;
@@ -86,6 +87,33 @@ const useAuthStore = create<AuthStore>()(
             isAuthenticated: !!user,
             userId: user?.id?.slice(-4),
           });
+        }
+      },
+
+      // Development helper to create test user for chatroom debugging
+      setTestUser: () => {
+        if (__DEV__) {
+          console.log("🧪 Setting test user for development");
+          const testUser: User = {
+            id: "test-user-dev",
+            email: "test@example.com",
+            username: "TestUser",
+            firstName: "Test",
+            lastName: "User",
+            city: "Washington",
+            state: "DC",
+            genderPreference: "all",
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          };
+
+          set((state) => ({
+            ...state,
+            user: testUser,
+            isAuthenticated: true,
+            isGuestMode: false,
+            error: null,
+          }));
         }
       },
 
