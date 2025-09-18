@@ -196,10 +196,15 @@ class EnhancedRealtimeChatService {
         })
         // Enhanced subscription status handling with v2.57.4 state management
         .subscribe(async (status, error) => {
+          console.log(`🔄 Subscription status change for room ${roomId}: ${status}`);
+
           const subscriptionState = this.subscriptionStates.get(roomId);
           if (subscriptionState) {
+            console.log(`🔄 Updating subscription state from ${subscriptionState.status} to ${status}`);
             subscriptionState.status = status as any;
             subscriptionState.lastStateChange = Date.now();
+          } else {
+            console.warn(`🔄 No subscription state found for room ${roomId} during status change`);
           }
 
           // Validate state transition (but don't fail on invalid transitions)
@@ -706,11 +711,23 @@ class EnhancedRealtimeChatService {
 
       // Check subscription health
       const subscriptionState = this.subscriptionStates.get(roomId);
+      console.log(`📤 sendMessage: Subscription state for room ${roomId}:`, subscriptionState);
+
       if (subscriptionState && subscriptionState.status !== "SUBSCRIBED") {
+        console.warn(`📤 sendMessage: Subscription not active. Status: ${subscriptionState.status}`);
         throw new AppError(
-          "Cannot send message: subscription not active",
+          `Cannot send message: subscription not active (status: ${subscriptionState.status})`,
           ErrorType.NETWORK,
           "SUBSCRIPTION_NOT_ACTIVE",
+        );
+      }
+
+      if (!subscriptionState) {
+        console.warn(`📤 sendMessage: No subscription state found for room ${roomId}`);
+        throw new AppError(
+          "Cannot send message: no subscription found",
+          ErrorType.NETWORK,
+          "NO_SUBSCRIPTION",
         );
       }
 
