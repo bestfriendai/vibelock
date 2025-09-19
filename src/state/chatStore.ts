@@ -121,7 +121,7 @@ interface ChatActions {
   setLoading: (loading: boolean) => void;
 
   // Pagination
-  loadOlderMessages: (roomId: string) => Promise<void>;
+  loadOlderMessages: (roomId: string) => Promise<{ hasMore: boolean; loadedCount: number }>;
 
   // Real-time subscriptions
   subscribeToChatRoom: (roomId: string) => void;
@@ -846,15 +846,16 @@ const useChatStore = create<ChatStore>()(
           const currentMessages = get().messages[roomId] || [];
           if (currentMessages.length === 0) {
             set({ isLoading: false });
-            return;
+            return { hasMore: false, loadedCount: 0 };
           }
 
           // Get the oldest loaded message (ascending array => index 0)
           const oldestMessage = currentMessages[0]!;
           const cursor = oldestMessage.timestamp.toISOString();
 
-          // Load older messages using enhanced service with cursor
-          const olderMessages = await enhancedRealtimeChatService.loadOlderMessages(roomId, cursor, 20);
+          // Load older messages using enhanced service with cursor (20 per batch)
+          const batchSize = 20;
+          const olderMessages = await enhancedRealtimeChatService.loadOlderMessages(roomId, cursor, batchSize);
 
           if (olderMessages.length > 0) {
             // Prepend older messages and keep ascending order
@@ -871,8 +872,16 @@ const useChatStore = create<ChatStore>()(
               },
               isLoading: false,
             }));
+
+            // If we got fewer messages than requested, there are no more
+            const hasMore = olderMessages.length === batchSize;
+            console.log(`📨 Loaded ${olderMessages.length} older messages. Has more: ${hasMore}`);
+
+            return { hasMore, loadedCount: olderMessages.length };
           } else {
             set({ isLoading: false });
+            console.log("📨 No older messages found");
+            return { hasMore: false, loadedCount: 0 };
           }
         } catch (error) {
           console.warn("Failed to load older messages:", error);
@@ -880,6 +889,7 @@ const useChatStore = create<ChatStore>()(
             isLoading: false,
             error: "Failed to load older messages",
           });
+          return { hasMore: false, loadedCount: 0 };
         }
       },
 

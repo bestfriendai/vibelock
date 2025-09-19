@@ -41,21 +41,23 @@ export default function ChatRoomScreen() {
   const { canAccessChat, needsSignIn, user } = useAuthState();
   const { colors } = useTheme();
 
-  const { roomId } = params;
-
-  // Validate roomId parameter
-  if (!roomId) {
-    console.error("ChatRoomScreen: Missing roomId parameter");
-    navigation.goBack();
-    return null;
-  }
-
+  // All hooks must be declared before any early returns
   const [showMemberList, setShowMemberList] = useState(false);
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
   const [isSubscribed, setIsSubscribed] = useState(false);
-
   const [isLoadingOlderMessages, setIsLoadingOlderMessages] = useState(false);
+  const [hasMoreMessages, setHasMoreMessages] = useState(true);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
+  const [selectedMessage, setSelectedMessage] = useState<ChatMessage | null>(null);
+  const [isActionsModalVisible, setIsActionsModalVisible] = useState(false);
+
   const mountedRef = useRef(true);
+  const listRef = useRef<any>(null);
+  const hasAutoScrolledRef = useRef(false);
+
+  const FlashListAny: any = FlashList;
+  const scrollManager = useScrollManager();
 
   const {
     messages,
@@ -71,16 +73,16 @@ export default function ChatRoomScreen() {
     connectionStatus,
   } = useChatStore();
 
-  const listRef = useRef<any>(null);
-  const FlashListAny: any = FlashList;
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
-  const [selectedMessage, setSelectedMessage] = useState<ChatMessage | null>(null);
-  const [isActionsModalVisible, setIsActionsModalVisible] = useState(false);
-  const hasAutoScrolledRef = useRef(false);
+  const { roomId } = params;
 
-  // Create ScrollManager instance
-  const scrollManager = useScrollManager();
+  // Validate roomId parameter after all hooks
+  if (!roomId) {
+    console.error("ChatRoomScreen: Missing roomId parameter");
+    navigation.goBack();
+    return null;
+  }
+
+  // All hooks already declared at the top - no duplicates needed
 
   // Set ref for ScrollManager
   useEffect(() => {
@@ -89,6 +91,8 @@ export default function ChatRoomScreen() {
 
   useEffect(() => {
     if (canAccessChat && !needsSignIn && user) {
+      // Reset pagination state when entering a new room
+      setHasMoreMessages(true);
       joinChatRoom(roomId);
     }
     return () => {
@@ -172,11 +176,19 @@ export default function ChatRoomScreen() {
   };
 
   const handleLoadOlderMessages = async () => {
-    if (isLoadingOlderMessages) return;
+    if (isLoadingOlderMessages || !hasMoreMessages) return;
 
     setIsLoadingOlderMessages(true);
     try {
-      await loadOlderMessages(roomId);
+      const result = await loadOlderMessages(roomId);
+
+      // Update hasMoreMessages based on the result
+      if (!result.hasMore) {
+        setHasMoreMessages(false);
+        console.log("📨 No more older messages to load");
+      } else {
+        console.log(`📨 Loaded ${result.loadedCount} older messages, more available`);
+      }
     } catch (error) {
       console.warn("Failed to load older messages:", error);
     } finally {
@@ -260,9 +272,17 @@ export default function ChatRoomScreen() {
           showsVerticalScrollIndicator={false}
           // Keep bottom anchored when new messages arrive
           maintainVisibleContentPosition={{ minIndexForVisible: 1, autoscrollToTopThreshold: 20 }}
+          // Infinite scroll: Load older messages when scrolling to top
+          onStartReached={() => {
+            if (!isLoadingOlderMessages && hasMoreMessages && roomMessages.length > 0) {
+              console.log("🔄 Auto-loading older messages on scroll...");
+              handleLoadOlderMessages();
+            }
+          }}
+          onStartReachedThreshold={0.5}
           // Show "Load older" at the top for normal list
           ListHeaderComponent={
-            roomMessages.length > 0 ? (
+            roomMessages.length > 0 && hasMoreMessages ? (
               <View className="items-center py-1">
                 <Pressable
                   onPress={handleLoadOlderMessages}
@@ -275,6 +295,12 @@ export default function ChatRoomScreen() {
                     {isLoadingOlderMessages ? "Loading..." : "Load older messages"}
                   </Text>
                 </Pressable>
+              </View>
+            ) : roomMessages.length > 0 && !hasMoreMessages ? (
+              <View className="items-center py-1">
+                <Text className="text-text-muted text-xs font-medium">
+                  No more messages
+                </Text>
               </View>
             ) : null
           }
