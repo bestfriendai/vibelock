@@ -72,6 +72,13 @@ const useAuthStore = create<AuthStore>()(
         if (!user && useAuthStore.getState().isAuthenticated) {
           console.warn("⚠️ Attempting to clear authenticated user. This might be unintentional.");
           console.trace("setUser(null) call stack:");
+
+          // Don't clear user if we're just having a temporary issue
+          const currentState = useAuthStore.getState();
+          if (currentState.user && currentState.isAuthenticated) {
+            console.log("🛡️ Protecting against accidental logout - keeping current user");
+            return;
+          }
         }
 
         set((state) => ({
@@ -85,7 +92,8 @@ const useAuthStore = create<AuthStore>()(
           console.log("🔄 Auth state updated:", {
             hasUser: !!user,
             isAuthenticated: !!user,
-            userId: user?.id?.slice(-4),
+            userId: user?.id?.slice(-8),
+            email: user?.email,
           });
         }
       },
