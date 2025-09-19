@@ -1,38 +1,24 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, Pressable, ScrollView, Modal } from "react-native";
-import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming } from "react-native-reanimated";
+import { View, Text, Pressable, Modal } from "react-native";
+import Animated, { useSharedValue, useAnimatedStyle, withTiming } from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../providers/ThemeProvider";
-import { ChatMember } from "../types";
 
 interface Props {
-  roomId: string;
-  members: ChatMember[];
-  onlineUsers: ChatMember[];
   typingUsers: { userName: string }[];
   connectionStatus: "connected" | "connecting" | "disconnected";
-  onMentionUser?: (userName: string) => void;
-  onSearchMessages?: (query: string) => void;
   onToggleNotifications?: () => void;
   isNotificationsEnabled?: boolean;
 }
 
 export default function SmartChatFeatures({
-  roomId,
-  members,
-  onlineUsers,
   typingUsers,
   connectionStatus,
-  onMentionUser,
-  onSearchMessages,
   onToggleNotifications,
   isNotificationsEnabled = true,
 }: Props) {
   const { colors } = useTheme();
-  const [showMemberList, setShowMemberList] = useState(false);
   const [showSearchModal, setShowSearchModal] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const memberListScale = useSharedValue(0);
   const connectionOpacity = useSharedValue(1);
   const typingOpacity = useSharedValue(0);
 
@@ -48,11 +34,6 @@ export default function SmartChatFeatures({
     });
   }, [typingUsers.length]);
 
-  const memberListAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: memberListScale.value }],
-    opacity: memberListScale.value,
-  }));
-
   const connectionAnimatedStyle = useAnimatedStyle(() => ({
     opacity: connectionOpacity.value,
   }));
@@ -60,17 +41,6 @@ export default function SmartChatFeatures({
   const typingAnimatedStyle = useAnimatedStyle(() => ({
     opacity: typingOpacity.value,
   }));
-
-  const openMemberList = () => {
-    setShowMemberList(true);
-    memberListScale.value = withSpring(1, { damping: 15, stiffness: 200 });
-  };
-
-  const closeMemberList = () => {
-    memberListScale.value = withTiming(0, { duration: 200 }, () => {
-      setShowMemberList(false);
-    });
-  };
 
   const formatTypingUsers = () => {
     if (typingUsers.length === 0) return "";
@@ -156,23 +126,13 @@ export default function SmartChatFeatures({
         </Animated.View>
       )}
 
-      {/* Compact Header Actions - Only show online status */}
+      {/* Compact Header Actions - No online status or member count per user preferences */}
       <View
-        className="flex-row items-center justify-between px-4 py-1"
+        className="flex-row items-center justify-end px-4 py-1"
         style={{
           backgroundColor: colors.surface[800],
         }}
       >
-        <View className="flex-row items-center">
-          {/* Online count - compact */}
-          <View className="flex-row items-center">
-            <View className="w-1.5 h-1.5 bg-green-500 rounded-full mr-1" />
-            <Text className="text-xs" style={{ color: colors.text.muted }}>
-              {onlineUsers.length} online
-            </Text>
-          </View>
-        </View>
-
         <View className="flex-row items-center">
           {/* Search button - compact */}
           <Pressable
@@ -190,7 +150,7 @@ export default function SmartChatFeatures({
                 onToggleNotifications();
               }
             }}
-            className="p-1 mr-2"
+            className="p-1"
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
             <Ionicons
@@ -199,80 +159,10 @@ export default function SmartChatFeatures({
               color={isNotificationsEnabled ? colors.text.primary : colors.text.muted}
             />
           </Pressable>
-
-          {/* Members button - compact */}
-          <Pressable onPress={openMemberList} className="p-1" hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Ionicons name="people" size={18} color={colors.text.primary} />
-          </Pressable>
         </View>
       </View>
 
-      {/* Member List Modal */}
-      <Modal visible={showMemberList} transparent animationType="fade" onRequestClose={closeMemberList}>
-        <View className="flex-1 bg-black/50 justify-center items-center p-4">
-          <Animated.View
-            style={[
-              memberListAnimatedStyle,
-              {
-                backgroundColor: colors.surface[800],
-                borderRadius: 16,
-                maxHeight: "70%",
-                width: "90%",
-                maxWidth: 400,
-              },
-            ]}
-          >
-            {/* Header */}
-            <View
-              className="flex-row items-center justify-between p-4 border-b"
-              style={{ borderBottomColor: colors.border.default }}
-            >
-              <Text className="text-lg font-bold" style={{ color: colors.text.primary }}>
-                Members
-              </Text>
-              <Pressable onPress={closeMemberList} className="p-2">
-                <Ionicons name="close" size={24} color={colors.text.primary} />
-              </Pressable>
-            </View>
 
-            {/* Member list */}
-            <ScrollView className="max-h-96">
-              {members.map((member) => (
-                <Pressable
-                  key={member.id}
-                  onPress={() => {
-                    onMentionUser?.(member.userName);
-                    closeMemberList();
-                  }}
-                  className="flex-row items-center p-4 border-b"
-                  style={{ borderBottomColor: colors.border.default + "40" }}
-                >
-                  {/* Avatar */}
-                  <View
-                    className="w-10 h-10 rounded-full items-center justify-center mr-3"
-                    style={{ backgroundColor: colors.brand.red }}
-                  >
-                    <Text className="text-white font-bold">{member.userName.charAt(0).toUpperCase()}</Text>
-                  </View>
-
-                  {/* User info */}
-                  <View className="flex-1">
-                    <Text className="font-medium" style={{ color: colors.text.primary }}>
-                      {member.userName}
-                    </Text>
-                    <Text className="text-xs" style={{ color: colors.text.muted }}>
-                      {member.isOnline ? "Online" : "Offline"}
-                    </Text>
-                  </View>
-
-                  {/* Online indicator */}
-                  {member.isOnline && <View className="w-2 h-2 bg-green-500 rounded-full" />}
-                </Pressable>
-              ))}
-            </ScrollView>
-          </Animated.View>
-        </View>
-      </Modal>
 
       {/* Search Modal */}
       <Modal

@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { mmkvStorage } from "../utils/mmkvStorage";
 import { startTransition } from "react";
-import { ChatRoom, ChatMessage, ChatMember, TypingUser, ConnectionStatus, ChatState, MessageEvent } from "../types";
+import { ChatRoom, ChatMessage, ChatMember, TypingUser, ConnectionStatus, ChatState, MessageEvent, UserRole } from "../types";
 import { enhancedRealtimeChatService } from "../services/realtimeChat";
 import useAuthStore from "./authStore";
 import { requireAuthentication, getUserDisplayName } from "../utils/authUtils";
@@ -155,34 +155,68 @@ const useChatStore = create<ChatStore>()(
       connect: async (userId: string) => {
         try {
           console.log("🚀 Connecting to enhanced real-time chat service...");
-          set({ connectionStatus: "connecting" });
+          set({ connectionStatus: "connecting", error: null });
+
+          // Verify authentication before connecting
+          const { user } = await requireAuthentication("connect to chat service");
+          console.log(`🔐 Authentication verified for chat connection: ${user.id}`);
 
           // Set up network monitoring once
           if (!netUnsubscribe) {
             netUnsubscribe = NetInfo.addEventListener(async (state) => {
               const online = Boolean(state.isConnected) && state.isInternetReachable !== false;
-              set({ connectionStatus: online ? "connected" : "disconnected" });
-              if (online && enhancedRealtimeChatService.getActiveChannelsCount() >= 0) {
-                try {
-                  await enhancedRealtimeChatService.initialize();
+              console.log(`📶 Network state changed: ${online ? "online" : "offline"}`);
+
+              if (online) {
+                // Only reconnect if we were previously connected
+                if (enhancedRealtimeChatService.getActiveChannelsCount() > 0) {
+                  try {
+                    set({ connectionStatus: "connecting" });
+                    await enhancedRealtimeChatService.initialize();
+                    set({ connectionStatus: "connected", error: null });
+                    console.log("🔄 Reconnected to chat service after network recovery");
+                  } catch (e) {
+                    console.warn("🔄 Reconnect initialize failed:", e);
+                    set({ connectionStatus: "error" as ConnectionStatus, error: "Reconnection failed" });
+                  }
+                } else {
                   set({ connectionStatus: "connected" });
-                } catch (e) {
-                  console.warn("Reconnect initialize failed:", e);
-                  set({ connectionStatus: "error" as ConnectionStatus });
                 }
+              } else {
+                set({ connectionStatus: "disconnected", error: "No internet connection" });
               }
             });
           }
 
-          await enhancedRealtimeChatService.initialize();
-          set({ connectionStatus: "connected" });
-          console.log("✅ Connected to enhanced real-time chat service");
+          // Initialize the real-time service with retry logic
+          let retryCount = 0;
+          const maxRetries = 3;
+
+          while (retryCount < maxRetries) {
+            try {
+              await enhancedRealtimeChatService.initialize();
+              set({ connectionStatus: "connected", error: null });
+              console.log("✅ Connected to enhanced real-time chat service");
+              return;
+            } catch (error) {
+              retryCount++;
+              console.warn(`❌ Connection attempt ${retryCount} failed:`, error);
+
+              if (retryCount < maxRetries) {
+                console.log(`🔄 Retrying connection in ${retryCount * 1000}ms...`);
+                await new Promise(resolve => setTimeout(resolve, retryCount * 1000));
+              } else {
+                throw error;
+              }
+            }
+          }
         } catch (error) {
-          console.warn("❌ Failed to connect to chat service:", error);
+          console.warn("❌ Failed to connect to chat service after all retries:", error);
           set({
             connectionStatus: "disconnected",
-            error: "Failed to connect to chat service",
+            error: error instanceof Error ? error.message : "Failed to connect to chat service",
           });
+          throw error;
         }
       },
 
@@ -301,6 +335,27 @@ const useChatStore = create<ChatStore>()(
 
           // Use unified authentication check
           const { user, supabaseUser } = await requireAuthentication("join chat room");
+
+          // Ensure user is added to chat_members_firebase table
+          console.log(`👥 Adding user to chat room members: ${roomId}`);
+          const { error: memberError } = await supabase
+            .from("chat_members_firebase")
+            .upsert({
+              chat_room_id: roomId,
+              user_id: supabaseUser.id,
+              role: "member",
+              is_active: true,
+              joined_at: new Date().toISOString(),
+            }, {
+              onConflict: "chat_room_id,user_id"
+            });
+
+          if (memberError) {
+            console.warn("⚠️ Failed to add user to room members:", memberError);
+            // Don't throw error here - user can still join the room
+          } else {
+            console.log(`✅ User successfully added to room members`);
+          }
 
           // IMPORTANT: Register message callback BEFORE joining room
           // This ensures the callback is available when loadInitialMessages is called
@@ -938,13 +993,34 @@ const useChatStore = create<ChatStore>()(
           set({ isLoading: true });
           console.log(`👥 Loading members for room ${roomId}...`);
 
-          // Load members directly from Supabase
-          const { data: members, error } = await supabase
+          // Load members directly from Supabase with user details
+          const { data: membersData, error } = await supabase
             .from("chat_members_firebase")
-            .select("*")
-            .eq("chat_room_id", roomId);
+            .select(`
+              *,
+              users (
+                id,
+                username,
+                avatar_url
+              )
+            `)
+            .eq("chat_room_id", roomId)
+            .eq("is_active", true);
 
           if (error) throw error;
+
+          // Transform the data to match ChatMember interface
+          const members: ChatMember[] = (membersData || []).map((member: any) => ({
+            id: member.id,
+            chatRoomId: member.chat_room_id,
+            userId: member.user_id,
+            userName: member.users?.username || "Unknown User",
+            userAvatar: member.users?.avatar_url || null,
+            joinedAt: new Date(member.joined_at || member.created_at),
+            role: member.role as UserRole,
+            isOnline: false, // Will be updated by presence
+            lastSeen: new Date(member.updated_at || member.created_at),
+          }));
 
           set((state) => ({
             members: {

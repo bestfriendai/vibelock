@@ -220,15 +220,12 @@ export default function ChatRoomScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1" style={{ backgroundColor: colors.background }}>
-      <View className="flex-1">
+    <SafeAreaView className="flex-1 bg-black">
+      <View className="flex-1 bg-black">
         {/* Navigation header already shows "Chat". Remove in-screen title. */}
 
         {/* Smart Chat Features */}
         <SmartChatFeatures
-          roomId={roomId}
-          members={members[roomId] || []}
-          onlineUsers={members[roomId]?.filter((member: any) => member.isOnline) || []}
           typingUsers={typingUsers || []}
           connectionStatus={connectionStatus === "error" ? "disconnected" : connectionStatus}
           onToggleNotifications={() => {

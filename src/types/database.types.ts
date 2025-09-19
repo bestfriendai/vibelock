@@ -132,6 +132,57 @@ export type Database = {
           },
         ];
       };
+      chat_members_firebase: {
+        Row: {
+          id: string;
+          chat_room_id: string;
+          user_id: string;
+          role: string | null;
+          joined_at: string | null;
+          is_active: boolean | null;
+          permissions: Json | null;
+          created_at: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          chat_room_id: string;
+          user_id: string;
+          role?: string | null;
+          joined_at?: string | null;
+          is_active?: boolean | null;
+          permissions?: Json | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          chat_room_id?: string;
+          user_id?: string;
+          role?: string | null;
+          joined_at?: string | null;
+          is_active?: boolean | null;
+          permissions?: Json | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "chat_members_firebase_chat_room_id_fkey";
+            columns: ["chat_room_id"];
+            isOneToOne: false;
+            referencedRelation: "chat_rooms_firebase";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "chat_members_firebase_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       chat_messages_firebase: {
         Row: {
           chat_room_id: string | null;
