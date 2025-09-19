@@ -30,9 +30,11 @@ export function useOffline(options: UseOfflineOptions = {}): UseOfflineReturn {
 
   useEffect(() => {
     const unsubscribe = NetInfo.addEventListener((state) => {
-      // Compute connected and online separately
+      // Improved network detection logic - consistent across the app
       const connected = Boolean(state.isConnected);
-      const online = connected && state.isInternetReachable !== false;
+      const hasInternetAccess = state.isInternetReachable === true ||
+                              (state.isInternetReachable === null && connected);
+      const online = connected && hasInternetAccess;
 
       setIsConnected(connected);
       setIsOnline(online);
@@ -45,7 +47,9 @@ export function useOffline(options: UseOfflineOptions = {}): UseOfflineReturn {
     // Check initial state
     NetInfo.fetch().then((state) => {
       const connected = Boolean(state.isConnected);
-      const online = connected && state.isInternetReachable !== false;
+      const hasInternetAccess = state.isInternetReachable === true ||
+                              (state.isInternetReachable === null && connected);
+      const online = connected && hasInternetAccess;
 
       setIsConnected(connected);
       setIsOnline(online);
@@ -77,9 +81,12 @@ export function useOffline(options: UseOfflineOptions = {}): UseOfflineReturn {
 
       for (let attempt = 0; attempt < normalizedMaxRetries; attempt++) {
         try {
-          // Check connection before each attempt
+          // Check connection before each attempt with improved logic
           const netState = await NetInfo.fetch();
-          const online = Boolean(netState.isConnected) && netState.isInternetReachable !== false;
+          const isConnected = Boolean(netState.isConnected);
+          const hasInternetAccess = netState.isInternetReachable === true ||
+                                  (netState.isInternetReachable === null && isConnected);
+          const online = isConnected && hasInternetAccess;
           if (!online) {
             throw new OfflineError();
           }
@@ -134,7 +141,12 @@ export function withOfflineHandling<T extends any[], R>(
   return async (...args: T): Promise<R> => {
     try {
       const netState = await NetInfo.fetch();
-      if (!netState.isConnected || !netState.isInternetReachable) {
+      const isConnected = Boolean(netState.isConnected);
+      const hasInternetAccess = netState.isInternetReachable === true ||
+                              (netState.isInternetReachable === null && isConnected);
+      const online = isConnected && hasInternetAccess;
+
+      if (!online) {
         if (options.fallback) {
           return await options.fallback(...args);
         }

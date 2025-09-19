@@ -26,6 +26,10 @@ interface Props {
   onReact?: (messageId: string, reaction: string) => void;
   onLongPress?: (message: ChatMessage) => void;
   onShowReactionPicker?: (messageId: string) => void;
+  // Optional pre-calculated grouping metadata for performance optimization
+  isFirstInGroup?: boolean;
+  isLastInGroup?: boolean;
+  groupId?: string;
 }
 
 const REACTIONS = ["❤️", "😂", "😮", "😢", "😡", "👍"];
@@ -42,6 +46,10 @@ const EnhancedMessageBubble = React.forwardRef<View, Props>(
       onReact,
       onLongPress,
       onShowReactionPicker,
+      // Optional pre-calculated grouping metadata
+      isFirstInGroup: preCalculatedIsFirst,
+      isLastInGroup: preCalculatedIsLast,
+      groupId,
     },
     ref,
   ) => {
@@ -56,20 +64,33 @@ const EnhancedMessageBubble = React.forwardRef<View, Props>(
     const translateY = useSharedValue(20);
     const reactionScale = useSharedValue(0);
 
-    // Enhanced grouping logic: 1min tight, 5min loose
-    const prevTime = previousMessage ? new Date(previousMessage.timestamp).getTime() : 0;
-    const nextTime = nextMessage ? new Date(nextMessage.timestamp).getTime() : 0;
-    const thisTime = new Date(message.timestamp).getTime();
-    const looseThreshold = 5 * 60 * 1000; // 5 minutes
+    // Optimized grouping logic: use pre-calculated values when available, fallback to calculation
+    const isFirstInGroup = preCalculatedIsFirst !== undefined
+      ? preCalculatedIsFirst
+      : (() => {
+          // Fallback calculation for backward compatibility
+          const prevTime = previousMessage ? new Date(previousMessage.timestamp).getTime() : 0;
+          const thisTime = new Date(message.timestamp).getTime();
+          const looseThreshold = 5 * 60 * 1000; // 5 minutes
+          const sameSenderAsPrev = !!previousMessage && previousMessage.senderId === message.senderId;
+          const closeToPrev = sameSenderAsPrev && thisTime - prevTime <= looseThreshold;
+          return !sameSenderAsPrev || !closeToPrev;
+        })();
 
+    const isLastInGroup = preCalculatedIsLast !== undefined
+      ? preCalculatedIsLast
+      : (() => {
+          // Fallback calculation for backward compatibility
+          const nextTime = nextMessage ? new Date(nextMessage.timestamp).getTime() : 0;
+          const thisTime = new Date(message.timestamp).getTime();
+          const looseThreshold = 5 * 60 * 1000; // 5 minutes
+          const sameSenderAsNext = !!nextMessage && nextMessage.senderId === message.senderId;
+          const closeToNext = sameSenderAsNext && nextTime - thisTime <= looseThreshold;
+          return !sameSenderAsNext || !closeToNext;
+        })();
+
+    // Calculate if we should show sender name (for non-own messages)
     const sameSenderAsPrev = !!previousMessage && previousMessage.senderId === message.senderId;
-    const sameSenderAsNext = !!nextMessage && nextMessage.senderId === message.senderId;
-    const closeToPrev = sameSenderAsPrev && thisTime - prevTime <= looseThreshold;
-    const closeToNext = sameSenderAsNext && nextTime - thisTime <= looseThreshold;
-
-    const isFirstInGroup = !sameSenderAsPrev || !closeToPrev;
-    const isLastInGroup = !sameSenderAsNext || !closeToNext;
-
     const showSenderName = !isOwn && (isFirstInGroup || (!sameSenderAsPrev && !!previousMessage));
 
     // Entry animation

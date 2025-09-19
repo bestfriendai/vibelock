@@ -6,9 +6,10 @@ import { useTheme } from "../providers/ThemeProvider";
 
 interface Props {
   typingUsers: { userName: string }[];
-  connectionStatus: "connected" | "connecting" | "disconnected";
+  connectionStatus: "connected" | "connecting" | "disconnected" | "error";
   onToggleNotifications?: () => void;
   isNotificationsEnabled?: boolean;
+  errorMessage?: string;
 }
 
 export default function SmartChatFeatures({
@@ -16,6 +17,7 @@ export default function SmartChatFeatures({
   connectionStatus,
   onToggleNotifications,
   isNotificationsEnabled = true,
+  errorMessage,
 }: Props) {
   const { colors } = useTheme();
   const [showSearchModal, setShowSearchModal] = useState(false);
@@ -59,6 +61,8 @@ export default function SmartChatFeatures({
         return colors.status.warning;
       case "disconnected":
         return colors.status.error;
+      case "error":
+        return colors.brand.red;
       default:
         return colors.text.muted;
     }
@@ -71,7 +75,9 @@ export default function SmartChatFeatures({
       case "connecting":
         return "Connecting...";
       case "disconnected":
-        return "Disconnected";
+        return "No internet connection";
+      case "error":
+        return errorMessage || "Authentication required";
       default:
         return "Unknown";
     }

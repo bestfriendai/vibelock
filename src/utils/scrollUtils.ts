@@ -35,8 +35,17 @@ export class ScrollManager {
 
       const component = this.scrollRef.current;
 
+      // Handle FlashList specifically
       if ("scrollToEnd" in component) {
-        component.scrollToEnd({ animated: options.animated });
+        try {
+          component.scrollToEnd({ animated: options.animated });
+        } catch (error) {
+          console.warn("ScrollToEnd failed, trying alternative:", error);
+          // Fallback for FlashList - scroll to a very large offset
+          if ("scrollToOffset" in component) {
+            component.scrollToOffset({ offset: 999999, animated: options.animated });
+          }
+        }
       } else if ("scrollTo" in component) {
         (component as unknown as ScrollView).scrollTo({ y: Number.MAX_SAFE_INTEGER, animated: options.animated });
       }
@@ -131,7 +140,11 @@ export class ScrollManager {
     }
 
     this.scrollTimeout = setTimeout(() => {
-      this.scrollToEnd();
+      this.scrollToEnd({ animated: true });
+      // Double-check scroll after a brief delay for FlashList
+      setTimeout(() => {
+        this.scrollToEnd({ animated: false });
+      }, 50);
       this.scrollTimeout = null;
     }, delay);
   }

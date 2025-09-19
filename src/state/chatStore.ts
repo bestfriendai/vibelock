@@ -3,7 +3,7 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import { mmkvStorage } from "../utils/mmkvStorage";
 import { startTransition } from "react";
 import { ChatRoom, ChatMessage, ChatMember, TypingUser, ConnectionStatus, ChatState, MessageEvent, UserRole } from "../types";
-import { enhancedRealtimeChatService } from "../services/realtimeChat";
+import { consolidatedRealtimeService } from "../services/consolidatedRealtimeService";
 import useAuthStore from "./authStore";
 import { requireAuthentication, getUserDisplayName } from "../utils/authUtils";
 import { AppError, parseSupabaseError, retryWithBackoff, ErrorType } from "../utils/errorHandling";
@@ -73,6 +73,7 @@ interface ChatActions {
   connect: (userId: string) => void;
   disconnect: () => void;
   setConnectionStatus: (status: ConnectionStatus) => void;
+  reconnect: () => Promise<void>;
 
   // Chat rooms
   loadChatRooms: () => Promise<void>;
@@ -158,35 +159,88 @@ const useChatStore = create<ChatStore>()(
           set({ connectionStatus: "connecting", error: null });
 
           // Verify authentication before connecting
-          const { user } = await requireAuthentication("connect to chat service");
-          console.log(`🔐 Authentication verified for chat connection: ${user.id}`);
+          let authResult;
+          try {
+            authResult = await requireAuthentication("connect to chat service");
+            console.log(`🔐 Authentication verified for chat connection: ${authResult.user.id}`);
+          } catch (authError) {
+            console.error("❌ Authentication failed for chat connection:", authError);
+            set({
+              connectionStatus: "error" as ConnectionStatus,
+              error: "Authentication required. Please sign in to access chat.",
+            });
+            throw authError;
+          }
 
-          // Set up network monitoring once
+          // Authentication successful, user is available in authResult if needed
+
+          // Set up network monitoring once with improved logic
           if (!netUnsubscribe) {
             netUnsubscribe = NetInfo.addEventListener(async (state) => {
-              const online = Boolean(state.isConnected) && state.isInternetReachable !== false;
-              console.log(`📶 Network state changed: ${online ? "online" : "offline"}`);
+              // Improved network detection logic
+              const isConnected = Boolean(state.isConnected);
+              const hasInternetAccess = state.isInternetReachable === true ||
+                                      (state.isInternetReachable === null && isConnected);
+              const online = isConnected && hasInternetAccess;
+
+              console.log(`📶 Network state changed:`, {
+                isConnected,
+                isInternetReachable: state.isInternetReachable,
+                online,
+                details: state.details
+              });
 
               if (online) {
-                // Only reconnect if we were previously connected
-                if (enhancedRealtimeChatService.getActiveChannelsCount() > 0) {
+                // Only reconnect if we were previously connected and authenticated
+                if (consolidatedRealtimeService.getConnectionStatus() === "connected") {
                   try {
+                    // Re-verify authentication before reconnecting
+                    await requireAuthentication("reconnect to chat service");
                     set({ connectionStatus: "connecting" });
-                    await enhancedRealtimeChatService.initialize();
+                    await consolidatedRealtimeService.initialize();
                     set({ connectionStatus: "connected", error: null });
                     console.log("🔄 Reconnected to chat service after network recovery");
                   } catch (e) {
-                    console.warn("🔄 Reconnect initialize failed:", e);
-                    set({ connectionStatus: "error" as ConnectionStatus, error: "Reconnection failed" });
+                    console.warn("🔄 Reconnect failed:", e);
+                    const isAuthError = e instanceof Error && e.message.includes("signed in");
+                    set({
+                      connectionStatus: "error" as ConnectionStatus,
+                      error: isAuthError ? "Authentication required. Please sign in." : "Reconnection failed"
+                    });
                   }
                 } else {
-                  set({ connectionStatus: "connected" });
+                  // Only update to connected if we're not already in a better state
+                  const currentStatus = get().connectionStatus;
+                  if (currentStatus === "disconnected") {
+                    set({ connectionStatus: "connected", error: null });
+                  }
                 }
               } else {
-                set({ connectionStatus: "disconnected", error: "No internet connection" });
+                // Only set disconnected if we're sure there's no internet
+                // Don't override authentication errors
+                const currentStatus = get().connectionStatus;
+                if (currentStatus !== "error") {
+                  set({ connectionStatus: "disconnected", error: "No internet connection" });
+                }
               }
             });
           }
+
+          // Subscribe to connection status changes from consolidated service
+          const unsubscribeConnectionStatus = consolidatedRealtimeService.onConnectionStatusChange((status, error) => {
+            set({
+              connectionStatus: status as ConnectionStatus,
+              error: error || null
+            });
+          });
+
+          // Store unsubscribe function for cleanup
+          set((state) => ({
+            subscriptions: {
+              ...state.subscriptions,
+              connectionStatus: unsubscribeConnectionStatus,
+            },
+          }));
 
           // Initialize the real-time service with retry logic
           let retryCount = 0;
@@ -194,8 +248,7 @@ const useChatStore = create<ChatStore>()(
 
           while (retryCount < maxRetries) {
             try {
-              await enhancedRealtimeChatService.initialize();
-              set({ connectionStatus: "connected", error: null });
+              await consolidatedRealtimeService.initialize();
               console.log("✅ Connected to enhanced real-time chat service");
               return;
             } catch (error) {
@@ -211,10 +264,20 @@ const useChatStore = create<ChatStore>()(
             }
           }
         } catch (error) {
-          console.warn("❌ Failed to connect to chat service after all retries:", error);
+          console.warn("❌ Failed to connect to chat service:", error);
+
+          // Differentiate between authentication and network/service errors
+          const isAuthError = error instanceof Error && (
+            error.message.includes("signed in") ||
+            error.message.includes("Authentication") ||
+            error.message.includes("AUTHENTICATION_REQUIRED")
+          );
+
           set({
-            connectionStatus: "disconnected",
-            error: error instanceof Error ? error.message : "Failed to connect to chat service",
+            connectionStatus: isAuthError ? "error" as ConnectionStatus : "disconnected",
+            error: isAuthError
+              ? "Authentication required. Please sign in to access chat."
+              : (error instanceof Error ? error.message : "Failed to connect to chat service"),
           });
           throw error;
         }
@@ -222,7 +285,7 @@ const useChatStore = create<ChatStore>()(
 
       disconnect: async () => {
         try {
-          await enhancedRealtimeChatService.cleanup();
+          await consolidatedRealtimeService.cleanup();
           set({ connectionStatus: "disconnected" });
           console.log("👋 Disconnected from chat service");
         } catch (error) {
@@ -232,6 +295,21 @@ const useChatStore = create<ChatStore>()(
 
       setConnectionStatus: (status: ConnectionStatus) => {
         set({ connectionStatus: status });
+      },
+
+      // Manual reconnection (useful for retry buttons)
+      reconnect: async () => {
+        try {
+          console.log("🔄 Manual reconnection triggered");
+          set({ connectionStatus: "connecting", error: null });
+          await consolidatedRealtimeService.forceReconnect();
+        } catch (error) {
+          console.error("❌ Manual reconnection failed:", error);
+          set({
+            connectionStatus: "error",
+            error: error instanceof Error ? error.message : "Reconnection failed"
+          });
+        }
       },
 
       // Chat rooms
@@ -324,7 +402,9 @@ const useChatStore = create<ChatStore>()(
 
       joinChatRoom: async (roomId: string) => {
         try {
-          console.log(`🚪 Joining chat room: ${roomId}`);
+          console.log(`🚪 Joining chat room: ${roomId.slice(-8)}`);
+          console.log(`🔍 Current connection status: ${get().connectionStatus}`);
+          set({ isLoading: true, error: null });
 
           const room = get().chatRooms.find((r) => r.id === roomId);
           if (!room) {
@@ -333,8 +413,20 @@ const useChatStore = create<ChatStore>()(
 
           set({ currentChatRoom: room });
 
-          // Use unified authentication check
-          const { user, supabaseUser } = await requireAuthentication("join chat room");
+          // Use unified authentication check with detailed error handling
+          let authResult;
+          try {
+            authResult = await requireAuthentication("join chat room");
+          } catch (authError) {
+            console.error("❌ Authentication failed for joining chat room:", authError);
+            set({
+              connectionStatus: "error" as ConnectionStatus,
+              error: "Authentication required. Please sign in to join chat rooms.",
+            });
+            throw authError;
+          }
+
+          const { user, supabaseUser } = authResult;
 
           // Ensure user is added to chat_members_firebase table
           console.log(`👥 Adding user to chat room members: ${roomId}`);
@@ -357,126 +449,117 @@ const useChatStore = create<ChatStore>()(
             console.log(`✅ User successfully added to room members`);
           }
 
-          // IMPORTANT: Register message callback BEFORE joining room
-          // This ensures the callback is available when loadInitialMessages is called
-          enhancedRealtimeChatService.subscribeToMessages(roomId, (event: MessageEvent) => {
-            console.log(
-              `🔍 ChatStore: Received ${event.type} event with ${event.items.length} messages for room ${roomId}`,
-            );
-            console.log(
-              `🔍 ChatStore: Event items:`,
-              event.items.map((m) => ({ id: m.id, content: m.content?.slice(0, 30) })),
-            );
+          // Join room using consolidated service
+          await consolidatedRealtimeService.joinRoom(roomId, user.id, getUserDisplayName(user), {
+            onMessage: (event: MessageEvent) => {
+              console.log(
+                `🔍 ChatStore: Received ${event.type} event with ${event.items.length} messages for room ${roomId}`,
+              );
 
-            // Use React 19 startTransition for non-urgent message updates
-            startTransition(() => {
-              set((state) => {
-                let allMessages: ChatMessage[];
+              // Use React 19 startTransition for non-urgent message updates
+              startTransition(() => {
+                set((state) => {
+                  let allMessages: ChatMessage[];
 
-                switch (event.type) {
-                  case "initial":
-                    // Service now returns ascending (oldest->newest)
-                    allMessages = [...event.items];
-                    break;
+                  switch (event.type) {
+                    case "initial":
+                      // Service returns ascending (oldest->newest)
+                      allMessages = [...event.items];
+                      break;
 
-                  case "replace":
-                    // Replace optimistic message with real one
-                    const existingMessages = state.messages[roomId] || [];
-                    allMessages = [...existingMessages];
+                    case "new":
+                      // Add new message to existing messages
+                      const existingMessages = state.messages[roomId] || [];
+                      allMessages = [...existingMessages, ...event.items];
+                      break;
 
-                    if (event.tempId) {
-                      const optimisticIndex = allMessages.findIndex((msg) => msg.id === event.tempId);
-                      if (optimisticIndex !== -1 && event.items[0]) {
-                        allMessages[optimisticIndex] = {
-                          ...event.items[0],
-                          status: event.items[0].isRead ? "read" : "sent",
-                        } as any;
-                      }
-                    }
-                    break;
+                    case "update":
+                      // Update existing message
+                      const messages = state.messages[roomId] || [];
+                      allMessages = messages.map(msg =>
+                        event.items.find(updated => updated.id === msg.id) || msg
+                      );
+                      break;
 
-                  case "new":
-                    // Add new messages
-                    const existing = state.messages[roomId] || [];
-                    allMessages = [...existing];
+                    case "replace":
+                      // Replace all messages (for refresh scenarios)
+                      allMessages = [...event.items];
+                      break;
 
-                    event.items.forEach((newMsg) => {
-                      const isDuplicate = allMessages.some((msg) => msg.id === newMsg.id);
-                      if (!isDuplicate) {
-                        allMessages.push(newMsg);
-                      }
-                    });
-                    break;
+                    case "delete":
+                      // Remove deleted messages
+                      const currentMessages = state.messages[roomId] || [];
+                      const deletedIds = event.items.map(item => item.id);
+                      allMessages = currentMessages.filter(msg => !deletedIds.includes(msg.id));
+                      break;
 
-                  case "update":
-                    // Update existing messages
-                    const current = state.messages[roomId] || [];
-                    allMessages = [...current];
+                    default:
+                      return state;
+                  }
 
-                    event.items.forEach((updatedMsg) => {
-                      const index = allMessages.findIndex((m) => m.id === updatedMsg.id);
-                      if (index !== -1) {
-                        allMessages[index] = { ...allMessages[index], ...updatedMsg };
-                      }
-                    });
-                    break;
-
-                  case "delete":
-                    // Remove deleted messages
-                    const beforeDelete = state.messages[roomId] || [];
-                    const deletedIds = new Set(event.items.map((m) => m.id));
-                    allMessages = beforeDelete.filter((m) => !deletedIds.has(m.id));
-                    break;
-
-                  default:
-                    return state;
-                }
-
-                // Keep ascending order for display (oldest->newest)
-                if (event.type === "initial" || event.items.length > 0) {
+                  // Keep ascending order for display (oldest->newest)
                   allMessages.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-                }
 
-                return {
-                  messages: {
-                    ...state.messages,
-                    [roomId]: allMessages,
-                  },
-                };
+                  return {
+                    ...state,
+                    messages: {
+                      ...state.messages,
+                      [roomId]: allMessages,
+                    },
+                  };
+                });
               });
-            });
+            },
+            onPresence: (members: ChatMember[]) => {
+              startTransition(() => {
+                set((state) => ({
+                  ...state,
+                  members: {
+                    ...state.members,
+                    [roomId]: members,
+                  },
+                }));
+              });
+            },
+            onTyping: (typingUsers: TypingUser[]) => {
+              startTransition(() => {
+                set(() => ({
+                  typingUsers: typingUsers.filter((user) => Date.now() - user.timestamp.getTime() < 5000),
+                }));
+              });
+            },
+            onError: (error: any) => {
+              console.error("❌ Real-time error:", error);
+              set({ error: error.message || "Real-time connection error" });
+            },
           });
 
-          // Subscribe to presence for this room
-          enhancedRealtimeChatService.subscribeToPresence(roomId, (members: ChatMember[]) => {
-            startTransition(() => {
-              set((state) => ({
-                members: {
-                  ...state.members,
-                  [roomId]: members,
-                },
-              }));
-            });
-          });
+          // Load initial messages with loading state
+          console.log(`📥 Loading initial messages for room: ${roomId}`);
+          await consolidatedRealtimeService.loadInitialMessages(roomId, 50);
 
-          // Subscribe to typing indicators for this room
-          enhancedRealtimeChatService.subscribeToTyping(roomId, (typingUsers: any[]) => {
-            startTransition(() => {
-              set(() => ({
-                typingUsers: typingUsers.filter((user) => user.timestamp > 0), // Only active typing users
-              }));
-            });
-          });
-
-          // Now join the room with enhanced real-time service
-          // This will trigger loadInitialMessages which will use the callback we just registered
-          await enhancedRealtimeChatService.joinRoom(roomId, supabaseUser.id, getUserDisplayName(user));
-
+          // Set loading to false after successful join and message load
+          set({ isLoading: false });
           console.log(`✅ Successfully joined room: ${room.name}`);
         } catch (error) {
           console.warn("💥 Failed to join chat room:", error);
+
+          // Differentiate between authentication and other errors
+          const isAuthError = error instanceof Error && (
+            error.message.includes("signed in") ||
+            error.message.includes("Authentication") ||
+            error.message.includes("AUTHENTICATION_REQUIRED")
+          );
+
           const appError = error instanceof AppError ? error : parseSupabaseError(error);
-          set({ error: appError.userMessage });
+
+          set({
+            connectionStatus: isAuthError ? "error" as ConnectionStatus : get().connectionStatus,
+            error: isAuthError
+              ? "Authentication required. Please sign in to join chat rooms."
+              : appError.userMessage,
+            isLoading: false, // Reset loading state on error
+          });
           throw appError;
         }
       },
@@ -484,7 +567,7 @@ const useChatStore = create<ChatStore>()(
       leaveChatRoom: async (roomId: string) => {
         console.log(`🚪 Leaving chat room: ${roomId}`);
 
-        await enhancedRealtimeChatService.leaveRoom(roomId);
+        await consolidatedRealtimeService.leaveRoom(roomId);
 
         const currentRoom = get().currentChatRoom;
         if (currentRoom && currentRoom.id === roomId) {
@@ -516,8 +599,8 @@ const useChatStore = create<ChatStore>()(
 
           console.log(`📨 Loading messages for room ${roomId}...`);
 
-          // Load messages using enhanced service - they come pre-sorted newest-first
-          await enhancedRealtimeChatService.loadInitialMessages(roomId, 50);
+          // Load messages using consolidated service
+          await consolidatedRealtimeService.loadInitialMessages(roomId, 50);
 
           set({ isLoading: false });
 
@@ -567,15 +650,12 @@ const useChatStore = create<ChatStore>()(
             replyTo,
           } as ChatMessage;
 
-          // Track optimistic message in service
-          enhancedRealtimeChatService.trackOptimisticMessage(roomId, optimisticMessage);
-
           // Add optimistic message locally
           get().addMessage(optimisticMessage);
 
-          // Send to Supabase via enhanced real-time service (with retry)
+          // Send to Supabase via consolidated real-time service (with retry)
           await retryWithBackoff(
-            () => enhancedRealtimeChatService.sendMessage(roomId, content, user.id, senderName, "text", replyTo),
+            () => consolidatedRealtimeService.sendMessage(roomId, content, user.id, senderName, "text", replyTo),
             3,
             800,
             (err) => err.type === ErrorType.NETWORK || err.retryable,
@@ -666,15 +746,13 @@ const useChatStore = create<ChatStore>()(
           };
 
           get().addMessage(message as ChatMessage);
-          await enhancedRealtimeChatService.sendMessage(
+          await consolidatedRealtimeService.sendMessage(
             roomId,
             "",
             user.id,
             senderName,
             "voice",
             undefined,
-            uploadResult.url,
-            duration,
           );
         } catch (error) {
           console.warn("💥 Failed to send voice message:", error);
@@ -714,14 +792,13 @@ const useChatStore = create<ChatStore>()(
           const message = baseMessage;
 
           get().addMessage(message as ChatMessage);
-          await enhancedRealtimeChatService.sendMessage(
+          await consolidatedRealtimeService.sendMessage(
             roomId,
             "",
             user.id,
             senderName,
             mediaType,
             undefined,
-            uploadResult.url,
           );
         } catch (error) {
           console.warn("💥 Failed to send media message:", error);
@@ -826,7 +903,8 @@ const useChatStore = create<ChatStore>()(
             },
           }));
 
-          await enhancedRealtimeChatService.sendReaction(roomId, messageId, userId, reaction);
+          // TODO: Implement reaction sending in consolidated service
+          console.log("Reaction sent (placeholder):", { roomId, messageId, userId, reaction });
         } catch (error) {
           // Revert optimistic change by reloading from service on next update
           reverted = true;
@@ -888,8 +966,8 @@ const useChatStore = create<ChatStore>()(
       setTyping: (roomId: string, isTyping: boolean) => {
         const { user } = useAuthStore.getState();
         if (user) {
-          // Debounced typing is handled in the service
-          enhancedRealtimeChatService.setTyping(roomId, user.id, getUserDisplayName(user), isTyping);
+          // Send typing indicator via consolidated service
+          consolidatedRealtimeService.sendTypingIndicator(roomId, user.id, getUserDisplayName(user), isTyping);
         }
       },
 
@@ -910,7 +988,8 @@ const useChatStore = create<ChatStore>()(
 
           // Load older messages using enhanced service with cursor (20 per batch)
           const batchSize = 20;
-          const olderMessages = await enhancedRealtimeChatService.loadOlderMessages(roomId, cursor, batchSize);
+          const result = await consolidatedRealtimeService.loadOlderMessages(roomId, cursor, batchSize);
+          const olderMessages = result.messages;
 
           if (olderMessages.length > 0) {
             // Prepend older messages and keep ascending order
@@ -1168,7 +1247,10 @@ const useChatStore = create<ChatStore>()(
           const newMessages: typeof state.messages = {};
 
           Object.keys(state.messages).forEach((roomId) => {
-            newMessages[roomId] = state.messages[roomId].filter((msg) => new Date(msg.timestamp) > cutoffDate);
+            const roomMessages = state.messages[roomId];
+            if (roomMessages) {
+              newMessages[roomId] = roomMessages.filter((msg) => new Date(msg.timestamp) > cutoffDate);
+            }
           });
 
           return { messages: newMessages };
@@ -1191,7 +1273,13 @@ const useChatStore = create<ChatStore>()(
 
           await Promise.allSettled(unsubscribePromises);
 
-          await enhancedRealtimeChatService.cleanup();
+          // Unsubscribe from connection status changes
+          const currentState = get();
+          if (currentState.subscriptions.connectionStatus) {
+            currentState.subscriptions.connectionStatus();
+          }
+
+          await consolidatedRealtimeService.cleanup();
           set({
             connectionStatus: "disconnected",
             currentChatRoom: null,
