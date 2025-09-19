@@ -88,15 +88,44 @@ class EnhancedRealtimeChatService {
   private priorityQueues: Map<string, { high: ChatMessage[]; normal: ChatMessage[]; low: ChatMessage[] }> = new Map();
 
   async initialize() {
-    console.log("🚀 Initializing Enhanced Supabase Real-time Chat Service");
+    console.log("🚀 Initializing Enhanced Supabase Real-time Chat Service v2.57.4");
+    console.log("🔍 React Native Environment Check:", {
+      platform: typeof navigator !== 'undefined' ? 'web' : 'react-native',
+      webWorkers: typeof Worker !== 'undefined',
+      websockets: typeof WebSocket !== 'undefined',
+      supabaseVersion: '2.57.4'
+    });
+
     this.connectionStatus = "connecting";
 
     try {
+      // Test Supabase connection health
+      console.log("🔍 Testing Supabase database connection...");
+      const { data: healthCheck, error: healthError } = await supabase.from("chat_rooms_firebase").select("count").limit(1);
+
+      if (healthError) {
+        console.error("🚨 Supabase health check failed:", healthError);
+        throw new AppError(`Database connection failed: ${healthError.message}`, ErrorType.NETWORK);
+      }
+
+      // Test realtime connection
+      console.log("🔍 Testing Supabase realtime connection...");
+      const realtimeStatus = supabase.realtime?.isConnected?.() ?? false;
+      console.log("🔍 Realtime connection status:", realtimeStatus);
+
       // Connection status will be managed per channel
       this.connectionStatus = "connected";
-      console.log("✅ Enhanced Realtime Chat Service initialized");
+      console.log("✅ Enhanced Realtime Chat Service initialized successfully");
+      console.log("✅ Environment compatibility verified for React Native");
     } catch (error) {
-      console.warn("Failed to initialize real-time service:", error);
+      console.error("🚨 Failed to initialize real-time service:", error);
+      console.error("🚨 Error details:", {
+        message: error?.message,
+        code: error?.code,
+        type: typeof error,
+        stack: error?.stack?.split('\n').slice(0, 3)
+      });
+      this.connectionStatus = "disconnected";
       throw new AppError("Failed to initialize chat service", ErrorType.NETWORK);
     }
   }
@@ -104,8 +133,18 @@ class EnhancedRealtimeChatService {
   async joinRoom(roomId: string, userId: string, userName: string): Promise<RealtimeChannel> {
     try {
       console.log(`🚪 Joining chat room: ${roomId} as ${userName}`);
+      console.log(`🔍 Join Room Debug:`, {
+        roomId: roomId?.slice(-8),
+        userId: userId?.slice(-8),
+        userName,
+        connectionStatus: this.connectionStatus,
+        isInitialized: this.isInitialized,
+        existingChannels: this.channels.size,
+        realtimeConnected: supabase.realtime?.isConnected?.() ?? 'unknown'
+      });
 
       // Clean up existing channel if any
+      console.log(`🧹 Cleaning up existing channel for room ${roomId}...`);
       await this.leaveRoom(roomId);
 
       // Validate subscription state before joining

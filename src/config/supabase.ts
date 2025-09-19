@@ -3,6 +3,9 @@ import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Database } from "../types/database.types";
 
+// React Native polyfills for Supabase realtime compatibility
+import 'react-native-url-polyfill/auto';
+
 // Supabase v2.57.4 API Version
 const SUPABASE_API_VERSION = "v2.57.4";
 const SUPPORTED_API_KEY_PREFIXES = ["sb_publishable_", "sb_secret_", "eyJ"];
@@ -246,7 +249,7 @@ export const supabase: SupabaseClient<Database> = createClient(supabaseUrl, supa
     flowType: "pkce",
     debug: __DEV__,
   },
-  // Production-optimized real-time configuration
+  // Production-optimized real-time configuration with React Native compatibility
   realtime: {
     // Production-tuned heartbeat for better connection reliability
     heartbeatIntervalMs: productionConfig.enableHealthChecks ? 15000 : 30000,
