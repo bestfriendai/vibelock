@@ -42,14 +42,26 @@ export default function ChatroomsScreen() {
   useEffect(() => {
     console.log("🔍 ChatroomsScreen Auth Debug:", {
       hasUser: !!user,
-      userId: user?.id?.slice(-4) || "none",
+      userId: user?.id?.slice(-8) || "none",
+      email: user?.email || "none",
       canAccessChat,
       needsSignIn,
       chatRoomsCount: chatRooms.length,
       isLoading,
       error: error || "none",
+      connectionStatus,
     });
-  }, [user, canAccessChat, needsSignIn, chatRooms.length, isLoading, error]);
+
+    // Additional auth store debugging
+    const authState = useAuthStore.getState();
+    console.log("🔍 Auth Store State:", {
+      isAuthenticated: authState.isAuthenticated,
+      isGuestMode: authState.isGuestMode,
+      hasUser: !!authState.user,
+      isLoading: authState.isLoading,
+      error: authState.error || "none"
+    });
+  }, [user, canAccessChat, needsSignIn, chatRooms.length, isLoading, error, connectionStatus]);
 
   useEffect(() => {
     const done = startTimer("chatrooms:initialLoad");

@@ -207,6 +207,15 @@ const useChatStore = create<ChatStore>()(
 
           console.log("🔄 Loading chat rooms...");
 
+          // Check auth state before loading
+          const authState = useAuthStore.getState();
+          console.log("🔍 Auth state during loadChatRooms:", {
+            isAuthenticated: authState.isAuthenticated,
+            hasUser: !!authState.user,
+            isGuestMode: authState.isGuestMode,
+            userId: authState.user?.id?.slice(-8) || 'none'
+          });
+
           // Load chat rooms directly from Supabase
           const { data: chatRooms, error } = await supabase
             .from("chat_rooms_firebase")

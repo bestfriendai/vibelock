@@ -471,6 +471,16 @@ const useAuthStore = create<AuthStore>()(
         // Set up the auth state change listener with proper synchronization
         const subscription = authService.onAuthStateChange(async (session) => {
           const supabaseUser = session?.user;
+
+          console.log("🔄 Auth state change triggered:", {
+            hasSession: !!session,
+            hasUser: !!supabaseUser,
+            userId: supabaseUser?.id?.slice(-8) || 'none',
+            email: supabaseUser?.email || 'none',
+            isProcessing: isProcessingAuthChange,
+            isInitializing
+          });
+
           // Prevent concurrent auth state processing
           if (isProcessingAuthChange || isInitializing) {
             console.log("🔄 Auth change ignored - already processing");
@@ -490,8 +500,21 @@ const useAuthStore = create<AuthStore>()(
             isProcessingAuthChange = true;
             try {
               if (supabaseUser) {
+                console.log("👤 Processing authenticated user:", supabaseUser.id?.slice(-8));
+
                 // Get user profile from users service
-                const userProfile = await usersService.getProfile(supabaseUser.id);
+                let userProfile = null;
+                try {
+                  userProfile = await usersService.getProfile(supabaseUser.id);
+                  console.log("📋 Profile fetch result:", {
+                    hasProfile: !!userProfile,
+                    profileId: userProfile?.id?.slice(-8) || 'none',
+                    email: userProfile?.email || 'none'
+                  });
+                } catch (profileError) {
+                  console.error("❌ Profile fetch error:", profileError);
+                }
+
                 if (userProfile) {
                   set((state) => ({
                     ...state,
@@ -503,24 +526,32 @@ const useAuthStore = create<AuthStore>()(
                   }));
                   console.log("✅ Auth state synchronized: User authenticated");
                 } else {
-                  console.warn("User profile not found in auth state change");
-                  const appError = new AppError(
-                    "User profile not found",
-                    ErrorType.AUTH,
-                    "PROFILE_NOT_FOUND",
-                    undefined,
-                    false,
-                  );
-                  set((state) => ({
-                    ...state,
-                    user: null,
-                    isAuthenticated: false,
-                    error: appError.userMessage,
-                    isLoading: false,
-                  }));
+                  console.warn("⚠️ User profile not found in auth state change - keeping current state");
+                  // Don't clear auth state if profile fetch fails - this might be temporary
+                  const currentState = get();
+                  if (!currentState.isAuthenticated) {
+                    console.log("🔄 No current auth state, setting error");
+                    const appError = new AppError(
+                      "User profile not found",
+                      ErrorType.AUTH,
+                      "PROFILE_NOT_FOUND",
+                      undefined,
+                      false,
+                    );
+                    set((state) => ({
+                      ...state,
+                      user: null,
+                      isAuthenticated: false,
+                      error: appError.userMessage,
+                      isLoading: false,
+                    }));
+                  } else {
+                    console.log("🔄 Keeping current authenticated state despite profile fetch failure");
+                  }
                 }
               } else {
                 // User signed out
+                console.log("👋 User signed out");
                 set((state) => ({
                   ...state,
                   user: null,
@@ -532,15 +563,27 @@ const useAuthStore = create<AuthStore>()(
                 console.log("✅ Auth state synchronized: User signed out");
               }
             } catch (error) {
-              console.warn("Error in auth state change:", error);
+              console.error("❌ Error in auth state change:", error);
               const appError = error instanceof AppError ? error : parseSupabaseError(error);
-              set((state) => ({
-                ...state,
-                user: null,
-                isAuthenticated: false,
-                error: appError.userMessage,
-                isLoading: false,
-              }));
+
+              // Don't clear auth state on temporary errors
+              const currentState = get();
+              if (currentState.isAuthenticated && supabaseUser) {
+                console.log("🔄 Keeping auth state despite error - might be temporary");
+                set((state) => ({
+                  ...state,
+                  error: appError.userMessage,
+                  isLoading: false,
+                }));
+              } else {
+                set((state) => ({
+                  ...state,
+                  user: null,
+                  isAuthenticated: false,
+                  error: appError.userMessage,
+                  isLoading: false,
+                }));
+              }
             } finally {
               isProcessingAuthChange = false;
             }
