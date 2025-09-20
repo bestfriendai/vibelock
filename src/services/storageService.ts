@@ -216,17 +216,25 @@ class StorageService {
    */
   async uploadFile(fileUri: string, options: FileUploadOptions): Promise<UploadResult> {
     try {
-      // Check authentication first
+      // Check authentication - but allow anonymous uploads for review images to maximize user review posting
       const {
         data: { user },
         error: authError,
       } = await supabase.auth.getUser();
-      if (authError || !user) {
+
+      // Allow anonymous uploads for review images (per user preference to maximize review posting)
+      const allowAnonymous = options.bucket === this.buckets.REVIEW_IMAGES;
+
+      if (!allowAnonymous && (authError || !user)) {
         console.warn("❌ Authentication required for storage upload:", authError);
         throw new AppError("Authentication required. Please sign in and try again.", ErrorType.AUTH, "AUTH_REQUIRED");
       }
 
-      console.log("🔐 Authenticated user for upload:", { userId: user.id, email: user.email });
+      if (allowAnonymous && !user) {
+        console.log("📤 Allowing anonymous upload to review-images bucket");
+      } else if (user) {
+        console.log("🔐 Authenticated user for upload:", { userId: user.id, email: user.email });
+      }
 
       // Validate bucket name to prevent injection attacks
       this.validateBucket(options.bucket);

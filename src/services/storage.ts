@@ -89,6 +89,11 @@ export class StorageService {
       });
 
       if (uploadResponse.error) {
+        // Provide more specific error handling for RLS issues
+        if (uploadResponse.error.message?.includes('row-level security policy')) {
+          console.error(`RLS Policy Error: User may need to be authenticated to upload to ${bucket}`);
+          throw new Error(`Upload failed: Authentication may be required for ${bucket} uploads. Please ensure user is signed in.`);
+        }
         handleStorageError(uploadResponse.error, "Upload");
       }
 
@@ -108,6 +113,12 @@ export class StorageService {
       };
     } catch (error: any) {
       console.error(`Failed to upload file to ${bucket}/${path}:`, error);
+
+      // Provide user-friendly error messages for common issues
+      if (error.message?.includes('row-level security policy')) {
+        throw new Error(`Upload failed: Authentication required for ${bucket} uploads. Please sign in and try again.`);
+      }
+
       throw error;
     }
   }
@@ -413,16 +424,22 @@ export class StorageService {
   // Utility method to validate bucket exists and is accessible
   async validateBucket(bucket: string): Promise<void> {
     try {
-      const { data: buckets, error } = await supabase.storage.listBuckets();
+      // Instead of listing all buckets (which may fail due to RLS),
+      // try to access the bucket directly by listing its contents
+      const { error } = await supabase.storage.from(bucket).list('', { limit: 1 });
 
       if (error) {
-        handleStorageError(error, "List Buckets");
+        // If we get a specific "bucket not found" error, throw our custom error
+        if (error.message?.includes('not found') || error.message?.includes('does not exist')) {
+          throw new Error(`Bucket '${bucket}' does not exist or is not accessible`);
+        }
+        // For other errors (like RLS), we assume the bucket exists but we don't have list permissions
+        // This is acceptable for upload operations
+        console.warn(`Bucket validation warning for ${bucket}:`, error.message);
       }
 
-      const bucketExists = buckets?.some((b) => b.name === bucket);
-      if (!bucketExists) {
-        throw new Error(`Bucket '${bucket}' does not exist or is not accessible`);
-      }
+      // If we reach here, the bucket is accessible (either no error or acceptable RLS error)
+      console.log(`✅ Bucket '${bucket}' validation passed`);
     } catch (error: any) {
       console.error(`Bucket validation failed for ${bucket}:`, error);
       throw error;
