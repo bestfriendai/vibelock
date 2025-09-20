@@ -479,6 +479,7 @@ class ConsolidatedRealtimeService {
         .from("chat_messages_firebase")
         .select("*")
         .eq("chat_room_id", roomId)
+        .eq("is_deleted", false)
         .order("timestamp", { ascending: false })
         .limit(limit);
 
@@ -517,6 +518,7 @@ class ConsolidatedRealtimeService {
         .from("chat_messages_firebase")
         .select("*")
         .eq("chat_room_id", roomId)
+        .eq("is_deleted", false)
         .lt("timestamp", beforeTimestamp)
         .order("timestamp", { ascending: false })
         .limit(limit);
@@ -548,54 +550,19 @@ class ConsolidatedRealtimeService {
       return { messages, hasMore };
     } catch (error) {
       console.error(`❌ Failed to load older messages for room ${roomId}:`, error);
+      console.error("Error details:", {
+        roomId,
+        beforeTimestamp,
+        limit,
+        errorMessage: error instanceof Error ? error.message : String(error),
+        errorCode: (error as any)?.code,
+        errorDetails: (error as any)?.details
+      });
       throw new AppError("Failed to load older messages", ErrorType.NETWORK);
     }
   }
 
-  async loadOlderMessages(roomId: string, beforeTimestamp: string, limit: number = 50): Promise<{
-    messages: ChatMessage[];
-    hasMore: boolean;
-  }> {
-    console.log(`📨 Loading older messages for room ${roomId} before ${beforeTimestamp}`);
 
-    try {
-      const { data, error } = await supabase
-        .from("chat_messages_firebase")
-        .select("*")
-        .eq("chat_room_id", roomId)
-        .lt("timestamp", beforeTimestamp)
-        .order("timestamp", { ascending: false })
-        .limit(limit + 1); // Load one extra to check if there are more
-
-      if (error) throw error;
-
-      const hasMore = (data || []).length > limit;
-      const messages: ChatMessage[] = (data || [])
-        .slice(0, limit) // Remove the extra message
-        .map(this.mapDatabaseMessageToChatMessage)
-        .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-
-      // Update cache
-      const cachedMessages = this.messageCache.get(roomId) || [];
-      const updatedMessages = [...messages, ...cachedMessages];
-      this.messageCache.set(roomId, updatedMessages);
-
-      // Notify callback
-      const subscription = this.subscriptions.get(roomId);
-      if (subscription) {
-        subscription.callbacks.onMessage({
-          type: "older_messages",
-          items: messages,
-        });
-      }
-
-      console.log(`📨 Loaded ${messages.length} older messages, hasMore: ${hasMore}`);
-      return { messages, hasMore };
-    } catch (error) {
-      console.error(`❌ Failed to load older messages:`, error);
-      throw new AppError("Failed to load older messages", ErrorType.NETWORK);
-    }
-  }
 
   async sendMessage(
     roomId: string,
@@ -916,6 +883,21 @@ class ConsolidatedRealtimeService {
     return null;
   }
 
+  trackOptimisticMessage(roomId: string, optimisticMessage: ChatMessage): void {
+    const optimisticKey = `${roomId}_${optimisticMessage.id}`;
+    this.optimisticMessages.set(optimisticKey, optimisticMessage);
+
+    // Add to cache as optimistic
+    const cachedMessages = this.messageCache.get(roomId) || [];
+    const existingIndex = cachedMessages.findIndex(m => m.id === optimisticMessage.id);
+
+    if (existingIndex === -1) {
+      // Add if not already in cache
+      cachedMessages.push(optimisticMessage);
+      this.messageCache.set(roomId, cachedMessages);
+    }
+  }
+
   private replaceOptimisticMessage(roomId: string, optimisticKey: string, realMessage: ChatMessage): void {
     // Remove optimistic message
     this.optimisticMessages.delete(optimisticKey);
@@ -933,8 +915,9 @@ class ConsolidatedRealtimeService {
       const subscription = this.subscriptions.get(roomId);
       if (subscription) {
         subscription.callbacks.onMessage({
-          type: "update",
+          type: "replace",
           items: [realMessage],
+          tempId: tempId,
         });
       }
     }
@@ -1104,6 +1087,64 @@ class ConsolidatedRealtimeService {
         subscription.callbacks.onTyping?.(currentTypingUsers);
       }
     }
+  }
+
+  // Get active room IDs
+  getActiveRoomIds(): string[] {
+    return Array.from(this.subscriptions.keys());
+  }
+
+  // Pause all subscriptions (for background)
+  private isPaused = false;
+  private pausedRooms = new Set<string>();
+  private pausedCallbacks = new Map<string, SubscriptionCallbacks>();
+
+  async pauseAll(): Promise<void> {
+    console.log('[ConsolidatedRealtimeService] Pausing all subscriptions');
+    this.isPaused = true;
+
+    // Store active room IDs and their callbacks
+    for (const [roomId, subscription] of this.subscriptions.entries()) {
+      this.pausedRooms.add(roomId);
+      this.pausedCallbacks.set(roomId, subscription.callbacks);
+
+      // Stop typing for all rooms
+      this.stopTyping(roomId);
+
+      // Unsubscribe the channel
+      try {
+        await subscription.channel.unsubscribe();
+        console.log(`[ConsolidatedRealtimeService] Paused subscription for room ${roomId}`);
+      } catch (error) {
+        console.error(`[ConsolidatedRealtimeService] Error pausing room ${roomId}:`, error);
+      }
+    }
+
+    // Clear subscriptions map (but keep pausedRooms for resuming)
+    this.subscriptions.clear();
+  }
+
+  // Resume all subscriptions (for foreground)
+  async resumeAll(userId: string, userName: string): Promise<void> {
+    console.log('[ConsolidatedRealtimeService] Resuming all subscriptions');
+    this.isPaused = false;
+
+    // Re-join each paused room
+    for (const roomId of this.pausedRooms) {
+      try {
+        const callbacks = this.pausedCallbacks.get(roomId);
+        if (callbacks) {
+          await this.joinRoom(roomId, userId, userName, callbacks);
+          console.log(`[ConsolidatedRealtimeService] Resumed subscription for room ${roomId}`);
+        }
+      } catch (error) {
+        console.error(`[ConsolidatedRealtimeService] Error resuming room ${roomId}:`, error);
+      }
+    }
+
+    // Clear paused state
+    this.pausedRooms.clear();
+    this.pausedCallbacks.clear();
   }
 }
 

@@ -8,9 +8,19 @@ import useAuthStore from "./authStore";
 import { requireAuthentication, getUserDisplayName } from "../utils/authUtils";
 import { AppError, parseSupabaseError, retryWithBackoff, ErrorType } from "../utils/errorHandling";
 import { supabase } from "../config/supabase";
+import { searchService } from "../services/search";
+import { messageEditService } from "../services/messageEditService";
+import { messageForwardService } from "../services/messageForwardService";
 import { notificationService } from "../services/notificationService";
 import { storageService } from "../services/storageService";
+import { messageStatusService } from "../services/messageStatusService";
 import NetInfo from "@react-native-community/netinfo";
+import { appStateManager } from "../services/appStateManager";
+import { reliableNetworkCheck } from "../utils/reliableNetworkCheck";
+import { messagePaginationManager } from "../services/messagePaginationService";
+import { memoryManager } from "../services/memoryManager";
+import { messageVirtualizer } from "../services/messageVirtualizer";
+import { performanceMonitor } from "../utils/performance";
 
 // Constants for data limits
 const MAX_PERSISTED_MESSAGES_PER_ROOM = 50;
@@ -98,6 +108,12 @@ interface ChatActions {
   toggleNotifications: (roomId: string) => Promise<void>;
   deleteMessage: (roomId: string, messageId: string) => Promise<void>;
 
+  // Message editing and forwarding
+  editMessage: (roomId: string, messageId: string, newContent: string) => Promise<void>;
+  forwardMessage: (sourceMessage: ChatMessage, targetRoomId: string, comment?: string) => Promise<void>;
+  searchMessages: (roomId: string, query: string) => Promise<ChatMessage[]>;
+  scrollToMessage: (messageId: string) => void;
+
   // Typing indicators
   setTyping: (roomId: string, isTyping: boolean) => void;
   addTypingUser: (typingUser: TypingUser) => void;
@@ -123,6 +139,11 @@ interface ChatActions {
 
   // Pagination
   loadOlderMessages: (roomId: string) => Promise<{ hasMore: boolean; loadedCount: number }>;
+
+  // Performance optimization
+  enableOptimizedMode: (roomId: string) => void;
+  cleanupMemory: (roomId?: string) => Promise<number>;
+  getPerformanceMetrics: () => any;
 
   // Real-time subscriptions
   subscribeToChatRoom: (roomId: string) => void;
@@ -152,6 +173,70 @@ const useChatStore = create<ChatStore>()(
       error: null,
       subscriptions: {},
 
+      // Performance optimization
+      enableOptimizedMode: (roomId: string) => {
+        const messages = get().messages[roomId] || [];
+
+        if (messages.length > 100) {
+          console.log(`🚀 Enabling optimized mode for room ${roomId} (${messages.length} messages)`);
+
+          // Initialize performance services
+          messageVirtualizer.optimizeForDevice({ memory: 4096 });
+          memoryManager.trackComponent('ChatRoom', roomId);
+          performanceMonitor.startFPSMonitoring();
+
+          // Enable aggressive cleanup
+          messagePaginationManager.cleanupOldMessages(roomId, 200);
+        }
+      },
+
+      cleanupMemory: async (roomId?: string) => {
+        let totalCleaned = 0;
+
+        if (roomId) {
+          // Clean specific room
+          const cleaned = await messagePaginationManager.cleanupOldMessages(roomId, 100);
+          totalCleaned += cleaned;
+
+          // Clear virtualization cache
+          messageVirtualizer.clear();
+        } else {
+          // Clean all rooms
+          const rooms = Object.keys(get().messages);
+          for (const room of rooms) {
+            const cleaned = await messagePaginationManager.cleanupOldMessages(room, 100);
+            totalCleaned += cleaned;
+          }
+        }
+
+        // Force memory cleanup
+        const memCleaned = await memoryManager.forceCleanup();
+        totalCleaned += memCleaned;
+
+        performanceMonitor.recordMetric('memoryCleanup', {
+          cleaned: totalCleaned,
+          roomId,
+          timestamp: Date.now()
+        });
+
+        return totalCleaned;
+      },
+
+      getPerformanceMetrics: () => {
+        const memoryReport = memoryManager.getMemoryReport();
+        const performanceReport = performanceMonitor.generatePerformanceReport();
+        const virtualizerMetrics = messageVirtualizer.getPerformanceMetrics();
+        const paginationMetrics = messagePaginationManager.getMetrics();
+
+        return {
+          memory: memoryReport,
+          performance: performanceReport,
+          virtualizer: virtualizerMetrics,
+          pagination: paginationMetrics,
+          timestamp: Date.now()
+        };
+      },
+
       // Connection management
       connect: async (userId: string) => {
         try {
@@ -174,19 +259,63 @@ const useChatStore = create<ChatStore>()(
 
           // Authentication successful, user is available in authResult if needed
 
-          // Set up network monitoring once with improved logic
-          if (!netUnsubscribe) {
-            netUnsubscribe = NetInfo.addEventListener(async (state) => {
-              // Improved network detection logic
-              const isConnected = Boolean(state.isConnected);
-              const hasInternetAccess = state.isInternetReachable === true ||
-                                      (state.isInternetReachable === null && isConnected);
+          // Initialize AppState manager
+          appStateManager.initialize();
+
+          // Register for AppState changes
+          appStateManager.registerListener('chatStore', async (nextState, prevState) => {
+            console.log(`[ChatStore] AppState changed: ${prevState} -> ${nextState}`);
+            await get().handleAppStateChange(nextState, prevState);
+          });
+
+          // Register foreground/background callbacks
+          const unsubscribeForeground = appStateManager.onForeground(async () => {
+            console.log('[ChatStore] App returned to foreground - reconnecting...');
+            await get().reconnectAllRooms();
+          });
+
+          const unsubscribeBackground = appStateManager.onBackground(() => {
+            console.log('[ChatStore] App going to background - pausing subscriptions...');
+            // Clear typing indicators for all rooms
+            const currentRoomId = get().currentChatRoom?.id;
+            if (currentRoomId) {
+              get().setTyping(currentRoomId, false);
+            }
+          });
+
+          // Store unsubscribe functions
+          set((state) => ({
+            subscriptions: {
+              ...state.subscriptions,
+              appStateForeground: unsubscribeForeground,
+              appStateBackground: unsubscribeBackground,
+            },
+          }));
+
+          // Create enhanced connection monitor with reliable network checking
+          const createConnectionMonitor = () => {
+            return NetInfo.addEventListener(async (state) => {
+              // Use reliable network check first
+              const reliableCheck = await reliableNetworkCheck();
+
+              // Combine NetInfo and reliable check results
+              const isConnected = Boolean(state.isConnected) && reliableCheck.isConnected;
+              const hasInternetAccess = (state.isInternetReachable === true ||
+                                        (state.isInternetReachable === null && isConnected)) &&
+                                       reliableCheck.isStable;
               const online = isConnected && hasInternetAccess;
 
               console.log(`📶 Network state changed:`, {
-                isConnected,
-                isInternetReachable: state.isInternetReachable,
-                online,
+                netInfo: {
+                  isConnected: state.isConnected,
+                  isInternetReachable: state.isInternetReachable,
+                },
+                reliableCheck: {
+                  isConnected: reliableCheck.isConnected,
+                  isStable: reliableCheck.isStable,
+                  latency: reliableCheck.latency,
+                },
+                finalResult: online,
                 details: state.details
               });
 
@@ -224,6 +353,11 @@ const useChatStore = create<ChatStore>()(
                 }
               }
             });
+          };
+
+          // Set up network monitoring once with improved logic
+          if (!netUnsubscribe) {
+            netUnsubscribe = createConnectionMonitor();
           }
 
           // Subscribe to connection status changes from consolidated service
@@ -482,8 +616,25 @@ const useChatStore = create<ChatStore>()(
                       break;
 
                     case "replace":
-                      // Replace all messages (for refresh scenarios)
-                      allMessages = [...event.items];
+                      // Replace only the optimistic message identified by event.tempId
+                      const currentMsgs = state.messages[roomId] || [];
+                      if (event.tempId && event.items.length > 0) {
+                        // Replace the optimistic message with the real message
+                        const realMessage = event.items[0];
+                        allMessages = currentMsgs.map(msg =>
+                          msg.id === event.tempId ? realMessage : msg
+                        );
+                        // Remove duplicate if the real message already exists
+                        const uniqueIds = new Set<string>();
+                        allMessages = allMessages.filter(msg => {
+                          if (uniqueIds.has(msg.id)) return false;
+                          uniqueIds.add(msg.id);
+                          return true;
+                        });
+                      } else {
+                        // Fallback: Replace all messages (for refresh scenarios)
+                        allMessages = [...event.items];
+                      }
                       break;
 
                     case "delete":
@@ -509,6 +660,36 @@ const useChatStore = create<ChatStore>()(
                   };
                 });
               });
+
+              // Track message delivery status for new/initial messages
+              if (event.type === "initial" || event.type === "new") {
+                const messageIds = event.items
+                  .filter(msg => msg.senderId !== user.id && !msg.isRead)
+                  .map(msg => msg.id);
+
+                if (messageIds.length > 0) {
+                  // Mark messages as delivered
+                  messageStatusService.markMessagesAsDelivered(messageIds, user.id).catch(error => {
+                    console.warn('[ChatStore] Failed to mark messages as delivered:', error);
+                  });
+
+                  // If room is currently active/visible, mark as read
+                  const currentRoom = get().currentChatRoom;
+                  if (currentRoom && currentRoom.id === roomId) {
+                    messageStatusService.markMessagesAsRead(messageIds, user.id).catch(error => {
+                      console.warn('[ChatStore] Failed to mark messages as read:', error);
+                    });
+                  }
+                }
+
+                // Check capability status and show warning if needed
+                const capabilities = messageStatusService.getCapabilityStatus();
+                if (capabilities.warningShown && !capabilities.supportsDelivered) {
+                  console.log('[ChatStore] Message delivery tracking is limited due to database schema');
+                  // Optionally set a non-blocking warning in state
+                  // set({ warning: 'Message delivery tracking is limited' });
+                }
+              }
             },
             onPresence: (members: ChatMember[]) => {
               startTransition(() => {
@@ -537,6 +718,44 @@ const useChatStore = create<ChatStore>()(
           // Load initial messages with loading state
           console.log(`📥 Loading initial messages for room: ${roomId}`);
           await consolidatedRealtimeService.loadInitialMessages(roomId, 50);
+
+          // Subscribe to message status updates
+          const unsubscribeStatus = messageStatusService.subscribeToRoomStatusUpdates(roomId, (status) => {
+            // Update message status in state
+            startTransition(() => {
+              set((state) => {
+                const messages = state.messages[roomId] || [];
+                const updatedMessages = messages.map(msg => {
+                  if (msg.id === status.messageId) {
+                    return {
+                      ...msg,
+                      status: status.status,
+                      deliveryStatus: status.status,
+                      readBy: status.readBy,
+                    };
+                  }
+                  return msg;
+                });
+
+                return {
+                  ...state,
+                  messages: {
+                    ...state.messages,
+                    [roomId]: updatedMessages,
+                  },
+                };
+              });
+            });
+          });
+
+          // Store unsubscribe function for cleanup
+          set((state) => ({
+            ...state,
+            subscriptions: {
+              ...state.subscriptions,
+              [`status_${roomId}`]: unsubscribeStatus,
+            },
+          }));
 
           // Set loading to false after successful join and message load
           set({ isLoading: false });
@@ -653,6 +872,9 @@ const useChatStore = create<ChatStore>()(
           // Add optimistic message locally
           get().addMessage(optimisticMessage);
 
+          // Track optimistic message with realtime service
+          consolidatedRealtimeService.trackOptimisticMessage(roomId, optimisticMessage);
+
           // Send to Supabase via consolidated real-time service (with retry)
           await retryWithBackoff(
             () => consolidatedRealtimeService.sendMessage(roomId, content, user.id, senderName, "text", replyTo),
@@ -767,31 +989,87 @@ const useChatStore = create<ChatStore>()(
           const { user } = await requireAuthentication("send media messages");
           const senderName = getUserDisplayName(user);
 
-          // Compress image if needed
-          let finalUri = mediaUri;
-          if (mediaType === "image") {
-            finalUri = await storageService.compressImage(mediaUri, 0.7);
-          }
+          // Process media (compress image or generate video thumbnail)
+          const { mediaProcessingService } = await import("../services/mediaProcessingService");
+          const processingResult = await mediaProcessingService.processMediaForChat(
+            mediaUri,
+            mediaType,
+            {
+              onProgress: (progress) => {
+                console.log(`Processing ${mediaType}: ${progress}%`);
+              },
+            }
+          );
 
-          // Upload media file to storage
-          const uploadResult = await storageService.uploadChatMedia(finalUri, user.id, roomId);
-
-          if (!uploadResult.success || !uploadResult.url) {
-            throw new Error("Failed to upload media");
-          }
-
-          const baseMessage: Partial<ChatMessage> = {
+          // Create optimistic message with thumbnail for immediate UI feedback
+          const optimisticMessage: Partial<ChatMessage> = {
+            id: `temp_${Date.now()}`,
             chatRoomId: roomId,
             senderId: user.id,
             senderName,
             messageType: mediaType,
             timestamp: new Date(),
+            status: "pending" as const,
+            width: processingResult.width,
+            height: processingResult.height,
           };
-          if (mediaType === "image") (baseMessage as any).imageUri = uploadResult.url;
-          if (mediaType === "video") (baseMessage as any).videoUri = uploadResult.url;
-          const message = baseMessage;
 
-          get().addMessage(message as ChatMessage);
+          if (mediaType === "image") {
+            optimisticMessage.imageUri = processingResult.processedUri;
+            optimisticMessage.thumbnailUri = processingResult.processedUri;
+          } else {
+            optimisticMessage.videoUri = mediaUri;
+            optimisticMessage.thumbnailUri = processingResult.thumbnailUri;
+            optimisticMessage.duration = processingResult.duration;
+          }
+
+          // Add optimistic message immediately
+          get().addMessage(optimisticMessage as ChatMessage);
+
+          // Upload processed media to storage
+          const uploadResult = await storageService.uploadChatMedia(
+            processingResult.processedUri,
+            user.id,
+            roomId
+          );
+
+          if (!uploadResult.success || !uploadResult.url) {
+            throw new Error("Failed to upload media");
+          }
+
+          // Upload thumbnail for videos
+          let thumbnailUrl: string | undefined;
+          if (mediaType === "video" && processingResult.thumbnailUri) {
+            const thumbnailUpload = await storageService.uploadChatMedia(
+              processingResult.thumbnailUri,
+              user.id,
+              roomId
+            );
+            thumbnailUrl = thumbnailUpload.url;
+          }
+
+          // Update message with final URLs
+          const finalMessage: Partial<ChatMessage> = {
+            chatRoomId: roomId,
+            senderId: user.id,
+            senderName,
+            messageType: mediaType,
+            timestamp: new Date(),
+            status: "sent" as const,
+            width: processingResult.width,
+            height: processingResult.height,
+          };
+
+          if (mediaType === "image") {
+            finalMessage.imageUri = uploadResult.url;
+            finalMessage.thumbnailUri = uploadResult.url;
+          } else {
+            finalMessage.videoUri = uploadResult.url;
+            finalMessage.thumbnailUri = thumbnailUrl;
+            finalMessage.duration = processingResult.duration;
+          }
+
+          // Send message through realtime service
           await consolidatedRealtimeService.sendMessage(
             roomId,
             "",
@@ -800,6 +1078,9 @@ const useChatStore = create<ChatStore>()(
             mediaType,
             undefined,
           );
+
+          // Clean up temp files
+          await mediaProcessingService.cleanupTempFiles();
         } catch (error) {
           console.warn("💥 Failed to send media message:", error);
           const appError = error instanceof AppError ? error : parseSupabaseError(error);
@@ -962,6 +1243,198 @@ const useChatStore = create<ChatStore>()(
         }
       },
 
+      // Message editing
+      editMessage: async (roomId: string, messageId: string, newContent: string) => {
+        const prevMessages = get().messages[roomId] || [];
+        let didOptimisticallyUpdate = false;
+
+        try {
+          const { user } = await requireAuthentication("edit messages");
+
+          // Find the original message for optimistic update
+          const originalMessage = prevMessages.find(m => m.id === messageId);
+          if (!originalMessage) {
+            throw new Error("Message not found");
+          }
+
+          // Optimistically update UI
+          set((state) => ({
+            messages: {
+              ...state.messages,
+              [roomId]: (state.messages[roomId] || []).map(m =>
+                m.id === messageId
+                  ? { ...m, content: newContent, isEdited: true, editedAt: new Date() }
+                  : m
+              ),
+            },
+          }));
+          didOptimisticallyUpdate = true;
+
+          // Use the message edit service for validation and database update
+          const updatedMessage = await messageEditService.editMessage(
+            messageId,
+            newContent,
+            user.id
+          );
+
+          // Broadcast the edit event
+          await messageEditService.broadcastEdit(messageId, roomId, newContent);
+
+          // Update with the actual response from service
+          set((state) => ({
+            messages: {
+              ...state.messages,
+              [roomId]: (state.messages[roomId] || []).map(m =>
+                m.id === messageId
+                  ? { ...m, ...updatedMessage, isEdited: true, editedAt: updatedMessage.editedAt }
+                  : m
+              ),
+            },
+          }));
+
+        } catch (error) {
+          console.warn("💥 Failed to edit message:", error);
+          const appError = error instanceof AppError ? error : parseSupabaseError(error);
+
+          // Rollback optimistic update
+          if (didOptimisticallyUpdate) {
+            set((state) => ({
+              messages: {
+                ...state.messages,
+                [roomId]: prevMessages,
+              },
+            }));
+          }
+          set({ error: appError.userMessage || (error as Error).message });
+          throw appError;
+        }
+      },
+
+      // Message forwarding
+      forwardMessage: async (sourceMessage: ChatMessage, targetRoomId: string, comment?: string) => {
+        try {
+          const { user } = await requireAuthentication("forward messages");
+          const senderName = getUserDisplayName(user);
+
+          // Create optimistic message for UI
+          const timestamp = Date.now();
+          const optimisticMessageId = `forwarded_${timestamp}_${user.id}`;
+
+          const forwardedMessage: ChatMessage = {
+            id: optimisticMessageId,
+            chatRoomId: targetRoomId,
+            senderId: user.id,
+            senderName,
+            content: comment ? `${comment}\n\n--- Forwarded message ---\n${sourceMessage.content}` : `--- Forwarded message ---\n${sourceMessage.content}`,
+            messageType: sourceMessage.messageType,
+            timestamp: new Date(timestamp),
+            isRead: false,
+            status: "pending",
+            isOwn: true,
+            forwardedFromId: sourceMessage.id,
+            forwardedFromRoomId: sourceMessage.chatRoomId,
+            forwardedFromSender: sourceMessage.senderName,
+            // Copy media fields if applicable
+            imageUri: sourceMessage.imageUri,
+            videoUri: sourceMessage.videoUri,
+            audioUri: sourceMessage.audioUri,
+            audioDuration: sourceMessage.audioDuration,
+            thumbnailUri: sourceMessage.thumbnailUri,
+          };
+
+          // Add optimistically
+          set((state) => ({
+            messages: {
+              ...state.messages,
+              [targetRoomId]: [...(state.messages[targetRoomId] || []), forwardedMessage],
+            },
+          }));
+
+          // Use the forward service for validation and database operation
+          const newMessage = await messageForwardService.forwardMessage(
+            sourceMessage,
+            targetRoomId,
+            user.id,
+            comment
+          );
+
+          // Update with real message from service
+          set((state) => ({
+            messages: {
+              ...state.messages,
+              [targetRoomId]: state.messages[targetRoomId]?.map(m =>
+                m.id === optimisticMessageId ? { ...newMessage, status: "sent", isOwn: true } : m
+              ) || [],
+            },
+          }));
+
+        } catch (error) {
+          console.error("💥 Failed to forward message:", error);
+          const appError = error instanceof AppError ? error : parseSupabaseError(error);
+
+          // Remove optimistic message on failure
+          set((state) => ({
+            messages: {
+              ...state.messages,
+              [targetRoomId]: state.messages[targetRoomId]?.filter(m => !m.id.startsWith('forwarded_')) || [],
+            },
+            error: appError.userMessage
+          }));
+
+          throw appError;
+        }
+      },
+
+      // Search messages
+      searchMessages: async (roomId: string, query: string) => {
+        try {
+          set({ isLoading: true });
+
+          const { data, error } = await supabase
+            .from("chat_messages_firebase")
+            .select("*")
+            .eq("chat_room_id", roomId)
+            .ilike("content", `%${query}%`)
+            .order("created_at", { ascending: false })
+            .limit(50);
+
+          if (error) throw error;
+
+          // Transform to ChatMessage format
+          const messages: ChatMessage[] = (data || []).map((msg: any) => ({
+            id: msg.id,
+            chatRoomId: msg.chat_room_id,
+            senderId: msg.sender_id,
+            senderName: msg.sender_name || "Unknown",
+            content: msg.content,
+            messageType: msg.message_type,
+            timestamp: new Date(msg.created_at),
+            isRead: msg.is_read || false,
+            isEdited: msg.is_edited,
+            editedAt: msg.edited_at ? new Date(msg.edited_at) : undefined,
+            forwardedFromId: msg.forwarded_from_id,
+            forwardedFromRoomId: msg.forwarded_from_room_id,
+            forwardedFromSender: msg.forwarded_from_sender,
+          }));
+
+          return messages;
+        } catch (error) {
+          console.error("💥 Failed to search messages:", error);
+          throw error;
+        } finally {
+          set({ isLoading: false });
+        }
+      },
+
+      // Scroll to message (this will be used by the UI)
+      scrollToMessage: (messageId: string) => {
+        // This is primarily a UI concern, but we can emit an event
+        // that the UI components can listen to
+        console.log(`📍 Request to scroll to message: ${messageId}`);
+        // The actual scrolling will be handled by the ChatRoomScreen
+        // which has access to the FlashList ref
+      },
+
       // Typing indicators with improved handling
       setTyping: (roomId: string, isTyping: boolean) => {
         const { user } = useAuthStore.getState();
@@ -977,16 +1450,56 @@ const useChatStore = create<ChatStore>()(
           set({ isLoading: true });
 
           const currentMessages = get().messages[roomId] || [];
+
+          // Use performance-optimized pagination for large message lists
+          if (currentMessages.length > 100) {
+            const messages = await messagePaginationManager.loadNextBatch(
+              roomId,
+              undefined,
+              async (room, cursor, limit) => {
+                const result = await consolidatedRealtimeService.loadOlderMessages(
+                  room,
+                  cursor || currentMessages[0]?.timestamp.toISOString(),
+                  limit
+                );
+                return {
+                  messages: result.messages,
+                  cursor: result.messages[0]?.timestamp.toISOString() || null,
+                  hasMore: result.messages.length === limit
+                };
+              }
+            );
+
+            if (messages.length > 0) {
+              const combined = [...messages, ...currentMessages];
+              const messageMap = new Map(combined.map((msg) => [msg.id, msg]));
+              const uniqueMessages = Array.from(messageMap.values()).sort(
+                (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
+              );
+
+              set((state) => ({
+                messages: {
+                  ...state.messages,
+                  [roomId]: uniqueMessages,
+                },
+                isLoading: false,
+              }));
+
+              return { hasMore: messages.length === 20, loadedCount: messages.length };
+            }
+
+            set({ isLoading: false });
+            return { hasMore: false, loadedCount: 0 };
+          }
+
+          // Standard pagination for smaller message lists
           if (currentMessages.length === 0) {
             set({ isLoading: false });
             return { hasMore: false, loadedCount: 0 };
           }
 
-          // Get the oldest loaded message (ascending array => index 0)
           const oldestMessage = currentMessages[0]!;
           const cursor = oldestMessage.timestamp.toISOString();
-
-          // Load older messages using enhanced service with cursor (20 per batch)
           const batchSize = 20;
           const result = await consolidatedRealtimeService.loadOlderMessages(roomId, cursor, batchSize);
           const olderMessages = result.messages;
@@ -1018,10 +1531,18 @@ const useChatStore = create<ChatStore>()(
             return { hasMore: false, loadedCount: 0 };
           }
         } catch (error) {
-          console.warn("Failed to load older messages:", error);
+          console.error("❌ Failed to load older messages:", error);
+          console.error("Error details:", {
+            message: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined,
+            roomId,
+            currentMessageCount: currentMessages.length
+          });
+
+          const errorMessage = error instanceof Error ? error.message : "Failed to load older messages";
           set({
             isLoading: false,
-            error: "Failed to load older messages",
+            error: errorMessage,
           });
           return { hasMore: false, loadedCount: 0 };
         }
@@ -1257,17 +1778,72 @@ const useChatStore = create<ChatStore>()(
         });
       },
 
+      // Handle AppState changes
+      handleAppStateChange: async (nextState: string, prevState: string) => {
+        // This method is called by the AppStateManager
+        // The actual logic is handled by the registered callbacks
+        console.log(`[ChatStore] Handling AppState change: ${prevState} -> ${nextState}`);
+      },
+
+      // Reconnect all active rooms after network recovery or foreground
+      reconnectAllRooms: async () => {
+        console.log('[ChatStore] Reconnecting all active rooms');
+
+        try {
+          // Use reliable network check first
+          const networkStatus = await reliableNetworkCheck();
+          if (!networkStatus.isConnected || !networkStatus.isStable) {
+            console.warn('[ChatStore] Network not stable, deferring reconnection');
+            return;
+          }
+
+          // Get the authenticated user
+          const authResult = await requireAuthentication("reconnect to chat");
+          const userName = getUserDisplayName(authResult.user);
+
+          // Resume all subscriptions through the consolidated service
+          await consolidatedRealtimeService.resumeAll(authResult.user.id, userName);
+
+          // If there's a current room, optionally re-join it to refresh local state
+          const { currentChatRoom } = get();
+          if (currentChatRoom) {
+            console.log(`[ChatStore] Re-joining current room: ${currentChatRoom.id}`);
+            await get().joinChatRoom(currentChatRoom.id);
+          }
+
+          console.log('[ChatStore] Successfully reconnected all rooms');
+        } catch (error) {
+          console.error('[ChatStore] Failed to reconnect rooms:', error);
+          set({ error: 'Failed to reconnect to chat rooms' });
+        }
+      },
+
       // Cleanup all subscriptions and connections
       cleanup: async () => {
         try {
-          // Cleanup all real-time subscriptions
+          // Unregister from AppState manager
+          appStateManager.unregisterListener('chatStore');
+
+          // Cleanup AppState callbacks
           const { subscriptions } = get();
+          if (subscriptions.appStateForeground) {
+            subscriptions.appStateForeground();
+          }
+          if (subscriptions.appStateBackground) {
+            subscriptions.appStateBackground();
+          }
+
+          // Cleanup all real-time subscriptions
           const unsubscribePromises = Object.entries(subscriptions).map(async ([roomId, subscription]) => {
             try {
-              await subscription.unsubscribe();
-              console.log(`Unsubscribed from room ${roomId}`);
+              if (typeof subscription === 'function') {
+                subscription();
+              } else if (subscription && typeof subscription.unsubscribe === 'function') {
+                await subscription.unsubscribe();
+              }
+              console.log(`Unsubscribed from ${roomId}`);
             } catch (error) {
-              console.warn(`Failed to unsubscribe from room ${roomId}:`, error);
+              console.warn(`Failed to unsubscribe from ${roomId}:`, error);
             }
           });
 

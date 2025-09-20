@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, Pressable, Modal } from "react-native";
+import { View, Text, Pressable } from "react-native";
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../providers/ThemeProvider";
+import { MessageSearchModal } from "./MessageSearchModal";
 
 interface Props {
   typingUsers: { userName: string }[];
@@ -10,6 +11,8 @@ interface Props {
   onToggleNotifications?: () => void;
   isNotificationsEnabled?: boolean;
   errorMessage?: string;
+  roomId?: string;
+  onMessageSelect?: (messageId: string, roomId: string) => void;
 }
 
 export default function SmartChatFeatures({
@@ -18,6 +21,8 @@ export default function SmartChatFeatures({
   onToggleNotifications,
   isNotificationsEnabled = true,
   errorMessage,
+  roomId,
+  onMessageSelect,
 }: Props) {
   const { colors } = useTheme();
   const [showSearchModal, setShowSearchModal] = useState(false);
@@ -170,33 +175,18 @@ export default function SmartChatFeatures({
 
 
 
-      {/* Search Modal */}
-      <Modal
+      {/* Message Search Modal */}
+      <MessageSearchModal
         visible={showSearchModal}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowSearchModal(false)}
-      >
-        <View className="flex-1 bg-black/50 justify-end">
-          <View className="rounded-t-3xl p-6" style={{ backgroundColor: colors.surface[800] }}>
-            <Text className="text-lg font-bold mb-4" style={{ color: colors.text.primary }}>
-              Search Messages
-            </Text>
-
-            <Text className="text-sm mb-4" style={{ color: colors.text.secondary }}>
-              Coming soon! Message search functionality will be available in the next update.
-            </Text>
-
-            <Pressable
-              onPress={() => setShowSearchModal(false)}
-              className="rounded-xl py-3 items-center"
-              style={{ backgroundColor: colors.brand.red }}
-            >
-              <Text className="text-white font-semibold">Close</Text>
-            </Pressable>
-          </View>
-        </View>
-      </Modal>
+        onClose={() => setShowSearchModal(false)}
+        roomId={roomId}
+        onMessageSelect={(messageId, roomId) => {
+          if (onMessageSelect) {
+            onMessageSelect(messageId, roomId);
+          }
+          setShowSearchModal(false);
+        }}
+      />
     </>
   );
 }

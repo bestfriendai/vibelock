@@ -2,6 +2,7 @@ import React from "react";
 import { View, Text, Pressable, Modal } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../providers/ThemeProvider";
+import { ChatMessage } from "../types";
 
 interface Props {
   visible: boolean;
@@ -9,9 +10,25 @@ interface Props {
   onReply: () => void;
   onCopy: () => void;
   onDelete: () => void;
+  onEdit?: () => void;
+  onForward?: () => void;
+  canEdit?: boolean;
+  canForward?: boolean;
+  message?: ChatMessage;
 }
 
-export default function MessageActionsModal({ visible, onClose, onReply, onCopy, onDelete }: Props) {
+export default function MessageActionsModal({
+  visible,
+  onClose,
+  onReply,
+  onCopy,
+  onDelete,
+  onEdit,
+  onForward,
+  canEdit = false,
+  canForward = true,
+  message,
+}: Props) {
   const { colors } = useTheme();
 
   return (
@@ -52,6 +69,51 @@ export default function MessageActionsModal({ visible, onClose, onReply, onCopy,
               Reply
             </Text>
           </Pressable>
+
+          {canEdit && onEdit && (
+            <Pressable
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                paddingVertical: 12,
+              }}
+              onPress={onEdit}
+            >
+              <Ionicons name="pencil" size={24} color={colors.text.primary} />
+              <Text
+                style={{
+                  color: colors.text.primary,
+                  fontSize: 16,
+                  marginLeft: 16,
+                }}
+              >
+                Edit
+              </Text>
+            </Pressable>
+          )}
+
+          {canForward && onForward && (
+            <Pressable
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                paddingVertical: 12,
+              }}
+              onPress={onForward}
+            >
+              <Ionicons name="share-outline" size={24} color={colors.text.primary} />
+              <Text
+                style={{
+                  color: colors.text.primary,
+                  fontSize: 16,
+                  marginLeft: 16,
+                }}
+              >
+                Forward
+              </Text>
+            </Pressable>
+          )}
+
           <Pressable
             style={{
               flexDirection: "row",

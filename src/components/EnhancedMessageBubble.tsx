@@ -1,13 +1,16 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, Pressable, Image } from "react-native";
+import React, { useState, useEffect, useMemo } from "react";
+import { View, Text, Pressable, ActivityIndicator } from "react-native";
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming } from "react-native-reanimated";
+import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { ChatMessage } from "../types";
 import { useTheme } from "../providers/ThemeProvider";
 import { formatTime } from "../utils/dateUtils";
+import { calculateDisplayDimensions, formatFileSize } from "../utils/mediaUtils";
 import SwipeToReply from "./SwipeToReply";
 import MessageReactions from "./MessageReactions";
 import VoiceMessage from "./VoiceMessage";
+import useChatStore from "../state/chatStore";
 import useAuthStore from "../state/authStore";
 
 interface Reaction {
@@ -26,13 +29,39 @@ interface Props {
   onReact?: (messageId: string, reaction: string) => void;
   onLongPress?: (message: ChatMessage) => void;
   onShowReactionPicker?: (messageId: string) => void;
+  onMediaPress?: (message: ChatMessage) => void;
   // Optional pre-calculated grouping metadata for performance optimization
   isFirstInGroup?: boolean;
   isLastInGroup?: boolean;
   groupId?: string;
+  // Performance optimization: visibility for lazy loading
+  isVisible?: boolean;
 }
 
 const REACTIONS = ["❤️", "😂", "😮", "😢", "😡", "👍"];
+
+// Custom comparator for React.memo
+const messagePropsAreEqual = (prevProps: Props, nextProps: Props) => {
+  // Check if the main message properties are the same
+  if (prevProps.message.id !== nextProps.message.id) return false;
+  if (prevProps.message.content !== nextProps.message.content) return false;
+  if (prevProps.message.status !== nextProps.message.status) return false;
+  if (prevProps.isOwn !== nextProps.isOwn) return false;
+  if (prevProps.isVisible !== nextProps.isVisible) return false;
+
+  // Check reactions
+  const prevReactions = prevProps.message.reactions || [];
+  const nextReactions = nextProps.message.reactions || [];
+  if (prevReactions.length !== nextReactions.length) return false;
+
+  // Check grouping metadata
+  if (prevProps.isFirstInGroup !== nextProps.isFirstInGroup) return false;
+  if (prevProps.isLastInGroup !== nextProps.isLastInGroup) return false;
+  if (prevProps.groupId !== nextProps.groupId) return false;
+
+  // All relevant props are equal
+  return true;
+};
 
 const EnhancedMessageBubble = React.forwardRef<View, Props>(
   (
@@ -46,10 +75,12 @@ const EnhancedMessageBubble = React.forwardRef<View, Props>(
       onReact,
       onLongPress,
       onShowReactionPicker,
+      onMediaPress,
       // Optional pre-calculated grouping metadata
       isFirstInGroup: preCalculatedIsFirst,
       isLastInGroup: preCalculatedIsLast,
       groupId,
+      isVisible = true,
     },
     ref,
   ) => {
@@ -99,8 +130,8 @@ const EnhancedMessageBubble = React.forwardRef<View, Props>(
       translateY.value = withSpring(0, { damping: 15, stiffness: 150 });
     }, [opacity, translateY]);
 
-    // Bubble styling with improved grouping and tails
-    const getBubbleStyle = () => {
+    // Memoized bubble styling with improved grouping and tails
+    const getBubbleStyle = useMemo(() => () => {
       const baseRadius = 20;
       const connectorRadius = 6;
 
@@ -155,7 +186,7 @@ const EnhancedMessageBubble = React.forwardRef<View, Props>(
           };
         }
       }
-    };
+    }, [isOwn, isFirstInGroup, isLastInGroup]);
 
     const handlePress = () => {
       setShowTimestamp(!showTimestamp);
@@ -192,10 +223,10 @@ const EnhancedMessageBubble = React.forwardRef<View, Props>(
       onReply?.(message);
     };
 
-    const formatFileSize = (bytes: number) => {
-      const sizes = ["Bytes", "KB", "MB", "GB"];
-      const i = Math.floor(Math.log(bytes) / Math.log(1024));
-      return Math.round((bytes / Math.pow(1024, i)) * 100) / 100 + " " + sizes[i];
+    const formatDuration = (seconds: number) => {
+      const mins = Math.floor(seconds / 60);
+      const secs = Math.floor(seconds % 60);
+      return `${mins}:${secs.toString().padStart(2, '0')}`;
     };
 
     const renderMessageContent = () => {
@@ -203,39 +234,222 @@ const EnhancedMessageBubble = React.forwardRef<View, Props>(
         case "voice":
           return (
             <VoiceMessage
+              messageId={message.id}
               audioUri={message.audioUri}
               duration={message.audioDuration}
-              isPlaying={false}
-              onPlay={() => {}}
-              onPause={() => {}}
+              onPlaybackStart={() => {
+                // Mark message as read when voice message starts playing
+                if (!isOwn && message.chatRoomId) {
+                  const chatStore = useChatStore.getState();
+                  chatStore.markMessagesAsRead(message.chatRoomId, message.id);
+                }
+              }}
+              onPlaybackEnd={() => {
+                // Optional: Add analytics or other cleanup
+                console.log(`Voice message ${message.id} playback ended`);
+              }}
+              showWaveform={true}
+              showSeekBar={true}
+              showPlaybackRate={false}
+              enableTranscription={!!message.transcription}
+              transcription={message.transcription}
+              waveformData={message.waveformData}
             />
           );
 
-        case "image":
-          return (
-            <View>
-              <Image
-                source={{ uri: message.imageUri }}
-                style={{
-                  width: 200,
-                  height: 150,
-                  borderRadius: 12,
-                  marginBottom: 4,
-                }}
-                resizeMode="cover"
-              />
-              {message.content && (
-                <Text
-                  className="text-base leading-5"
-                  style={{
-                    color: isOwn ? "#FFFFFF" : colors.text.primary,
-                  }}
-                >
-                  {message.content}
-                </Text>
-              )}
-            </View>
+        case "image": {
+          const mediaWidth = message.media?.width || message.media?.dimensions?.width || 200;
+          const mediaHeight = message.media?.height || message.media?.dimensions?.height || 150;
+          const { width: displayWidth, height: displayHeight } = calculateDisplayDimensions(
+            mediaWidth,
+            mediaHeight,
+            250, // maxWidth
+            400  // maxHeight
           );
+
+          // Lazy loading: only render media when visible
+          if (!isVisible) {
+            return (
+              <View
+                style={{
+                  width: displayWidth,
+                  height: displayHeight,
+                  backgroundColor: colors.surface[700],
+                  borderRadius: 12,
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
+                <Ionicons name="image-outline" size={32} color={colors.text.muted} />
+              </View>
+            );
+          }
+
+          return (
+            <Pressable
+              onPress={() => onMediaPress?.(message)}
+              style={{ opacity: message.status === "failed" ? 0.5 : 1 }}
+            >
+              <View>
+                <Image
+                  source={{ uri: message.thumbnailUri || message.imageUri }}
+                  style={{
+                    width: displayWidth,
+                    height: displayHeight,
+                    borderRadius: 12,
+                    marginBottom: message.content ? 4 : 0,
+                    backgroundColor: colors.surface[600],
+                  }}
+                  contentFit="cover"
+                  transition={200}
+                  accessibilityLabel="Image message"
+                  accessibilityHint="Tap to view full size"
+                />
+                {message.status === "pending" && (
+                  <View
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      backgroundColor: "rgba(0,0,0,0.3)",
+                      borderRadius: 12,
+                      justifyContent: "center",
+                      alignItems: "center",
+                    }}
+                  >
+                    <ActivityIndicator color="white" />
+                  </View>
+                )}
+                {message.content && (
+                  <Text
+                    className="text-base leading-5"
+                    style={{
+                      color: isOwn ? "#FFFFFF" : colors.text.primary,
+                    }}
+                  >
+                    {message.content}
+                  </Text>
+                )}
+              </View>
+            </Pressable>
+          );
+        }
+
+        case "video": {
+          const mediaWidth = message.media?.width || message.media?.dimensions?.width || 320;
+          const mediaHeight = message.media?.height || message.media?.dimensions?.height || 240;
+          const { width: displayWidth, height: displayHeight } = calculateDisplayDimensions(
+            mediaWidth,
+            mediaHeight,
+            250, // maxWidth
+            400  // maxHeight
+          );
+
+          // Lazy loading: only render media when visible
+          if (!isVisible) {
+            return (
+              <View
+                style={{
+                  width: displayWidth,
+                  height: displayHeight,
+                  backgroundColor: colors.surface[700],
+                  borderRadius: 12,
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
+                <Ionicons name="play-circle-outline" size={48} color={colors.text.muted} />
+              </View>
+            );
+          }
+
+          return (
+            <Pressable
+              onPress={() => onMediaPress?.(message)}
+              style={{ opacity: message.status === "failed" ? 0.5 : 1 }}
+            >
+              <View style={{ position: "relative" }}>
+                <Image
+                  source={{ uri: message.thumbnailUri || message.videoUri }}
+                  style={{
+                    width: displayWidth,
+                    height: displayHeight,
+                    borderRadius: 12,
+                    backgroundColor: colors.surface[600],
+                  }}
+                  contentFit="cover"
+                  transition={200}
+                  accessibilityLabel="Video message"
+                  accessibilityHint="Tap to play video"
+                />
+                {/* Play button overlay */}
+                <View
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    justifyContent: "center",
+                    alignItems: "center",
+                    borderRadius: 12,
+                  }}
+                  pointerEvents="none"
+                >
+                  <View
+                    style={{
+                      width: 60,
+                      height: 60,
+                      borderRadius: 30,
+                      backgroundColor: "rgba(0,0,0,0.6)",
+                      justifyContent: "center",
+                      alignItems: "center",
+                    }}
+                  >
+                    <Ionicons name="play" size={30} color="white" style={{ marginLeft: 4 }} />
+                  </View>
+                </View>
+                {/* Duration badge */}
+                {message.duration && (
+                  <View
+                    style={{
+                      position: "absolute",
+                      bottom: 8,
+                      right: 8,
+                      backgroundColor: "rgba(0,0,0,0.6)",
+                      paddingHorizontal: 8,
+                      paddingVertical: 4,
+                      borderRadius: 4,
+                    }}
+                  >
+                    <Text style={{ color: "white", fontSize: 12 }}>
+                      {formatDuration(message.media?.duration || message.audioDuration || 0)}
+                    </Text>
+                  </View>
+                )}
+                {message.status === "pending" && (
+                  <View
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      backgroundColor: "rgba(0,0,0,0.3)",
+                      borderRadius: 12,
+                      justifyContent: "center",
+                      alignItems: "center",
+                    }}
+                  >
+                    <ActivityIndicator color="white" />
+                  </View>
+                )}
+              </View>
+            </Pressable>
+          );
+        }
 
         case "document":
           return (
@@ -281,7 +495,14 @@ const EnhancedMessageBubble = React.forwardRef<View, Props>(
     return (
       <SwipeToReply onReply={handleReply} isOwnMessage={isOwn}>
         <View className={`mb-1 ${isOwn ? "items-end" : "items-start"}`}>
-          {/* Sender name */}
+          {/* Sender name and forwarding info */}
+          {message.forwardedFromSender && (
+            <View className="mx-3 mb-1">
+              <Text className="text-xs font-medium" style={{ color: colors.text.secondary }}>
+                <Ionicons name="arrow-forward" size={10} color={colors.text.secondary} /> Forwarded from {message.forwardedFromSender}
+              </Text>
+            </View>
+          )}
           {showSenderName && (
             <Text className="text-xs mb-1 mx-3 font-medium" style={{ color: colors.text.secondary }}>
               {message.senderName}
@@ -322,6 +543,7 @@ const EnhancedMessageBubble = React.forwardRef<View, Props>(
                 <View className="flex-row items-center justify-end mt-1">
                   <Text className="text-xs mr-1" style={{ color: "rgba(255,255,255,0.7)" }}>
                     {formatTime(message.timestamp)}
+                    {message.isEdited && " (edited)"}
                   </Text>
                   {(() => {
                     const status = message.status || (message.isRead ? "read" : undefined);
@@ -348,6 +570,7 @@ const EnhancedMessageBubble = React.forwardRef<View, Props>(
             {showTimestamp && !isOwn && (
               <Text className="text-xs mt-1 mx-3" style={{ color: colors.text.muted }}>
                 {formatTime(message.timestamp)}
+                {message.isEdited && " (edited)"}
               </Text>
             )}
 
@@ -412,4 +635,5 @@ const EnhancedMessageBubble = React.forwardRef<View, Props>(
 
 EnhancedMessageBubble.displayName = "EnhancedMessageBubble";
 
-export default EnhancedMessageBubble;
+// Export memoized component with custom comparator
+export default React.memo(EnhancedMessageBubble, messagePropsAreEqual);

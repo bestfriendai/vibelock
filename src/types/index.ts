@@ -32,6 +32,57 @@ export interface MediaItem {
   width?: number;
   height?: number;
   duration?: number; // for videos, in seconds
+  processingProgress?: MediaUploadProgress;
+  uploadProgress?: MediaUploadProgress;
+}
+
+// Media processing and upload types
+export interface MediaProcessingResult {
+  processedUri: string;
+  thumbnailUri?: string;
+  width: number;
+  height: number;
+  size: number;
+  duration?: number;
+  compressionRatio?: number;
+  processingTime?: number;
+}
+
+export interface MediaUploadProgress {
+  stage: "processing" | "uploading" | "complete" | "failed";
+  progress: number; // 0-100
+  bytesUploaded?: number;
+  totalBytes?: number;
+  estimatedTimeRemaining?: number;
+  error?: string;
+}
+
+export interface VideoThumbnailOptions {
+  timePosition?: number;
+  quality?: number;
+  size?: {
+    width?: number;
+    height?: number;
+  };
+}
+
+export interface MediaDisplayDimensions {
+  width: number;
+  height: number;
+  aspectRatio: number;
+}
+
+export type MediaErrorCode =
+  | "MEDIA_TOO_LARGE"
+  | "MEDIA_UNSUPPORTED_FORMAT"
+  | "MEDIA_PROCESSING_FAILED"
+  | "MEDIA_UPLOAD_FAILED"
+  | "MEDIA_PERMISSION_DENIED";
+
+export interface MediaError {
+  code: MediaErrorCode;
+  message: string;
+  details?: any;
 }
 
 export interface SocialMediaHandles {
@@ -163,6 +214,10 @@ export type MessageType = "text" | "image" | "voice" | "document" | "video" | "s
 export type UserRole = "member" | "moderator" | "admin";
 export type ConnectionStatus = "connecting" | "connected" | "disconnected" | "error";
 
+// AppState types for React Native
+export type AppStateStatus = 'active' | 'background' | 'inactive' | 'unknown' | 'extension';
+export type AppStateChangeHandler = (nextAppState: AppStateStatus, prevAppState: AppStateStatus) => void;
+
 export interface ChatRoom {
   id: string;
   name: string;
@@ -229,6 +284,19 @@ export interface MessageEvent {
   tempId?: string; // For replacement events
 }
 
+// Message delivery and status types
+export type DeliveryStatus = "pending" | "sent" | "delivered" | "read" | "failed";
+
+export interface MessageStatus {
+  messageId: string;
+  roomId: string;
+  status: DeliveryStatus;
+  deliveredAt?: Date;
+  readAt?: Date;
+  readBy?: string[];
+  error?: string;
+}
+
 export interface Message {
   id: string;
   chatRoomId: string;
@@ -239,7 +307,10 @@ export interface Message {
   messageType: MessageType;
   timestamp: Date;
   isRead: boolean;
-  status?: "pending" | "sent" | "delivered" | "read" | "failed";
+  status?: DeliveryStatus;
+  deliveryStatus?: DeliveryStatus; // Alternative field for delivery tracking
+  readBy?: string[]; // Track which users have read the message
+  deliveredTo?: string[]; // Track which users have received the message
   isOwn?: boolean;
   replyTo?: string;
   reactions?: {
@@ -257,6 +328,15 @@ export interface Message {
   fileSize?: number;
   mimeType?: string;
   thumbnailUri?: string;
+  // Enhanced voice message support
+  transcription?: string;
+  waveformData?: number[];
+  // Editing and forwarding fields
+  editedAt?: Date;
+  isEdited?: boolean;
+  forwardedFromId?: string;
+  forwardedFromRoomId?: string;
+  forwardedFromSender?: string;
 }
 
 export interface ChatMember {
@@ -269,6 +349,16 @@ export interface ChatMember {
   role: UserRole;
   isOnline: boolean;
   lastSeen: Date;
+}
+
+// Network and connectivity types
+export interface NetworkStatus {
+  isOnline: boolean;
+  isConnected: boolean;
+  isStable: boolean;
+  latency: number;
+  networkType?: 'wifi' | 'cellular' | 'ethernet' | 'none' | 'unknown';
+  shouldReconnect?: boolean;
 }
 
 export interface TypingUser {
@@ -292,6 +382,14 @@ export interface ChatState {
   error: string | null;
   // Real-time subscriptions management
   subscriptions: Record<string, any>;
+  // New state fields for enhanced functionality
+  messageStatuses?: Record<string, MessageStatus>;
+  networkStatus?: NetworkStatus;
+  appState?: AppStateStatus;
+  backgroundTimestamp?: number;
+  // New methods for enhanced functionality
+  handleAppStateChange?: (nextState: string, prevState: string) => Promise<void>;
+  reconnectAllRooms?: () => Promise<void>;
 }
 
 // Comment-related types (enhanced version with more features)
@@ -364,4 +462,85 @@ export interface SearchResults {
   comments: SearchResult[];
   messages: SearchResult[];
   total: number;
+}
+
+// Audio Player types
+export interface AudioPlayerState {
+  currentMessageId: string | null;
+  audioUri: string | null;
+  isPlaying: boolean;
+  isPaused: boolean;
+  isLoading: boolean;
+  duration: number;
+  currentTime: number;
+  playbackRate: PlaybackRate;
+  error: string | null;
+  waveformData: number[] | null;
+}
+
+export interface AudioPlayerActions {
+  play: (messageId: string, audioUri: string, duration: number) => Promise<void>;
+  pause: () => Promise<void>;
+  resume: () => Promise<void>;
+  stop: () => Promise<void>;
+  seek: (position: number) => Promise<void>;
+  setPlaybackRate: (rate: PlaybackRate) => Promise<void>;
+  updateProgress: (currentTime: number) => void;
+  onPlaybackStatusUpdate?: (status: any) => void;
+}
+
+export type WaveformData = number[];
+export type PlaybackRate = 0.5 | 1 | 1.5 | 2;
+
+export interface AudioAnalysisResult {
+  duration: number;
+  waveformData: number[];
+  peakLevel: number;
+  averageLevel: number;
+}
+
+export type AudioErrorCode =
+  | "AUDIO_LOAD_FAILED"
+  | "AUDIO_DECODE_ERROR"
+  | "AUDIO_PERMISSION_DENIED"
+  | "AUDIO_NETWORK_ERROR";
+
+export interface AudioError {
+  code: AudioErrorCode;
+  message: string;
+  details?: any;
+}
+
+// Message search and editing types
+export interface MessageSearchResult extends SearchResult {
+  messageId: string;
+  roomId: string;
+  roomName: string;
+  senderId: string;
+  senderName: string;
+  messageType: MessageType;
+  highlightedContent?: string;
+  contextBefore?: string;
+  contextAfter?: string;
+}
+
+export interface EditMessageRequest {
+  messageId: string;
+  newContent: string;
+  roomId: string;
+}
+
+export interface ForwardMessageRequest {
+  sourceMessage: Message;
+  targetRoomId: string;
+  comment?: string;
+}
+
+export enum MessageActionType {
+  REPLY = 'reply',
+  EDIT = 'edit',
+  FORWARD = 'forward',
+  COPY = 'copy',
+  DELETE = 'delete',
+  REACT = 'react'
 }

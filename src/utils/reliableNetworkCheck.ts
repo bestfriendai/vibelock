@@ -7,17 +7,26 @@ import NetInfo from "@react-native-community/netinfo";
 
 export interface NetworkCheckResult {
   isOnline: boolean;
+  isConnected: boolean;
+  isStable: boolean;
+  latency: number;
   method: 'netinfo' | 'fetch' | 'combined';
+  networkType?: 'wifi' | 'cellular' | 'ethernet' | 'none' | 'unknown';
   details: {
     netinfo?: {
       isConnected: boolean | null;
       isInternetReachable: boolean | null;
       type: string;
+      cellularGeneration?: string;
     };
     fetch?: {
       success: boolean;
       responseTime: number;
       error?: string;
+    };
+    supabase?: {
+      reachable: boolean;
+      responseTime: number;
     };
   };
   timestamp: number;
@@ -28,31 +37,48 @@ export interface NetworkCheckResult {
  */
 async function checkNetworkWithFetch(timeout: number = 5000): Promise<{ success: boolean; responseTime: number; error?: string }> {
   const startTime = Date.now();
-  
+
   try {
-    // Use multiple reliable endpoints
+    // Use multiple reliable endpoints with fallback
     const endpoints = [
-      'https://www.google.com/generate_204', // Google's connectivity check
-      'https://httpbin.org/status/200',      // HTTPBin status endpoint
-      'https://jsonplaceholder.typicode.com/posts/1' // JSONPlaceholder
+      { url: 'https://www.google.com/generate_204', expected: 204 }, // Google's connectivity check
+      { url: 'https://cloudflare-dns.com/dns-query', expected: 200 }, // Cloudflare DNS
+      { url: 'https://api.ipify.org?format=json', expected: 200 } // IP detection service
     ];
-    
-    // Try the first endpoint with timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeout);
-    
-    const response = await fetch(endpoints[0], {
-      method: 'HEAD',
-      signal: controller.signal,
-      cache: 'no-cache'
-    });
-    
-    clearTimeout(timeoutId);
+
+    // Try endpoints in sequence until one succeeds
+    for (const endpoint of endpoints) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeout / endpoints.length);
+
+        const response = await fetch(endpoint.url, {
+          method: 'HEAD',
+          signal: controller.signal,
+          cache: 'no-cache'
+        });
+
+        clearTimeout(timeoutId);
+        const responseTime = Date.now() - startTime;
+
+        if (response.ok || response.status === endpoint.expected) {
+          return {
+            success: true,
+            responseTime
+          };
+        }
+      } catch (err) {
+        // Try next endpoint
+        continue;
+      }
+    }
+
+    // All endpoints failed
     const responseTime = Date.now() - startTime;
-    
     return {
-      success: response.ok || response.status === 204,
-      responseTime
+      success: false,
+      responseTime,
+      error: 'All endpoints unreachable'
     };
   } catch (error) {
     const responseTime = Date.now() - startTime;
@@ -65,24 +91,102 @@ async function checkNetworkWithFetch(timeout: number = 5000): Promise<{ success:
 }
 
 /**
- * Get network state using NetInfo
+ * Check Supabase connectivity specifically
+ */
+async function checkSupabaseConnectivity(timeout: number = 3000): Promise<{ reachable: boolean; responseTime: number }> {
+  const startTime = Date.now();
+
+  try {
+    const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
+    if (!supabaseUrl) {
+      return { reachable: false, responseTime: 0 };
+    }
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+    // Try multiple Supabase endpoints
+    const endpoints = [
+      `${supabaseUrl}/realtime/v1/health`,
+      `${supabaseUrl}/rest/v1/`
+    ];
+
+    for (const endpoint of endpoints) {
+      try {
+        const response = await fetch(endpoint, {
+          method: 'GET',
+          signal: controller.signal,
+          cache: 'no-cache'
+        });
+
+        clearTimeout(timeoutId);
+        const responseTime = Date.now() - startTime;
+
+        // Treat 200, 401, 404 as reachable (network path is alive)
+        // 401/404 are expected without auth or for specific endpoints
+        if (response.status === 200 || response.status === 401 || response.status === 404) {
+          return {
+            reachable: true,
+            responseTime
+          };
+        }
+      } catch (err) {
+        // Try next endpoint
+        continue;
+      }
+    }
+
+    clearTimeout(timeoutId);
+    const responseTime = Date.now() - startTime;
+
+    // All endpoints failed
+    return {
+      reachable: false,
+      responseTime
+    };
+  } catch (error) {
+    const responseTime = Date.now() - startTime;
+    return {
+      reachable: false,
+      responseTime
+    };
+  }
+}
+
+/**
+ * Get network state using NetInfo with enhanced mobile detection
  */
 async function checkNetworkWithNetInfo(): Promise<{
   isConnected: boolean | null;
   isInternetReachable: boolean | null;
   type: string;
+  cellularGeneration?: string;
+  networkType: 'wifi' | 'cellular' | 'ethernet' | 'none' | 'unknown';
   computed: boolean;
 }> {
   try {
     const state = await NetInfo.fetch();
     const isConnected = Boolean(state.isConnected);
-    const hasInternetAccess = state.isInternetReachable === true || 
+    const hasInternetAccess = state.isInternetReachable === true ||
                             (state.isInternetReachable === null && isConnected);
-    
+
+    // Determine network type for mobile
+    let networkType: 'wifi' | 'cellular' | 'ethernet' | 'none' | 'unknown' = 'unknown';
+    if (state.type === 'wifi') networkType = 'wifi';
+    else if (state.type === 'cellular') networkType = 'cellular';
+    else if (state.type === 'ethernet') networkType = 'ethernet';
+    else if (state.type === 'none') networkType = 'none';
+
+    // Get cellular generation if applicable
+    const cellularGeneration = state.type === 'cellular' && state.details ?
+      (state.details as any).cellularGeneration : undefined;
+
     return {
       isConnected: state.isConnected,
       isInternetReachable: state.isInternetReachable,
       type: state.type,
+      cellularGeneration,
+      networkType,
       computed: isConnected && hasInternetAccess
     };
   } catch (error) {
@@ -91,65 +195,83 @@ async function checkNetworkWithNetInfo(): Promise<{
       isConnected: null,
       isInternetReachable: null,
       type: 'unknown',
+      networkType: 'unknown',
       computed: false
     };
   }
 }
 
 /**
- * Comprehensive network check using both methods
+ * Comprehensive network check with mobile-specific enhancements
  */
 export async function reliableNetworkCheck(): Promise<NetworkCheckResult> {
   const timestamp = Date.now();
-  
+
   try {
-    // Run both checks in parallel
-    const [netinfoResult, fetchResult] = await Promise.allSettled([
+    // Run all checks in parallel
+    const [netinfoResult, fetchResult, supabaseResult] = await Promise.allSettled([
       checkNetworkWithNetInfo(),
-      checkNetworkWithFetch()
+      checkNetworkWithFetch(),
+      checkSupabaseConnectivity()
     ]);
-    
+
     const netinfo = netinfoResult.status === 'fulfilled' ? netinfoResult.value : null;
     const fetch = fetchResult.status === 'fulfilled' ? fetchResult.value : null;
-    
-    // Determine final result
+    const supabase = supabaseResult.status === 'fulfilled' ? supabaseResult.value : null;
+
+    // Calculate average latency
+    const latencies = [];
+    if (fetch?.responseTime) latencies.push(fetch.responseTime);
+    if (supabase?.responseTime) latencies.push(supabase.responseTime);
+    const avgLatency = latencies.length > 0 ?
+      Math.round(latencies.reduce((a, b) => a + b, 0) / latencies.length) : 0;
+
+    // Determine connection stability (stable if latency < 1000ms)
+    const isStable = avgLatency > 0 && avgLatency < 1000;
+
+    // Determine if truly online
     let isOnline = false;
+    let isConnected = false;
     let method: 'netinfo' | 'fetch' | 'combined' = 'combined';
-    
-    if (fetch?.success) {
-      // If fetch succeeds, we're definitely online
+
+    if (fetch?.success || supabase?.reachable) {
+      // If any external check succeeds, we're online
       isOnline = true;
-      method = 'fetch';
+      isConnected = true;
+      method = fetch?.success ? 'fetch' : 'combined';
     } else if (netinfo?.computed) {
-      // If NetInfo says we're online but fetch failed, be cautious
-      // Only trust NetInfo if fetch didn't explicitly fail due to network
-      if (!fetch || fetch.error?.includes('network') || fetch.error?.includes('timeout')) {
-        isOnline = false;
-        method = 'fetch';
-      } else {
-        isOnline = true;
-        method = 'netinfo';
-      }
+      // NetInfo says online but external checks failed
+      // Be cautious - likely a connectivity issue
+      isConnected = true;
+      isOnline = false; // Can't reach external services
+      method = 'netinfo';
     } else {
-      // Both methods suggest offline
+      // All methods suggest offline
       isOnline = false;
+      isConnected = false;
       method = 'combined';
     }
-    
+
     return {
       isOnline,
+      isConnected,
+      isStable,
+      latency: avgLatency,
       method,
+      networkType: netinfo?.networkType,
       details: {
         netinfo: netinfo ? {
           isConnected: netinfo.isConnected,
           isInternetReachable: netinfo.isInternetReachable,
-          type: netinfo.type
+          type: netinfo.type,
+          cellularGeneration: netinfo.cellularGeneration
         } : undefined,
         fetch: fetch ? {
           success: fetch.success,
           responseTime: fetch.responseTime,
           error: fetch.error
-        } : undefined
+        } : undefined,
+        supabase: supabase || undefined
       },
       timestamp
     };
@@ -157,11 +279,113 @@ export async function reliableNetworkCheck(): Promise<NetworkCheckResult> {
     console.warn('Reliable network check failed:', error);
     return {
       isOnline: false,
+      isConnected: false,
+      isStable: false,
+      latency: 0,
       method: 'combined',
+      networkType: 'unknown',
       details: {},
       timestamp
     };
   }
+}
+
+/**
+ * Wait for stable network connection
+ */
+export async function waitForStableConnection(
+  maxAttempts: number = 10,
+  delayMs: number = 1000
+): Promise<boolean> {
+  for (let i = 0; i < maxAttempts; i++) {
+    const result = await reliableNetworkCheck();
+
+    if (result.isConnected && result.isStable) {
+      console.log(`[Network] Stable connection established after ${i + 1} attempts`);
+      return true;
+    }
+
+    if (i < maxAttempts - 1) {
+      console.log(`[Network] Waiting for stable connection (attempt ${i + 1}/${maxAttempts})`);
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+    }
+  }
+
+  console.warn('[Network] Could not establish stable connection');
+  return false;
+}
+
+/**
+ * Create a realtime-specific network monitor
+ */
+export function createRealtimeNetworkMonitor(
+  onStateChange: (state: {
+    isOnline: boolean;
+    isStable: boolean;
+    networkType?: string;
+    shouldReconnect: boolean;
+  }) => void,
+  options: {
+    checkInterval?: number;
+    stableThresholdMs?: number;
+  } = {}
+) {
+  const { checkInterval = 30000, stableThresholdMs = 1000 } = options;
+
+  let previousNetworkType: string | undefined;
+  let lastStableCheck = Date.now();
+  let intervalId: NodeJS.Timeout | null = null;
+
+  // Monitor network type changes (important for mobile)
+  const unsubscribe = NetInfo.addEventListener(async (state) => {
+    const currentType = state.type;
+
+    // Detect network type change (WiFi to cellular, etc.)
+    if (previousNetworkType && previousNetworkType !== currentType) {
+      console.log(`[Network] Type changed: ${previousNetworkType} -> ${currentType}`);
+
+      // Check if we need to reconnect
+      const result = await reliableNetworkCheck();
+
+      onStateChange({
+        isOnline: result.isOnline,
+        isStable: result.isStable,
+        networkType: currentType,
+        shouldReconnect: result.isOnline && result.isStable
+      });
+    }
+
+    previousNetworkType = currentType;
+  });
+
+  // Periodic stability checks
+  intervalId = setInterval(async () => {
+    const result = await reliableNetworkCheck();
+    const now = Date.now();
+
+    // Check if connection has been stable
+    const isStableLongTerm = result.isStable &&
+      (now - lastStableCheck) > stableThresholdMs;
+
+    if (result.isStable) {
+      lastStableCheck = now;
+    }
+
+    onStateChange({
+      isOnline: result.isOnline,
+      isStable: isStableLongTerm,
+      networkType: result.networkType,
+      shouldReconnect: false // Don't trigger reconnect on periodic checks
+    });
+  }, checkInterval);
+
+  // Cleanup function
+  return () => {
+    unsubscribe();
+    if (intervalId) {
+      clearInterval(intervalId);
+    }
+  };
 }
 
 /**

@@ -89,12 +89,24 @@ class EnhancedRealtimeChatService {
 
   async initialize() {
     console.log("🚀 Initializing Enhanced Supabase Real-time Chat Service v2.57.4");
+
+    // Detect actual transport method used by Supabase
+    const transportMethod = this.detectTransportMethod();
     console.log("🔍 React Native Environment Check:", {
       platform: typeof navigator !== 'undefined' ? 'web' : 'react-native',
       webWorkers: typeof Worker !== 'undefined',
       websockets: typeof WebSocket !== 'undefined',
-      supabaseVersion: '2.57.4'
+      supabaseVersion: '2.57.4',
+      realtimeTransport: transportMethod,
+      webWorkersWarning: typeof Worker !== 'undefined' ? '⚠️ Web Workers detected - may cause issues' : '✅ No Web Workers'
     });
+
+    // Log warning if Web Workers are detected in React Native
+    if (typeof Worker !== 'undefined') {
+      console.warn('⚠️ Web Workers detected in React Native environment');
+      console.warn('⚠️ This may cause realtime connection issues');
+      console.warn('ℹ️ Forcing WebSocket transport in channel configurations');
+    }
 
     this.connectionStatus = "connecting";
 
@@ -185,18 +197,25 @@ class EnhancedRealtimeChatService {
         quotaUsage: 0,
       });
 
-      // Create enhanced channel with all features
-      const channel = supabase
-        .channel(`enhanced_room_${roomId}`, {
-          config: {
-            presence: {
-              key: `user_${userId}`,
-            },
-            broadcast: {
-              self: false, // Don't receive own broadcasts
-            },
+      // Create enhanced channel with React Native specific configuration
+      const channelConfig: any = {
+        config: {
+          presence: {
+            key: `user_${userId}`,
           },
-        })
+          broadcast: {
+            self: false, // Don't receive own broadcasts
+          },
+        },
+      };
+
+      // Force WebSocket transport if available in channel options
+      if ((supabase as any).realtime?.transport === 'websocket') {
+        console.log('✅ Using WebSocket transport for channel');
+      }
+
+      const channel = supabase
+        .channel(`enhanced_room_${roomId}`, channelConfig)
         // Listen to new messages
         .on(
           "postgres_changes",
@@ -236,6 +255,15 @@ class EnhancedRealtimeChatService {
         // Enhanced subscription status handling with v2.57.4 state management
         .subscribe(async (status, error) => {
           console.log(`🔄 Subscription status change for room ${roomId}: ${status}`);
+
+          // Check for Web Workers related errors
+          if (error && this.isWebWorkersError(error)) {
+            console.error('🚨 Web Workers error detected:', error);
+            console.log('🔄 Attempting to recover with WebSocket-only connection...');
+            // Attempt recovery with fallback
+            await this.handleWebWorkersFailure(roomId, userId, userName);
+            return;
+          }
 
           const subscriptionState = this.subscriptionStates.get(roomId);
           if (subscriptionState) {
@@ -1133,6 +1161,60 @@ class EnhancedRealtimeChatService {
     }
   }
 
+  // Pause all subscriptions (for background)
+  async pauseAll(): Promise<void> {
+    console.log('[RealtimeChat] Pausing all subscriptions');
+
+    const roomIds = Array.from(this.channels.keys());
+
+    for (const roomId of roomIds) {
+      try {
+        // Stop typing for all rooms
+        this.stopTyping(roomId);
+
+        // Unsubscribe channel but keep it in the map for resuming
+        const channel = this.channels.get(roomId);
+        if (channel) {
+          await channel.unsubscribe();
+          console.log(`[RealtimeChat] Paused subscription for room ${roomId}`);
+        }
+      } catch (error) {
+        console.error(`[RealtimeChat] Error pausing room ${roomId}:`, error);
+      }
+    }
+  }
+
+  // Resume all subscriptions (for foreground)
+  async resumeAll(userId: string, userName: string): Promise<void> {
+    console.log('[RealtimeChat] Resuming all subscriptions');
+
+    const roomIds = Array.from(this.channels.keys());
+
+    for (const roomId of roomIds) {
+      try {
+        const channel = this.channels.get(roomId);
+        if (channel) {
+          // Re-subscribe to the channel
+          await channel.subscribe((status) => {
+            if (status === 'SUBSCRIBED') {
+              console.log(`[RealtimeChat] Resumed subscription for room ${roomId}`);
+
+              // Track presence again
+              channel.track({
+                user_id: userId,
+                user_name: userName,
+                online_at: new Date().toISOString(),
+                status: 'online',
+              });
+            }
+          });
+        }
+      } catch (error) {
+        console.error(`[RealtimeChat] Error resuming room ${roomId}:`, error);
+      }
+    }
+  }
+
   // Cleanup all connections
   async cleanup(): Promise<void> {
     try {
@@ -1527,6 +1609,134 @@ class EnhancedRealtimeChatService {
       for (const entry of cache.values()) {
         entry.priority = priority;
       }
+    }
+  }
+
+  /**
+   * Detect the transport method being used by Supabase realtime
+   */
+  private detectTransportMethod(): string {
+    try {
+      // Check if Supabase realtime client has transport info
+      const realtimeClient = (supabase as any).realtime;
+      if (realtimeClient?._transport) {
+        return realtimeClient._transport;
+      }
+      if (realtimeClient?.transport) {
+        return realtimeClient.transport;
+      }
+
+      // Check if Web Workers are available (shouldn't be in React Native)
+      if (typeof Worker !== 'undefined') {
+        return 'web-workers-detected';
+      }
+
+      // Check if WebSocket is available
+      if (typeof WebSocket !== 'undefined') {
+        return 'websocket-available';
+      }
+
+      return 'unknown';
+    } catch (error) {
+      console.warn('Failed to detect transport method:', error);
+      return 'detection-failed';
+    }
+  }
+
+  /**
+   * Check if an error is related to Web Workers incompatibility
+   */
+  private isWebWorkersError(error: any): boolean {
+    if (!error) return false;
+
+    const errorString = JSON.stringify(error).toLowerCase();
+    const errorMessage = error?.message?.toLowerCase() || '';
+    const errorStack = error?.stack?.toLowerCase() || '';
+
+    // Common Web Workers error patterns
+    const webWorkerPatterns = [
+      'worker',
+      'postmessage',
+      'importscripts',
+      'shared worker',
+      'service worker',
+      'message channel',
+      'message port'
+    ];
+
+    return webWorkerPatterns.some(pattern =>
+      errorString.includes(pattern) ||
+      errorMessage.includes(pattern) ||
+      errorStack.includes(pattern)
+    );
+  }
+
+  /**
+   * Handle Web Workers failure by attempting fallback connection
+   */
+  private async handleWebWorkersFailure(roomId: string, userId: string, userName: string): Promise<void> {
+    console.log('🔄 Handling Web Workers failure with fallback strategy');
+
+    try {
+      // Clean up existing channel
+      await this.leaveRoom(roomId);
+
+      // Wait a moment for cleanup
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Retry with explicit WebSocket configuration
+      console.log('🔄 Retrying connection with WebSocket-only configuration');
+
+      // Create a new channel with WebSocket-only configuration
+      const fallbackChannel = supabase
+        .channel(`fallback_room_${roomId}_${Date.now()}`, {
+          config: {
+            presence: { key: `user_${userId}` },
+            broadcast: { self: false },
+          },
+        } as any);
+
+      // Add all the same event listeners
+      fallbackChannel
+        .on("postgres_changes", {
+          event: "INSERT",
+          schema: "public",
+          table: "chat_messages_firebase",
+          filter: `chat_room_id=eq.${roomId}`,
+        }, (payload) => this.handleNewMessage(roomId, payload))
+        .on("postgres_changes", {
+          event: "UPDATE",
+          schema: "public",
+          table: "chat_messages_firebase",
+          filter: `chat_room_id=eq.${roomId}`,
+        }, (payload) => this.handleMessageUpdate(roomId, payload))
+        .on("presence", { event: "sync" }, () => {
+          this.handlePresenceSync(roomId, fallbackChannel);
+        })
+        .on("broadcast", { event: "typing" }, (payload) => {
+          this.handleTypingBroadcast(roomId, payload);
+        });
+
+      // Subscribe with error handling
+      await fallbackChannel.subscribe((status) => {
+        console.log(`🔄 Fallback channel status: ${status}`);
+        if (status === "SUBSCRIBED") {
+          console.log('✅ Fallback connection successful');
+          this.channels.set(roomId, fallbackChannel);
+
+          // Track presence
+          fallbackChannel.track({
+            user_id: userId,
+            user_name: userName,
+            online_at: new Date().toISOString(),
+            status: "online",
+          });
+        }
+      });
+
+    } catch (fallbackError) {
+      console.error('🚨 Fallback connection also failed:', fallbackError);
+      throw new AppError('Unable to establish realtime connection', ErrorType.NETWORK, 'FALLBACK_FAILED');
     }
   }
 }

@@ -13,6 +13,9 @@ import EnhancedMessageInput from "../components/EnhancedMessageInput";
 import SmartChatFeatures from "../components/SmartChatFeatures";
 import EmojiPicker from "../components/EmojiPicker";
 import MessageActionsModal from "../components/MessageActionsModal";
+import { MessageEditModal } from "../components/MessageEditModal";
+import { ForwardMessageModal } from "../components/ForwardMessageModal";
+import { canEditMessage } from "../utils/messageUtils";
 import { ChatMessage } from "../types";
 import { useTheme } from "../providers/ThemeProvider";
 import { notificationService } from "../services/notificationService";
@@ -21,7 +24,14 @@ import ReliableOfflineBanner from "../components/ReliableOfflineBanner";
 import LoadingSpinner from "../components/LoadingSpinner";
 import NetworkDebugOverlay from "../components/NetworkDebugOverlay";
 import { useScrollManager } from "../utils/scrollUtils";
-import { getCachedOptimizedMessageList, MessageWithGrouping } from "../utils/chatUtils";
+import { getCachedOptimizedMessageList, MessageWithGrouping, getMessageHeightEstimate } from "../utils/chatUtils";
+import { calculateDisplayDimensions } from "../utils/mediaUtils";
+import { performanceMonitor } from "../utils/performance";
+import { monitorScrollPerformance } from "../utils/performanceUtils";
+import { usePerformanceOptimization } from "../hooks/usePerformanceOptimization";
+import PerformanceDashboard from "../components/PerformanceDashboard";
+import MediaViewer from "../components/MediaViewer";
+import { messagePaginationManager } from "../services/messagePaginationService";
 
 // ChatRoomRouteProp is now exported from AppNavigator for consistency
 
@@ -58,6 +68,13 @@ export default function ChatRoomScreen() {
   const [selectedMessage, setSelectedMessage] = useState<ChatMessage | null>(null);
   const [isActionsModalVisible, setIsActionsModalVisible] = useState(false);
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingMessage, setEditingMessage] = useState<ChatMessage | null>(null);
+  const [showForwardModal, setShowForwardModal] = useState(false);
+  const [forwardingMessage, setForwardingMessage] = useState<ChatMessage | null>(null);
+  const [showMediaViewer, setShowMediaViewer] = useState(false);
+  const [selectedMedia, setSelectedMedia] = useState<any[]>([]);
+  const [selectedMediaIndex, setSelectedMediaIndex] = useState(0);
 
   const mountedRef = useRef(true);
   const listRef = useRef<any>(null);
@@ -65,6 +82,8 @@ export default function ChatRoomScreen() {
   const isNearBottomRef = useRef(true); // Track if user is near bottom
   const lastMessageCountRef = useRef(0);
   const lastLoadTimeRef = useRef(0); // Debounce infinite scroll
+  const viewableItemsRef = useRef<Set<string>>(new Set());
+  const performanceStartRef = useRef(Date.now());
 
   // Cleanup refs for proper resource management
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -123,11 +142,9 @@ export default function ChatRoomScreen() {
     }
   }, [roomId, navigation]);
 
-  // Set ref for ScrollManager
+  // Set ref for ScrollManager - update whenever listRef changes
   useEffect(() => {
-    if (listRef.current) {
-      scrollManager.setRef(listRef.current);
-    }
+    scrollManager.setRef(listRef);
   }, [scrollManager]);
 
   useEffect(() => {
@@ -228,6 +245,21 @@ export default function ChatRoomScreen() {
     return getCachedOptimizedMessageList(roomId, roomMessages, messagesHash);
   }, [roomId, roomMessages]);
 
+  // Use performance optimization hook (must be after optimizedMessages)
+  usePerformanceOptimization(roomId, optimizedMessages.length);
+
+  // Track performance for large message lists and enable optimized mode
+  useEffect(() => {
+    if (optimizedMessages.length > 100) {
+      performanceMonitor.recordMetric('largeMessageList', {
+        messageCount: optimizedMessages.length,
+        renderTime: Date.now() - performanceStartRef.current
+      });
+      // Enable optimized mode when messages exceed 100
+      useChatStore.getState().enableOptimizedMode(roomId);
+    }
+  }, [optimizedMessages.length, roomId]);
+
   // Smart auto-scroll: only scroll to bottom when user is near bottom
   useEffect(() => {
     if (roomId && optimizedMessages.length > 0 && listRef.current) {
@@ -241,13 +273,25 @@ export default function ChatRoomScreen() {
           clearTimeout(autoScrollTimeoutRef.current);
         }
         autoScrollTimeoutRef.current = setTimeout(() => {
-          if (mountedRef.current) {
-            scrollManager.scrollToEnd({ animated: false });
+          if (mountedRef.current && listRef.current) {
+            console.log('🔄 Initial auto-scroll to bottom');
+            try {
+              // Try scrolling to the last message index
+              const lastIndex = optimizedMessages.length - 1;
+              if (lastIndex >= 0) {
+                listRef.current.scrollToIndex({ index: lastIndex, animated: false });
+              } else {
+                listRef.current.scrollToEnd({ animated: false });
+              }
+            } catch (error) {
+              console.warn('Direct scroll failed, using scrollManager:', error);
+              scrollManager.scrollToEnd({ animated: false });
+            }
             hasAutoScrolledRef.current = true;
             isNearBottomRef.current = true;
           }
           autoScrollTimeoutRef.current = null;
-        }, 100);
+        }, 200);
       } else if (currentMessageCount > previousMessageCount) {
         // New messages arrived - only scroll if user is near bottom
         if (isNearBottomRef.current) {
@@ -256,8 +300,20 @@ export default function ChatRoomScreen() {
             clearTimeout(scrollTimeoutRef.current);
           }
           scrollTimeoutRef.current = setTimeout(() => {
-            if (mountedRef.current) {
-              scrollManager.scrollToEnd({ animated: true });
+            if (mountedRef.current && listRef.current) {
+              console.log('🔄 New message auto-scroll to bottom');
+              try {
+                // Try scrolling to the last message index
+                const lastIndex = optimizedMessages.length - 1;
+                if (lastIndex >= 0) {
+                  listRef.current.scrollToIndex({ index: lastIndex, animated: true });
+                } else {
+                  listRef.current.scrollToEnd({ animated: true });
+                }
+              } catch (error) {
+                console.warn('Direct scroll failed, using scrollManager:', error);
+                scrollManager.scrollToEnd({ animated: true });
+              }
             }
             scrollTimeoutRef.current = null;
           }, 50);
@@ -292,6 +348,32 @@ export default function ChatRoomScreen() {
     setReplyingTo(message);
   }, []);
 
+  const handleScrollToMessage = useCallback((messageId: string, messageRoomId: string) => {
+    if (messageRoomId !== roomId) {
+      // Navigate to the correct room first
+      navigation.navigate('ChatRoom', { roomId: messageRoomId });
+      return;
+    }
+
+    // Find the message index
+    const messages = useChatStore.getState().messages[roomId] || [];
+    const index = messages.findIndex(m => m.id === messageId);
+
+    if (index !== -1 && listRef.current) {
+      listRef.current.scrollToIndex({
+        index,
+        animated: true,
+        viewPosition: 0.5, // Center the message
+      });
+
+      // Highlight the message briefly
+      setTimeout(() => {
+        // This would trigger a visual highlight effect
+        // You might want to add a highlighted state to the message
+      }, 500);
+    }
+  }, [roomId, navigation]);
+
   const handleReact = useCallback((messageId: string, reaction: string) => {
     useChatStore.getState().reactToMessage(roomId, messageId, reaction);
   }, [roomId]);
@@ -322,6 +404,23 @@ export default function ChatRoomScreen() {
     useChatStore.getState().sendMediaMessage(roomId, media.uri, media.type);
   };
 
+  const handleMediaPress = useCallback((message: ChatMessage) => {
+    // Collect all media in the current room for gallery view
+    const allMedia = optimizedMessages
+      .filter((item) => item.message.messageType === 'image' || item.message.messageType === 'video')
+      .map((item, idx) => ({
+        uri: item.message.mediaUrl || item.message.content,
+        type: item.message.messageType,
+        id: item.message.id,
+        ...item.message.media
+      }));
+
+    const currentIndex = allMedia.findIndex(m => m.id === message.id);
+    setSelectedMedia(allMedia);
+    setSelectedMediaIndex(currentIndex >= 0 ? currentIndex : 0);
+    setShowMediaViewer(true);
+  }, [optimizedMessages]);
+
   const handleLoadOlderMessages = async () => {
     if (isLoadingOlderMessages || !hasMoreMessages) return;
 
@@ -343,18 +442,27 @@ export default function ChatRoomScreen() {
     }
   };
 
-  // Track scroll position to determine if user is near bottom
-  const handleScroll = (event: any) => {
+  // Track scroll position with throttling and preload pagination
+  const handleScroll = useMemo(() => monitorScrollPerformance((event: any) => {
     const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
     const distanceFromBottom = contentSize.height - (contentOffset.y + layoutMeasurement.height);
+    const distanceFromTop = contentOffset.y;
 
     // Consider "near bottom" if within 100 pixels of the bottom
     const nearBottomThreshold = 100;
     const isNearBottom = distanceFromBottom <= nearBottomThreshold;
 
-    isNearBottomRef.current = isNearBottom;
-    setShowScrollToBottom(!isNearBottom && optimizedMessages.length > 0);
-  };
+    // Only update state if the value actually changes
+    if (isNearBottomRef.current !== isNearBottom) {
+      isNearBottomRef.current = isNearBottom;
+      setShowScrollToBottom(!isNearBottom && optimizedMessages.length > 0);
+    }
+
+    // Preload next batch when near top (within 200 pixels)
+    if (distanceFromTop < 200 && hasMoreMessages && !isLoadingOlderMessages) {
+      messagePaginationManager.preloadNextBatch(roomId).catch(console.warn);
+    }
+  }), [optimizedMessages.length, hasMoreMessages, isLoadingOlderMessages, roomId]);
 
   // Handle scroll to bottom button press
   const handleScrollToBottomPress = () => {
@@ -362,6 +470,15 @@ export default function ChatRoomScreen() {
     setShowScrollToBottom(false);
     isNearBottomRef.current = true;
   };
+
+  // Optimized item layout override for FlashList
+  const overrideItemLayout = useCallback((layout: any, item: MessageWithGrouping) => {
+    const message = item.message;
+    // Use the consistent height estimation utility
+    const estimatedHeight = getMessageHeightEstimate(message);
+    // Only set the size, not the offset (FlashList handles that)
+    layout.size = estimatedHeight;
+  }, []);
 
   // Optimized render function using pre-calculated grouping metadata
   const renderMessage = useCallback(({ item, index }: { item: MessageWithGrouping; index: number }) => {
@@ -384,13 +501,15 @@ export default function ChatRoomScreen() {
         onReact={handleReact}
         onLongPress={handleLongPress}
         onShowReactionPicker={handleShowReactionPicker}
+        onMediaPress={handleMediaPress}
         // Pass pre-calculated grouping metadata to avoid recalculation
         isFirstInGroup={item.isFirstInGroup}
         isLastInGroup={item.isLastInGroup}
         groupId={item.groupId}
+        isVisible={viewableItemsRef.current.has(message.id)}
       />
     );
-  }, [user, optimizedMessages, handleReply, handleReact, handleLongPress, handleShowReactionPicker]);
+  }, [user, optimizedMessages, handleReply, handleReact, handleLongPress, handleShowReactionPicker, handleMediaPress]);
 
 
 
@@ -440,6 +559,8 @@ export default function ChatRoomScreen() {
             setIsSubscribed(!isSubscribed);
           }}
           isNotificationsEnabled={isSubscribed}
+          roomId={roomId}
+          onMessageSelect={handleScrollToMessage}
         />
 
         <FlashListAny
@@ -451,20 +572,50 @@ export default function ChatRoomScreen() {
           contentContainerStyle={contentContainerStyle}
           estimatedItemSize={80} // Better estimate for chat messages with padding
           showsVerticalScrollIndicator={false}
-          // Performance optimizations
+          // Performance optimizations for large message lists
           removeClippedSubviews={true}
-          maxToRenderPerBatch={10} // Render 10 items per batch for smooth scrolling
-          updateCellsBatchingPeriod={50} // Update every 50ms for responsiveness
-          windowSize={21} // Keep 21 items in memory (10 above + 10 below + current)
-          initialNumToRender={15} // Render 15 items initially for faster load
+          maxToRenderPerBatch={optimizedMessages.length > 100 ? 15 : 10}
+          updateCellsBatchingPeriod={optimizedMessages.length > 100 ? 30 : 50}
+          windowSize={optimizedMessages.length > 100 ? 15 : 21}
+          initialNumToRender={20}
+          // Advanced optimization props
+          getItemType={(item: MessageWithGrouping) => {
+            const message = item.message;
+            // Use messageType instead of type for consistency
+            if (message.messageType === 'image' || message.messageType === 'video') return 'media';
+            if (message.messageType === 'voice') return 'voice';
+            if (message.messageType === 'document') return 'document';
+            return 'text';
+          }}
+          // Use overrideItemLayout instead of getItemLayout for FlashList
+          overrideItemLayout={optimizedMessages.length > 100 ? overrideItemLayout : undefined}
+          keyboardDismissMode="on-drag"
+          // Only disable auto layout when we provide an override
+          disableAutoLayout={optimizedMessages.length > 100 && !!overrideItemLayout}
+          // Track viewable items for performance monitoring
+          onViewableItemsChanged={({ viewableItems }: any) => {
+            const newViewableIds = new Set(viewableItems.map((item: any) => item.item.message.id));
+            viewableItemsRef.current = newViewableIds;
+
+            if (optimizedMessages.length > 100) {
+              performanceMonitor.recordMetric('visibleMessages', {
+                count: viewableItems.length,
+                totalMessages: optimizedMessages.length
+              });
+            }
+          }}
+          viewabilityConfig={{
+            viewAreaCoveragePercentThreshold: 50,
+            minimumViewTime: 200
+          }}
           // Track scroll position for smart auto-scroll
           onScroll={handleScroll}
           scrollEventThrottle={16} // 60fps scroll events
-          // Maintain scroll position when loading older messages
-          maintainVisibleContentPosition={{
-            minIndexForVisible: 1, // Keep at least 1 message visible
-            autoscrollToTopThreshold: 50, // Smaller threshold for better control
-          }}
+          // Maintain scroll position when loading older messages - disabled for debugging
+          // maintainVisibleContentPosition={{
+          //   minIndexForVisible: 1, // Keep at least 1 message visible
+          //   autoscrollToTopThreshold: 50, // Smaller threshold for better control
+          // }}
           // Infinite scroll: Load older messages when scrolling to top
           onStartReached={() => {
             const now = Date.now();
@@ -563,6 +714,7 @@ export default function ChatRoomScreen() {
         useReliableCheck={true}
       />
       <NetworkDebugOverlay />
+      {__DEV__ && <PerformanceDashboard />}
 
       {isLoading && (
         <View className="absolute inset-0 items-center justify-center" pointerEvents="none">
@@ -647,9 +799,26 @@ export default function ChatRoomScreen() {
       <MessageActionsModal
         visible={isActionsModalVisible}
         onClose={() => setIsActionsModalVisible(false)}
+        message={selectedMessage}
+        canEdit={selectedMessage && user ? canEditMessage(selectedMessage, user.id) : false}
+        canForward={true}
         onReply={() => {
           if (selectedMessage) {
             handleReply(selectedMessage);
+          }
+          setIsActionsModalVisible(false);
+        }}
+        onEdit={() => {
+          if (selectedMessage) {
+            setEditingMessage(selectedMessage);
+            setShowEditModal(true);
+          }
+          setIsActionsModalVisible(false);
+        }}
+        onForward={() => {
+          if (selectedMessage) {
+            setForwardingMessage(selectedMessage);
+            setShowForwardModal(true);
           }
           setIsActionsModalVisible(false);
         }}
@@ -674,6 +843,53 @@ export default function ChatRoomScreen() {
           } finally {
             setIsActionsModalVisible(false);
           }
+        }}
+      />
+
+      <MessageEditModal
+        visible={showEditModal}
+        onClose={() => {
+          setShowEditModal(false);
+          setEditingMessage(null);
+        }}
+        message={editingMessage || undefined}
+        onSave={async (newContent) => {
+          if (editingMessage) {
+            await useChatStore.getState().editMessage(
+              roomId,
+              editingMessage.id,
+              newContent
+            );
+          }
+        }}
+      />
+
+      <ForwardMessageModal
+        visible={showForwardModal}
+        onClose={() => {
+          setShowForwardModal(false);
+          setForwardingMessage(null);
+        }}
+        message={forwardingMessage}
+        onForward={async (targetRoomId, comment) => {
+          if (forwardingMessage) {
+            await useChatStore.getState().forwardMessage(
+              forwardingMessage,
+              targetRoomId,
+              comment
+            );
+          }
+        }}
+      />
+
+      {/* Media Viewer */}
+      <MediaViewer
+        visible={showMediaViewer}
+        media={selectedMedia}
+        initialIndex={selectedMediaIndex}
+        onClose={() => {
+          setShowMediaViewer(false);
+          setSelectedMedia([]);
         }}
       />
     </SafeAreaView>

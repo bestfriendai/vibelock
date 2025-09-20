@@ -19,11 +19,11 @@ export class SearchService {
   async initializeSearchExtensions(): Promise<void> {
     try {
       // Check if pg_trgm extension is enabled
-      const { data: extensions } = await supabase.from("pg_extension").select("extname").eq("extname", "pg_trgm");
-
-      if (!extensions || extensions.length === 0) {
-        console.warn("pg_trgm extension may not be enabled. Consider enabling it for better search performance.");
-      }
+      // TODO: Check pg_trgm extension when pg_extension table is accessible
+      // const { data: extensions } = await supabase.from("pg_extension").select("extname").eq("extname", "pg_trgm");
+      // if (!extensions || extensions.length === 0) {
+      //   console.warn("pg_trgm extension may not be enabled. Consider enabling it for better search performance.");
+      // }
     } catch (error) {
       console.warn("Could not check pg_trgm extension status:", error);
     }
@@ -35,7 +35,7 @@ export class SearchService {
   async basicSearch(query: string, table: string, columns: string[]): Promise<any[]> {
     const orConditions = columns.map((col) => `${col}.ilike.%${query}%`).join(",");
 
-    const { data, error } = await supabase.from(table).select("*").or(orConditions).limit(SEARCH_CONFIG.maxResults);
+    const { data, error } = await (supabase as any).from(table).select("*").or(orConditions).limit(SEARCH_CONFIG.maxResults);
 
     if (error) throw error;
     return data || [];
@@ -51,56 +51,18 @@ export class SearchService {
     column: string,
     threshold: number = SEARCH_CONFIG.similarityThreshold,
   ): Promise<any[]> {
-    try {
-      // Use custom similarity_search function
-      const { data, error } = await supabase.rpc("similarity_search", {
-        search_query: query,
-        search_table: table,
-        search_column: column,
-        similarity_threshold: threshold,
-      });
-
-      if (error) {
-        console.warn("Similarity search failed, falling back to basic search:", error);
-        return this.basicSearch(query, table, [column]);
-      }
-
-      // Transform the RPC response to match expected format
-      return (data || []).map((item: any) => ({
-        ...item.content,
-        similarity: item.similarity_score,
-      }));
-    } catch (error) {
-      console.warn("Similarity search not available, using basic search:", error);
-      return this.basicSearch(query, table, [column]);
-    }
+    // TODO: Implement similarity search when RPC function is available
+    // For now, fall back to basic search
+    return this.basicSearch(query, table, [column]);
   }
 
   /**
    * Enhanced full-text search using PostgreSQL's tsvector
    */
   async enhancedFullTextSearch(query: string, table: string): Promise<any[]> {
-    try {
-      const { data, error } = await supabase.rpc("enhanced_text_search", {
-        search_query: query,
-        search_table: table,
-        limit_count: SEARCH_CONFIG.maxResults,
-      });
-
-      if (error) {
-        console.warn("Enhanced full-text search failed:", error);
-        return [];
-      }
-
-      // Transform the RPC response to match expected format
-      return (data || []).map((item: any) => ({
-        ...item.content,
-        rank_score: item.rank_score,
-      }));
-    } catch (error) {
-      console.warn("Enhanced full-text search not available:", error);
-      return [];
-    }
+    // TODO: Implement enhanced full-text search when RPC function is available
+    // For now, fall back to basic search
+    return this.basicSearch(query, table, ['content']);
   }
 
   /**
@@ -117,31 +79,9 @@ export class SearchService {
   ): Promise<any[]> {
     const { similarityWeight = 0.4, ftsWeight = 0.6, limit = SEARCH_CONFIG.maxResults } = options;
 
-    try {
-      const { data, error } = await supabase.rpc("hybrid_search", {
-        search_query: query,
-        search_table: table,
-        similarity_weight: similarityWeight,
-        fts_weight: ftsWeight,
-        limit_count: limit,
-      });
-
-      if (error) {
-        console.warn("Hybrid search failed:", error);
-        return [];
-      }
-
-      // Transform the RPC response to match expected format
-      return (data || []).map((item: any) => ({
-        ...item.content,
-        combined_score: item.combined_score,
-        similarity_score: item.similarity_score,
-        fts_score: item.fts_score,
-      }));
-    } catch (error) {
-      console.warn("Hybrid search not available:", error);
-      return [];
-    }
+    // TODO: Implement hybrid search when RPC function is available
+    // For now, fall back to basic search
+    return this.basicSearch(query, table, ['content']);
   }
 
   /**
@@ -150,7 +90,7 @@ export class SearchService {
   async fullTextSearch(query: string, table: string, textColumn: string): Promise<any[]> {
     try {
       // Use PostgreSQL's full-text search
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from(table)
         .select("*")
         .textSearch(textColumn, query, {
@@ -196,7 +136,7 @@ export class SearchService {
       const { data, error } = await searchQuery;
 
       if (error) throw error;
-      return (data || []).map(mapFieldsToCamelCase);
+      return (data || []).map(mapFieldsToCamelCase) as Profile[];
     });
   }
 
@@ -373,10 +313,10 @@ export class SearchService {
 
       if (commentError) throw commentError;
 
-      // Search messages
+      // Search messages (basic search in chat_messages_firebase)
       const { data: messageData, error: messageError } = await supabase
-        .from("messages")
-        .select("*, user:users(*), chat_room:chat_rooms(*)")
+        .from("chat_messages_firebase")
+        .select("*, chat_rooms_firebase(name)")
         .ilike("content", `%${query}%`)
         .order("created_at", { ascending: false })
         .limit(25);
@@ -414,15 +354,16 @@ export class SearchService {
       const messages = (messageData || []).map((item) => ({
         id: item.id,
         type: "message" as const,
-        title: `Message in ${item.chat_room?.name || "Chat"}`,
+        title: `Message in ${item.chat_rooms_firebase?.name || "Chat"}`,
         content: item.content,
         snippet: item.content.substring(0, 150),
         createdAt: new Date(item.created_at),
         metadata: {
           messageId: item.id,
-          roomId: item.room_id,
-          roomName: item.chat_room?.name,
-          authorName: item.user?.display_name || "Anonymous",
+          roomId: item.chat_room_id,
+          roomName: item.chat_rooms_firebase?.name,
+          senderId: item.sender_id,
+          senderName: item.sender_name || "Anonymous",
         },
       }));
 
@@ -435,38 +376,161 @@ export class SearchService {
     });
   }
 
-  async searchMessages(roomId: string, query: string, limit: number = 20): Promise<SearchResults> {
-    const { data, error } = await supabase
-      .from("messages")
-      .select("*, user:users(*), chat_room:chat_rooms(*)")
-      .eq("room_id", roomId)
-      .ilike("content", `%${query}%`)
-      .order("created_at", { ascending: false })
-      .limit(limit);
+  /**
+   * Search messages within a specific room using RPC
+   */
+  async searchMessages(roomId: string, query: string, limit: number = 50, offset: number = 0): Promise<SearchResults> {
+    try {
+      const { data, error } = await supabase.rpc("search_messages_in_room", {
+        p_room_id: roomId,
+        p_query: query,
+        p_limit: limit,
+        p_offset: offset,
+      });
 
-    if (error) throw error;
+      if (error) {
+        console.warn("RPC search failed, falling back to basic search:", error);
+        // Fallback to basic search
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from("chat_messages_firebase")
+          .select("*, chat_rooms_firebase(name)")
+          .eq("chat_room_id", roomId)
+          .ilike("content", `%${query}%`)
+          .order("created_at", { ascending: false })
+          .limit(limit);
 
-    const messages = (data || []).map((item) => ({
-      id: item.id,
-      type: "message" as const,
-      title: `Message in ${item.chat_room?.name || "Chat"}`,
-      content: item.content,
-      snippet: item.content.substring(0, 150),
-      createdAt: new Date(item.created_at),
-      metadata: {
-        messageId: item.id,
-        roomId: item.room_id,
-        roomName: item.chat_room?.name,
-        authorName: item.user?.display_name || "Anonymous",
-      },
-    }));
+        if (fallbackError) throw fallbackError;
 
-    return {
-      reviews: [],
-      comments: [],
-      messages,
-      total: messages.length,
-    };
+        const messages = (fallbackData || []).map((item) => ({
+          id: item.id,
+          type: "message" as const,
+          title: `Message in ${item.chat_rooms_firebase?.name || "Chat"}`,
+          content: item.content,
+          snippet: item.content.substring(0, 150),
+          createdAt: new Date(item.created_at),
+          metadata: {
+            messageId: item.id,
+            roomId: item.chat_room_id,
+            roomName: item.chat_rooms_firebase?.name,
+            senderId: item.sender_id,
+            senderName: item.sender_name || "Anonymous",
+          },
+        }));
+
+        return {
+          reviews: [],
+          comments: [],
+          messages,
+          total: messages.length,
+        };
+      }
+
+      // Map RPC results to SearchResults format
+      const messages = (data || []).map((item) => ({
+        id: item.message_id,
+        type: "message" as const,
+        title: `Message from ${item.sender_name}`,
+        content: item.content,
+        snippet: item.snippet || item.content.substring(0, 150),
+        createdAt: new Date(item.created_at),
+        metadata: {
+          messageId: item.message_id,
+          roomId: roomId,
+          roomName: "Current Room",
+          senderId: item.sender_id,
+          senderName: item.sender_name || "Anonymous",
+          rank: item.rank,
+        },
+      }));
+
+      return {
+        reviews: [],
+        comments: [],
+        messages,
+        total: messages.length,
+      };
+    } catch (error) {
+      console.error("Search messages failed:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * Search messages globally across all accessible rooms
+   */
+  async searchMessagesGlobal(query: string, userId: string, limit: number = 50, offset: number = 0): Promise<SearchResults> {
+    try {
+      const { data, error } = await supabase.rpc("search_messages_global", {
+        p_user_id: userId,
+        p_query: query,
+        p_limit: limit,
+        p_offset: offset,
+      });
+
+      if (error) {
+        console.warn("Global RPC search failed, falling back to basic search:", error);
+        // Fallback to basic search
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from("chat_messages_firebase")
+          .select("*, chat_rooms_firebase(name)")
+          .ilike("content", `%${query}%`)
+          .order("created_at", { ascending: false })
+          .limit(limit);
+
+        if (fallbackError) throw fallbackError;
+
+        const messages = (fallbackData || []).map((item) => ({
+          id: item.id,
+          type: "message" as const,
+          title: `Message in ${item.chat_rooms_firebase?.name || "Chat"}`,
+          content: item.content,
+          snippet: item.content.substring(0, 150),
+          createdAt: new Date(item.created_at),
+          metadata: {
+            messageId: item.id,
+            roomId: item.chat_room_id,
+            roomName: item.chat_rooms_firebase?.name || "Unknown Room",
+            senderId: item.sender_id,
+            senderName: item.sender_name || "Anonymous",
+          },
+        }));
+
+        return {
+          reviews: [],
+          comments: [],
+          messages,
+          total: messages.length,
+        };
+      }
+
+      // Map RPC results to SearchResults format
+      const messages = (data || []).map((item) => ({
+        id: item.message_id,
+        type: "message" as const,
+        title: `Message in ${item.room_name}`,
+        content: item.content,
+        snippet: item.snippet || item.content.substring(0, 150),
+        createdAt: new Date(item.created_at),
+        metadata: {
+          messageId: item.message_id,
+          roomId: item.room_id,
+          roomName: item.room_name || "Unknown Room",
+          senderId: item.sender_id,
+          senderName: item.sender_name || "Anonymous",
+          rank: item.rank,
+        },
+      }));
+
+      return {
+        reviews: [],
+        comments: [],
+        messages,
+        total: messages.length,
+      };
+    } catch (error) {
+      console.error("Global search messages failed:", error);
+      throw error;
+    }
   }
 
   /**
@@ -477,8 +541,8 @@ export class SearchService {
       if (partialQuery.length < 2) return [];
 
       const { data, error } = await supabase.rpc("get_search_suggestions", {
-        partial_query: partialQuery,
-        limit_count: limit,
+        p_prefix: partialQuery,
+        p_limit: limit,
       });
 
       if (error) {

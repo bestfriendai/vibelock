@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { View, Modal, Pressable, Text, StatusBar } from "react-native";
+import React, { useState, useEffect, useCallback } from "react";
+import { View, Modal, Pressable, Text, StatusBar, ActivityIndicator, Share } from "react-native";
 import { Image } from "expo-image";
 import { VideoView, useVideoPlayer } from "expo-video";
 import { Ionicons } from "@expo/vector-icons";
@@ -7,7 +7,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Constants from "expo-constants";
 import { MediaItem } from "../types";
 import { useResponsiveScreen } from "../utils/responsive";
+import { formatFileSize } from "../utils/mediaUtils";
 import ComponentErrorBoundary from "./ComponentErrorBoundary";
+import { ZoomableImage } from "./ZoomableImage";
 
 interface Props {
   visible: boolean;
@@ -27,6 +29,8 @@ export default function MediaViewer({
   commentCounts = {},
 }: Props) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
+  const [currentZoom, setCurrentZoom] = useState(1);
+  const [showInfo, setShowInfo] = useState(false);
   const currentMedia = media[currentIndex];
   const screenData = useResponsiveScreen();
   const { width: screenWidth, height: screenHeight } = screenData;
@@ -65,12 +69,28 @@ export default function MediaViewer({
   }, [currentMedia?.id]);
 
   const navigateMedia = (direction: "prev" | "next") => {
+    // Reset zoom when navigating
+    setCurrentZoom(1);
+
     if (direction === "prev" && currentIndex > 0) {
       setCurrentIndex(currentIndex - 1);
     } else if (direction === "next" && currentIndex < media.length - 1) {
       setCurrentIndex(currentIndex + 1);
     }
   };
+
+  const handleShare = useCallback(async () => {
+    if (!currentMedia) return;
+
+    try {
+      await Share.share({
+        message: `Check out this ${currentMedia.type}`,
+        url: currentMedia.uri,
+      });
+    } catch (error) {
+      console.error("Error sharing media:", error);
+    }
+  }, [currentMedia]);
 
   const handleClose = () => {
     onClose();
@@ -107,16 +127,16 @@ export default function MediaViewer({
             {/* Media Content */}
             <View className="flex-1 items-center justify-center">
               {currentMedia.type === "image" ? (
-                <Image
-                  source={{ uri: currentMedia.uri }}
-                  style={{
-                    width: screenWidth,
-                    height: screenHeight * 0.8,
-                  }}
-                  contentFit="contain"
-                  transition={200}
-                  cachePolicy="memory-disk"
-                  placeholder="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+                <ZoomableImage
+                  uri={currentMedia.uri}
+                  width={screenWidth}
+                  height={screenHeight * 0.8}
+                  minZoom={1}
+                  maxZoom={4}
+                  doubleTapScale={2}
+                  onZoomChange={setCurrentZoom}
+                  accessible={true}
+                  accessibilityLabel="Zoomable image"
                 />
               ) : (
                 <View style={{ width: screenWidth, height: screenHeight * 0.8 }}>
@@ -164,8 +184,56 @@ export default function MediaViewer({
               )}
             </View>
 
+            {/* Media Info Overlay */}
+            {showInfo && currentMedia && (
+              <View className="absolute top-20 left-0 right-0 bg-black/70 p-4">
+                <Text className="text-white text-sm mb-1">
+                  {currentMedia.type === "image" ? "Image" : "Video"}
+                </Text>
+                {currentMedia.width && currentMedia.height && (
+                  <Text className="text-white text-sm mb-1">
+                    {currentMedia.width} × {currentMedia.height}
+                  </Text>
+                )}
+                {currentMedia.duration && (
+                  <Text className="text-white text-sm mb-1">
+                    Duration: {Math.round(currentMedia.duration)}s
+                  </Text>
+                )}
+              </View>
+            )}
+
+            {/* Action Buttons */}
+            <View className="absolute bottom-20 left-0 right-0 flex-row justify-center gap-6 px-4">
+              <Pressable
+                onPress={() => setShowInfo(!showInfo)}
+                className="bg-black/50 rounded-full p-3"
+              >
+                <Ionicons name="information-circle-outline" size={24} color="white" />
+              </Pressable>
+              <Pressable
+                onPress={handleShare}
+                className="bg-black/50 rounded-full p-3"
+              >
+                <Ionicons name="share-outline" size={24} color="white" />
+              </Pressable>
+              {onCommentPress && (
+                <Pressable
+                  onPress={() => onCommentPress(currentMedia, currentIndex)}
+                  className="bg-black/50 rounded-full p-3 flex-row items-center"
+                >
+                  <Ionicons name="chatbubble-outline" size={24} color="white" />
+                  {commentCounts[currentMedia.id] && commentCounts[currentMedia.id] > 0 && (
+                    <Text className="text-white text-xs ml-1">
+                      {commentCounts[currentMedia.id]}
+                    </Text>
+                  )}
+                </Pressable>
+              )}
+            </View>
+
             {/* Navigation Controls */}
-            {media.length > 1 && (
+            {media.length > 1 && currentZoom === 1 && (
               <>
                 {/* Previous Button */}
                 {currentIndex > 0 && (

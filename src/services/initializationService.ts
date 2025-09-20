@@ -706,7 +706,16 @@ class InitializationService {
   private async initializeSupabase(): Promise<void> {
     const healthResult = await performHealthCheck();
     if (!healthResult.healthy) {
-      throw new Error("Supabase health check failed");
+      // Log detailed health check results for debugging
+      console.error("Supabase health check details:", healthResult.details);
+      throw new Error(`Supabase health check failed: ${JSON.stringify(healthResult.details)}`);
+    }
+
+    // Log successful initialization with any warnings
+    if (healthResult.details && !healthResult.details.realtime) {
+      console.warn("✅ Supabase initialized successfully (realtime features limited)");
+    } else {
+      console.log("✅ Supabase initialized successfully (all features available)");
     }
   }
 

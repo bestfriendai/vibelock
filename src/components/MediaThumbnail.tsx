@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, Pressable } from "react-native";
+import { View, Text, Pressable, ActivityIndicator } from "react-native";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { MediaItem } from "../types";
 import { videoThumbnailService } from "../services/videoThumbnailService";
+import { formatDuration } from "../utils/mediaUtils";
 import LazyImage from "./LazyImage";
 
 interface Props {
@@ -16,29 +17,35 @@ interface Props {
 
 export default function MediaThumbnail({ media, size = 80, onPress, showPlayIcon = true, onLoad }: Props) {
   const [imageError, setImageError] = useState(false);
-  const [videoThumbnail, setVideoThumbnail] = useState<string | null>(null);
+  const [videoThumbnail, setVideoThumbnail] = useState<string | null>(
+    media.thumbnailUri || null
+  );
   const [thumbnailLoading, setThumbnailLoading] = useState(false);
   const isVideo = media.type === "video";
 
   // Generate video thumbnail when component mounts
   useEffect(() => {
-    if (isVideo && !videoThumbnail && !thumbnailLoading) {
+    if (isVideo && !videoThumbnail && !thumbnailLoading && !media.thumbnailUri) {
       setThumbnailLoading(true);
       videoThumbnailService
         .generateThumbnail(media.uri)
         .then((result) => {
           if (result.success && result.uri) {
             setVideoThumbnail(result.uri);
+            onLoad?.();
           }
         })
         .catch((error) => {
           console.warn("Failed to generate video thumbnail:", error);
+          setImageError(true);
         })
         .finally(() => {
           setThumbnailLoading(false);
         });
+    } else if (media.thumbnailUri && !videoThumbnail) {
+      setVideoThumbnail(media.thumbnailUri);
     }
-  }, [isVideo, media.uri, videoThumbnail, thumbnailLoading]);
+  }, [isVideo, media.uri, media.thumbnailUri, videoThumbnail, thumbnailLoading]);
 
   return (
     <Pressable
@@ -69,7 +76,7 @@ export default function MediaThumbnail({ media, size = 80, onPress, showPlayIcon
           // Show video icon placeholder while loading or if no thumbnail
           <View className="flex-1 bg-surface-700 items-center justify-center" style={{ width: size, height: size }}>
             {thumbnailLoading ? (
-              <View className="w-4 h-4 border-2 border-gray-400 border-t-white rounded-full animate-spin" />
+              <ActivityIndicator size="small" color="#6B7280" />
             ) : (
               <Ionicons name="videocam" size={size * 0.4} color="#6B7280" />
             )}
@@ -83,7 +90,7 @@ export default function MediaThumbnail({ media, size = 80, onPress, showPlayIcon
       ) : (
         // For regular images with lazy loading
         <LazyImage
-          uri={media.uri}
+          uri={media.thumbnailUri || media.uri}
           width={size}
           height={size}
           contentFit="cover"
@@ -109,16 +116,12 @@ export default function MediaThumbnail({ media, size = 80, onPress, showPlayIcon
         </View>
       )}
 
-      {/* Loading overlay */}
-      <View className="absolute inset-0 bg-surface-800/50 items-center justify-center opacity-0">
-        <View className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-      </View>
+      {/* Loading overlay for lazy loading state */}
+      {thumbnailLoading && (
+        <View className="absolute inset-0 bg-surface-800/50 items-center justify-center">
+          <ActivityIndicator size="small" color="white" />
+        </View>
+      )}
     </Pressable>
   );
-}
-
-function formatDuration(seconds: number): string {
-  const mins = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
-  return `${mins}:${secs.toString().padStart(2, "0")}`;
 }

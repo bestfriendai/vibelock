@@ -1,12 +1,9 @@
-import React, { useRef, useEffect } from "react";
-import { View, Pressable, Text, Alert, Linking } from "react-native";
+import React, { useRef, useEffect, useState, useCallback } from "react";
+import { View, Pressable, Text, Alert, Linking, ActivityIndicator } from "react-native";
 import {
   useAudioRecorder,
-  useAudioPlayer,
-  useAudioPlayerStatus,
   useAudioRecorderState,
   requestRecordingPermissionsAsync,
-  setAudioModeAsync,
   RecordingPresets,
 } from "expo-audio";
 import * as Haptics from "expo-haptics";
@@ -20,18 +17,33 @@ import Animated, {
 } from "react-native-reanimated";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../providers/ThemeProvider";
+import { useAudioPlayer } from "../hooks/useAudioPlayer";
+import { WaveformVisualizer } from "./WaveformVisualizer";
+import { AudioControls } from "./AudioControls";
+import { VoiceMessageTranscription } from "./VoiceMessageTranscription";
+import { formatDuration } from "../utils/audioUtils";
+import audioAnalysisService from "../services/audioAnalysisService";
+import audioModeService from "../services/audioModeService";
+import { useChatStore } from "../state/chatStore";
+import { PlaybackRate } from "../types";
 
 interface VoiceMessageProps {
   audioUri?: string;
   duration?: number;
   onSend?: (audioUri: string, duration: number) => void;
   isRecording?: boolean;
-  isPlaying?: boolean;
   onStartRecording?: () => void;
   onStopRecording?: () => void;
-  onPlay?: () => void;
-  onPause?: () => void;
   showWaveform?: boolean;
+  // New props for enhanced playback
+  messageId?: string;
+  onPlaybackStart?: () => void;
+  onPlaybackEnd?: () => void;
+  showSeekBar?: boolean;
+  showPlaybackRate?: boolean;
+  enableTranscription?: boolean;
+  transcription?: string;
+  waveformData?: number[];
 }
 
 export const VoiceMessage: React.FC<VoiceMessageProps> = ({
@@ -41,19 +53,64 @@ export const VoiceMessage: React.FC<VoiceMessageProps> = ({
   isRecording = false,
   onStartRecording,
   onStopRecording,
-  onPlay,
-  onPause,
   showWaveform = true,
+  messageId,
+  onPlaybackStart,
+  onPlaybackEnd,
+  showSeekBar = true,
+  showPlaybackRate = false,
+  enableTranscription = false,
+  transcription,
+  waveformData: initialWaveformData,
 }) => {
   const { colors } = useTheme();
+  const chatStore = useChatStore();
+
+  // State for enhanced features
+  const [localWaveformData, setLocalWaveformData] = useState<number[]>(initialWaveformData || []);
+  const [audioLevel, setAudioLevel] = useState(0);
+  const [isLoadingWaveform, setIsLoadingWaveform] = useState(false);
+  const [showTranscription, setShowTranscription] = useState(false);
+
   // Use high-quality preset for maximum SDK 54 compatibility
   const recorder = useAudioRecorder(
     // @ts-ignore - RecordingPresets is provided by expo-audio at runtime
     RecordingPresets?.HIGH_QUALITY ?? ({} as any),
   );
   const recorderState = useAudioRecorderState(recorder);
-  const player = useAudioPlayer(audioUri || null);
-  const playerStatus = useAudioPlayerStatus(player);
+
+  // Enhanced audio player hook
+  const {
+    isPlaying,
+    isPaused,
+    isLoading,
+    currentTime,
+    duration: playerDuration,
+    progress,
+    error,
+    playbackRate,
+    play,
+    pause,
+    resume,
+    stop,
+    seek,
+    setPlaybackRate,
+    togglePlayPause,
+    retry,
+  } = useAudioPlayer({
+    messageId,
+    audioUri,
+    duration,
+    autoCleanup: false,
+    onPlaybackStart: () => {
+      // Rely on the onPlaybackStart prop from parent component for read receipt marking
+      onPlaybackStart?.();
+    },
+    onPlaybackEnd,
+    onError: (err) => {
+      Alert.alert("Playback Error", err);
+    },
+  });
 
   const scale = useSharedValue(1);
   const waveformOpacity = useSharedValue(0);
@@ -62,12 +119,43 @@ export const VoiceMessage: React.FC<VoiceMessageProps> = ({
   const recordingAnimation = useSharedValue(0);
 
   useEffect(() => {
-    if (isRecording) {
+    if (isRecording || recorderState.isRecording) {
       recordingAnimation.value = withRepeat(withTiming(1, { duration: 1000 }), -1, true);
     } else {
       recordingAnimation.value = withTiming(0);
     }
-  }, [isRecording]);
+  }, [isRecording, recorderState.isRecording]);
+
+  // Load waveform data if not provided
+  useEffect(() => {
+    if (audioUri && !localWaveformData.length && !isLoadingWaveform) {
+      setIsLoadingWaveform(true);
+      audioAnalysisService
+        .generateWaveformData(audioUri)
+        .then((data) => {
+          setLocalWaveformData(data);
+        })
+        .catch((err) => {
+          console.error("Failed to generate waveform:", err);
+        })
+        .finally(() => {
+          setIsLoadingWaveform(false);
+        });
+    }
+  }, [audioUri, localWaveformData.length]);
+
+  // Monitor audio levels during recording
+  useEffect(() => {
+    if (recorderState.isRecording) {
+      const interval = setInterval(() => {
+        // Simulate audio level (in production, get from recorder metering)
+        const level = Math.random() * 0.5 + 0.5;
+        setAudioLevel(level);
+      }, 100);
+
+      return () => clearInterval(interval);
+    }
+  }, [recorderState.isRecording]);
 
   // Set up permissions and audio mode on mount
   useEffect(() => {
@@ -78,10 +166,8 @@ export const VoiceMessage: React.FC<VoiceMessageProps> = ({
           console.log("Recording permission not granted");
         }
 
-        await setAudioModeAsync({
-          playsInSilentMode: true,
-          allowsRecording: true,
-        });
+        // Use centralized audio mode service
+        await audioModeService.configureForRecording();
       } catch (e) {
         console.warn("Audio setup failed", e);
       }
@@ -113,7 +199,7 @@ export const VoiceMessage: React.FC<VoiceMessageProps> = ({
         return;
       }
 
-      await setAudioModeAsync({ playsInSilentMode: true, allowsRecording: true });
+      await audioModeService.configureForRecording();
       await recorder.prepareToRecordAsync();
       recorder.record();
 
@@ -154,36 +240,26 @@ export const VoiceMessage: React.FC<VoiceMessageProps> = ({
     }
   };
 
-  const playAudio = () => {
-    if (!audioUri) {
-      Alert.alert("Playback Error", "No audio available to play.");
-      return;
-    }
+  const handleSeek = useCallback(
+    (position: number) => {
+      seek(position);
+      Haptics.selectionAsync();
+    },
+    [seek]
+  );
 
-    try {
-      player.play();
-      onPlay?.();
-    } catch (error) {
-      console.warn("Failed to play audio", error);
-      Alert.alert("Playback Error", "Failed to play the audio.");
-    }
-  };
+  const handlePlaybackRateChange = useCallback(async () => {
+    const rates: PlaybackRate[] = [0.5, 1, 1.5, 2];
+    const currentIndex = rates.indexOf(playbackRate);
+    const nextRate = rates[(currentIndex + 1) % rates.length];
+    await setPlaybackRate(nextRate);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  }, [playbackRate, setPlaybackRate]);
 
-  const pauseAudio = () => {
-    try {
-      player.pause();
-      onPause?.();
-    } catch (error) {
-      console.warn("Failed to pause audio", error);
-      Alert.alert("Playback Error", "Failed to pause the audio.");
-    }
-  };
-
-  const formatDuration = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
-  };
+  const toggleTranscription = useCallback(() => {
+    setShowTranscription((prev) => !prev);
+    Haptics.selectionAsync();
+  }, []);
 
   const recordingButtonStyle = useAnimatedStyle(() => {
     const animatedScale = interpolate(recordingAnimation.value, [0, 1], [1, 1.1]);
@@ -224,17 +300,16 @@ export const VoiceMessage: React.FC<VoiceMessageProps> = ({
             </Text>
 
             {showWaveform && (
-              <Animated.View style={[waveformStyle, { flexDirection: "row", alignItems: "center", marginTop: 8 }]}>
-                {Array.from({ length: 20 }).map((_, index) => (
-                  <View
-                    key={index}
-                    className="w-1 bg-red-500 rounded-full mr-1"
-                    style={{
-                      height: Math.random() * 20 + 5,
-                      opacity: Math.random() * 0.8 + 0.2,
-                    }}
-                  />
-                ))}
+              <Animated.View style={[waveformStyle, { marginTop: 8 }]}>
+                <WaveformVisualizer
+                  mode="recording"
+                  audioLevel={audioLevel}
+                  primaryColor={colors.brand.red}
+                  secondaryColor={colors.surface[600]}
+                  height={30}
+                  barCount={20}
+                  isPlaying={true}
+                />
               </Animated.View>
             )}
           </View>
@@ -244,35 +319,36 @@ export const VoiceMessage: React.FC<VoiceMessageProps> = ({
   }
 
   // Playback UI
-  const progress = playerStatus.duration > 0 ? playerStatus.currentTime / playerStatus.duration : 0;
+  const effectiveDuration = playerDuration || duration;
 
   return (
-    <View className="flex-row items-center p-3 rounded-lg" style={{ backgroundColor: colors.surface[700] }}>
-      <Pressable
-        onPress={playerStatus.playing ? pauseAudio : playAudio}
-        className="w-10 h-10 rounded-full items-center justify-center mr-3"
-        style={{ backgroundColor: colors.brand.red }}
-      >
-        <Ionicons name={playerStatus.playing ? "pause" : "play"} size={20} color="white" />
-      </Pressable>
+    <View className="rounded-lg" style={{ backgroundColor: colors.surface[700] }}>
+      {/* Use AudioControls component for playback UI */}
+      <AudioControls
+        messageId={messageId || ""}
+        audioUri={audioUri || ""}
+        duration={effectiveDuration}
+        primaryColor={colors.brand.red}
+        secondaryColor={colors.surface[600]}
+        showProgressBar={showSeekBar}
+        showTimeDisplay={true}
+        showPlaybackRate={showPlaybackRate}
+        onPlaybackStart={onPlaybackStart}
+        onPlaybackEnd={onPlaybackEnd}
+      />
 
-      <View className="flex-1">
-        {/* Progress Bar */}
-        <View className="h-1 rounded-full mb-1" style={{ backgroundColor: colors.surface[600] }}>
-          <View
-            className="h-1 rounded-full"
-            style={{
-              backgroundColor: colors.brand.red,
-              width: `${progress * 100}%`,
-            }}
-          />
-        </View>
-
-        {/* Duration */}
-        <Text className="text-xs" style={{ color: colors.text.muted }}>
-          {formatDuration(playerStatus.currentTime)} / {formatDuration(duration)}
-        </Text>
-      </View>
+      {/* Use VoiceMessageTranscription component */}
+      {enableTranscription && (
+        <VoiceMessageTranscription
+          audioUri={audioUri || ""}
+          messageId={messageId || ""}
+          existingTranscription={transcription}
+          autoTranscribe={false}
+          showToggle={true}
+          showCopyButton={true}
+          showLanguageIndicator={true}
+        />
+      )}
     </View>
   );
 };

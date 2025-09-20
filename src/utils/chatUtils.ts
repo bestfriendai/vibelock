@@ -1,6 +1,11 @@
 /**
  * Chat utility functions for message processing and formatting
+ * Enhanced with optimizations for large message datasets
  */
+
+import { performanceMonitor } from './performance';
+import { memoryManager } from '../services/memoryManager';
+import { messageVirtualizer } from '../services/messageVirtualizer';
 
 export interface MessageGroup {
   senderId: string;
@@ -99,33 +104,69 @@ export function createOptimizedMessageList(messages: any[]): MessageWithGrouping
  * Memoized grouping cache to prevent recalculation
  */
 const groupingCache = new Map<string, MessageWithGrouping[]>();
-const maxCacheSize = 10; // Keep last 10 room groupings
+const maxCacheSize = 5; // Reduced to 5 for better memory efficiency with large datasets
+const cacheAccessTime = new Map<string, number>();
 
 export function getCachedOptimizedMessageList(
   roomId: string,
   messages: any[],
   messagesHash?: string,
 ): MessageWithGrouping[] {
+  const startTime = performance.now();
+
+  // For large datasets, use more aggressive caching
+  const isLargeDataset = messages.length > 100;
+  const effectiveCacheSize = isLargeDataset ? 3 : maxCacheSize;
+
   // Create a hash of the messages for cache invalidation
   const hash = messagesHash || `${messages.length}_${messages[0]?.id || ""}_${messages[messages.length - 1]?.id || ""}`;
   const cacheKey = `${roomId}_${hash}`;
 
   // Check cache first
   if (groupingCache.has(cacheKey)) {
+    cacheAccessTime.set(cacheKey, Date.now());
+    memoryManager.updateCacheAccess('messageGrouping');
     return groupingCache.get(cacheKey)!;
   }
 
   // Calculate new grouping
   const optimizedList = createOptimizedMessageList(messages);
 
-  // Update cache with LRU eviction
-  if (groupingCache.size >= maxCacheSize) {
-    const firstKey = groupingCache.keys().next().value;
-    if (firstKey) {
-      groupingCache.delete(firstKey);
+  // Smart LRU eviction based on usage patterns
+  if (groupingCache.size >= effectiveCacheSize) {
+    // Find least recently used entry
+    let oldestKey: string | null = null;
+    let oldestTime = Date.now();
+
+    groupingCache.forEach((_, key) => {
+      const accessTime = cacheAccessTime.get(key) || 0;
+      if (accessTime < oldestTime) {
+        oldestTime = accessTime;
+        oldestKey = key;
+      }
+    });
+
+    if (oldestKey) {
+      groupingCache.delete(oldestKey);
+      cacheAccessTime.delete(oldestKey);
     }
   }
+
   groupingCache.set(cacheKey, optimizedList);
+  cacheAccessTime.set(cacheKey, Date.now());
+
+  // Register cache size with memory manager
+  const cacheSize = JSON.stringify(optimizedList).length * 2;
+  memoryManager.registerCache('messageGrouping', cacheSize);
+
+  const endTime = performance.now();
+  if (messages.length > 100) {
+    performanceMonitor.recordMetric('largeMessageGrouping', {
+      messageCount: messages.length,
+      processingTime: endTime - startTime,
+      cacheHit: false
+    });
+  }
 
   return optimizedList;
 }
@@ -175,6 +216,147 @@ export function extractMentions(content: string): string[] {
  */
 export function generateOptimisticId(): string {
   return `optimistic_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+}
+
+/**
+ * Create virtualized message list for large datasets
+ */
+export function createVirtualizedMessageList(
+  messages: any[],
+  viewportInfo: { scrollOffset: number; viewportHeight: number }
+): any[] {
+  return messageVirtualizer.virtualizeMessages(
+    messages,
+    viewportInfo.viewportHeight,
+    viewportInfo.scrollOffset
+  );
+}
+
+/**
+ * Get message height estimate for virtualization
+ */
+export function getMessageHeightEstimate(message: any): number {
+  let height = 80; // Base height
+
+  if (message.type === 'text' && message.content) {
+    const lines = Math.ceil(message.content.length / 40);
+    height = Math.min(lines * 20 + 60, 300);
+  } else if (message.type === 'image' || message.type === 'video') {
+    height = 220; // Default media height
+  } else if (message.type === 'voice') {
+    height = 60;
+  } else if (message.type === 'document') {
+    height = 80;
+  }
+
+  // Add extra for reactions and replies
+  if (message.reactions?.length > 0) height += 30;
+  if (message.replyTo) height += 40;
+
+  return height;
+}
+
+/**
+ * Check if message should be cleaned up
+ */
+export function shouldCleanupMessage(
+  message: any,
+  currentTime: number,
+  retentionPolicy: { maxAge?: number; keepImportant?: boolean } = {}
+): boolean {
+  const messageTime = message.timestamp instanceof Date
+    ? message.timestamp.getTime()
+    : new Date(message.timestamp).getTime();
+
+  const age = currentTime - messageTime;
+  const maxAge = retentionPolicy.maxAge || 7 * 24 * 60 * 60 * 1000; // 7 days default
+
+  // Keep important messages (with reactions, replies)
+  if (retentionPolicy.keepImportant) {
+    if (message.reactions?.length > 0) return false;
+    if (message.replyTo || message.repliedBy?.length > 0) return false;
+  }
+
+  return age > maxAge;
+}
+
+/**
+ * Optimize messages for large dataset
+ */
+export function optimizeForLargeDataset(
+  messages: any[],
+  threshold: number = 100
+): any[] {
+  if (messages.length <= threshold) {
+    return messages;
+  }
+
+  const currentTime = Date.now();
+  const optimized = messages.map((message, index) => {
+    // Skip optimization for recent messages (last 50)
+    if (index >= messages.length - 50) {
+      return message;
+    }
+
+    // Older messages get optimized
+    const optimizedMessage = { ...message };
+    const messageAge = currentTime - new Date(message.timestamp).getTime();
+    const daysOld = messageAge / (24 * 60 * 60 * 1000);
+
+    // Summarize very long text for old messages
+    if (message.type === 'text' && message.content?.length > 500) {
+      if (daysOld > 7) {
+        optimizedMessage.content = message.content.substring(0, 200) + '...';
+        optimizedMessage.metadata = {
+          ...optimizedMessage.metadata,
+          isSummarized: true,
+          originalLength: message.content.length
+        };
+      }
+    }
+
+    // Remove heavy media metadata for very old messages
+    if (daysOld > 30 && (message.type === 'image' || message.type === 'video')) {
+      optimizedMessage.media = {
+        url: message.media?.url,
+        type: message.media?.type,
+        // Remove detailed metadata
+      };
+    }
+
+    return optimizedMessage;
+  });
+
+  performanceMonitor.recordMetric('messageOptimization', {
+    originalCount: messages.length,
+    optimizedCount: optimized.length,
+    memorySaved: JSON.stringify(messages).length - JSON.stringify(optimized).length
+  });
+
+  return optimized;
+}
+
+/**
+ * Clear message grouping cache
+ */
+export function clearGroupingCache(roomId?: string): void {
+  if (roomId) {
+    // Clear specific room cache
+    const keysToDelete: string[] = [];
+    groupingCache.forEach((_, key) => {
+      if (key.startsWith(roomId)) {
+        keysToDelete.push(key);
+      }
+    });
+    keysToDelete.forEach(key => {
+      groupingCache.delete(key);
+      cacheAccessTime.delete(key);
+    });
+  } else {
+    // Clear all cache
+    groupingCache.clear();
+    cacheAccessTime.clear();
+  }
 }
 
 /**
