@@ -468,7 +468,10 @@ class EnhancedRealtimeChatService {
           optimisticFingerprint === fingerprint ||
           (optimisticMsg.senderId === newMessage.senderId &&
             optimisticMsg.content === newMessage.content &&
-            Math.abs(optimisticMsg.timestamp.getTime() - newMessage.timestamp.getTime()) < 5000)
+            Math.abs(
+              (optimisticMsg.timestamp instanceof Date ? optimisticMsg.timestamp.getTime() : new Date(optimisticMsg.timestamp).getTime()) -
+              (newMessage.timestamp instanceof Date ? newMessage.timestamp.getTime() : new Date(newMessage.timestamp).getTime())
+            ) < 5000)
         ) {
           // Found matching optimistic message
           tempId = optimisticId;
@@ -1312,7 +1315,10 @@ class EnhancedRealtimeChatService {
 
   // Generate unique fingerprint for message deduplication
   private generateMessageFingerprint(message: ChatMessage): string {
-    return `${message.senderId}_${message.content}_${message.messageType}_${Math.floor(message.timestamp.getTime() / 1000)}`;
+    const timestamp = message.timestamp instanceof Date
+      ? message.timestamp.getTime()
+      : new Date(message.timestamp).getTime();
+    return `${message.senderId}_${message.content}_${message.messageType}_${Math.floor(timestamp / 1000)}`;
   }
 
   // Replace optimistic message with real message

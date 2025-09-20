@@ -876,7 +876,10 @@ class ConsolidatedRealtimeService {
       if (key.startsWith(`${roomId}_`) &&
           optimisticMessage.senderId === realMessage.senderId &&
           optimisticMessage.content === realMessage.content &&
-          Math.abs(optimisticMessage.timestamp.getTime() - realMessage.timestamp.getTime()) < 10000) {
+          Math.abs(
+            (optimisticMessage.timestamp instanceof Date ? optimisticMessage.timestamp.getTime() : new Date(optimisticMessage.timestamp).getTime()) -
+            (realMessage.timestamp instanceof Date ? realMessage.timestamp.getTime() : new Date(realMessage.timestamp).getTime())
+          ) < 10000) {
         return key;
       }
     }

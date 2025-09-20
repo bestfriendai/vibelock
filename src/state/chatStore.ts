@@ -453,16 +453,7 @@ const useChatStore = create<ChatStore>()(
 
           console.log("🔄 Loading chat rooms...");
 
-          // Check auth state before loading
-          const authState = useAuthStore.getState();
-          console.log("🔍 Auth state during loadChatRooms:", {
-            isAuthenticated: authState.isAuthenticated,
-            hasUser: !!authState.user,
-            isGuestMode: authState.isGuestMode,
-            userId: authState.user?.id?.slice(-8) || 'none'
-          });
-
-          // Load chat rooms directly from Supabase
+          // Load chat rooms directly from Supabase - simplified approach
           const { data: chatRooms, error } = await supabase
             .from("chat_rooms_firebase")
             .select(
@@ -476,6 +467,7 @@ const useChatStore = create<ChatStore>()(
               online_count,
               unread_count,
               last_activity,
+              last_message,
               is_active,
               location,
               created_at,
@@ -547,20 +539,28 @@ const useChatStore = create<ChatStore>()(
 
           set({ currentChatRoom: room });
 
-          // Use unified authentication check with detailed error handling
-          let authResult;
-          try {
-            authResult = await requireAuthentication("join chat room");
-          } catch (authError) {
-            console.error("❌ Authentication failed for joining chat room:", authError);
+          // Simplified authentication check
+          const authState = useAuthStore.getState();
+          if (!authState.user && !authState.isGuestMode) {
+            console.error("❌ No user found for joining chat room");
             set({
               connectionStatus: "error" as ConnectionStatus,
-              error: "Authentication required. Please sign in to join chat rooms.",
+              error: "Please sign in to join chat rooms.",
+              isLoading: false
             });
-            throw authError;
+            return;
           }
 
-          const { user, supabaseUser } = authResult;
+          const user = authState.user;
+          if (!user) {
+            console.error("❌ No user available for joining chat room");
+            set({
+              connectionStatus: "error" as ConnectionStatus,
+              error: "User information not available.",
+              isLoading: false
+            });
+            return;
+          }
 
           // Ensure user is added to chat_members_firebase table
           console.log(`👥 Adding user to chat room members: ${roomId}`);
@@ -568,7 +568,7 @@ const useChatStore = create<ChatStore>()(
             .from("chat_members_firebase")
             .upsert({
               chat_room_id: roomId,
-              user_id: supabaseUser.id,
+              user_id: user.id,
               role: "member",
               is_active: true,
               joined_at: new Date().toISOString(),
@@ -705,7 +705,10 @@ const useChatStore = create<ChatStore>()(
             onTyping: (typingUsers: TypingUser[]) => {
               startTransition(() => {
                 set(() => ({
-                  typingUsers: typingUsers.filter((user) => Date.now() - user.timestamp.getTime() < 5000),
+                  typingUsers: typingUsers.filter((user) => {
+                    const timestamp = user.timestamp instanceof Date ? user.timestamp.getTime() : new Date(user.timestamp).getTime();
+                    return Date.now() - timestamp < 5000;
+                  }),
                 }));
               });
             },
@@ -1459,7 +1462,9 @@ const useChatStore = create<ChatStore>()(
               async (room, cursor, limit) => {
                 const result = await consolidatedRealtimeService.loadOlderMessages(
                   room,
-                  cursor || currentMessages[0]?.timestamp.toISOString(),
+                  cursor || (currentMessages[0]?.timestamp instanceof Date
+                    ? currentMessages[0].timestamp.toISOString()
+                    : currentMessages[0]?.timestamp ? new Date(currentMessages[0].timestamp).toISOString() : new Date().toISOString()),
                   limit
                 );
                 return {
@@ -1499,7 +1504,9 @@ const useChatStore = create<ChatStore>()(
           }
 
           const oldestMessage = currentMessages[0]!;
-          const cursor = oldestMessage.timestamp.toISOString();
+          const cursor = oldestMessage.timestamp instanceof Date
+            ? oldestMessage.timestamp.toISOString()
+            : new Date(oldestMessage.timestamp).toISOString();
           const batchSize = 20;
           const result = await consolidatedRealtimeService.loadOlderMessages(roomId, cursor, batchSize);
           const olderMessages = result.messages;

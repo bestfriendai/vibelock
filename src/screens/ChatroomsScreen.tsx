@@ -64,9 +64,17 @@ export default function ChatroomsScreen() {
   }, [user, canAccessChat, needsSignIn, chatRooms.length, isLoading, error, connectionStatus]);
 
   useEffect(() => {
+    console.log("🔄 ChatroomsScreen: Initial load effect triggered");
     const done = startTimer("chatrooms:initialLoad");
-    retryWithBackoff(loadChatRooms).finally(done);
-  }, [loadChatRooms]);
+    retryWithBackoff(loadChatRooms)
+      .then(() => {
+        console.log("✅ ChatroomsScreen: loadChatRooms completed successfully");
+      })
+      .catch((error) => {
+        console.error("❌ ChatroomsScreen: loadChatRooms failed:", error);
+      })
+      .finally(done);
+  }, [loadChatRooms, retryWithBackoff]);
 
   useEffect(() => {
     setRoomCategoryFilter(category);
@@ -108,7 +116,7 @@ export default function ChatroomsScreen() {
 
   // Development bypass for testing (remove in production)
   const isDevelopment = __DEV__;
-  const allowDevAccess = isDevelopment && chatRooms.length > 0; // Allow if we have data to show
+  const allowDevAccess = isDevelopment; // Always allow in development
 
   // Guest mode protection (with development bypass)
   if ((!canAccessChat || needsSignIn) && !allowDevAccess) {
@@ -177,6 +185,17 @@ export default function ChatroomsScreen() {
       </SafeAreaView>
     );
   }
+
+  // Debug logging for render state
+  console.log("🎨 ChatroomsScreen render state:", {
+    isLoading,
+    chatRoomsCount: chatRooms.length,
+    error: error || "none",
+    canAccessChat,
+    needsSignIn,
+    allowDevAccess,
+    filteredCount: filtered.length
+  });
 
   return (
     <SafeAreaView className="flex-1" style={{ backgroundColor: colors.background }}>
