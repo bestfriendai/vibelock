@@ -431,9 +431,9 @@ const useReviewsStore = create<ReviewsStore>()(
           const uploadedMedia: MediaItem[] = [];
           console.log(`🚀 Starting media upload process for ${data.media.length} items`);
 
-          for (const mediaItem of data.media) {
+          for (const [index, mediaItem] of data.media.entries()) {
             const isLocal = mediaItem.uri.startsWith("file://") || mediaItem.uri.startsWith("content://");
-            console.log(`📁 Processing media item:`, {
+            console.log(`📁 Processing media item ${index + 1}:`, {
               type: mediaItem.type,
               uri: mediaItem.uri.substring(0, 100) + "...",
               isLocal,
@@ -446,6 +446,15 @@ const useReviewsStore = create<ReviewsStore>()(
             }
 
             try {
+              let processedUri = mediaItem.uri;
+              const mime = mediaItem.type === "video" 
+                ? (mediaItem.uri.toLowerCase().endsWith(".mov") ? "video/quicktime" : "video/mp4")
+                : "image/jpeg";
+              let fileName = `reviews/${Date.now()}_${Math.random().toString(36).substring(7)}`;
+              fileName += mediaItem.type === "video" 
+                ? (mime === "video/quicktime" ? ".mov" : ".mp4") 
+                : ".jpg";
+
               if (mediaItem.type === "image") {
                 // Compress and resize image using expo-image-manipulator
                 const manipulatedImage = await manipulateAsync(mediaItem.uri, [{ resize: { width: 800 } }], {
@@ -453,32 +462,18 @@ const useReviewsStore = create<ReviewsStore>()(
                   format: SaveFormat.JPEG,
                 });
 
-                // Use FileSystem to read the manipulated image as base64
-                // Then convert base64 -> ArrayBuffer via data URL (RN-safe)
-                const base64 = await FileSystem.readAsStringAsync(manipulatedImage.uri, {
-                  encoding: "base64" as any,
-                });
+                processedUri = manipulatedImage.uri;
 
-                const dataUrl = `data:image/jpeg;base64,${base64}`;
-                const resp = await fetch(dataUrl);
-                const arrayBuffer = await resp.arrayBuffer();
-
-                // Debug: Check buffer size
-                console.log(`📸 Image upload debug:`, {
-                  originalUri: mediaItem.uri,
-                  manipulatedUri: manipulatedImage.uri,
-                  base64Length: base64.length,
-                  byteLength: arrayBuffer.byteLength,
-                });
-
-                if (!arrayBuffer || arrayBuffer.byteLength === 0) {
-                  throw new Error(`Empty image buffer created from ${manipulatedImage.uri}`);
+                // Log compression results
+                const fileInfo = await FileSystem.getInfoAsync(processedUri);
+                if (fileInfo.exists && fileInfo.size) {
+                  const sizeKB = Math.round(fileInfo.size / 1024);
+                  console.log(`📸 Image compressed to ~${sizeKB}KB`);
                 }
 
-                const filename = `reviews/${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`;
-                const uploadResult = await storageService.uploadFile(manipulatedImage.uri, {
+                const uploadResult = await storageService.uploadFile(processedUri, {
                   bucket: "review-images",
-                  fileName: filename,
+                  fileName: fileName,
                   contentType: "image/jpeg"
                 });
                 const downloadURL = uploadResult.url || "";
@@ -486,75 +481,37 @@ const useReviewsStore = create<ReviewsStore>()(
                 uploadedMedia.push({
                   ...mediaItem,
                   uri: downloadURL,
-                  width: manipulatedImage.width,
-                  height: manipulatedImage.height,
-                });
-              } else if (mediaItem.type === "video") {
-                // Read video as base64 and convert to ArrayBuffer using data URL fetch
-                const videoBase64 = await FileSystem.readAsStringAsync(mediaItem.uri, {
-                  encoding: "base64" as any,
-                });
-                const mime = mediaItem.uri.toLowerCase().endsWith(".mov") ? "video/quicktime" : "video/mp4";
-                const dataUrl = `data:${mime};base64,${videoBase64}`;
-                const vResp = await fetch(dataUrl);
-                const arrayBuffer = await vResp.arrayBuffer();
-
-                console.log(`🎥 Video upload debug:`, {
-                  originalUri: mediaItem.uri,
-                  mime,
-                  base64Length: videoBase64.length,
-                  byteLength: arrayBuffer.byteLength,
+                  width: manipulatedImage.width || mediaItem.width,
+                  height: manipulatedImage.height || mediaItem.height,
                 });
 
-                if (!arrayBuffer || arrayBuffer.byteLength === 0) {
-                  throw new Error(`Empty video buffer created from ${mediaItem.uri}`);
+                // Clean up manipulated image uri if it's temp
+                if (processedUri.startsWith(FileSystem.cacheDirectory)) {
+                  await FileSystem.deleteAsync(processedUri, { idempotent: true }).catch(console.warn);
                 }
-
+              } else if (mediaItem.type === "video") {
                 // Generate a thumbnail from the local video (best-effort)
                 let thumbnailUrl: string | undefined;
                 try {
                   const { uri: thumbLocal } = await VideoThumbnails.getThumbnailAsync(mediaItem.uri, { time: 1000 });
-                  const thumbB64 = await FileSystem.readAsStringAsync(thumbLocal, {
-                    encoding: "base64" as any,
+                  const thumbName = `reviews/${Date.now()}_${Math.random().toString(36).substring(7)}_thumb.jpg`;
+                  const thumbResult = await storageService.uploadFile(thumbLocal, {
+                    bucket: "review-images",
+                    fileName: thumbName,
+                    contentType: "image/jpeg",
                   });
-                  const thumbResp = await fetch(`data:image/jpeg;base64,${thumbB64}`);
-                  const thumbBuf = await thumbResp.arrayBuffer();
-                  if (thumbBuf && thumbBuf.byteLength > 0) {
-                    const thumbName = `reviews/${Date.now()}_${Math.random().toString(36).substring(7)}_thumb.jpg`;
-                    // Create a temporary file for the thumbnail
-                    const tempThumbPath = `${FileSystem.cacheDirectory}${thumbName}`;
-                    await FileSystem.writeAsStringAsync(tempThumbPath, Buffer.from(thumbBuf).toString("base64"), {
-                      encoding: FileSystem.EncodingType.Base64,
-                    });
-                    const thumbResult = await storageService.uploadFile(tempThumbPath, {
-                      bucket: "review-images",
-                      fileName: thumbName,
-                      contentType: "image/jpeg",
-                    });
-                    thumbnailUrl = thumbResult.url || "";
-                    // Clean up temp file
-                    await FileSystem.deleteAsync(tempThumbPath, { idempotent: true });
-                  }
+                  thumbnailUrl = thumbResult.url || "";
+                  console.log("✅ Video thumbnail uploaded successfully");
                 } catch (thumbErr) {
                   console.warn("⚠️ Failed to generate/upload video thumbnail:", thumbErr);
                 }
 
-                const ext = mime === "video/quicktime" ? "mov" : "mp4";
-                const filename = `reviews/${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
-                // Create a temporary file for the video
-                const tempVideoPath = `${FileSystem.cacheDirectory}${filename}`;
-                await FileSystem.writeAsStringAsync(tempVideoPath, Buffer.from(arrayBuffer).toString("base64"), {
-                  encoding: FileSystem.EncodingType.Base64,
-                });
-                // Use review-images bucket (unrestricted MIME types)
-                const uploadResult = await storageService.uploadFile(tempVideoPath, {
+                const uploadResult = await storageService.uploadFile(processedUri, {
                   bucket: "review-images",
-                  fileName: filename,
+                  fileName: fileName,
                   contentType: mime,
                 });
                 const downloadURL = uploadResult.url || "";
-                // Clean up temp file
-                await FileSystem.deleteAsync(tempVideoPath, { idempotent: true });
 
                 uploadedMedia.push({
                   ...mediaItem,
@@ -567,18 +524,28 @@ const useReviewsStore = create<ReviewsStore>()(
               }
             } catch (uploadError) {
               console.warn("❌ Failed to upload media:", {
+                index,
                 originalUri: mediaItem.uri,
                 mediaType: mediaItem.type,
                 error: uploadError instanceof Error ? uploadError.message : String(uploadError),
-                stack: uploadError instanceof Error ? uploadError.stack : undefined,
               });
 
               // Use safe media error handling
               const mediaError = handleMediaUploadError(uploadError, `media upload for ${mediaItem.type}`);
               console.warn(`Media upload failed:`, mediaError);
 
-              // For now, still push the original to avoid breaking the review creation
-              uploadedMedia.push(mediaItem);
+              // Track failed uploads
+              if (!mediaUploads.failed) {
+                mediaUploads.failed = [];
+              }
+              mediaUploads.failed.push({
+                index,
+                type: mediaItem.type,
+                uri: mediaItem.uri,
+                error: mediaError.userMessage || 'Unknown upload error',
+              });
+
+              // Continue with other media items
             }
           }
 
@@ -586,6 +553,14 @@ const useReviewsStore = create<ReviewsStore>()(
           const remoteMedia = (uploadedMedia || []).filter(
             (m): m is MediaItem => m && typeof m.uri === "string" && /^https?:\/\//.test(m.uri),
           );
+
+          // Check if uploads were successful
+          const hasRemoteMedia = remoteMedia.length > 0;
+          if (!hasRemoteMedia && mediaUploads.failed && mediaUploads.failed.length > 0) {
+            // All uploads failed
+            const errorMsg = `Failed to upload media. Errors: ${mediaUploads.failed.map(f => f.error).join('; ')}`;
+            throw new Error(errorMsg);
+          }
 
           // Create review data for backend
           const reviewData: Omit<Review, "id" | "createdAt" | "updatedAt" | "authorId"> = {
@@ -636,6 +611,19 @@ const useReviewsStore = create<ReviewsStore>()(
           reviewsService.createReview({ ...reviewData, authorId: newReview.authorId }).catch((error) => {
             console.warn("Failed to save review to database (but it's still visible locally):", error);
           });
+
+          // Check for partial media upload success
+          if (mediaUploads.failed && mediaUploads.failed.length > 0 && hasRemoteMedia) {
+            const failedCount = mediaUploads.failed.length;
+            const successCount = remoteMedia.length;
+            const detailMsg = `${failedCount} item${failedCount > 1 ? 's' : ''} failed to upload, but review created with ${successCount} item${successCount > 1 ? 's' : ''}.`;
+            set({
+              error: detailMsg,
+              isLoading: false,
+            });
+          } else {
+            set({ isLoading: false });
+          }
         } catch (error) {
           set({
             error: error instanceof Error ? error.message : "Failed to create review",

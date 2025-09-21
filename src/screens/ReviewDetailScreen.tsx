@@ -142,7 +142,16 @@ export default function ReviewDetailScreen() {
 
     // Filter to only valid remote media (avoid legacy file:// URIs)
     const cleanedMedia = Array.isArray(review.media)
-      ? review.media.filter((m) => typeof m?.uri === "string" && /^https?:\/\//.test(m.uri))
+      ? review.media
+          .filter((m) => typeof m?.uri === "string" && /^https?:\/\//.test(m.uri))
+          .map((m) => ({
+            ...m,
+            type: m.type || (
+              m.uri.includes('.mp4') || m.uri.includes('.mov') || m.uri.includes('.avi') || m.uri.includes('.mkv') 
+              ? 'video' 
+              : 'image'
+            ) as const,
+          }))
       : [];
 
     if (cleanedMedia.length > 0) {

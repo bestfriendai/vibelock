@@ -72,24 +72,24 @@ export async function launchImageLibraryWithWorkaround(
     if (error?.message?.includes("PHPhotosErrorDomain") && error?.message?.includes("3164")) {
       console.log("🔄 Detected PHPhotosErrorDomain 3164, attempting workaround...");
       
-      // Try progressively simpler configurations
-      const fallbackConfigs = [
-        // Attempt 1: Remove editing and multiple selection
-        {
-          mediaTypes: ImagePicker.MediaTypeOptions.Images,
-          allowsEditing: false,
-          allowsMultipleSelection: false,
-          quality: 1.0,
-        },
-        // Attempt 2: Most minimal configuration
-        {
-          mediaTypes: ImagePicker.MediaTypeOptions.Images,
-          allowsEditing: false,
-          allowsMultipleSelection: false,
-          quality: 1.0,
-          aspect: undefined,
-        },
-      ];
+  // Try progressively simpler configurations
+  const fallbackConfigs = [
+    // Attempt 1: Remove editing and multiple selection
+    {
+      mediaTypes: ["images", "videos"],
+      allowsEditing: false,
+      allowsMultipleSelection: false,
+      quality: 1.0,
+    },
+    // Attempt 2: Most minimal configuration
+    {
+      mediaTypes: ["images", "videos"],
+      allowsEditing: false,
+      allowsMultipleSelection: false,
+      quality: 1.0,
+      aspect: undefined,
+    },
+  ];
 
       for (let i = 0; i < Math.min(maxRetries, fallbackConfigs.length); i++) {
         try {

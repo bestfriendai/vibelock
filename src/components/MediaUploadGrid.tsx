@@ -123,7 +123,8 @@ export default function MediaUploadGrid({ media, onMediaChange, maxItems = 6, re
         allowsEditing: true,
         aspect: [4, 3],
         quality: 0.8,
-        videoMaxDuration: 60, // 60 seconds max
+        videoMaxDuration: 60,
+        allowsEditing: false,
       });
 
       if (!result.canceled && result.assets[0]) {
@@ -175,7 +176,7 @@ export default function MediaUploadGrid({ media, onMediaChange, maxItems = 6, re
         mediaTypes: ["images", "videos"],
         allowsMultipleSelection: remainingSlots > 1,
         selectionLimit: remainingSlots,
-        allowsEditing: remainingSlots === 1,
+        allowsEditing: false,
         aspect: [4, 3],
         quality: 0.8,
         videoMaxDuration: 60,
