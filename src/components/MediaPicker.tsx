@@ -7,7 +7,11 @@ import * as Haptics from "expo-haptics";
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from "react-native-reanimated";
 import { useTheme } from "../providers/ThemeProvider";
 import { AppError, ErrorType } from "../utils/errorHandling";
-import { launchImageLibraryWithWorkaround, isPHPhotosError3164, getPHPhotosErrorMessage } from "../utils/imagePickerWorkaround";
+import {
+  launchImageLibraryWithWorkaround,
+  isPHPhotosError3164,
+  getPHPhotosErrorMessage,
+} from "../utils/imagePickerWorkaround";
 
 const { width: screenWidth } = Dimensions.get("window");
 
@@ -39,7 +43,6 @@ export const MediaPicker: React.FC<MediaPickerProps> = ({ onMediaSelect, onClose
   const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
   const ALLOWED_IMAGE_TYPES = useMemo(() => ["image/jpeg", "image/png", "image/webp"], []);
   const ALLOWED_VIDEO_TYPES = useMemo(() => ["video/mp4", "video/quicktime"], []);
-  const ALLOWED_AUDIO_TYPES = useMemo(() => ["audio/mp4", "audio/mpeg", "audio/wav"], []);
 
   /**
    * Validate selected media file
@@ -127,7 +130,7 @@ export const MediaPicker: React.FC<MediaPickerProps> = ({ onMediaSelect, onClose
     try {
       setIsLoading(true);
       const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ["images"] as ImagePicker.MediaType[],
         allowsEditing: true,
         aspect: [4, 3],
         quality: 0.8,
@@ -176,7 +179,7 @@ export const MediaPicker: React.FC<MediaPickerProps> = ({ onMediaSelect, onClose
 
       // Use the workaround utility to handle PHPhotosErrorDomain 3164
       const result = await launchImageLibraryWithWorkaround({
-        mediaTypes: ImagePicker.MediaTypeOptions.All,
+        mediaTypes: ["images", "videos"] as ImagePicker.MediaType[],
         allowsEditing: true,
         aspect: [4, 3],
         quality: 0.8,
@@ -217,20 +220,16 @@ export const MediaPicker: React.FC<MediaPickerProps> = ({ onMediaSelect, onClose
 
       // Use the enhanced error handling for PHPhotosErrorDomain issues
       if (isPHPhotosError3164(error)) {
-        Alert.alert(
-          "Photo Library Access Issue",
-          getPHPhotosErrorMessage(error),
-          [
-            { text: "Cancel", style: "cancel" },
-            { text: "Try Again", onPress: () => pickImageFromGallery() },
-            { text: "Open Settings", onPress: () => Linking.openSettings?.() },
-          ]
-        );
+        Alert.alert("Photo Library Access Issue", getPHPhotosErrorMessage(error), [
+          { text: "Cancel", style: "cancel" },
+          { text: "Try Again", onPress: () => pickImageFromGallery() },
+          { text: "Open Settings", onPress: () => Linking.openSettings?.() },
+        ]);
       } else if (error?.message?.includes("PHPhotosErrorDomain")) {
         if (error?.message?.includes("3311")) {
           Alert.alert(
             "Network Required",
-            "Network access is required to load photos from iCloud. Please check your internet connection."
+            "Network access is required to load photos from iCloud. Please check your internet connection.",
           );
         } else {
           Alert.alert("Photo Library Error", "Unable to access photo library. Please try again.");

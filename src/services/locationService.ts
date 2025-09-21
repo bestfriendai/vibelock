@@ -1,11 +1,6 @@
 import * as Location from "expo-location";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { locationCache } from "./cacheService";
 import { AppError, parseSupabaseError } from "../utils/errorHandling";
-
-// Constants for secure location caching
-const LOCATION_CACHE_EXPIRY = 30 * 60 * 1000; // 30 minutes
-const MAX_CACHED_LOCATIONS = 5;
 
 // Sanitize location data for storage - reduce precision for privacy
 const sanitizeLocationForStorage = (location: LocationData): LocationData => {
@@ -19,17 +14,6 @@ const sanitizeLocationForStorage = (location: LocationData): LocationData => {
         }
       : undefined,
   };
-};
-
-// Validate cached location data
-const isValidCachedLocation = (location: any): boolean => {
-  if (!location || typeof location !== "object") return false;
-  if (typeof location.city !== "string" || typeof location.state !== "string") return false;
-  if (location.coordinates) {
-    if (typeof location.coordinates.latitude !== "number" || typeof location.coordinates.longitude !== "number")
-      return false;
-  }
-  return true;
 };
 
 export interface LocationData {

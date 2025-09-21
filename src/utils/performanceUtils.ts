@@ -1,13 +1,9 @@
-import { performanceMonitor } from './performance';
-import { Platform } from 'react-native';
+import { performanceMonitor } from "./performance";
 
 /**
  * Measure performance of an operation
  */
-export function measurePerformance<T>(
-  operation: string,
-  callback: () => T
-): T {
+export function measurePerformance<T>(operation: string, callback: () => T): T {
   const stop = performanceMonitor.start(operation);
   try {
     const result = callback();
@@ -27,10 +23,7 @@ export function measurePerformance<T>(
 /**
  * Detect memory leaks by tracking component instances
  */
-export function detectMemoryLeaks(
-  componentName: string,
-  instances: Map<string, any>
-): string[] {
+export function detectMemoryLeaks(componentName: string, instances: Map<string, any>): string[] {
   const leaks: string[] = [];
   const now = Date.now();
 
@@ -46,11 +39,7 @@ export function detectMemoryLeaks(
 /**
  * Get optimal settings based on device capabilities
  */
-export function optimizeForDevice(deviceSpecs: {
-  memory?: number;
-  cpu?: number;
-  screenDensity?: number;
-}) {
+export function optimizeForDevice(deviceSpecs: { memory?: number; cpu?: number; screenDensity?: number }) {
   const isLowEnd = (deviceSpecs.memory || 4096) < 2048 || (deviceSpecs.cpu || 2) < 1.5;
   const isHighEnd = (deviceSpecs.memory || 4096) > 6144 && (deviceSpecs.cpu || 2) > 2.5;
 
@@ -60,9 +49,9 @@ export function optimizeForDevice(deviceSpecs: {
     updateCellsBatchingPeriod: isLowEnd ? 100 : isHighEnd ? 30 : 50,
     enableAnimations: !isLowEnd,
     enableShadows: isHighEnd,
-    imageQuality: isLowEnd ? 'low' : isHighEnd ? 'high' : 'medium',
+    imageQuality: isLowEnd ? "low" : isHighEnd ? "high" : "medium",
     memoryLimit: isLowEnd ? 100 : isHighEnd ? 500 : 200,
-    cacheSize: isLowEnd ? 3 : isHighEnd ? 10 : 5
+    cacheSize: isLowEnd ? 3 : isHighEnd ? 10 : 5,
   };
 }
 
@@ -72,7 +61,7 @@ export function optimizeForDevice(deviceSpecs: {
 export function throttleWithPerformance<T extends (...args: any[]) => any>(
   func: T,
   delay: number,
-  performanceThreshold: number = 16
+  performanceThreshold: number = 16,
 ): T {
   let lastCall = 0;
   let timeout: NodeJS.Timeout | null = null;
@@ -83,7 +72,7 @@ export function throttleWithPerformance<T extends (...args: any[]) => any>(
     const timeSinceLastCall = now - lastCall;
 
     // Adjust delay based on current performance
-    const fps = performanceMonitor.average('frame') || 60;
+    const fps = performanceMonitor.average("frame") || 60;
     const adjustedDelay = fps < 30 ? delay * 2 : delay;
 
     if (timeSinceLastCall >= adjustedDelay) {
@@ -107,11 +96,7 @@ export function throttleWithPerformance<T extends (...args: any[]) => any>(
 /**
  * Batch updates for efficient state changes
  */
-export function batchUpdates<T>(
-  updates: T[],
-  batchSize: number,
-  processBatch: (batch: T[]) => void
-): void {
+export function batchUpdates<T>(updates: T[], batchSize: number, processBatch: (batch: T[]) => void): void {
   for (let i = 0; i < updates.length; i += batchSize) {
     const batch = updates.slice(i, i + batchSize);
 
@@ -125,10 +110,7 @@ export function batchUpdates<T>(
 /**
  * Measure render time for a component
  */
-export function measureRenderTime(
-  componentName: string,
-  renderFunction: () => void
-): number {
+export function measureRenderTime(componentName: string, renderFunction: () => void): number {
   const startTime = performance.now();
   renderFunction();
   const endTime = performance.now();
@@ -142,10 +124,7 @@ export function measureRenderTime(
 /**
  * Get optimal FlashList settings
  */
-export function getOptimalFlashListSettings(
-  messageCount: number,
-  deviceSpecs: any
-): any {
+export function getOptimalFlashListSettings(messageCount: number, deviceSpecs: any): any {
   const optimized = optimizeForDevice(deviceSpecs);
 
   // Adjust based on message count
@@ -155,7 +134,7 @@ export function getOptimalFlashListSettings(
       windowSize: Math.max(5, optimized.windowSize - 10),
       maxToRenderPerBatch: Math.max(3, optimized.maxToRenderPerBatch - 5),
       disableAutoLayout: true,
-      drawDistance: 100
+      drawDistance: 100,
     };
   } else if (messageCount > 100) {
     return {
@@ -163,23 +142,21 @@ export function getOptimalFlashListSettings(
       windowSize: Math.max(10, optimized.windowSize - 5),
       maxToRenderPerBatch: Math.max(5, optimized.maxToRenderPerBatch - 2),
       disableAutoLayout: messageCount > 200,
-      drawDistance: 200
+      drawDistance: 200,
     };
   }
 
   return {
     ...optimized,
     disableAutoLayout: false,
-    drawDistance: 300
+    drawDistance: 300,
   };
 }
 
 /**
  * Monitor scroll performance
  */
-export function monitorScrollPerformance(
-  scrollHandler: (event: any) => void
-): (event: any) => void {
+export function monitorScrollPerformance(scrollHandler: (event: any) => void): (event: any) => void {
   let lastScrollTime = 0;
   let scrollEvents = 0;
   let lagCount = 0;
@@ -196,14 +173,14 @@ export function monitorScrollPerformance(
 
     // Report metrics every 50 scroll events
     if (scrollEvents % 50 === 0) {
-      performanceMonitor.recordMetric('scrollPerformance', {
+      performanceMonitor.recordMetric("scrollPerformance", {
         events: scrollEvents,
         lagEvents: lagCount,
-        lagRate: lagCount / scrollEvents
+        lagRate: lagCount / scrollEvents,
       });
 
       if (lagCount / scrollEvents > 0.2) {
-        console.warn('Poor scroll performance detected');
+        console.warn("Poor scroll performance detected");
       }
     }
 
@@ -225,36 +202,34 @@ export function generatePerformanceReport(metrics: any): {
 
   // Analyze render performance
   if (metrics.averageRenderTime > 16) {
-    recommendations.push('Optimize component rendering - consider memoization');
+    recommendations.push("Optimize component rendering - consider memoization");
     score -= 20;
   }
 
   // Analyze memory usage
   if (metrics.memoryUsage > 0.8) {
-    recommendations.push('High memory usage - implement cleanup strategies');
+    recommendations.push("High memory usage - implement cleanup strategies");
     score -= 25;
   }
 
   // Analyze FPS
   if (metrics.fps < 30) {
-    recommendations.push('Low FPS - reduce animations and visual effects');
+    recommendations.push("Low FPS - reduce animations and visual effects");
     score -= 30;
   }
 
   // Analyze scroll performance
   if (metrics.scrollLag > 100) {
-    recommendations.push('Scroll lag detected - reduce list complexity');
+    recommendations.push("Scroll lag detected - reduce list complexity");
     score -= 15;
   }
 
-  const summary = score >= 80 ? 'Excellent' :
-                  score >= 60 ? 'Good' :
-                  score >= 40 ? 'Fair' : 'Poor';
+  const summary = score >= 80 ? "Excellent" : score >= 60 ? "Good" : score >= 40 ? "Fair" : "Poor";
 
   return {
     summary: `Performance: ${summary} (${score}/100)`,
     recommendations,
-    score
+    score,
   };
 }
 
@@ -264,7 +239,7 @@ export function generatePerformanceReport(metrics: any): {
 export function debounceWithMemory<T extends (...args: any[]) => any>(
   func: T,
   delay: number,
-  memoryThreshold: number = 0.8
+  memoryThreshold: number = 0.8,
 ): T {
   let timeout: NodeJS.Timeout | null = null;
 
@@ -274,7 +249,7 @@ export function debounceWithMemory<T extends (...args: any[]) => any>(
     }
 
     // Check memory pressure
-    performanceMonitor.trackMemoryUsage().then(usage => {
+    performanceMonitor.trackMemoryUsage().then((usage) => {
       // Increase delay if memory pressure is high
       const adjustedDelay = usage > memoryThreshold ? delay * 2 : delay;
 

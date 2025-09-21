@@ -1,11 +1,9 @@
 import React, { useEffect, useCallback } from "react";
 import { StyleSheet, View, Dimensions, ActivityIndicator } from "react-native";
 import {
-  PinchGestureHandler,
-  PanGestureHandler,
-  TapGestureHandler,
+  GestureDetector,
+  Gesture,
   GestureHandlerRootView,
-  State,
 } from "react-native-gesture-handler";
 import Animated, {
   useSharedValue,
@@ -14,9 +12,8 @@ import Animated, {
   withDecay,
   withTiming,
   runOnJS,
-  useAnimatedGestureHandler,
   interpolate,
-  Extrapolate,
+  Extrapolation,
 } from "react-native-reanimated";
 import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
@@ -70,7 +67,7 @@ export const ZoomableImage: React.FC<ZoomableImageProps> = ({
       const maxY = Math.max(0, (scaledHeight - height) / 2);
       return { maxX, maxY };
     },
-    [width, height]
+    [width, height],
   );
 
   // Reset to initial state
@@ -93,16 +90,16 @@ export const ZoomableImage: React.FC<ZoomableImageProps> = ({
       const constrainedY = Math.max(-maxY, Math.min(maxY, y));
       return { x: constrainedX, y: constrainedY };
     },
-    [getMaxTranslate]
+    [getMaxTranslate],
   );
 
   // Pinch gesture handler
-  const pinchHandler = useAnimatedGestureHandler({
-    onStart: () => {
+  const pinchGesture = Gesture.Pinch()
+    .onStart(() => {
       isZooming.value = true;
       lastScale.value = scale.value;
-    },
-    onActive: (event) => {
+    })
+    .onUpdate((event) => {
       const newScale = Math.max(minZoom, Math.min(maxZoom, lastScale.value * event.scale));
       scale.value = newScale;
 
@@ -119,8 +116,8 @@ export const ZoomableImage: React.FC<ZoomableImageProps> = ({
       if (onZoomChange) {
         runOnJS(onZoomChange)(newScale);
       }
-    },
-    onEnd: () => {
+    })
+    .onEnd(() => {
       isZooming.value = false;
       lastScale.value = scale.value;
 
@@ -128,28 +125,27 @@ export const ZoomableImage: React.FC<ZoomableImageProps> = ({
       if (scale.value < minZoom * 1.1) {
         reset();
       }
-    },
-  });
+    });
 
   // Pan gesture handler
-  const panHandler = useAnimatedGestureHandler({
-    onStart: () => {
+  const panGesture = Gesture.Pan()
+    .onStart(() => {
       isPanning.value = true;
       lastTranslateX.value = translateX.value;
       lastTranslateY.value = translateY.value;
-    },
-    onActive: (event) => {
+    })
+    .onUpdate((event) => {
       if (scale.value > 1) {
         const { x, y } = constrainTranslation(
           lastTranslateX.value + event.translationX,
           lastTranslateY.value + event.translationY,
-          scale.value
+          scale.value,
         );
         translateX.value = x;
         translateY.value = y;
       }
-    },
-    onEnd: (event) => {
+    })
+    .onEnd((event) => {
       isPanning.value = false;
 
       if (scale.value > 1) {
@@ -157,7 +153,7 @@ export const ZoomableImage: React.FC<ZoomableImageProps> = ({
         const { x: finalX, y: finalY } = constrainTranslation(
           translateX.value + event.velocityX * 0.1,
           translateY.value + event.velocityY * 0.1,
-          scale.value
+          scale.value,
         );
 
         translateX.value = withDecay({
@@ -174,12 +170,14 @@ export const ZoomableImage: React.FC<ZoomableImageProps> = ({
 
       lastTranslateX.value = translateX.value;
       lastTranslateY.value = translateY.value;
-    },
-  });
+    })
+    .minPointers(1)
+    .maxPointers(2);
 
   // Double tap handler
-  const doubleTapHandler = useAnimatedGestureHandler({
-    onEnd: (event) => {
+  const doubleTapGesture = Gesture.Tap()
+    .numberOfTaps(2)
+    .onEnd((event) => {
       runOnJS(Haptics.impactAsync)(Haptics.ImpactFeedbackStyle.Light);
 
       if (scale.value > 1) {
@@ -208,17 +206,12 @@ export const ZoomableImage: React.FC<ZoomableImageProps> = ({
           runOnJS(onZoomChange)(targetScale);
         }
       }
-    },
-  });
+    });
 
   // Animated styles
   const animatedStyle = useAnimatedStyle(() => {
     return {
-      transform: [
-        { translateX: translateX.value },
-        { translateY: translateY.value },
-        { scale: scale.value },
-      ],
+      transform: [{ translateX: translateX.value }, { translateY: translateY.value }, { scale: scale.value }],
     };
   });
 
@@ -236,7 +229,7 @@ export const ZoomableImage: React.FC<ZoomableImageProps> = ({
       setError(errorMessage);
       onError?.(errorMessage);
     },
-    [onError]
+    [onError],
   );
 
   // Reset on URI change
@@ -256,41 +249,36 @@ export const ZoomableImage: React.FC<ZoomableImageProps> = ({
     );
   }
 
+  // Compose gestures
+  const composedGesture = Gesture.Simultaneous(
+    doubleTapGesture,
+    Gesture.Simultaneous(pinchGesture, panGesture)
+  );
+
   return (
     <GestureHandlerRootView style={[styles.container, { width, height }]}>
-      <TapGestureHandler numberOfTaps={2} onHandlerStateChange={doubleTapHandler}>
+      <GestureDetector gesture={composedGesture}>
         <Animated.View style={[styles.container, { width, height }]}>
-          <PinchGestureHandler onGestureEvent={pinchHandler}>
-            <Animated.View style={[styles.container, { width, height }]}>
-              <PanGestureHandler
-                onGestureEvent={panHandler}
-                minPointers={1}
-                maxPointers={2}
-                shouldCancelWhenOutside
-              >
-                <Animated.View style={[styles.imageContainer, animatedStyle]}>
-                  <Image
-                    source={{ uri }}
-                    style={{ width, height }}
-                    contentFit="contain"
-                    onLoad={handleLoad}
-                    onError={handleError}
-                    accessible={accessible}
-                    accessibilityLabel={accessibilityLabel}
-                    accessibilityHint="Pinch to zoom, double tap to toggle zoom"
-                    transition={200}
-                  />
-                  {loading && (
-                    <View style={[styles.loadingOverlay, { width, height }]}>
-                      <ActivityIndicator size="large" color="white" />
-                    </View>
-                  )}
-                </Animated.View>
-              </PanGestureHandler>
-            </Animated.View>
-          </PinchGestureHandler>
+          <Animated.View style={[styles.imageContainer, animatedStyle]}>
+            <Image
+              source={{ uri }}
+              style={{ width, height }}
+              contentFit="contain"
+              onLoad={handleLoad}
+              onError={handleError}
+              accessible={accessible}
+              accessibilityLabel={accessibilityLabel}
+              accessibilityHint="Pinch to zoom, double tap to toggle zoom"
+              transition={200}
+            />
+            {loading && (
+              <View style={[styles.loadingOverlay, { width, height }]}>
+                <ActivityIndicator size="large" color="white" />
+              </View>
+            )}
+          </Animated.View>
         </Animated.View>
-      </TapGestureHandler>
+      </GestureDetector>
     </GestureHandlerRootView>
   );
 };

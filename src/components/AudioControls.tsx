@@ -1,24 +1,11 @@
 import React, { useMemo } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  ActivityIndicator,
-  AccessibilityInfo,
-} from "react-native";
+import { View, Text, StyleSheet, Pressable, ActivityIndicator } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Slider from "@react-native-community/slider";
 import { useAudioPlayer } from "../hooks/useAudioPlayer";
 import * as Haptics from "expo-haptics";
 import { PlaybackRate } from "../types";
-import Animated, {
-  useAnimatedStyle,
-  withSpring,
-  withTiming,
-  useSharedValue,
-  interpolate,
-} from "react-native-reanimated";
+import Animated, { useAnimatedStyle, withSpring, useSharedValue } from "react-native-reanimated";
 import { formatDuration } from "../utils/audioUtils";
 
 interface AudioControlsProps {
@@ -60,17 +47,12 @@ export const AudioControls: React.FC<AudioControlsProps> = ({
 }) => {
   const {
     isPlaying,
-    isPaused,
     isLoading,
     currentTime,
     duration,
     progress,
     error,
     playbackRate,
-    play,
-    pause,
-    resume,
-    stop,
     seek,
     setPlaybackRate,
     togglePlayPause,
@@ -117,9 +99,9 @@ export const AudioControls: React.FC<AudioControlsProps> = ({
       playbackRateScale.value = withSpring(1, { duration: 100 });
     });
 
-    const currentIndex = playbackRates.indexOf(playbackRate);
+    const currentIndex = playbackRates.indexOf(playbackRate || 1);
     const nextIndex = (currentIndex + 1) % playbackRates.length;
-    await setPlaybackRate(playbackRates[nextIndex]);
+    await setPlaybackRate(playbackRates[nextIndex] as PlaybackRate);
   };
 
   const handleRetry = async () => {
@@ -140,10 +122,9 @@ export const AudioControls: React.FC<AudioControlsProps> = ({
   });
 
   const iconName = useMemo(() => {
-    if (isLoading) return null;
     if (isPlaying) return "pause";
     return "play";
-  }, [isLoading, isPlaying]);
+  }, [isPlaying]);
 
   const accessibilityLabel = useMemo(() => {
     if (!accessible) return undefined;
@@ -159,15 +140,9 @@ export const AudioControls: React.FC<AudioControlsProps> = ({
     return `Audio progress: ${currentFormatted} of ${totalFormatted}`;
   }, [accessible, showProgressBar, currentTime, duration]);
 
-  const containerStyle = [
-    styles.container,
-    orientation === "vertical" && styles.containerVertical,
-  ];
+  const containerStyle = [styles.container, orientation === "vertical" && styles.containerVertical];
 
-  const controlsStyle = [
-    styles.controls,
-    orientation === "vertical" && styles.controlsVertical,
-  ];
+  const controlsStyle = [styles.controls, orientation === "vertical" && styles.controlsVertical];
 
   if (error) {
     return (
@@ -215,9 +190,7 @@ export const AudioControls: React.FC<AudioControlsProps> = ({
 
         {showTimeDisplay && (
           <View style={styles.timeDisplay}>
-            <Text style={[styles.timeText, { color: primaryColor }]}>
-              {formatDuration(currentTime)}
-            </Text>
+            <Text style={[styles.timeText, { color: primaryColor }]}>{formatDuration(currentTime)}</Text>
             <Text style={styles.timeSeparator}>/</Text>
             <Text style={styles.timeText}>{formatDuration(duration)}</Text>
           </View>
@@ -226,19 +199,13 @@ export const AudioControls: React.FC<AudioControlsProps> = ({
         {showPlaybackRate && (
           <AnimatedPressable
             onPress={handlePlaybackRateChange}
-            style={[
-              styles.rateButton,
-              playbackRateAnimatedStyle,
-              { borderColor: primaryColor },
-            ]}
+            style={[styles.rateButton, playbackRateAnimatedStyle, { borderColor: primaryColor }]}
             accessible={accessible}
             accessibilityLabel={`Playback rate: ${playbackRate}x`}
             accessibilityRole="button"
             accessibilityHint="Tap to change playback speed"
           >
-            <Text style={[styles.rateText, { color: primaryColor }]}>
-              {playbackRate}x
-            </Text>
+            <Text style={[styles.rateText, { color: primaryColor }]}>{playbackRate}x</Text>
           </AnimatedPressable>
         )}
       </View>

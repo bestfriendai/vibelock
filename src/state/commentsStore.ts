@@ -148,7 +148,7 @@ const useCommentsStore = create<CommentsStore>()(
                 comments: {
                   ...state.comments,
                   [reviewId]: (state.comments[reviewId] || []).map((c) =>
-                    c.id === optimisticComment.id ? createdComment as unknown as ReviewComment : c,
+                    c.id === optimisticComment.id ? (createdComment as unknown as ReviewComment) : c,
                   ) as ReviewComment[],
                 },
               }));
@@ -182,7 +182,11 @@ const useCommentsStore = create<CommentsStore>()(
                     type: "new_comment",
                     title: "Someone replied to your comment",
                     body: commentData.content.slice(0, 100),
-                    data: { reviewId, parentCommentId: (commentData as any).parentCommentId, commentId: createdComment.id },
+                    data: {
+                      reviewId,
+                      parentCommentId: (commentData as any).parentCommentId,
+                      commentId: createdComment.id,
+                    },
                   });
                 }
               }

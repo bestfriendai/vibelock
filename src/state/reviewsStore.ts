@@ -429,6 +429,7 @@ const useReviewsStore = create<ReviewsStore>()(
 
           // Upload media files to Supabase Storage if they are local files
           const uploadedMedia: MediaItem[] = [];
+          const mediaUploads: { failed?: Array<{ index: number; type: string; uri: string; error: string }> } = {};
           console.log(`🚀 Starting media upload process for ${data.media.length} items`);
 
           for (const [index, mediaItem] of data.media.entries()) {
@@ -447,13 +448,14 @@ const useReviewsStore = create<ReviewsStore>()(
 
             try {
               let processedUri = mediaItem.uri;
-              const mime = mediaItem.type === "video" 
-                ? (mediaItem.uri.toLowerCase().endsWith(".mov") ? "video/quicktime" : "video/mp4")
-                : "image/jpeg";
+              const mime =
+                mediaItem.type === "video"
+                  ? mediaItem.uri.toLowerCase().endsWith(".mov")
+                    ? "video/quicktime"
+                    : "video/mp4"
+                  : "image/jpeg";
               let fileName = `reviews/${Date.now()}_${Math.random().toString(36).substring(7)}`;
-              fileName += mediaItem.type === "video" 
-                ? (mime === "video/quicktime" ? ".mov" : ".mp4") 
-                : ".jpg";
+              fileName += mediaItem.type === "video" ? (mime === "video/quicktime" ? ".mov" : ".mp4") : ".jpg";
 
               if (mediaItem.type === "image") {
                 // Compress and resize image using expo-image-manipulator
@@ -474,7 +476,7 @@ const useReviewsStore = create<ReviewsStore>()(
                 const uploadResult = await storageService.uploadFile(processedUri, {
                   bucket: "review-images",
                   fileName: fileName,
-                  contentType: "image/jpeg"
+                  contentType: "image/jpeg",
                 });
                 const downloadURL = uploadResult.url || "";
 
@@ -542,7 +544,7 @@ const useReviewsStore = create<ReviewsStore>()(
                 index,
                 type: mediaItem.type,
                 uri: mediaItem.uri,
-                error: mediaError.userMessage || 'Unknown upload error',
+                error: mediaError.userMessage || "Unknown upload error",
               });
 
               // Continue with other media items
@@ -558,7 +560,7 @@ const useReviewsStore = create<ReviewsStore>()(
           const hasRemoteMedia = remoteMedia.length > 0;
           if (!hasRemoteMedia && mediaUploads.failed && mediaUploads.failed.length > 0) {
             // All uploads failed
-            const errorMsg = `Failed to upload media. Errors: ${mediaUploads.failed.map(f => f.error).join('; ')}`;
+            const errorMsg = `Failed to upload media. Errors: ${mediaUploads.failed.map((f) => f.error).join("; ")}`;
             throw new Error(errorMsg);
           }
 
@@ -616,7 +618,7 @@ const useReviewsStore = create<ReviewsStore>()(
           if (mediaUploads.failed && mediaUploads.failed.length > 0 && hasRemoteMedia) {
             const failedCount = mediaUploads.failed.length;
             const successCount = remoteMedia.length;
-            const detailMsg = `${failedCount} item${failedCount > 1 ? 's' : ''} failed to upload, but review created with ${successCount} item${successCount > 1 ? 's' : ''}.`;
+            const detailMsg = `${failedCount} item${failedCount > 1 ? "s" : ""} failed to upload, but review created with ${successCount} item${successCount > 1 ? "s" : ""}.`;
             set({
               error: detailMsg,
               isLoading: false,

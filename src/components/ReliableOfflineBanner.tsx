@@ -25,7 +25,7 @@ export default function ReliableOfflineBanner({ onRetry, useReliableCheck = true
     console.log(`📶 ReliableOfflineBanner: Network state changed:`, {
       isOnline,
       method: details.method,
-      details: details.details
+      details: details.details,
     });
 
     setLastCheckResult(details);
@@ -54,14 +54,11 @@ export default function ReliableOfflineBanner({ onRetry, useReliableCheck = true
     });
 
     // Set up monitoring
-    const cleanup = createReliableNetworkMonitor(
-      handleNetworkStateChange,
-      {
-        useReliableCheck,
-        checkInterval: useReliableCheck ? 30000 : 0, // Check every 30s if using reliable method
-        debounceMs: 1000 // 1 second debounce
-      }
-    );
+    const cleanup = createReliableNetworkMonitor(handleNetworkStateChange, {
+      useReliableCheck,
+      checkInterval: useReliableCheck ? 30000 : 0, // Check every 30s if using reliable method
+      debounceMs: 1000, // 1 second debounce
+    });
 
     cleanupRef.current = cleanup;
 
@@ -82,11 +79,11 @@ export default function ReliableOfflineBanner({ onRetry, useReliableCheck = true
 
   const handleRetry = async () => {
     console.log(`📶 ReliableOfflineBanner: Retry button pressed`);
-    
+
     if (onRetry) {
       onRetry();
     }
-    
+
     // Force a reliable network check
     try {
       const result = await reliableNetworkCheck();
@@ -103,13 +100,13 @@ export default function ReliableOfflineBanner({ onRetry, useReliableCheck = true
 
   const getMethodColor = () => {
     if (!lastCheckResult) return "bg-red-600";
-    
+
     switch (lastCheckResult.method) {
-      case 'fetch':
+      case "fetch":
         return "bg-red-700"; // Fetch-based detection (more reliable)
-      case 'netinfo':
+      case "netinfo":
         return "bg-red-500"; // NetInfo-based detection
-      case 'combined':
+      case "combined":
         return "bg-red-600"; // Combined detection
       default:
         return "bg-red-600";
@@ -118,7 +115,7 @@ export default function ReliableOfflineBanner({ onRetry, useReliableCheck = true
 
   const getMethodText = () => {
     if (!lastCheckResult) return "No internet connection";
-    
+
     const baseText = "No internet connection";
     if (useReliableCheck) {
       return `${baseText} (${lastCheckResult.method})`;
@@ -137,7 +134,7 @@ export default function ReliableOfflineBanner({ onRetry, useReliableCheck = true
           <Text className="text-white font-medium">{getMethodText()}</Text>
           {lastCheckResult && useReliableCheck && (
             <Text className="text-white/70 text-xs">
-              Method: {lastCheckResult.method} | 
+              Method: {lastCheckResult.method} |
               {lastCheckResult.details.fetch && ` Fetch: ${lastCheckResult.details.fetch.responseTime}ms`}
               {lastCheckResult.details.netinfo && ` NetInfo: ${lastCheckResult.details.netinfo.type}`}
             </Text>

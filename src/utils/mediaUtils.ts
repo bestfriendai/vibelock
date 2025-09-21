@@ -7,7 +7,7 @@ export function calculateDisplayDimensions(
   originalWidth: number,
   originalHeight: number,
   maxWidth: number,
-  maxHeight: number
+  maxHeight: number,
 ): { width: number; height: number; aspectRatio: number } {
   const aspectRatio = originalWidth / originalHeight;
 
@@ -74,7 +74,7 @@ export function getMediaType(uri: string): "image" | "video" | "unknown" {
  */
 export async function validateMediaFile(
   uri: string,
-  type: "image" | "video"
+  type: "image" | "video",
 ): Promise<{ valid: boolean; error?: string }> {
   try {
     // Check if file exists
@@ -123,7 +123,7 @@ export function generateMediaId(): string {
  */
 export function getOptimalThumbnailSize(
   originalWidth: number,
-  originalHeight: number
+  originalHeight: number,
 ): { width: number; height: number } {
   const maxDimension = 320;
   const aspectRatio = originalWidth / originalHeight;
@@ -158,9 +158,7 @@ export function formatDuration(seconds: number): string {
   const secs = Math.floor(seconds % 60);
 
   if (hours > 0) {
-    return `${hours}:${minutes.toString().padStart(2, "0")}:${secs
-      .toString()
-      .padStart(2, "0")}`;
+    return `${hours}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   }
 
   return `${minutes}:${secs.toString().padStart(2, "0")}`;
@@ -188,9 +186,7 @@ export function isMediaSupported(mimeType: string): boolean {
     "video/avi",
   ];
 
-  return supportedTypes.some((type) =>
-    mimeType.toLowerCase().includes(type)
-  );
+  return supportedTypes.some((type) => mimeType.toLowerCase().includes(type));
 }
 
 /**
@@ -207,7 +203,7 @@ export function getMediaTypeFromMime(mimeType: string): "image" | "video" | "unk
  */
 export function getFileExtension(uri: string): string {
   const match = uri.match(/\.([^.]+)$/);
-  return match ? match[1].toLowerCase() : "";
+  return match && match[1] ? match[1].toLowerCase() : "";
 }
 
 /**
@@ -222,10 +218,7 @@ export function getThumbnailUri(originalUri: string): string {
 /**
  * Estimate upload time based on file size and connection speed
  */
-export function estimateUploadTime(
-  fileSizeBytes: number,
-  connectionSpeedMbps: number = 10
-): number {
+export function estimateUploadTime(fileSizeBytes: number, connectionSpeedMbps: number = 10): number {
   // Convert Mbps to bytes per second
   const bytesPerSecond = (connectionSpeedMbps * 1024 * 1024) / 8;
   // Add 20% overhead for protocol and processing
@@ -236,11 +229,7 @@ export function estimateUploadTime(
 /**
  * Create a data URI placeholder for loading states
  */
-export function createPlaceholderDataUri(
-  width: number = 1,
-  height: number = 1,
-  color: string = "#E5E5E7"
-): string {
+export function createPlaceholderDataUri(width: number = 1, height: number = 1, color: string = "#E5E5E7"): string {
   // Simple 1x1 transparent PNG
   return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
 }

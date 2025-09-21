@@ -10,7 +10,7 @@ import { requireAuthentication } from "./authUtils";
 import useAuthStore from "../state/authStore";
 import useChatStore from "../state/chatStore";
 
-interface TestResult {
+export interface TestResult {
   step: string;
   success: boolean;
   error?: string;
@@ -22,7 +22,7 @@ export class ChatroomTester {
 
   private addResult(step: string, success: boolean, error?: string, data?: any) {
     this.results.push({ step, success, error, data });
-    console.log(`${success ? '✅' : '❌'} ${step}${error ? `: ${error}` : ''}`);
+    console.log(`${success ? "✅" : "❌"} ${step}${error ? `: ${error}` : ""}`);
   }
 
   async runCompleteTest(): Promise<TestResult[]> {
@@ -32,42 +32,43 @@ export class ChatroomTester {
     try {
       // Test 1: Database Connection
       await this.testDatabaseConnection();
-      
+
       // Test 2: Authentication State
       await this.testAuthenticationState();
-      
+
       // Test 3: Chat Rooms Loading
       await this.testChatRoomsLoading();
-      
+
       // Test 4: Real-time Service Initialization
       await this.testRealtimeServiceInit();
-      
+
       // Test 5: Chat Room Joining
       await this.testChatRoomJoining();
-      
+
       // Test 6: Message Sending
       await this.testMessageSending();
-      
+
       // Test 7: Message Loading
       await this.testMessageLoading();
-      
+
       // Test 8: Connection Status
       await this.testConnectionStatus();
-
     } catch (error) {
       this.addResult("Complete Test", false, `Test suite failed: ${error}`);
     }
 
     console.log("\n📊 Test Results Summary:");
-    const passed = this.results.filter(r => r.success).length;
+    const passed = this.results.filter((r) => r.success).length;
     const total = this.results.length;
     console.log(`${passed}/${total} tests passed`);
-    
+
     if (passed < total) {
       console.log("\n❌ Failed tests:");
-      this.results.filter(r => !r.success).forEach(r => {
-        console.log(`  - ${r.step}: ${r.error}`);
-      });
+      this.results
+        .filter((r) => !r.success)
+        .forEach((r) => {
+          console.log(`  - ${r.step}: ${r.error}`);
+        });
     }
 
     return this.results;
@@ -75,11 +76,8 @@ export class ChatroomTester {
 
   private async testDatabaseConnection() {
     try {
-      const { data, error } = await supabase
-        .from("chat_rooms_firebase")
-        .select("count")
-        .limit(1);
-      
+      const { data, error } = await supabase.from("chat_rooms_firebase").select("count").limit(1);
+
       if (error) throw error;
       this.addResult("Database Connection", true, undefined, { connected: true });
     } catch (error) {
@@ -91,7 +89,7 @@ export class ChatroomTester {
     try {
       const authState = useAuthStore.getState();
       const isAuthenticated = authState.isAuthenticated && !!authState.user && !authState.isGuestMode;
-      
+
       if (!isAuthenticated) {
         this.addResult("Authentication State", false, "User not authenticated or in guest mode");
         return;
@@ -99,11 +97,11 @@ export class ChatroomTester {
 
       // Test requireAuthentication function
       const { user, supabaseUser } = await requireAuthentication("test authentication");
-      
+
       this.addResult("Authentication State", true, undefined, {
         hasUser: !!user,
         hasSupabaseUser: !!supabaseUser,
-        userId: user?.id?.slice(-8)
+        userId: user?.id?.slice(-8),
       });
     } catch (error) {
       this.addResult("Authentication State", false, `${error}`);
@@ -114,11 +112,11 @@ export class ChatroomTester {
     try {
       const chatStore = useChatStore.getState();
       await chatStore.loadChatRooms();
-      
+
       const rooms = chatStore.chatRooms;
-      this.addResult("Chat Rooms Loading", true, undefined, { 
+      this.addResult("Chat Rooms Loading", true, undefined, {
         roomCount: rooms.length,
-        rooms: rooms.slice(0, 3).map(r => ({ id: r.id.slice(-8), name: r.name }))
+        rooms: rooms.slice(0, 3).map((r) => ({ id: r.id.slice(-8), name: r.name })),
       });
     } catch (error) {
       this.addResult("Chat Rooms Loading", false, `${error}`);
@@ -128,9 +126,9 @@ export class ChatroomTester {
   private async testRealtimeServiceInit() {
     try {
       await enhancedRealtimeChatService.initialize();
-      this.addResult("Real-time Service Init", true, undefined, { 
+      this.addResult("Real-time Service Init", true, undefined, {
         initialized: true,
-        activeChannels: enhancedRealtimeChatService.getActiveChannelsCount()
+        activeChannels: enhancedRealtimeChatService.getActiveChannelsCount(),
       });
     } catch (error) {
       this.addResult("Real-time Service Init", false, `${error}`);
@@ -141,19 +139,24 @@ export class ChatroomTester {
     try {
       const chatStore = useChatStore.getState();
       const rooms = chatStore.chatRooms;
-      
+
       if (rooms.length === 0) {
         this.addResult("Chat Room Joining", false, "No chat rooms available to join");
         return;
       }
 
       const testRoom = rooms[0];
+      if (!testRoom) {
+        this.addResult("Chat Room Joining", false, "First room is undefined");
+        return;
+      }
+
       await chatStore.joinChatRoom(testRoom.id);
-      
+
       this.addResult("Chat Room Joining", true, undefined, {
         roomId: testRoom.id.slice(-8),
         roomName: testRoom.name,
-        currentRoom: !!chatStore.currentChatRoom
+        currentRoom: !!chatStore.currentChatRoom,
       });
     } catch (error) {
       this.addResult("Chat Room Joining", false, `${error}`);
@@ -164,7 +167,7 @@ export class ChatroomTester {
     try {
       const chatStore = useChatStore.getState();
       const currentRoom = chatStore.currentChatRoom;
-      
+
       if (!currentRoom) {
         this.addResult("Message Sending", false, "No current chat room");
         return;
@@ -172,10 +175,10 @@ export class ChatroomTester {
 
       const testMessage = `Test message from chatroom tester - ${new Date().toISOString()}`;
       await chatStore.sendMessage(currentRoom.id, testMessage);
-      
+
       this.addResult("Message Sending", true, undefined, {
         roomId: currentRoom.id.slice(-8),
-        messageContent: testMessage.slice(0, 50)
+        messageContent: testMessage.slice(0, 50),
       });
     } catch (error) {
       this.addResult("Message Sending", false, `${error}`);
@@ -186,7 +189,7 @@ export class ChatroomTester {
     try {
       const chatStore = useChatStore.getState();
       const currentRoom = chatStore.currentChatRoom;
-      
+
       if (!currentRoom) {
         this.addResult("Message Loading", false, "No current chat room");
         return;
@@ -194,11 +197,11 @@ export class ChatroomTester {
 
       await chatStore.loadMessages(currentRoom.id);
       const messages = chatStore.messages[currentRoom.id] || [];
-      
+
       this.addResult("Message Loading", true, undefined, {
         roomId: currentRoom.id.slice(-8),
         messageCount: messages.length,
-        latestMessage: messages[messages.length - 1]?.content?.slice(0, 30)
+        latestMessage: messages[messages.length - 1]?.content?.slice(0, 30),
       });
     } catch (error) {
       this.addResult("Message Loading", false, `${error}`);
@@ -209,15 +212,17 @@ export class ChatroomTester {
     try {
       const chatStore = useChatStore.getState();
       const connectionStatus = chatStore.connectionStatus;
-      
+
       const isHealthy = connectionStatus === "connected";
-      this.addResult("Connection Status", isHealthy, 
-        isHealthy ? undefined : `Connection status is ${connectionStatus}`, 
-        { 
+      this.addResult(
+        "Connection Status",
+        isHealthy,
+        isHealthy ? undefined : `Connection status is ${connectionStatus}`,
+        {
           status: connectionStatus,
           error: chatStore.error,
-          activeChannels: enhancedRealtimeChatService.getActiveChannelsCount()
-        }
+          activeChannels: enhancedRealtimeChatService.getActiveChannelsCount(),
+        },
       );
     } catch (error) {
       this.addResult("Connection Status", false, `${error}`);
@@ -229,11 +234,11 @@ export class ChatroomTester {
   }
 
   getFailedTests(): TestResult[] {
-    return this.results.filter(r => !r.success);
+    return this.results.filter((r) => !r.success);
   }
 
   getPassedTests(): TestResult[] {
-    return this.results.filter(r => r.success);
+    return this.results.filter((r) => r.success);
   }
 }
 

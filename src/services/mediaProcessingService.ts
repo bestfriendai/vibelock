@@ -1,7 +1,7 @@
 import { imageCompressionService, CompressionOptions } from "./imageCompressionService";
 import { videoThumbnailService, VideoThumbnailOptions } from "./videoThumbnailService";
 import * as FileSystem from "expo-file-system";
-import { Platform } from "react-native";
+import { Paths } from "expo-file-system";
 
 export interface MediaProcessingResult {
   processedUri: string;
@@ -47,7 +47,7 @@ class MediaProcessingService {
   async processMediaForChat(
     uri: string,
     type: "image" | "video",
-    options?: MediaProcessingOptions
+    options?: MediaProcessingOptions,
   ): Promise<MediaProcessingResult> {
     const startTime = Date.now();
 
@@ -79,7 +79,7 @@ class MediaProcessingService {
     uri: string,
     originalSize: number,
     options?: MediaProcessingOptions,
-    startTime?: number
+    startTime?: number,
   ): Promise<MediaProcessingResult> {
     // Report progress
     options?.onProgress?.(30);
@@ -96,17 +96,21 @@ class MediaProcessingService {
     // Report progress
     options?.onProgress?.(80);
 
+    if (!compressed.success || !compressed.uri) {
+      throw new Error(compressed.error || "Image compression failed");
+    }
+
     // Get compressed file info
     const compressedInfo = await FileSystem.getInfoAsync(compressed.uri);
-    const compressedSize = compressedInfo.size || 0;
+    const compressedSize = (compressedInfo as any).size || 0;
 
     // Report completion
     options?.onProgress?.(100);
 
     return {
       processedUri: compressed.uri,
-      width: compressed.width,
-      height: compressed.height,
+      width: 0, // Will be determined by image display component
+      height: 0, // Will be determined by image display component
       size: compressedSize,
       compressionRatio: originalSize > 0 ? compressedSize / originalSize : 1,
       processingTime: startTime ? Date.now() - startTime : undefined,
@@ -121,7 +125,7 @@ class MediaProcessingService {
     uri: string,
     originalSize: number,
     options?: MediaProcessingOptions,
-    startTime?: number
+    startTime?: number,
   ): Promise<MediaProcessingResult> {
     // Report progress
     options?.onProgress?.(30);
@@ -159,8 +163,8 @@ class MediaProcessingService {
    * Process multiple media items in batch
    */
   async processMediaBatch(
-    items: Array<{ uri: string; type: "image" | "video" }>,
-    options?: MediaProcessingOptions
+    items: { uri: string; type: "image" | "video" }[],
+    options?: MediaProcessingOptions,
   ): Promise<MediaProcessingResult[]> {
     const totalItems = items.length;
     const results: MediaProcessingResult[] = [];
@@ -168,11 +172,17 @@ class MediaProcessingService {
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
 
+      // Skip undefined items
+      if (!item) {
+        console.warn(`Skipping undefined item at index ${i}`);
+        continue;
+      }
+
       // Calculate progress for batch
       const itemProgress = (i / totalItems) * 100;
       const progressCallback = options?.onProgress
         ? (progress: number) => {
-            const overallProgress = itemProgress + (progress / totalItems);
+            const overallProgress = itemProgress + progress / totalItems;
             options.onProgress!(overallProgress);
           }
         : undefined;
@@ -189,22 +199,37 @@ class MediaProcessingService {
   }
 
   /**
-   * Validate media file
+   * Validate media file with enhanced error handling
    */
   private async validateFile(uri: string): Promise<FileSystem.FileInfo> {
-    const fileInfo = await FileSystem.getInfoAsync(uri);
+    try {
+      // Check if URI is valid
+      if (!uri || typeof uri !== "string") {
+        throw new Error("Invalid file URI");
+      }
 
-    if (!fileInfo.exists) {
-      throw new Error("File does not exist");
+      // Try to get file info with timeout
+      const fileInfo = await Promise.race([
+        FileSystem.getInfoAsync(uri),
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error("File access timeout")), 10000)),
+      ]);
+
+      if (!fileInfo.exists) {
+        throw new Error("File does not exist or is not accessible");
+      }
+
+      // Check file size (100MB limit) - handle both possible FileInfo structures
+      const maxSize = 100 * 1024 * 1024;
+      const fileSize = (fileInfo as any).size;
+      if (fileSize && fileSize > maxSize) {
+        throw new Error("File size exceeds 100MB limit");
+      }
+
+      return fileInfo;
+    } catch (error) {
+      console.warn("File validation failed:", error, "URI:", uri);
+      throw new Error(`File validation failed: ${error instanceof Error ? error.message : "Unknown error"}`);
     }
-
-    // Check file size (100MB limit)
-    const maxSize = 100 * 1024 * 1024;
-    if (fileInfo.size && fileInfo.size > maxSize) {
-      throw new Error("File size exceeds 100MB limit");
-    }
-
-    return fileInfo;
   }
 
   /**
@@ -212,7 +237,7 @@ class MediaProcessingService {
    */
   private async getVideoMetadata(uri: string): Promise<{ duration?: number }> {
     try {
-      // In production, you'd use expo-av or another library to get actual duration
+      // In production, you'd use expo-audio or another library to get actual duration
       // For now, return a default duration
       return {
         duration: undefined, // Will be populated from video player
@@ -265,7 +290,7 @@ class MediaProcessingService {
    */
   async cleanupTempFiles(): Promise<void> {
     try {
-      const tempDir = `${FileSystem.documentDirectory}media_temp/`;
+      const tempDir = `${Paths.document.uri}media_temp/`;
       const dirInfo = await FileSystem.getInfoAsync(tempDir);
 
       if (dirInfo.exists) {

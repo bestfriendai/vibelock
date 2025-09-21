@@ -1,7 +1,7 @@
-import { supabase } from '../config/supabase';
-import { Message, ChatRoom } from '../types';
-import { AppError, ErrorType } from '../utils/errorHandling';
-import { storageService } from './storageService';
+import { supabase } from "../config/supabase";
+import { Message, ChatRoom } from "../types";
+import { AppError, ErrorType } from "../utils/errorHandling";
+import { storageService } from "./storageService";
 
 interface ForwardPermissionResult {
   canForward: boolean;
@@ -16,36 +16,29 @@ export class MessageForwardService {
     sourceMessage: Message,
     targetRoomId: string,
     userId: string,
-    comment?: string
+    comment?: string,
   ): Promise<Message> {
     try {
       // Check permissions
-      const permission = await this.checkForwardPermission(
-        sourceMessage,
-        targetRoomId,
-        userId
-      );
+      const permission = await this.checkForwardPermission(sourceMessage, targetRoomId, userId);
 
       if (!permission.canForward) {
         throw new AppError(
-          permission.reason || 'Cannot forward this message',
+          permission.reason || "Cannot forward this message",
           ErrorType.PERMISSION,
-          permission.reason || 'You do not have permission to forward this message'
+          permission.reason || "You do not have permission to forward this message",
         );
       }
 
       // Format the forwarded content
-      const forwardedContent = this.formatForwardedContent(
-        sourceMessage,
-        comment
-      );
+      const forwardedContent = this.formatForwardedContent(sourceMessage, comment);
 
       // Handle media forwarding
       const mediaFields = await this.handleMediaForwarding(sourceMessage);
 
       // Create the forwarded message
       const { data: forwardedMessage, error } = await supabase
-        .from('chat_messages_firebase')
+        .from("chat_messages_firebase")
         .insert({
           chat_room_id: targetRoomId,
           sender_id: userId,
@@ -61,30 +54,25 @@ export class MessageForwardService {
 
       if (error) {
         throw new AppError(
-          'Failed to forward message',
+          "Failed to forward message",
           ErrorType.SERVER,
-          'Failed to forward the message. Please try again.'
+          "Failed to forward the message. Please try again.",
         );
       }
 
       // Log the forward action
-      await this.logForward(
-        sourceMessage.id,
-        targetRoomId,
-        userId,
-        comment
-      );
+      await this.logForward(sourceMessage.id, targetRoomId, userId, comment);
 
       return this.transformToMessage(forwardedMessage);
     } catch (error) {
-      console.error('Failed to forward message:', error);
+      console.error("Failed to forward message:", error);
       if (error instanceof AppError) {
         throw error;
       }
       throw new AppError(
-        'An unexpected error occurred',
+        "An unexpected error occurred",
         ErrorType.UNKNOWN,
-        'Failed to forward message. Please try again.'
+        "Failed to forward message. Please try again.",
       );
     }
   }
@@ -95,51 +83,51 @@ export class MessageForwardService {
   async checkForwardPermission(
     message: Message,
     targetRoomId: string,
-    userId: string
+    userId: string,
   ): Promise<ForwardPermissionResult> {
     // Check if user has access to the source message room
     const { data: sourceMembership, error: sourceError } = await supabase
-      .from('chat_members_firebase')
-      .select('id')
-      .eq('chat_room_id', message.chatRoomId)
-      .eq('user_id', userId)
-      .eq('is_active', true)
+      .from("chat_members_firebase")
+      .select("id")
+      .eq("chat_room_id", message.chatRoomId)
+      .eq("user_id", userId)
+      .eq("is_active", true)
       .single();
 
     if (sourceError || !sourceMembership) {
       return {
         canForward: false,
-        reason: 'You do not have access to the source message',
+        reason: "You do not have access to the source message",
       };
     }
 
     // Check if user has access to the target room
     const { data: targetMembership, error: targetError } = await supabase
-      .from('chat_members_firebase')
-      .select('id')
-      .eq('chat_room_id', targetRoomId)
-      .eq('user_id', userId)
-      .eq('is_active', true)
+      .from("chat_members_firebase")
+      .select("id")
+      .eq("chat_room_id", targetRoomId)
+      .eq("user_id", userId)
+      .eq("is_active", true)
       .single();
 
     if (targetError || !targetMembership) {
       return {
         canForward: false,
-        reason: 'You do not have access to the target room',
+        reason: "You do not have access to the target room",
       };
     }
 
     // Check if target room allows the message type
     const { data: targetRoom, error: roomError } = await supabase
-      .from('chat_rooms_firebase')
-      .select('*')
-      .eq('id', targetRoomId)
+      .from("chat_rooms_firebase")
+      .select("*")
+      .eq("id", targetRoomId)
       .single();
 
     if (roomError || !targetRoom) {
       return {
         canForward: false,
-        reason: 'Target room not found',
+        reason: "Target room not found",
       };
     }
 
@@ -147,7 +135,7 @@ export class MessageForwardService {
     if (message.chatRoomId === targetRoomId) {
       return {
         canForward: false,
-        reason: 'Cannot forward message to the same room',
+        reason: "Cannot forward message to the same room",
       };
     }
 
@@ -157,11 +145,8 @@ export class MessageForwardService {
   /**
    * Format the content for a forwarded message
    */
-  private formatForwardedContent(
-    sourceMessage: Message,
-    comment?: string
-  ): string {
-    let content = '';
+  private formatForwardedContent(sourceMessage: Message, comment?: string): string {
+    let content = "";
 
     if (comment && comment.trim()) {
       content += `${comment.trim()}\n\n`;
@@ -182,7 +167,7 @@ export class MessageForwardService {
     const mediaFields: any = {};
 
     // For text messages, no media handling needed
-    if (sourceMessage.messageType === 'text') {
+    if (sourceMessage.messageType === "text") {
       return mediaFields;
     }
 
@@ -208,10 +193,7 @@ export class MessageForwardService {
   /**
    * Create attribution text for forwarded messages
    */
-  generateForwardedAttribution(
-    forwardedFromSender: string,
-    forwardedFromRoom?: string
-  ): string {
+  generateForwardedAttribution(forwardedFromSender: string, forwardedFromRoom?: string): string {
     if (forwardedFromRoom) {
       return `Forwarded from ${forwardedFromSender} in ${forwardedFromRoom}`;
     }
@@ -221,9 +203,7 @@ export class MessageForwardService {
   /**
    * Handle forwarding chains (messages that are already forwarded)
    */
-  async handleForwardingChain(
-    sourceMessage: Message
-  ): Promise<{ originalMessageId: string; chainLength: number }> {
+  async handleForwardingChain(sourceMessage: Message): Promise<{ originalMessageId: string; chainLength: number }> {
     let originalMessageId = sourceMessage.id;
     let chainLength = 0;
 
@@ -237,9 +217,9 @@ export class MessageForwardService {
       const maxChainLength = 5;
       if (chainLength >= maxChainLength) {
         throw new AppError(
-          'Forwarding chain too long',
+          "Forwarding chain too long",
           ErrorType.VALIDATION,
-          'This message has been forwarded too many times'
+          "This message has been forwarded too many times",
         );
       }
     }
@@ -250,12 +230,7 @@ export class MessageForwardService {
   /**
    * Log forward action for analytics
    */
-  private async logForward(
-    messageId: string,
-    targetRoomId: string,
-    userId: string,
-    comment?: string
-  ): Promise<void> {
+  private async logForward(messageId: string, targetRoomId: string, userId: string, comment?: string): Promise<void> {
     // TODO: Implement when message_forward_logs table is created
     // try {
     //   await supabase.from('message_forward_logs').insert({
@@ -279,7 +254,7 @@ export class MessageForwardService {
       id: dbMessage.id,
       chatRoomId: dbMessage.chat_room_id,
       senderId: dbMessage.sender_id,
-      senderName: dbMessage.sender_name || 'Unknown',
+      senderName: dbMessage.sender_name || "Unknown",
       content: dbMessage.content,
       messageType: dbMessage.message_type,
       timestamp: new Date(dbMessage.created_at),
@@ -301,7 +276,7 @@ export class MessageForwardService {
    * Validate forwarding for different message types
    */
   validateMessageTypeForForwarding(messageType: string): boolean {
-    const allowedTypes = ['text', 'image', 'video', 'voice', 'document'];
+    const allowedTypes = ["text", "image", "video", "voice", "document"];
     return allowedTypes.includes(messageType);
   }
 
@@ -310,7 +285,7 @@ export class MessageForwardService {
    */
   async getForwardingStats(
     roomId: string,
-    days: number = 30
+    days: number = 30,
   ): Promise<{
     totalForwards: number;
     mostForwardedMessages: any[];
@@ -321,11 +296,11 @@ export class MessageForwardService {
 
     // Get total forwards
     const { data: forwards, error: forwardsError } = await supabase
-      .from('chat_messages_firebase')
-      .select('id', { count: 'exact' })
-      .eq('chat_room_id', roomId)
-      .not('forwarded_from_id', 'is', null)
-      .gte('created_at', cutoffDate.toISOString());
+      .from("chat_messages_firebase")
+      .select("id", { count: "exact" })
+      .eq("chat_room_id", roomId)
+      .not("forwarded_from_id", "is", null)
+      .gte("created_at", cutoffDate.toISOString());
 
     // TODO: Implement when message_forward_logs table is created
     // Get most forwarded messages

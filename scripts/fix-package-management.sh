@@ -113,16 +113,16 @@ else
     log_warning "Neither npx expo nor global Expo CLI found. react-native-worklets is in package.json but may need manual configuration."
 fi
 
-log_info "Ensuring expo-av is properly configured via npx expo..."
-if npx expo install expo-av 2>/dev/null; then
-    log_success "Successfully installed expo-av via npx expo"
+log_info "Ensuring expo-audio and expo-video are properly configured via npx expo..."
+if npx expo install expo-audio expo-video 2>/dev/null; then
+    log_success "Successfully installed expo-audio and expo-video via npx expo"
 elif command -v expo &> /dev/null; then
     log_info "npx expo unavailable, trying global expo CLI..."
-    expo install expo-av || {
-        log_warning "expo install for expo-av failed, but package is already in package.json"
+    expo install expo-audio expo-video || {
+        log_warning "expo install for expo-audio/video failed, but packages are already in package.json"
     }
 else
-    log_warning "Neither npx expo nor global Expo CLI found. expo-av is in package.json but may need manual configuration."
+    log_warning "Neither npx expo nor global Expo CLI found. expo-audio/expo-video are in package.json but may need manual configuration."
 fi
 
 # Step 5: Check app.json for deprecated properties
@@ -187,7 +187,7 @@ echo ""
 
 # Final check - ensure package.json has the required dependencies
 log_info "Final verification of key dependencies..."
-REQUIRED_DEPS=("react-native-worklets" "expo-av")
+REQUIRED_DEPS=("react-native-worklets" "expo-audio" "expo-video")
 MISSING_DEPS=()
 
 for dep in "${REQUIRED_DEPS[@]}"; do

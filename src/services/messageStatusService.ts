@@ -1,10 +1,10 @@
 // Message Status Tracking Service
 // Handles message delivery and read status tracking
 
-import { supabase } from '../config/supabase';
-import { enhancedRealtimeChatService } from './realtimeChat';
-import { RealtimeChannel } from '@supabase/supabase-js';
-import { DeliveryStatus, MessageStatus } from '../types';
+import { supabase } from "../config/supabase";
+import { enhancedRealtimeChatService } from "./realtimeChat";
+import { RealtimeChannel } from "@supabase/supabase-js";
+import { DeliveryStatus, MessageStatus } from "../types";
 
 interface MessageStatusUpdate {
   messageId: string;
@@ -36,40 +36,37 @@ class MessageStatusService {
 
     try {
       // Try to select delivered_at column
-      const { data, error } = await supabase
-        .from('chat_messages_firebase')
-        .select('id, delivered_at')
-        .limit(1);
+      const { data, error } = await supabase.from("chat_messages_firebase").select("id, delivered_at").limit(1);
 
       if (!error) {
         this.supportsDelivered = true;
-        console.log('[MessageStatus] Schema supports delivered_at column');
-      } else if (error.code === '42703' || error.code === 'PGRST301') {
+        console.log("[MessageStatus] Schema supports delivered_at column");
+      } else if (error.code === "42703" || error.code === "PGRST301") {
         // Column doesn't exist
         this.supportsDelivered = false;
-        console.log('[MessageStatus] Schema does not support delivered_at column');
+        console.log("[MessageStatus] Schema does not support delivered_at column");
       }
 
       // Check for environment flag override
       const enableDeliveredColumn = process.env.EXPO_PUBLIC_ENABLE_DELIVERED_COLUMN;
-      if (enableDeliveredColumn === 'false') {
+      if (enableDeliveredColumn === "false") {
         this.supportsDelivered = false;
-        console.log('[MessageStatus] delivered_at column disabled by environment flag');
+        console.log("[MessageStatus] delivered_at column disabled by environment flag");
       }
 
       // Test if status column exists
       const { data: statusData, error: statusError } = await supabase
-        .from('chat_messages_firebase')
-        .select('id, status')
+        .from("chat_messages_firebase")
+        .select("id, status")
         .limit(1);
 
       if (!statusError) {
         this.supportsStatus = true;
-        console.log('[MessageStatus] Schema supports status column');
-      } else if (statusError.code === '42703' || statusError.code === 'PGRST301') {
+        console.log("[MessageStatus] Schema supports status column");
+      } else if (statusError.code === "42703" || statusError.code === "PGRST301") {
         // Column doesn't exist
         this.supportsStatus = false;
-        console.log('[MessageStatus] Schema does not support status column');
+        console.log("[MessageStatus] Schema does not support status column");
       } else {
         // Default to false on other errors
         this.supportsStatus = false;
@@ -77,7 +74,7 @@ class MessageStatusService {
 
       this.capabilityCheckDone = true;
     } catch (error) {
-      console.warn('[MessageStatus] Failed to check schema capabilities:', error);
+      console.warn("[MessageStatus] Failed to check schema capabilities:", error);
       // Default to safe mode (no delivered_at/status)
       this.supportsDelivered = false;
       this.supportsStatus = false;
@@ -90,7 +87,7 @@ class MessageStatusService {
    */
   private showCapabilityWarning(): void {
     if (!this.capabilityWarningShown) {
-      console.warn('[MessageStatus] Message delivery tracking is limited due to missing database columns');
+      console.warn("[MessageStatus] Message delivery tracking is limited due to missing database columns");
       this.capabilityWarningShown = true;
     }
   }
@@ -104,22 +101,22 @@ class MessageStatusService {
 
       // Update in database
       const { error } = await supabase
-        .from('chat_messages_firebase')
+        .from("chat_messages_firebase")
         .update({
           is_read: true,
-          read_at: new Date().toISOString()
+          read_at: new Date().toISOString(),
         })
-        .eq('id', messageId);
+        .eq("id", messageId);
 
       if (error) {
-        console.error('[MessageStatus] Error marking message as read:', error);
+        console.error("[MessageStatus] Error marking message as read:", error);
         throw error;
       }
 
       // Update cache
       const cached = this.statusCache.get(messageId);
       if (cached) {
-        cached.status = 'read';
+        cached.status = "read";
         cached.readAt = new Date();
         if (!cached.readBy) cached.readBy = [];
         if (!cached.readBy.includes(userId)) {
@@ -130,7 +127,7 @@ class MessageStatusService {
 
       console.log(`[MessageStatus] Message ${messageId} marked as read`);
     } catch (error) {
-      console.error('[MessageStatus] Failed to mark message as read:', error);
+      console.error("[MessageStatus] Failed to mark message as read:", error);
       throw error;
     }
   }
@@ -146,23 +143,23 @@ class MessageStatusService {
 
       // Batch update in database
       const { error } = await supabase
-        .from('chat_messages_firebase')
+        .from("chat_messages_firebase")
         .update({
           is_read: true,
-          read_at: new Date().toISOString()
+          read_at: new Date().toISOString(),
         })
-        .in('id', messageIds);
+        .in("id", messageIds);
 
       if (error) {
-        console.error('[MessageStatus] Error batch marking messages as read:', error);
+        console.error("[MessageStatus] Error batch marking messages as read:", error);
         throw error;
       }
 
       // Update cache for all messages
-      messageIds.forEach(messageId => {
+      messageIds.forEach((messageId) => {
         const cached = this.statusCache.get(messageId);
         if (cached) {
-          cached.status = 'read';
+          cached.status = "read";
           cached.readAt = new Date();
           if (!cached.readBy) cached.readBy = [];
           if (!cached.readBy.includes(userId)) {
@@ -174,7 +171,7 @@ class MessageStatusService {
 
       console.log(`[MessageStatus] ${messageIds.length} messages marked as read`);
     } catch (error) {
-      console.error('[MessageStatus] Failed to batch mark messages as read:', error);
+      console.error("[MessageStatus] Failed to batch mark messages as read:", error);
       throw error;
     }
   }
@@ -198,12 +195,12 @@ class MessageStatusService {
       console.log(`[MessageStatus] Marking ${messageIds.length} messages as delivered`);
 
       // Add to pending updates for batch processing
-      messageIds.forEach(messageId => {
+      messageIds.forEach((messageId) => {
         const update: MessageStatusUpdate = {
           messageId,
-          status: 'delivered',
+          status: "delivered",
           userId,
-          timestamp: new Date()
+          timestamp: new Date(),
         };
 
         if (!this.pendingUpdates.has(messageId)) {
@@ -216,17 +213,16 @@ class MessageStatusService {
       this.scheduleBatchUpdate();
 
       // Update cache immediately for UI responsiveness
-      messageIds.forEach(messageId => {
+      messageIds.forEach((messageId) => {
         const cached = this.statusCache.get(messageId);
-        if (cached && cached.status !== 'read') {
-          cached.status = 'delivered';
+        if (cached && cached.status !== "read") {
+          cached.status = "delivered";
           cached.deliveredAt = new Date();
           this.notifyStatusChange(cached);
         }
       });
-
     } catch (error) {
-      console.error('[MessageStatus] Failed to mark messages as delivered:', error);
+      console.error("[MessageStatus] Failed to mark messages as delivered:", error);
       throw error;
     }
   }
@@ -243,22 +239,22 @@ class MessageStatusService {
     try {
       // Fetch from database
       const { data, error } = await supabase
-        .from('chat_messages_firebase')
-        .select('id, chat_room_id, is_read, created_at')
-        .eq('id', messageId)
+        .from("chat_messages_firebase")
+        .select("id, chat_room_id, is_read, created_at")
+        .eq("id", messageId)
         .single();
 
       if (error || !data) {
-        console.warn('[MessageStatus] Message not found:', messageId);
+        console.warn("[MessageStatus] Message not found:", messageId);
         return null;
       }
 
       const status: MessageStatus = {
         messageId: data.id,
         roomId: data.chat_room_id,
-        status: data.is_read ? 'read' : 'delivered',
+        status: data.is_read ? "read" : "delivered",
         deliveredAt: new Date(data.created_at),
-        readAt: data.is_read ? new Date(data.created_at) : undefined
+        readAt: data.is_read ? new Date(data.created_at) : undefined,
       };
 
       // Cache the status
@@ -266,7 +262,7 @@ class MessageStatusService {
 
       return status;
     } catch (error) {
-      console.error('[MessageStatus] Failed to get message status:', error);
+      console.error("[MessageStatus] Failed to get message status:", error);
       return null;
     }
   }
@@ -283,17 +279,17 @@ class MessageStatusService {
       const channel = supabase
         .channel(`message_status_${roomId}`)
         .on(
-          'postgres_changes',
+          "postgres_changes",
           {
-            event: 'UPDATE',
-            schema: 'public',
-            table: 'chat_messages_firebase',
-            filter: `chat_room_id=eq.${roomId}`
+            event: "UPDATE",
+            schema: "public",
+            table: "chat_messages_firebase",
+            filter: `chat_room_id=eq.${roomId}`,
           },
-          (payload) => this.handleStatusUpdate(roomId, payload)
+          (payload) => this.handleStatusUpdate(roomId, payload),
         )
         .subscribe((status) => {
-          if (status === 'SUBSCRIBED') {
+          if (status === "SUBSCRIBED") {
             console.log(`[MessageStatus] Subscribed to status updates for room ${roomId}`);
           }
         });
@@ -306,7 +302,7 @@ class MessageStatusService {
       this.statusListeners.delete(listenerId);
 
       // Check if we should unsubscribe from channel
-      const hasListeners = Array.from(this.statusListeners.keys()).some(key => key.startsWith(roomId));
+      const hasListeners = Array.from(this.statusListeners.keys()).some((key) => key.startsWith(roomId));
       if (!hasListeners && this.statusChannels.has(roomId)) {
         const channel = this.statusChannels.get(roomId)!;
         channel.unsubscribe();
@@ -327,9 +323,9 @@ class MessageStatusService {
     const status: MessageStatus = {
       messageId: id,
       roomId,
-      status: is_read ? 'read' : 'delivered',
+      status: is_read ? "read" : "delivered",
       deliveredAt: new Date(created_at),
-      readAt: is_read ? new Date() : undefined
+      readAt: is_read ? new Date() : undefined,
     };
 
     // Update cache
@@ -343,11 +339,11 @@ class MessageStatusService {
    * Notify all listeners about a status change
    */
   private notifyStatusChange(status: MessageStatus): void {
-    this.statusListeners.forEach(callback => {
+    this.statusListeners.forEach((callback) => {
       try {
         callback(status);
       } catch (error) {
-        console.error('[MessageStatus] Error in status listener:', error);
+        console.error("[MessageStatus] Error in status listener:", error);
       }
     });
   }
@@ -378,24 +374,22 @@ class MessageStatusService {
     try {
       // Group updates by status
       const deliveredIds = updates
-        .filter(([_, statuses]) => statuses.some(s => s.status === 'delivered'))
+        .filter(([_, statuses]) => statuses.some((s) => s.status === "delivered"))
         .map(([id]) => id);
 
-      const readIds = updates
-        .filter(([_, statuses]) => statuses.some(s => s.status === 'read'))
-        .map(([id]) => id);
+      const readIds = updates.filter(([_, statuses]) => statuses.some((s) => s.status === "read")).map(([id]) => id);
 
       // Batch update delivered messages (only if supported)
       if (deliveredIds.length > 0 && this.supportsDelivered) {
         const { error } = await supabase
-          .from('chat_messages_firebase')
+          .from("chat_messages_firebase")
           .update({ delivered_at: new Date().toISOString() })
-          .in('id', deliveredIds);
+          .in("id", deliveredIds);
 
-        if (error && (error.code === '42703' || error.code === 'PGRST301')) {
+        if (error && (error.code === "42703" || error.code === "PGRST301")) {
           // Column doesn't exist - disable for this session
           this.supportsDelivered = false;
-          console.log('[MessageStatus] Disabled delivered_at updates - column not found');
+          console.log("[MessageStatus] Disabled delivered_at updates - column not found");
           this.showCapabilityWarning();
         }
       }
@@ -403,23 +397,23 @@ class MessageStatusService {
       // Batch update read messages (always supported)
       if (readIds.length > 0) {
         await supabase
-          .from('chat_messages_firebase')
+          .from("chat_messages_firebase")
           .update({
             is_read: true,
-            read_at: new Date().toISOString()
+            read_at: new Date().toISOString(),
           })
-          .in('id', readIds);
+          .in("id", readIds);
       }
 
       console.log(`[MessageStatus] Batch updated ${updates.length} message statuses`);
     } catch (error: any) {
-      console.error('[MessageStatus] Batch update failed:', error);
+      console.error("[MessageStatus] Batch update failed:", error);
 
       // Check for column not found error
-      if (error?.code === '42703' || error?.code === 'PGRST301') {
+      if (error?.code === "42703" || error?.code === "PGRST301") {
         this.supportsDelivered = false;
         this.supportsStatus = false;
-        console.log('[MessageStatus] Disabled advanced status updates - columns not found');
+        console.log("[MessageStatus] Disabled advanced status updates - columns not found");
         this.showCapabilityWarning();
         // Don't retry these updates
         return;
@@ -435,35 +429,27 @@ class MessageStatusService {
   /**
    * Update message status with retry logic
    */
-  async updateMessageStatus(
-    messageId: string,
-    status: DeliveryStatus,
-    userId?: string,
-    retries = 3
-  ): Promise<void> {
+  async updateMessageStatus(messageId: string, status: DeliveryStatus, userId?: string, retries = 3): Promise<void> {
     let lastError: any;
 
     for (let i = 0; i < retries; i++) {
       try {
-        if (status === 'read') {
+        if (status === "read") {
           await this.markMessageAsRead(messageId, userId!);
-        } else if (status === 'delivered') {
+        } else if (status === "delivered") {
           await this.markMessagesAsDelivered([messageId], userId!);
         } else {
           // Update other statuses directly (only if supported)
           await this.checkSchemaCapabilities();
 
           if (this.supportsStatus) {
-            const { error } = await supabase
-              .from('chat_messages_firebase')
-              .update({ status })
-              .eq('id', messageId);
+            const { error } = await supabase.from("chat_messages_firebase").update({ status }).eq("id", messageId);
 
             if (error) {
-              if (error.code === '42703' || error.code === 'PGRST301') {
+              if (error.code === "42703" || error.code === "PGRST301") {
                 // Column doesn't exist - disable for this session
                 this.supportsStatus = false;
-                console.log('[MessageStatus] Disabled status updates - column not found');
+                console.log("[MessageStatus] Disabled status updates - column not found");
                 this.showCapabilityWarning();
                 return; // Don't retry
               }
@@ -482,13 +468,13 @@ class MessageStatusService {
 
         if (i < retries - 1) {
           // Exponential backoff
-          await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
+          await new Promise((resolve) => setTimeout(resolve, Math.pow(2, i) * 1000));
         }
       }
     }
 
     // All retries failed
-    console.error('[MessageStatus] Failed to update message status after retries:', lastError);
+    console.error("[MessageStatus] Failed to update message status after retries:", lastError);
     throw lastError;
   }
 
@@ -503,7 +489,7 @@ class MessageStatusService {
       }
     });
 
-    keysToDelete.forEach(key => this.statusCache.delete(key));
+    keysToDelete.forEach((key) => this.statusCache.delete(key));
     console.log(`[MessageStatus] Cleared cache for room ${roomId} (${keysToDelete.length} entries)`);
   }
 
@@ -514,7 +500,7 @@ class MessageStatusService {
     return {
       supportsDelivered: this.supportsDelivered ?? false,
       supportsStatus: this.supportsStatus ?? false,
-      warningShown: this.capabilityWarningShown
+      warningShown: this.capabilityWarningShown,
     };
   }
 
@@ -542,7 +528,7 @@ class MessageStatusService {
     this.statusChannels.clear();
     this.pendingUpdates.clear();
 
-    console.log('[MessageStatus] Service cleaned up');
+    console.log("[MessageStatus] Service cleaned up");
   }
 }
 

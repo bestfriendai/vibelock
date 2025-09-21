@@ -23,8 +23,6 @@ interface LazyImageProps {
   className?: string;
 }
 
-const SCREEN_WIDTH = Dimensions.get("window").width;
-
 // Placeholder blurhash for loading state
 const DEFAULT_BLURHASH = "L6PZfSi_.AyE_3t7t7R**0o#DgR4";
 
@@ -41,7 +39,6 @@ export default function LazyImage({
   style,
   className,
 }: LazyImageProps) {
-  const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
   const [isInView, setIsInView] = useState(priority === "high");
   const viewRef = useRef<View>(null);
@@ -82,7 +79,6 @@ export default function LazyImage({
   }, [isInView, priority]);
 
   const handleLoad = () => {
-    setIsLoaded(true);
     opacity.value = withTiming(1, { duration: 300 });
     scale.value = withTiming(1, { duration: 300 });
     onLoad?.();

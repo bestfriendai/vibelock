@@ -108,8 +108,13 @@ const useAuthStore = create<AuthStore>()(
             username: "TestUser",
             firstName: "Test",
             lastName: "User",
+            anonymousId: "test-anonymous-dev",
             city: "Washington",
             state: "DC",
+            location: {
+              city: "Washington",
+              state: "DC",
+            },
             genderPreference: "all",
             createdAt: new Date(),
             updatedAt: new Date(),
@@ -164,6 +169,10 @@ const useAuthStore = create<AuthStore>()(
 
           // Sign in with auth service
           const { user: supabaseUser } = await authService.signIn(safeEmail, password);
+
+          if (!supabaseUser) {
+            throw new AppError("Authentication failed - no user returned", ErrorType.AUTH, "AUTH_FAILED");
+          }
 
           // Get user profile from users service
           let userProfile = await usersService.getProfile(supabaseUser.id);
@@ -235,6 +244,10 @@ const useAuthStore = create<AuthStore>()(
           // Create user with auth service
           const { user: supabaseUser } = await authService.signUp(safeEmail, password);
 
+          if (!supabaseUser) {
+            throw new AppError("Registration failed - no user returned", ErrorType.AUTH, "REGISTRATION_FAILED");
+          }
+
           // Create user profile in Supabase
           const userProfile: Partial<User> = {
             id: supabaseUser.id,
@@ -242,9 +255,10 @@ const useAuthStore = create<AuthStore>()(
             anonymousId: uuidv4(),
             city: location.city,
             state: location.state,
-            latitude: location.coordinates?.latitude,
-            longitude: location.coordinates?.longitude,
-            locationFullName: `${location.city}, ${location.state}`,
+            location: {
+              city: location.city,
+              state: location.state,
+            },
             genderPreference: opts?.genderPreference || "all",
             gender: opts?.gender,
           };
@@ -264,8 +278,8 @@ const useAuthStore = create<AuthStore>()(
         } catch (error) {
           console.error("Registration error details:", error);
           console.error("Error type:", typeof error);
-          console.error("Error message:", error?.message);
-          console.error("Error stack:", error?.stack);
+          console.error("Error message:", error && typeof error === 'object' && 'message' in error ? (error as any).message : 'Unknown error');
+          console.error("Error stack:", error && typeof error === 'object' && 'stack' in error ? (error as any).stack : 'No stack trace');
 
           const appError = error instanceof AppError ? error : parseSupabaseError(error);
 
@@ -277,7 +291,7 @@ const useAuthStore = create<AuthStore>()(
 
           // Show specific error dialog with more details in development
           const errorMessage = __DEV__
-            ? `${appError.userMessage}\n\nDev Info: ${error?.message || "Unknown error"}`
+            ? `${appError.userMessage}\n\nDev Info: ${error && typeof error === 'object' && 'message' in error ? (error as any).message : "Unknown error"}`
             : appError.userMessage;
 
           Alert.alert("Registration Failed", errorMessage, [{ text: "OK", style: "default" }]);
@@ -366,7 +380,7 @@ const useAuthStore = create<AuthStore>()(
             locationType: location.type,
             institutionType: location.institutionType,
             locationUpdatedAt: new Date(),
-          });
+          } as any);
           console.log("✅ Location saved to database successfully");
         } catch (error) {
           console.warn("❌ Failed to update user location in database:", error);
@@ -483,10 +497,10 @@ const useAuthStore = create<AuthStore>()(
           console.log("🔄 Auth state change triggered:", {
             hasSession: !!session,
             hasUser: !!supabaseUser,
-            userId: supabaseUser?.id?.slice(-8) || 'none',
-            email: supabaseUser?.email || 'none',
+            userId: supabaseUser?.id?.slice(-8) || "none",
+            email: supabaseUser?.email || "none",
             isProcessing: isProcessingAuthChange,
-            isInitializing
+            isInitializing,
           });
 
           // Prevent concurrent auth state processing
@@ -516,8 +530,8 @@ const useAuthStore = create<AuthStore>()(
                   userProfile = await usersService.getProfile(supabaseUser.id);
                   console.log("📋 Profile fetch result:", {
                     hasProfile: !!userProfile,
-                    profileId: userProfile?.id?.slice(-8) || 'none',
-                    email: userProfile?.email || 'none'
+                    profileId: userProfile?.id?.slice(-8) || "none",
+                    email: userProfile?.email || "none",
                   });
                 } catch (profileError) {
                   console.error("❌ Profile fetch error:", profileError);

@@ -212,7 +212,7 @@ class SupabaseTestSuite {
         const filename = `test-images/test_${Date.now()}.png`;
         const uploadedUrl = await supabaseStorage.uploadFile("review-images", filename, blob);
 
-        if (uploadedUrl && typeof uploadedUrl === 'string' && (uploadedUrl as string).startsWith("https://")) {
+        if (uploadedUrl && typeof uploadedUrl === "string" && (uploadedUrl as string).startsWith("https://")) {
           return `Upload successful: ${uploadedUrl}`;
         } else {
           throw new Error("Invalid URL returned");

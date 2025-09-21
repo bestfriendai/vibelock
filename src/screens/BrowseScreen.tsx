@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
-import { View, Text, Pressable } from "react-native";
+import { View, Text, Pressable, InteractionManager } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
@@ -81,12 +81,16 @@ export default function BrowseScreen({ navigation, route }: Props) {
             institutionType: result.location.institutionType || undefined,
           });
 
-          console.log(`📍 Location detected via ${result.source}:`, result.location.fullName);
+          if (__DEV__) {
+            console.log(`📍 Location detected via ${result.source}:`, result.location.fullName);
+          }
         } else {
           setLocationError(result.error || "Location detection failed");
         }
       } catch (error) {
-        console.warn("Location initialization failed:", error);
+        if (__DEV__) {
+          console.warn("Location initialization failed:", error);
+        }
         setLocationError("Failed to detect location");
       } finally {
         setLocationLoading(false);
@@ -105,13 +109,13 @@ export default function BrowseScreen({ navigation, route }: Props) {
 
     const done = startTimer("browse:initialLoad");
     try {
-      // Use requestIdleCallback for better performance if available
-      if (typeof requestIdleCallback !== 'undefined') {
-        await new Promise(resolve => requestIdleCallback(resolve));
-      }
+      // Use InteractionManager for better performance on React Native
+      await new Promise<void>((resolve) => {
+        InteractionManager.runAfterInteractions(resolve);
+      });
       await loadReviews(true);
     } catch (error: any) {
-      if (error.name !== "AbortError") {
+      if (error.name !== "AbortError" && __DEV__) {
         console.warn("Error loading reviews:", error);
       }
     } finally {
@@ -134,7 +138,9 @@ export default function BrowseScreen({ navigation, route }: Props) {
         try {
           await loadReviews(true);
         } catch (error) {
-          console.warn("Error loading reviews on focus:", error);
+          if (__DEV__) {
+            console.warn("Error loading reviews on focus:", error);
+          }
         }
       }, 500);
 
@@ -253,7 +259,9 @@ export default function BrowseScreen({ navigation, route }: Props) {
                 }
               }
               onLocationChange={async (location) => {
-                console.log("🌍 Location change requested:", location);
+                if (__DEV__) {
+                  console.log("🌍 Location change requested:", location);
+                }
                 try {
                   setCurrentLocation(location);
 
@@ -273,12 +281,18 @@ export default function BrowseScreen({ navigation, route }: Props) {
                     fullName: location?.fullName || `${location?.city}, ${location?.state}`,
                     institutionType: location?.institutionType || undefined,
                   }).catch((error) => {
-                    console.warn("❌ Failed to update user location in auth store:", error);
+                    if (__DEV__) {
+                      console.warn("❌ Failed to update user location in auth store:", error);
+                    }
                   });
 
-                  console.log("✅ Location updated and reviews reloaded");
+                  if (__DEV__) {
+                    console.log("✅ Location updated and reviews reloaded");
+                  }
                 } catch (error) {
-                  console.warn("❌ Failed to update location:", error);
+                  if (__DEV__) {
+                    console.warn("❌ Failed to update location:", error);
+                  }
                 }
               }}
             />

@@ -71,7 +71,7 @@ export const useAudioPlayer = ({
       debounce((position: number) => {
         storeSeek(position);
       }, 100),
-    [storeSeek]
+    [storeSeek],
   );
 
   // Play function with error handling and retry logic
@@ -92,7 +92,9 @@ export const useAudioPlayer = ({
       // Automatic retry for transient failures
       setTimeout(() => {
         storePlay(messageId, audioUri, initialDuration).catch((retryErr) => {
-          console.error("Audio playback retry failed:", retryErr);
+          if (__DEV__) {
+            console.error("Audio playback retry failed:", retryErr);
+          }
         });
       }, 1000);
     }
@@ -127,7 +129,7 @@ export const useAudioPlayer = ({
         debouncedSeek(position);
       }
     },
-    [isCurrentMessage, debouncedSeek]
+    [isCurrentMessage, debouncedSeek],
   );
 
   // Set playback rate
@@ -135,7 +137,7 @@ export const useAudioPlayer = ({
     async (rate: 0.5 | 1 | 1.5 | 2) => {
       await storeSetPlaybackRate(rate);
     },
-    [storeSetPlaybackRate]
+    [storeSetPlaybackRate],
   );
 
   // Toggle play/pause

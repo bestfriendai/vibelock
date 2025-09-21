@@ -85,10 +85,7 @@ const RealBannerAd: React.FC<{
       setBannerAdSize(adModule.BannerAdSize);
       setIsLoading(false);
     } catch (error) {
-      console.warn(`Failed to load AdMob components (attempt ${attempt}/${MAX_LOAD_ATTEMPTS}):`, error);
-
       if (isSDK54CompatibilityError(error) && attempt < MAX_LOAD_ATTEMPTS) {
-        console.log("Applying SDK 54 compatibility workaround...");
         setLoadAttempts(attempt);
         // Retry with extended delay for SDK 54 compatibility
         setTimeout(() => loadAdComponents(attempt + 1), RETRY_DELAY * 2);
@@ -104,6 +101,7 @@ const RealBannerAd: React.FC<{
 
   useEffect(() => {
     loadAdComponents();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (isLoading || !BannerAd || !BannerAdSize) {
@@ -126,16 +124,13 @@ const RealBannerAd: React.FC<{
       unitId={unitId}
       size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
       onAdLoaded={() => {
-        console.log("Banner ad loaded successfully");
         onLoad();
       }}
       onAdFailedToLoad={(e: any) => {
         const msg = typeof e === "string" ? e : (e?.message ?? "Ad failed to load");
-        console.warn("Banner ad failed to load:", msg);
 
         // Implement retry logic for failed ad loads
         if (loadAttempts < MAX_LOAD_ATTEMPTS - 1) {
-          console.log("Retrying banner ad load...");
           setTimeout(() => {
             setLoadAttempts((prev) => prev + 1);
             // Force re-render to retry ad load
@@ -146,12 +141,8 @@ const RealBannerAd: React.FC<{
           onError(msg);
         }
       }}
-      onAdOpened={() => {
-        console.log("Banner ad opened");
-      }}
-      onAdClosed={() => {
-        console.log("Banner ad closed");
-      }}
+      onAdOpened={() => {}}
+      onAdClosed={() => {}}
     />
   );
 };
@@ -190,7 +181,6 @@ export default function AdBanner({ placement }: Props) {
   }
 
   const handleAdLoad = () => {
-    console.log("AdBanner: Ad loaded successfully");
     setAdLoaded(true);
     setAdError(null);
     setRetryCount(0);
@@ -200,12 +190,9 @@ export default function AdBanner({ placement }: Props) {
   };
 
   const handleAdError = (error: string) => {
-    console.warn("AdBanner: Ad error:", error);
-
     // Implement retry logic for failed ads
     if (retryCount < MAX_RETRIES && !isRetrying) {
       setIsRetrying(true);
-      console.log(`AdBanner: Retrying ad load (attempt ${retryCount + 1}/${MAX_RETRIES})`);
 
       setTimeout(() => {
         setRetryCount((prev) => prev + 1);

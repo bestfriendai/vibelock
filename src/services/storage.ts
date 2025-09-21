@@ -90,9 +90,11 @@ export class StorageService {
 
       if (uploadResponse.error) {
         // Provide more specific error handling for RLS issues
-        if (uploadResponse.error.message?.includes('row-level security policy')) {
+        if (uploadResponse.error.message?.includes("row-level security policy")) {
           console.error(`RLS Policy Error: User may need to be authenticated to upload to ${bucket}`);
-          throw new Error(`Upload failed: Authentication may be required for ${bucket} uploads. Please ensure user is signed in.`);
+          throw new Error(
+            `Upload failed: Authentication may be required for ${bucket} uploads. Please ensure user is signed in.`,
+          );
         }
         handleStorageError(uploadResponse.error, "Upload");
       }
@@ -115,7 +117,7 @@ export class StorageService {
       console.error(`Failed to upload file to ${bucket}/${path}:`, error);
 
       // Provide user-friendly error messages for common issues
-      if (error.message?.includes('row-level security policy')) {
+      if (error.message?.includes("row-level security policy")) {
         throw new Error(`Upload failed: Authentication required for ${bucket} uploads. Please sign in and try again.`);
       }
 
@@ -426,11 +428,11 @@ export class StorageService {
     try {
       // Instead of listing all buckets (which may fail due to RLS),
       // try to access the bucket directly by listing its contents
-      const { error } = await supabase.storage.from(bucket).list('', { limit: 1 });
+      const { error } = await supabase.storage.from(bucket).list("", { limit: 1 });
 
       if (error) {
         // If we get a specific "bucket not found" error, throw our custom error
-        if (error.message?.includes('not found') || error.message?.includes('does not exist')) {
+        if (error.message?.includes("not found") || error.message?.includes("does not exist")) {
           throw new Error(`Bucket '${bucket}' does not exist or is not accessible`);
         }
         // For other errors (like RLS), we assume the bucket exists but we don't have list permissions

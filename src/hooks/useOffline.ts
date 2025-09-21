@@ -32,8 +32,7 @@ export function useOffline(options: UseOfflineOptions = {}): UseOfflineReturn {
     const unsubscribe = NetInfo.addEventListener((state) => {
       // Improved network detection logic - consistent across the app
       const connected = Boolean(state.isConnected);
-      const hasInternetAccess = state.isInternetReachable === true ||
-                              (state.isInternetReachable === null && connected);
+      const hasInternetAccess = state.isInternetReachable === true || (state.isInternetReachable === null && connected);
       const online = connected && hasInternetAccess;
 
       setIsConnected(connected);
@@ -47,8 +46,7 @@ export function useOffline(options: UseOfflineOptions = {}): UseOfflineReturn {
     // Check initial state
     NetInfo.fetch().then((state) => {
       const connected = Boolean(state.isConnected);
-      const hasInternetAccess = state.isInternetReachable === true ||
-                              (state.isInternetReachable === null && connected);
+      const hasInternetAccess = state.isInternetReachable === true || (state.isInternetReachable === null && connected);
       const online = connected && hasInternetAccess;
 
       setIsConnected(connected);
@@ -84,8 +82,8 @@ export function useOffline(options: UseOfflineOptions = {}): UseOfflineReturn {
           // Check connection before each attempt with improved logic
           const netState = await NetInfo.fetch();
           const isConnected = Boolean(netState.isConnected);
-          const hasInternetAccess = netState.isInternetReachable === true ||
-                                  (netState.isInternetReachable === null && isConnected);
+          const hasInternetAccess =
+            netState.isInternetReachable === true || (netState.isInternetReachable === null && isConnected);
           const online = isConnected && hasInternetAccess;
           if (!online) {
             throw new OfflineError();
@@ -142,8 +140,8 @@ export function withOfflineHandling<T extends any[], R>(
     try {
       const netState = await NetInfo.fetch();
       const isConnected = Boolean(netState.isConnected);
-      const hasInternetAccess = netState.isInternetReachable === true ||
-                              (netState.isInternetReachable === null && isConnected);
+      const hasInternetAccess =
+        netState.isInternetReachable === true || (netState.isInternetReachable === null && isConnected);
       const online = isConnected && hasInternetAccess;
 
       if (!online) {

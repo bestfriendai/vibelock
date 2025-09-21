@@ -173,8 +173,6 @@ export default function SmartChatFeatures({
         </View>
       </View>
 
-
-
       {/* Message Search Modal */}
       <MessageSearchModal
         visible={showSearchModal}

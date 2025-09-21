@@ -30,6 +30,7 @@ export default function AuthScreen() {
     // Buttons entrance
     buttonsOpacity.value = withDelay(900, withTiming(1, { duration: 600 }));
     buttonsTranslateY.value = withDelay(900, withSpring(0, { damping: 15, stiffness: 200 }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSignIn = () => {

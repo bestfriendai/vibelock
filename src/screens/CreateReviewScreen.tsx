@@ -22,6 +22,7 @@ import useSubscriptionStore from "../state/subscriptionStore";
 import { useTheme } from "../providers/ThemeProvider";
 import PremiumBadge from "../components/PremiumBadge";
 import { imageCompressionService } from "../services/imageCompressionService";
+import { storageService } from "../services/storageService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AppError, parseSupabaseError } from "../utils/errorHandling";
 
@@ -259,6 +260,62 @@ export default function CreateReviewScreen() {
         throw new Error("Security validation failed. Please refresh and try again.");
       }
 
+      // Upload media files before creating review
+      const tempReviewId = `temp-${Date.now()}`;
+      const uploadedMedia = [];
+      for (const mediaItem of media) {
+        if (mediaItem.type === "video") {
+          // Upload video
+          const videoResult = await storageService.uploadFile(mediaItem.uri, {
+            bucket: "review-images",
+            folder: tempReviewId,
+            fileName: `video-${Date.now()}.mp4`,
+            contentType: "video/mp4",
+          });
+
+          if (!videoResult.success || !videoResult.url) {
+            throw new Error(`Failed to upload video: ${videoResult.error}`);
+          }
+
+          let thumbnailUrl = undefined;
+          if (mediaItem.thumbnailUri) {
+            // Upload thumbnail
+            const thumbResult = await storageService.uploadFile(mediaItem.thumbnailUri, {
+              bucket: "review-images",
+              folder: tempReviewId,
+              fileName: `thumb-${Date.now()}.jpg`,
+              contentType: "image/jpeg",
+            });
+            if (thumbResult.success && thumbResult.url) {
+              thumbnailUrl = thumbResult.url;
+            }
+          }
+
+          uploadedMedia.push({
+            ...mediaItem,
+            uri: videoResult.url,
+            thumbnailUri: thumbnailUrl,
+          });
+        } else {
+          // Upload image
+          const imageResult = await storageService.uploadFile(mediaItem.uri, {
+            bucket: "review-images",
+            folder: tempReviewId,
+            fileName: `image-${Date.now()}.jpg`,
+            contentType: "image/jpeg",
+          });
+
+          if (!imageResult.success || !imageResult.url) {
+            throw new Error(`Failed to upload image: ${imageResult.error}`);
+          }
+
+          uploadedMedia.push({
+            ...mediaItem,
+            uri: imageResult.url,
+          });
+        }
+      }
+
       // Use sanitized data from validation
       const reviewData = {
         reviewedPersonName: validation.sanitizedData.name,
@@ -269,12 +326,11 @@ export default function CreateReviewScreen() {
         sentiment: sentiment || undefined,
         reviewText: validation.sanitizedData.reviewText,
         category,
-        media,
+        media: uploadedMedia,
         socialMedia,
         csrfToken, // Include CSRF token in submission
       };
 
-      console.log("🚀 Calling createReview with data:", reviewData);
       await createReview(reviewData);
       console.log("✅ createReview completed successfully");
 

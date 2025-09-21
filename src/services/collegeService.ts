@@ -218,8 +218,16 @@ export async function searchColleges(query: string, limit: number = 10): Promise
         institutionType: college.institution_type,
         coordinates: college.coordinates
           ? {
-              latitude: college.coordinates.latitude,
-              longitude: college.coordinates.longitude,
+              latitude: typeof college.coordinates === 'object' && college.coordinates !== null && 'latitude' in college.coordinates
+                ? (college.coordinates as any).latitude
+                : typeof college.coordinates === 'object' && college.coordinates !== null && Array.isArray(college.coordinates) && college.coordinates.length >= 2
+                ? college.coordinates[1]
+                : 0,
+              longitude: typeof college.coordinates === 'object' && college.coordinates !== null && 'longitude' in college.coordinates
+                ? (college.coordinates as any).longitude
+                : typeof college.coordinates === 'object' && college.coordinates !== null && Array.isArray(college.coordinates) && college.coordinates.length >= 2
+                ? college.coordinates[0]
+                : 0,
             }
           : undefined,
       }),

@@ -1,6 +1,6 @@
 import * as FileSystem from "expo-file-system";
-import { Audio } from "expo-av";
-import { AudioError, AudioErrorCode } from "../types";
+import { AudioModule } from "expo-audio";
+import { AudioError } from "../types";
 
 /**
  * Format audio duration from seconds to MM:SS or HH:MM:SS
@@ -35,9 +35,10 @@ export async function validateAudioFile(uri: string): Promise<boolean> {
       return false;
     }
 
-    // Try to load the audio to verify it's playable
-    const { sound } = await Audio.Sound.createAsync({ uri });
-    await sound.unloadAsync();
+    // Try to create the audio player to verify it's playable
+    const player = new AudioModule.AudioPlayer(uri, 500, false);
+    // If creation succeeds, assume it's valid
+    player.remove();
 
     return true;
   } catch (error) {
@@ -56,18 +57,21 @@ export async function getAudioMetadata(uri: string): Promise<{
   sampleRate?: number;
 } | null> {
   try {
-    const { sound, status } = await Audio.Sound.createAsync({ uri });
+    const player = new AudioModule.AudioPlayer(uri, 500, false);
 
-    if (!status.isLoaded) {
-      await sound.unloadAsync();
+    // Wait a bit for loading
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    if (!player.isLoaded) {
+      player.remove();
       return null;
     }
 
     const metadata = {
-      duration: (status.durationMillis || 0) / 1000,
+      duration: player.duration,
     };
 
-    await sound.unloadAsync();
+    player.remove();
     return metadata;
   } catch (error) {
     console.error("Failed to get audio metadata:", error);
@@ -112,10 +116,7 @@ export function calculateAudioProgress(currentTime: number, duration: number): n
 /**
  * Generate simplified waveform for small displays
  */
-export function generateAudioThumbnail(
-  waveformData: number[],
-  targetWidth: number
-): number[] {
+export function generateAudioThumbnail(waveformData: number[], targetWidth: number): number[] {
   if (!waveformData || waveformData.length === 0) {
     return Array(targetWidth).fill(0.5);
   }
@@ -133,11 +134,16 @@ export function generateAudioThumbnail(
 
     // Take average of segment
     let sum = 0;
+    let count = 0;
     for (let j = startIndex; j < endIndex && j < waveformData.length; j++) {
-      sum += waveformData[j];
+      const value = waveformData[j];
+      if (value !== undefined && value !== null && !isNaN(value)) {
+        sum += value;
+        count++;
+      }
     }
 
-    thumbnail.push(sum / (endIndex - startIndex));
+    thumbnail.push(count > 0 ? sum / count : 0);
   }
 
   return thumbnail;
@@ -148,7 +154,7 @@ export function generateAudioThumbnail(
  */
 export function debounceAudioSeek(
   seekFunction: (position: number) => void,
-  delay: number = 100
+  delay: number = 100,
 ): (position: number) => void {
   let timeoutId: NodeJS.Timeout;
 
@@ -210,7 +216,7 @@ export function audioErrorToUserMessage(error: Error | AudioError | string): str
  */
 export async function compressAudioForUpload(
   uri: string,
-  quality: "low" | "medium" | "high" = "medium"
+  quality: "low" | "medium" | "high" = "medium",
 ): Promise<string> {
   try {
     // Check file size
@@ -269,10 +275,7 @@ export function generateAudioFileName(extension: string = "m4a"): string {
 /**
  * Estimate audio file size based on duration and quality
  */
-export function estimateAudioFileSize(
-  durationSeconds: number,
-  quality: "low" | "medium" | "high" = "medium"
-): number {
+export function estimateAudioFileSize(durationSeconds: number, quality: "low" | "medium" | "high" = "medium"): number {
   // Bitrates in kbps
   const bitrates = {
     low: 64,
@@ -315,7 +318,7 @@ export async function hasEnoughStorageForRecording(estimatedSizeBytes: number): 
  */
 export async function cleanupTempAudioFiles(olderThanMs: number = 24 * 60 * 60 * 1000): Promise<void> {
   try {
-    const tempDir = `${FileSystem.documentDirectory}audio_temp/`;
+    const tempDir = `${(FileSystem as any).documentDirectory}audio_temp/`;
     const dirInfo = await FileSystem.getInfoAsync(tempDir);
 
     if (!dirInfo.exists) return;

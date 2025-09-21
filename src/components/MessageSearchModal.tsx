@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   View,
   TextInput,
@@ -12,16 +12,16 @@ import {
   Platform,
   Alert,
   Switch,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { debounce } from 'lodash';
-import { searchService } from '../services/search';
-import { MessageSearchResult, ChatRoom, SearchResult, SearchResults, MessageType } from '../types';
-import useAuthStore from '../state/authStore';
-import { formatDistanceToNow } from 'date-fns';
-import { useTheme } from '../providers/ThemeProvider';
-import useChatStore from '../state/chatStore';
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { debounce } from "lodash";
+import { searchService } from "../services/search";
+import { MessageSearchResult, ChatRoom, SearchResult, SearchResults, MessageType } from "../types";
+import useAuthStore from "../state/authStore";
+import { formatDistanceToNow } from "date-fns";
+import { useTheme } from "../providers/ThemeProvider";
+import useChatStore from "../state/chatStore";
 
 interface MessageSearchModalProps {
   visible: boolean;
@@ -32,18 +32,18 @@ interface MessageSearchModalProps {
 
 interface DateRangeFilter {
   label: string;
-  value: 'today' | 'week' | 'month' | 'all';
+  value: "today" | "week" | "month" | "all";
   days?: number;
 }
 
 const DATE_FILTERS: DateRangeFilter[] = [
-  { label: 'All Time', value: 'all' },
-  { label: 'Today', value: 'today', days: 1 },
-  { label: 'Past Week', value: 'week', days: 7 },
-  { label: 'Past Month', value: 'month', days: 30 },
+  { label: "All Time", value: "all" },
+  { label: "Today", value: "today", days: 1 },
+  { label: "Past Week", value: "week", days: 7 },
+  { label: "Past Month", value: "month", days: 30 },
 ];
 
-const RECENT_SEARCHES_KEY = '@message_search_recent';
+const RECENT_SEARCHES_KEY = "@message_search_recent";
 const MAX_RECENT_SEARCHES = 10;
 
 export const MessageSearchModal: React.FC<MessageSearchModalProps> = ({
@@ -54,7 +54,7 @@ export const MessageSearchModal: React.FC<MessageSearchModalProps> = ({
 }) => {
   const { colors } = useTheme();
   const { chatRooms } = useChatStore();
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<MessageSearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -80,17 +80,17 @@ export const MessageSearchModal: React.FC<MessageSearchModalProps> = ({
         setRecentSearches(JSON.parse(saved));
       }
     } catch (error) {
-      console.error('Failed to load recent searches:', error);
+      console.error("Failed to load recent searches:", error);
     }
   };
 
   const saveRecentSearch = async (query: string) => {
     try {
-      const updated = [query, ...recentSearches.filter(s => s !== query)].slice(0, MAX_RECENT_SEARCHES);
+      const updated = [query, ...recentSearches.filter((s) => s !== query)].slice(0, MAX_RECENT_SEARCHES);
       setRecentSearches(updated);
       await AsyncStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated));
     } catch (error) {
-      console.error('Failed to save recent search:', error);
+      console.error("Failed to save recent search:", error);
     }
   };
 
@@ -108,11 +108,11 @@ export const MessageSearchModal: React.FC<MessageSearchModalProps> = ({
       metadata: msg.metadata,
       // MessageSearchResult specific properties
       messageId: msg.metadata.messageId || msg.id,
-      roomId: msg.metadata.roomId || roomId || '',
-      roomName: msg.metadata.roomName || 'Unknown Room',
-      senderId: (msg.metadata as any).senderId || '',
-      senderName: (msg.metadata as any).senderName || msg.metadata.authorName || 'Unknown',
-      messageType: 'text' as MessageType,
+      roomId: msg.metadata.roomId || roomId || "",
+      roomName: msg.metadata.roomName || "Unknown Room",
+      senderId: (msg.metadata as any).senderId || "",
+      senderName: (msg.metadata as any).senderName || msg.metadata.authorName || "Unknown",
+      messageType: "text" as MessageType,
       highlightedContent: msg.snippet,
       contextBefore: undefined,
       contextAfter: undefined,
@@ -151,12 +151,12 @@ export const MessageSearchModal: React.FC<MessageSearchModalProps> = ({
         if (selectedDateFilter.days) {
           const cutoffDate = new Date();
           cutoffDate.setDate(cutoffDate.getDate() - selectedDateFilter.days);
-          results = results.filter(r => new Date(r.createdAt) >= cutoffDate);
+          results = results.filter((r) => new Date(r.createdAt) >= cutoffDate);
         }
 
         // Apply sender filter
         if (selectedSender) {
-          results = results.filter(r => r.senderId === selectedSender);
+          results = results.filter((r) => r.senderId === selectedSender);
         }
 
         setSearchResults(results);
@@ -173,14 +173,14 @@ export const MessageSearchModal: React.FC<MessageSearchModalProps> = ({
           await saveRecentSearch(query);
         }
       } catch (err) {
-        console.error('Search failed:', err);
-        setError('Failed to search messages. Please try again.');
+        console.error("Search failed:", err);
+        setError("Failed to search messages. Please try again.");
         setSearchResults([]);
       } finally {
         setIsLoading(false);
       }
     }, 300),
-    [globalSearch, roomId, selectedDateFilter, selectedSender, user]
+    [globalSearch, roomId, selectedDateFilter, selectedSender, user],
   );
 
   useEffect(() => {
@@ -207,12 +207,12 @@ export const MessageSearchModal: React.FC<MessageSearchModalProps> = ({
       await AsyncStorage.removeItem(RECENT_SEARCHES_KEY);
       setRecentSearches([]);
     } catch (error) {
-      console.error('Failed to clear recent searches:', error);
+      console.error("Failed to clear recent searches:", error);
     }
   };
 
   const renderSearchResult = ({ item }: { item: MessageSearchResult }) => {
-    const room = chatRooms.find(r => r.id === item.roomId);
+    const room = chatRooms.find((r) => r.id === item.roomId);
 
     return (
       <TouchableOpacity
@@ -221,28 +221,19 @@ export const MessageSearchModal: React.FC<MessageSearchModalProps> = ({
         activeOpacity={0.7}
       >
         <View style={styles.resultHeader}>
-          <Text style={[styles.senderName, { color: colors.brand.red }]}>
-            {item.senderName}
-          </Text>
+          <Text style={[styles.senderName, { color: colors.brand.red }]}>{item.senderName}</Text>
           {globalSearch && room && (
-            <Text style={[styles.roomName, { color: colors.text.secondary }]}>
-              in {room.name}
-            </Text>
+            <Text style={[styles.roomName, { color: colors.text.secondary }]}>in {room.name}</Text>
           )}
           <Text style={[styles.timestamp, { color: colors.text.secondary }]}>
             {formatDistanceToNow(new Date(item.createdAt), { addSuffix: true })}
           </Text>
         </View>
-        <Text
-          style={[styles.messageContent, { color: colors.text.primary }]}
-          numberOfLines={2}
-        >
+        <Text style={[styles.messageContent, { color: colors.text.primary }]} numberOfLines={2}>
           {item.highlightedContent || item.content}
         </Text>
         {item.contextBefore && (
-          <Text style={[styles.context, { color: colors.text.secondary }]}>
-            ...{item.contextBefore}
-          </Text>
+          <Text style={[styles.context, { color: colors.text.secondary }]}>...{item.contextBefore}</Text>
         )}
       </TouchableOpacity>
     );
@@ -269,15 +260,10 @@ export const MessageSearchModal: React.FC<MessageSearchModalProps> = ({
   );
 
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      presentationStyle="pageSheet"
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
       <KeyboardAvoidingView
         style={[styles.container, { backgroundColor: colors.background }]}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         <View style={[styles.header, { backgroundColor: colors.surface[800] }]}>
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
@@ -301,7 +287,7 @@ export const MessageSearchModal: React.FC<MessageSearchModalProps> = ({
               returnKeyType="search"
             />
             {searchQuery.length > 0 && (
-              <TouchableOpacity onPress={() => setSearchQuery('')}>
+              <TouchableOpacity onPress={() => setSearchQuery("")}>
                 <Ionicons name="close-circle" size={20} color={colors.text.secondary} />
               </TouchableOpacity>
             )}
@@ -312,14 +298,14 @@ export const MessageSearchModal: React.FC<MessageSearchModalProps> = ({
               <Text style={[styles.filterLabel, { color: colors.text.primary }]}>Search scope:</Text>
               <View style={styles.scopeToggle}>
                 <Text style={[styles.scopeText, { color: colors.text.primary }]}>
-                  {globalSearch ? 'All Rooms' : 'Current Room'}
+                  {globalSearch ? "All Rooms" : "Current Room"}
                 </Text>
                 <Switch
                   value={globalSearch}
                   onValueChange={setGlobalSearch}
                   disabled={!roomId}
                   trackColor={{ false: colors.border.default, true: colors.brand.red }}
-                  thumbColor={'#fff'}
+                  thumbColor={"#fff"}
                 />
               </View>
             </View>
@@ -327,7 +313,7 @@ export const MessageSearchModal: React.FC<MessageSearchModalProps> = ({
             <View style={styles.filterRow}>
               <Text style={[styles.filterLabel, { color: colors.text.primary }]}>Date range:</Text>
               <View style={styles.dateFilters}>
-                {DATE_FILTERS.map(filter => (
+                {DATE_FILTERS.map((filter) => (
                   <TouchableOpacity
                     key={filter.value}
                     style={[
@@ -343,7 +329,7 @@ export const MessageSearchModal: React.FC<MessageSearchModalProps> = ({
                       style={[
                         styles.dateFilterText,
                         { color: colors.text.primary },
-                        selectedDateFilter.value === filter.value && { color: '#fff' },
+                        selectedDateFilter.value === filter.value && { color: "#fff" },
                       ]}
                     >
                       {filter.label}
@@ -389,9 +375,7 @@ export const MessageSearchModal: React.FC<MessageSearchModalProps> = ({
         {isLoading && (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={colors.brand.red} />
-            <Text style={[styles.loadingText, { color: colors.text.secondary }]}>
-              Searching messages...
-            </Text>
+            <Text style={[styles.loadingText, { color: colors.text.secondary }]}>Searching messages...</Text>
           </View>
         )}
 
@@ -411,15 +395,13 @@ export const MessageSearchModal: React.FC<MessageSearchModalProps> = ({
         {!isLoading && !error && searchQuery.length > 0 && (
           <FlatList
             data={searchResults}
-            keyExtractor={item => item.id}
+            keyExtractor={(item) => item.id}
             renderItem={renderSearchResult}
             contentContainerStyle={styles.resultsList}
             ListEmptyComponent={
               <View style={styles.emptyContainer}>
                 <Ionicons name="search-outline" size={64} color={colors.text.secondary} />
-                <Text style={[styles.emptyText, { color: colors.text.secondary }]}>
-                  No messages found
-                </Text>
+                <Text style={[styles.emptyText, { color: colors.text.secondary }]}>No messages found</Text>
                 <Text style={[styles.emptySubtext, { color: colors.text.secondary }]}>
                   Try adjusting your search terms or filters
                 </Text>
@@ -437,21 +419,21 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'ios' ? 50 : 20,
+    paddingTop: Platform.OS === "ios" ? 50 : 20,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.1)',
+    borderBottomColor: "rgba(0,0,0,0.1)",
   },
   closeButton: {
     padding: 8,
   },
   title: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   placeholder: {
     width: 40,
@@ -461,8 +443,8 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   searchInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
@@ -481,19 +463,19 @@ const styles = StyleSheet.create({
   },
   filterLabel: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: "500",
     marginBottom: 4,
   },
   scopeToggle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   scopeText: {
     fontSize: 14,
   },
   dateFilters: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 8,
   },
   dateFilterButton: {
@@ -503,21 +485,21 @@ const styles = StyleSheet.create({
   },
   dateFilterText: {
     fontSize: 12,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   recentSearchesContainer: {
     paddingHorizontal: 16,
     marginVertical: 12,
   },
   recentSearchesHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 8,
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   clearButton: {
     fontSize: 14,
@@ -533,8 +515,8 @@ const styles = StyleSheet.create({
     maxHeight: 120,
   },
   suggestionItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     padding: 12,
     marginRight: 8,
     borderRadius: 8,
@@ -553,21 +535,21 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   resultHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 4,
     gap: 8,
   },
   senderName: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   roomName: {
     fontSize: 12,
   },
   timestamp: {
     fontSize: 12,
-    marginLeft: 'auto',
+    marginLeft: "auto",
   },
   messageContent: {
     fontSize: 14,
@@ -575,13 +557,13 @@ const styles = StyleSheet.create({
   },
   context: {
     fontSize: 12,
-    fontStyle: 'italic',
+    fontStyle: "italic",
     marginTop: 4,
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     gap: 12,
   },
   loadingText: {
@@ -589,14 +571,14 @@ const styles = StyleSheet.create({
   },
   errorContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     gap: 12,
     paddingHorizontal: 32,
   },
   errorText: {
     fontSize: 16,
-    textAlign: 'center',
+    textAlign: "center",
   },
   retryButton: {
     paddingHorizontal: 24,
@@ -605,20 +587,20 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   retryButtonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   emptyContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     paddingVertical: 64,
     gap: 12,
   },
   emptyText: {
     fontSize: 18,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   emptySubtext: {
     fontSize: 14,

@@ -4,7 +4,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Database } from "../types/database.types";
 
 // React Native polyfills for Supabase realtime compatibility
-import 'react-native-url-polyfill/auto';
+import "react-native-url-polyfill/auto";
 
 // Supabase v2.57.4 API Version
 const SUPABASE_API_VERSION = "v2.57.4";
@@ -231,8 +231,8 @@ if (__DEV__) {
   console.log("[Supabase Config] Web Workers: Disabled");
 
   // Check for Web Workers availability (should not be available in React Native)
-  if (typeof Worker !== 'undefined') {
-    console.warn('⚠️ Web Workers detected in React Native environment - this may cause issues');
+  if (typeof Worker !== "undefined") {
+    console.warn("⚠️ Web Workers detected in React Native environment - this may cause issues");
   }
 }
 
@@ -455,7 +455,7 @@ export const performHealthCheck = async (): Promise<{ healthy: boolean; details:
     database: false,
     storage: false,
     realtime: false,
-    realtimeTransport: 'unknown',
+    realtimeTransport: "unknown",
     webWorkersDetected: false,
     latency: 0,
     timestamp: Date.now(),
@@ -495,10 +495,10 @@ export const performHealthCheck = async (): Promise<{ healthy: boolean; details:
 
     // Log transport method being used
     if (__DEV__ && realtimeConnected) {
-      const transport = (supabase.realtime as any)?._transport || 'unknown';
+      const transport = (supabase.realtime as any)?._transport || "unknown";
       console.log(`[Health Check] Realtime transport: ${transport}`);
-      if (transport !== 'websocket') {
-        console.warn('⚠️ Realtime not using WebSocket transport - may cause issues in React Native');
+      if (transport !== "websocket") {
+        console.warn("⚠️ Realtime not using WebSocket transport - may cause issues in React Native");
       }
     }
 
@@ -508,13 +508,13 @@ export const performHealthCheck = async (): Promise<{ healthy: boolean; details:
     connectionMetrics.lastHealthCheck = Date.now();
 
     // Check for Web Workers (should not be present in React Native)
-    healthDetails.webWorkersDetected = typeof Worker !== 'undefined';
+    healthDetails.webWorkersDetected = typeof Worker !== "undefined";
     if (healthDetails.webWorkersDetected) {
-      console.warn('⚠️ Web Workers detected - forcing WebSocket transport');
+      console.warn("⚠️ Web Workers detected - forcing WebSocket transport");
     }
 
     // Get actual transport method if available
-    healthDetails.realtimeTransport = (supabase.realtime as any)?._transport || 'unknown';
+    healthDetails.realtimeTransport = (supabase.realtime as any)?._transport || "unknown";
 
     // Consider the app healthy if core services (auth + database) are working
     // Realtime is optional and shouldn't block app initialization
@@ -522,7 +522,7 @@ export const performHealthCheck = async (): Promise<{ healthy: boolean; details:
     const isHealthy = coreServicesHealthy;
 
     if (!healthDetails.realtime) {
-      console.warn('⚠️ Realtime is not connected - real-time features may not work');
+      console.warn("⚠️ Realtime is not connected - real-time features may not work");
       // Don't fail the health check for realtime issues
     }
 

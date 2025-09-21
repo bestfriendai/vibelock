@@ -1,6 +1,6 @@
-import { ChatMessage } from '../types';
-import { calculateDisplayDimensions } from '../utils/mediaUtils';
-import { performanceMonitor } from '../utils/performance';
+import { ChatMessage } from "../types";
+import { calculateDisplayDimensions } from "../utils/mediaUtils";
+import { performanceMonitor } from "../utils/performance";
 
 interface VirtualizedMessage {
   id: string;
@@ -9,7 +9,7 @@ interface VirtualizedMessage {
   isVisible: boolean;
   isPlaceholder: boolean;
   content?: ChatMessage;
-  placeholderType?: 'text' | 'media' | 'loading';
+  placeholderType?: "text" | "media" | "loading";
 }
 
 interface ViewportInfo {
@@ -51,25 +51,21 @@ export class MessageVirtualizer {
       enableLazyLoading: true,
       enableProgressiveImages: true,
       maxTextLength: 500,
-      ...options
+      ...options,
     };
   }
 
   /**
    * Virtualize messages based on viewport
    */
-  virtualizeMessages(
-    messages: ChatMessage[],
-    viewportHeight: number,
-    scrollOffset: number
-  ): VirtualizedMessage[] {
+  virtualizeMessages(messages: ChatMessage[], viewportHeight: number, scrollOffset: number): VirtualizedMessage[] {
     const startTime = performance.now();
 
     // Update viewport
     this.viewport = {
       scrollOffset,
       viewportHeight,
-      containerHeight: this.calculateTotalHeight(messages)
+      containerHeight: this.calculateTotalHeight(messages),
     };
 
     // Calculate visible range
@@ -114,11 +110,11 @@ export class MessageVirtualizer {
     const memSaved = this.calculateMemorySaved(messages, virtualized);
     this.performanceMetrics.memSaved += memSaved;
 
-    performanceMonitor.recordMetric('messageVirtualization', {
+    performanceMonitor.recordMetric("messageVirtualization", {
       totalMessages: messages.length,
       visibleMessages: endIndex - startIndex + 1,
       renderTime: performance.now() - startTime,
-      memorySaved: memSaved
+      memorySaved: memSaved,
     });
 
     return virtualized;
@@ -130,7 +126,7 @@ export class MessageVirtualizer {
   getVisibleRange(
     scrollOffset: number,
     viewportHeight: number,
-    messages: ChatMessage[]
+    messages: ChatMessage[],
   ): { startIndex: number; endIndex: number } {
     const bufferSize = this.options.bufferSize || 10;
     let startIndex = 0;
@@ -141,7 +137,7 @@ export class MessageVirtualizer {
     for (let i = 0; i < messages.length; i++) {
       const height = this.getMessageHeight(messages[i]);
 
-      if (currentOffset + height >= scrollOffset - (bufferSize * 80)) {
+      if (currentOffset + height >= scrollOffset - bufferSize * 80) {
         startIndex = Math.max(0, i);
         break;
       }
@@ -154,7 +150,7 @@ export class MessageVirtualizer {
     for (let i = 0; i < messages.length; i++) {
       const height = this.getMessageHeight(messages[i]);
 
-      if (currentOffset >= scrollOffset + viewportHeight + (bufferSize * 80)) {
+      if (currentOffset >= scrollOffset + viewportHeight + bufferSize * 80) {
         endIndex = Math.min(messages.length - 1, i);
         break;
       }
@@ -168,10 +164,7 @@ export class MessageVirtualizer {
   /**
    * Preload adjacent messages
    */
-  preloadAdjacentMessages(
-    visibleRange: { startIndex: number; endIndex: number },
-    preloadCount: number = 5
-  ): void {
+  preloadAdjacentMessages(visibleRange: { startIndex: number; endIndex: number }, preloadCount: number = 5): void {
     const preloadStart = Math.max(0, visibleRange.startIndex - preloadCount);
     const preloadEnd = visibleRange.endIndex + preloadCount;
 
@@ -207,9 +200,9 @@ export class MessageVirtualizer {
     });
 
     if (cleanedCount > 0) {
-      performanceMonitor.recordMetric('messageCleanup', {
+      performanceMonitor.recordMetric("messageCleanup", {
         cleaned: cleanedCount,
-        remaining: this.virtualizedMessages.size - cleanedCount
+        remaining: this.virtualizedMessages.size - cleanedCount,
       });
     }
 
@@ -235,14 +228,14 @@ export class MessageVirtualizer {
     let height = 80; // Base height with padding
 
     switch (message.type) {
-      case 'image':
-      case 'video':
+      case "image":
+      case "video":
         if (message.media?.dimensions) {
           const display = calculateDisplayDimensions(
             message.media.dimensions.width,
             message.media.dimensions.height,
             300,
-            400
+            400,
           );
           height = display.height + 20;
         } else {
@@ -250,15 +243,15 @@ export class MessageVirtualizer {
         }
         break;
 
-      case 'voice':
+      case "voice":
         height = 60;
         break;
 
-      case 'document':
+      case "document":
         height = 80;
         break;
 
-      case 'text':
+      case "text":
       default:
         if (message.content) {
           // Estimate based on text length
@@ -291,17 +284,17 @@ export class MessageVirtualizer {
     const processed = { ...message };
 
     // Progressive image loading
-    if (this.options.enableProgressiveImages && (message.type === 'image' || message.type === 'video')) {
+    if (this.options.enableProgressiveImages && (message.type === "image" || message.type === "video")) {
       processed.media = this.getProgressiveMedia(message);
     }
 
     // Text truncation for very long messages
-    if (message.type === 'text' && message.content && message.content.length > (this.options.maxTextLength || 500)) {
+    if (message.type === "text" && message.content && message.content.length > (this.options.maxTextLength || 500)) {
       processed.content = this.truncateText(message.content);
       processed.metadata = {
         ...processed.metadata,
         isTruncated: true,
-        fullLength: message.content.length
+        fullLength: message.content.length,
       };
     }
 
@@ -344,21 +337,21 @@ export class MessageVirtualizer {
 
     // Find last complete word before limit
     let truncateAt = maxLength;
-    while (truncateAt > 0 && text[truncateAt] !== ' ') {
+    while (truncateAt > 0 && text[truncateAt] !== " ") {
       truncateAt--;
     }
 
-    return text.substring(0, truncateAt) + '...';
+    return text.substring(0, truncateAt) + "...";
   }
 
   /**
    * Get placeholder type
    */
-  private getPlaceholderType(message: ChatMessage): 'text' | 'media' | 'loading' {
-    if (message.type === 'image' || message.type === 'video') {
-      return 'media';
+  private getPlaceholderType(message: ChatMessage): "text" | "media" | "loading" {
+    if (message.type === "image" || message.type === "video") {
+      return "media";
     }
-    return 'text';
+    return "text";
   }
 
   /**
@@ -371,10 +364,7 @@ export class MessageVirtualizer {
   /**
    * Calculate memory saved
    */
-  private calculateMemorySaved(
-    originalMessages: ChatMessage[],
-    virtualizedMessages: VirtualizedMessage[]
-  ): number {
+  private calculateMemorySaved(originalMessages: ChatMessage[], virtualizedMessages: VirtualizedMessage[]): number {
     const originalSize = JSON.stringify(originalMessages).length * 2; // Rough estimate in bytes
     const virtualizedSize = virtualizedMessages.reduce((total, vm) => {
       if (vm.content) {
@@ -390,11 +380,11 @@ export class MessageVirtualizer {
    * Update search index
    */
   private updateSearchIndex(message: ChatMessage): void {
-    if (message.type === 'text' && message.content) {
+    if (message.type === "text" && message.content) {
       this.searchIndex.set(message.id, {
         messageId: message.id,
         searchableText: message.content.toLowerCase(),
-        timestamp: message.timestamp instanceof Date ? message.timestamp.getTime() : message.timestamp
+        timestamp: message.timestamp instanceof Date ? message.timestamp.getTime() : message.timestamp,
       });
     }
   }
@@ -436,7 +426,7 @@ export class MessageVirtualizer {
     // Simulate loading low res image
     setTimeout(() => {
       this.imageCache.set(message.id, {
-        lowRes: message.media?.url + '?quality=low'
+        lowRes: message.media?.url + "?quality=low",
       });
     }, 50);
   }
@@ -450,7 +440,7 @@ export class MessageVirtualizer {
       const cached = this.imageCache.get(message.id) || {};
       this.imageCache.set(message.id, {
         ...cached,
-        fullRes: message.media?.url
+        fullRes: message.media?.url,
       });
     }, 500);
   }
@@ -469,7 +459,7 @@ export class MessageVirtualizer {
   restoreScrollPosition(
     previousMessages: ChatMessage[],
     newMessages: ChatMessage[],
-    previousScrollOffset: number
+    previousScrollOffset: number,
   ): number {
     if (previousMessages.length === 0 || newMessages.length === 0) {
       return previousScrollOffset;
@@ -477,7 +467,7 @@ export class MessageVirtualizer {
 
     // Find a stable reference message
     const referenceMessage = previousMessages[Math.floor(previousMessages.length / 2)];
-    const referenceIndex = newMessages.findIndex(m => m.id === referenceMessage.id);
+    const referenceIndex = newMessages.findIndex((m) => m.id === referenceMessage.id);
 
     if (referenceIndex === -1) {
       return previousScrollOffset;
@@ -509,7 +499,7 @@ export class MessageVirtualizer {
 
     return {
       ...this.performanceMetrics,
-      cacheHitRate: totalRequests > 0 ? cacheHits / totalRequests : 0
+      cacheHitRate: totalRequests > 0 ? cacheHits / totalRequests : 0,
     };
   }
 
@@ -528,7 +518,7 @@ export class MessageVirtualizer {
    * Prefetch message heights
    */
   prefetchHeights(messages: ChatMessage[]): void {
-    messages.forEach(message => {
+    messages.forEach((message) => {
       if (!this.messageHeights.has(message.id)) {
         this.getMessageHeight(message);
       }

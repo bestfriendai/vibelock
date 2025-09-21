@@ -1,10 +1,10 @@
-import { useEffect, useRef, useCallback, useState } from 'react';
-import { AppState, AppStateStatus, Keyboard } from 'react-native';
-import { useUserFeedback } from '../components/UserFeedbackSystem';
-import { productionMonitor } from '../services/productionMonitoring';
-import { performanceMonitor } from '../utils/performance';
-import { uiValidator } from '../utils/uiValidation';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useEffect, useRef, useCallback, useState } from "react";
+import { AppState, AppStateStatus, Keyboard } from "react-native";
+import { useUserFeedback } from "../components/UserFeedbackSystem";
+import { productionMonitor } from "../services/productionMonitoring";
+import { performanceMonitor } from "../utils/performance";
+import { uiValidator } from "../utils/uiValidation";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 interface ProductionQualityOptions {
   enableMonitoring?: boolean;
@@ -66,7 +66,7 @@ interface CacheEntry {
 
 export function useProductionQuality(
   componentName: string,
-  options: ProductionQualityOptions = {}
+  options: ProductionQualityOptions = {},
 ): ProductionQualityUtilities {
   const {
     enableMonitoring = true,
@@ -77,7 +77,7 @@ export function useProductionQuality(
     maxRetries = 3,
     retryDelay = 1000,
     cacheEnabled = true,
-    cacheTimeout = 300000 // 5 minutes
+    cacheTimeout = 300000, // 5 minutes
   } = options;
 
   const feedback = useUserFeedback();
@@ -98,31 +98,31 @@ export function useProductionQuality(
     renderCount.current++;
 
     if (enableMonitoring) {
-      productionMonitor.trackUserFlow(componentName, 'mount', {
+      productionMonitor.trackUserFlow(componentName, "mount", {
         renderCount: renderCount.current,
-        mountDuration: Date.now() - componentMountTime.current
+        mountDuration: Date.now() - componentMountTime.current,
       });
     }
 
     // Monitor app state changes
-    appStateSubscription.current = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
+    appStateSubscription.current = AppState.addEventListener("change", (nextAppState: AppStateStatus) => {
       if (enableMonitoring) {
-        productionMonitor.trackUserEngagement('app_state_change', componentName, {
-          state: nextAppState
+        productionMonitor.trackUserEngagement("app_state_change", componentName, {
+          state: nextAppState,
         });
       }
     });
 
     // Monitor keyboard events
-    const keyboardDidShowSub = Keyboard.addListener('keyboardDidShow', () => {
+    const keyboardDidShowSub = Keyboard.addListener("keyboardDidShow", () => {
       if (enableMonitoring) {
-        productionMonitor.trackUserEngagement('keyboard_show', componentName);
+        productionMonitor.trackUserEngagement("keyboard_show", componentName);
       }
     });
 
-    const keyboardDidHideSub = Keyboard.addListener('keyboardDidHide', () => {
+    const keyboardDidHideSub = Keyboard.addListener("keyboardDidHide", () => {
       if (enableMonitoring) {
-        productionMonitor.trackUserEngagement('keyboard_hide', componentName);
+        productionMonitor.trackUserEngagement("keyboard_hide", componentName);
       }
     });
 
@@ -137,20 +137,22 @@ export function useProductionQuality(
     return () => {
       if (enableMonitoring) {
         const lifetime = Date.now() - componentMountTime.current;
-        productionMonitor.trackUserFlow(componentName, 'unmount', {
+        productionMonitor.trackUserFlow(componentName, "unmount", {
           lifetime,
-          renderCount: renderCount.current
+          renderCount: renderCount.current,
         });
       }
 
       // Check for memory leaks
       if (memoryLeakDetector.current.size > 0) {
-        console.warn(`[${componentName}] Potential memory leak detected: ${memoryLeakDetector.current.size} unreleased objects`);
+        console.warn(
+          `[${componentName}] Potential memory leak detected: ${memoryLeakDetector.current.size} unreleased objects`,
+        );
       }
 
       // Cleanup subscriptions
       appStateSubscription.current?.remove();
-      keyboardSubscriptions.current.forEach(sub => sub.remove());
+      keyboardSubscriptions.current.forEach((sub) => sub.remove());
 
       // Clear cache
       cache.current.clear();
@@ -160,152 +162,156 @@ export function useProductionQuality(
   /**
    * Error handler wrapper
    */
-  const withErrorHandler = useCallback(async <T,>(
-    fn: () => Promise<T>,
-    fallback?: T
-  ): Promise<T> => {
-    setIsLoading(true);
-    setError(null);
+  const withErrorHandler = useCallback(
+    async <T>(fn: () => Promise<T>, fallback?: T): Promise<T> => {
+      setIsLoading(true);
+      setError(null);
 
-    try {
-      const result = await fn();
-      setIsLoading(false);
-      return result;
-    } catch (err: any) {
-      setIsLoading(false);
-      setError(err);
+      try {
+        const result = await fn();
+        setIsLoading(false);
+        return result;
+      } catch (err: any) {
+        setIsLoading(false);
+        setError(err);
 
-      if (enableMonitoring) {
-        productionMonitor.trackError(err, { componentName }, 'medium');
+        if (enableMonitoring) {
+          productionMonitor.trackError(err, { componentName }, "medium");
+        }
+
+        if (enableErrorBoundary) {
+          feedback.showError(err, [
+            {
+              label: "Retry",
+              onPress: () => withErrorHandler(fn, fallback),
+              style: "primary",
+            },
+          ]);
+        }
+
+        if (fallback !== undefined) {
+          return fallback;
+        }
+
+        throw err;
       }
-
-      if (enableErrorBoundary) {
-        feedback.showError(err, [
-          {
-            label: 'Retry',
-            onPress: () => withErrorHandler(fn, fallback),
-            style: 'primary'
-          }
-        ]);
-      }
-
-      if (fallback !== undefined) {
-        return fallback;
-      }
-
-      throw err;
-    }
-  }, [componentName, enableMonitoring, enableErrorBoundary, feedback]);
+    },
+    [componentName, enableMonitoring, enableErrorBoundary, feedback],
+  );
 
   /**
    * Retry mechanism
    */
-  const retry = useCallback(async <T,>(
-    fn: () => Promise<T>,
-    options: RetryOptions = {}
-  ): Promise<T> => {
-    const {
-      maxRetries: maxAttempts = maxRetries,
-      delay = retryDelay,
-      backoff = true,
-      onRetry
-    } = options;
+  const retry = useCallback(
+    async <T>(fn: () => Promise<T>, options: RetryOptions = {}): Promise<T> => {
+      const { maxRetries: maxAttempts = maxRetries, delay = retryDelay, backoff = true, onRetry } = options;
 
-    let lastError: Error | null = null;
+      let lastError: Error | null = null;
 
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      try {
-        setRetryCount(attempt - 1);
-        const result = await fn();
-        setRetryCount(0);
-        return result;
-      } catch (err: any) {
-        lastError = err;
-
-        if (attempt === maxAttempts) {
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+          setRetryCount(attempt - 1);
+          const result = await fn();
           setRetryCount(0);
-          throw err;
-        }
+          return result;
+        } catch (err: any) {
+          lastError = err;
 
-        if (onRetry) {
-          onRetry(attempt);
-        }
+          if (attempt === maxAttempts) {
+            setRetryCount(0);
+            throw err;
+          }
 
-        const waitTime = backoff ? delay * Math.pow(2, attempt - 1) : delay;
-        await new Promise(resolve => setTimeout(resolve, waitTime));
+          if (onRetry) {
+            onRetry(attempt);
+          }
+
+          const waitTime = backoff ? delay * Math.pow(2, attempt - 1) : delay;
+          await new Promise((resolve) => setTimeout(resolve, waitTime));
+        }
       }
-    }
 
-    throw lastError || new Error('Retry failed');
-  }, [maxRetries, retryDelay]);
+      throw lastError || new Error("Retry failed");
+    },
+    [maxRetries, retryDelay],
+  );
 
   /**
    * Track performance of operations
    */
-  const trackPerformance = useCallback((operation: string) => {
-    const startTime = Date.now();
-    performanceTrackers.current.set(operation, startTime);
-
-    if (enablePerformanceTracking) {
-      performanceMonitor.start(`${componentName}:${operation}`);
-    }
-
-    return () => {
-      const duration = Date.now() - startTime;
-      performanceTrackers.current.delete(operation);
+  const trackPerformance = useCallback(
+    (operation: string) => {
+      const startTime = Date.now();
+      performanceTrackers.current.set(operation, startTime);
 
       if (enablePerformanceTracking) {
-        const stop = performanceMonitor.start(`${componentName}:${operation}`);
-        stop();
+        performanceMonitor.start(`${componentName}:${operation}`);
       }
 
-      if (enableMonitoring) {
-        productionMonitor.trackPerformance(`${componentName}:${operation}`, duration);
-      }
-    };
-  }, [componentName, enablePerformanceTracking, enableMonitoring]);
+      return () => {
+        const duration = Date.now() - startTime;
+        performanceTrackers.current.delete(operation);
+
+        if (enablePerformanceTracking) {
+          const stop = performanceMonitor.start(`${componentName}:${operation}`);
+          stop();
+        }
+
+        if (enableMonitoring) {
+          productionMonitor.trackPerformance(`${componentName}:${operation}`, duration);
+        }
+      };
+    },
+    [componentName, enablePerformanceTracking, enableMonitoring],
+  );
 
   /**
    * Memoization helper
    */
-  const memoize = useCallback(<T,>(fn: (...args: any[]) => T) => {
-    return (...args: any[]): T => {
-      const key = JSON.stringify(args);
-      const cached = cache.current.get(key);
+  const memoize = useCallback(
+    <T>(fn: (...args: any[]) => T) => {
+      return (...args: any[]): T => {
+        const key = JSON.stringify(args);
+        const cached = cache.current.get(key);
 
-      if (cached && Date.now() - cached.timestamp < cached.ttl) {
-        return cached.value;
-      }
-
-      const result = fn(...args);
-
-      if (cacheEnabled) {
-        cache.current.set(key, {
-          value: result,
-          timestamp: Date.now(),
-          ttl: cacheTimeout
-        });
-      }
-
-      // Clean old cache entries
-      const now = Date.now();
-      cache.current.forEach((entry, k) => {
-        if (now - entry.timestamp > entry.ttl) {
-          cache.current.delete(k);
+        if (cached && Date.now() - cached.timestamp < cached.ttl) {
+          return cached.value;
         }
-      });
 
-      return result;
-    };
-  }, [cacheEnabled, cacheTimeout]);
+        const result = fn(...args);
+
+        if (cacheEnabled) {
+          cache.current.set(key, {
+            value: result,
+            timestamp: Date.now(),
+            ttl: cacheTimeout,
+          });
+        }
+
+        // Clean old cache entries
+        const now = Date.now();
+        cache.current.forEach((entry, k) => {
+          if (now - entry.timestamp > entry.ttl) {
+            cache.current.delete(k);
+          }
+        });
+
+        return result;
+      };
+    },
+    [cacheEnabled, cacheTimeout],
+  );
 
   /**
    * Show loading state
    */
-  const showLoading = useCallback((message?: string) => {
-    setIsLoading(true);
-    feedback.showLoading(message || `Loading ${componentName}...`);
-  }, [componentName, feedback]);
+  const showLoading = useCallback(
+    (message?: string) => {
+      setIsLoading(true);
+      feedback.showLoading(message || `Loading ${componentName}...`);
+    },
+    [componentName, feedback],
+  );
 
   /**
    * Hide loading state
@@ -318,58 +324,79 @@ export function useProductionQuality(
   /**
    * Show error message
    */
-  const showError = useCallback((error: Error | string) => {
-    const errorObj = error instanceof Error ? error : new Error(error);
-    setError(errorObj);
+  const showError = useCallback(
+    (error: Error | string) => {
+      const errorObj = error instanceof Error ? error : new Error(error);
+      setError(errorObj);
 
-    const actions = enableAutoRetry ? [
-      {
-        label: 'Retry',
-        onPress: () => clearError(),
-        style: 'primary' as const
-      }
-    ] : undefined;
+      const actions = enableAutoRetry
+        ? [
+            {
+              label: "Retry",
+              onPress: () => clearError(),
+              style: "primary" as const,
+            },
+          ]
+        : undefined;
 
-    feedback.showError(errorObj, actions);
-  }, [enableAutoRetry, feedback]);
+      feedback.showError(errorObj, actions);
+    },
+    [enableAutoRetry, feedback],
+  );
 
   /**
    * Show success message
    */
-  const showSuccess = useCallback((message: string) => {
-    feedback.showSuccess(message);
-  }, [feedback]);
+  const showSuccess = useCallback(
+    (message: string) => {
+      feedback.showSuccess(message);
+    },
+    [feedback],
+  );
 
   /**
    * Track custom event
    */
-  const trackEvent = useCallback((event: string, data?: any) => {
-    if (enableMonitoring) {
-      productionMonitor.trackUserEngagement(event, componentName, data);
-    }
-  }, [componentName, enableMonitoring]);
+  const trackEvent = useCallback(
+    (event: string, data?: any) => {
+      if (enableMonitoring) {
+        productionMonitor.trackUserEngagement(event, componentName, data);
+      }
+    },
+    [componentName, enableMonitoring],
+  );
 
   /**
    * Track error
    */
-  const trackError = useCallback((error: Error, context?: any) => {
-    if (enableMonitoring) {
-      productionMonitor.trackError(error, {
-        componentName,
-        ...context
-      }, 'medium');
-    }
-  }, [componentName, enableMonitoring]);
+  const trackError = useCallback(
+    (error: Error, context?: any) => {
+      if (enableMonitoring) {
+        productionMonitor.trackError(
+          error,
+          {
+            componentName,
+            ...context,
+          },
+          "medium",
+        );
+      }
+    },
+    [componentName, enableMonitoring],
+  );
 
   /**
    * Announce for accessibility
    */
-  const announceForAccessibility = useCallback((message: string) => {
-    // Implementation would use AccessibilityInfo.announceForAccessibility
-    if (__DEV__) {
-      console.log(`[Accessibility] ${componentName}: ${message}`);
-    }
-  }, [componentName]);
+  const announceForAccessibility = useCallback(
+    (message: string) => {
+      // Implementation would use AccessibilityInfo.announceForAccessibility
+      if (__DEV__) {
+        console.log(`[Accessibility] ${componentName}: ${message}`);
+      }
+    },
+    [componentName],
+  );
 
   /**
    * Validate accessibility
@@ -385,9 +412,9 @@ export function useProductionQuality(
       }
 
       if (enableMonitoring) {
-        productionMonitor.trackUserFlow('accessibility_validation', componentName, {
+        productionMonitor.trackUserFlow("accessibility_validation", componentName, {
           score: result.metrics?.accessibilityScore,
-          issues: result.errors.length
+          issues: result.errors.length,
         });
       }
     } catch (error) {
@@ -437,9 +464,12 @@ export function useProductionQuality(
   useEffect(() => {
     if (!error || !enableAutoRetry || retryCount >= maxRetries) return;
 
-    const timeout = setTimeout(() => {
-      clearError();
-    }, retryDelay * Math.pow(2, retryCount));
+    const timeout = setTimeout(
+      () => {
+        clearError();
+      },
+      retryDelay * Math.pow(2, retryCount),
+    );
 
     return () => clearTimeout(timeout);
   }, [error, enableAutoRetry, retryCount, maxRetries, retryDelay, clearError]);
@@ -474,7 +504,7 @@ export function useProductionQuality(
 
     // Lifecycle
     clearError,
-    reset
+    reset,
   };
 }
 

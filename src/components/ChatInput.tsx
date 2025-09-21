@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { View, TextInput, Pressable, Text, Alert, Platform } from "react-native";
+import { View, TextInput, Pressable, Text, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming } from "react-native-reanimated";
 import * as ImagePicker from "expo-image-picker";
@@ -143,7 +143,7 @@ export default function ChatInput({ onSend, onTyping, onSendMedia, replyingTo, o
           type: "document",
         });
       }
-    } catch (error) {
+    } catch {
       Alert.alert("Error", "Failed to pick document");
     }
     toggleAttachments();

@@ -99,7 +99,7 @@ export class UsersService {
   }
 
   async blockUser(blockerId: string, blockedId: string): Promise<void> {
-    const { error } = await supabase.from("blocks").insert({
+    const { error } = await supabase.from("user_blocks").insert({
       blocker_id: blockerId,
       blocked_id: blockedId,
     });
@@ -108,13 +108,13 @@ export class UsersService {
   }
 
   async unblockUser(blockerId: string, blockedId: string): Promise<void> {
-    const { error } = await supabase.from("blocks").delete().eq("blocker_id", blockerId).eq("blocked_id", blockedId);
+    const { error } = await supabase.from("user_blocks").delete().eq("blocker_id", blockerId).eq("blocked_id", blockedId);
 
     if (error) throw error;
   }
 
   async getBlockedUsers(userId: string): Promise<string[]> {
-    const { data, error } = await supabase.from("blocks").select("blocked_id").eq("blocker_id", userId);
+    const { data, error } = await supabase.from("user_blocks").select("blocked_id").eq("blocker_id", userId);
 
     if (error) throw error;
     return (data || []).map((item) => item.blocked_id);

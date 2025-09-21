@@ -43,6 +43,7 @@ export default function SignInScreen() {
     // Footer entrance
     footerOpacity.value = withDelay(600, withTiming(1, { duration: 600 }));
     footerTranslateY.value = withDelay(600, withSpring(0, { damping: 15, stiffness: 200 }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Validation functions kept for future use but not used in testing mode

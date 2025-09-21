@@ -26,7 +26,7 @@ export default function OfflineBanner({ onRetry }: OfflineBannerProps) {
       connected,
       currentlyConnected: isConnected,
       currentlyShowingBanner: showBanner,
-      isInitialized
+      isInitialized,
     });
 
     // Clear any pending debounce
@@ -69,32 +69,34 @@ export default function OfflineBanner({ onRetry }: OfflineBannerProps) {
     let isMounted = true;
 
     // Check initial network state
-    NetInfo.fetch().then((state) => {
-      if (!isMounted) return;
+    NetInfo.fetch()
+      .then((state) => {
+        if (!isMounted) return;
 
-      const isConnected = Boolean(state.isConnected);
-      const hasInternetAccess = state.isInternetReachable === true ||
-                              (state.isInternetReachable === null && isConnected);
-      const connected = isConnected && hasInternetAccess;
+        const isConnected = Boolean(state.isConnected);
+        const hasInternetAccess =
+          state.isInternetReachable === true || (state.isInternetReachable === null && isConnected);
+        const connected = isConnected && hasInternetAccess;
 
-      console.log(`📶 OfflineBanner: Initial network state:`, {
-        isConnected,
-        isInternetReachable: state.isInternetReachable,
-        connected,
-        type: state.type,
-        details: state.details
-      });
+        console.log(`📶 OfflineBanner: Initial network state:`, {
+          isConnected,
+          isInternetReachable: state.isInternetReachable,
+          connected,
+          type: state.type,
+          details: state.details,
+        });
 
-      updateConnectionState(connected, 'initial');
-      setIsInitialized(true);
-    }).catch((error) => {
-      console.warn(`📶 OfflineBanner: Failed to fetch initial network state:`, error);
-      // Assume connected on error to avoid false positives
-      if (isMounted) {
-        updateConnectionState(true, 'initial-error');
+        updateConnectionState(connected, "initial");
         setIsInitialized(true);
-      }
-    });
+      })
+      .catch((error) => {
+        console.warn(`📶 OfflineBanner: Failed to fetch initial network state:`, error);
+        // Assume connected on error to avoid false positives
+        if (isMounted) {
+          updateConnectionState(true, "initial-error");
+          setIsInitialized(true);
+        }
+      });
 
     // Listen for network state changes
     const unsubscribe = NetInfo.addEventListener((state) => {
@@ -102,8 +104,8 @@ export default function OfflineBanner({ onRetry }: OfflineBannerProps) {
 
       // Improved network detection logic - consistent with chatStore
       const isConnected = Boolean(state.isConnected);
-      const hasInternetAccess = state.isInternetReachable === true ||
-                              (state.isInternetReachable === null && isConnected);
+      const hasInternetAccess =
+        state.isInternetReachable === true || (state.isInternetReachable === null && isConnected);
       const connected = isConnected && hasInternetAccess;
 
       console.log(`📶 OfflineBanner: Network state changed:`, {
@@ -111,10 +113,10 @@ export default function OfflineBanner({ onRetry }: OfflineBannerProps) {
         isInternetReachable: state.isInternetReachable,
         connected,
         type: state.type,
-        details: state.details
+        details: state.details,
       });
 
-      updateConnectionState(connected, 'listener');
+      updateConnectionState(connected, "listener");
     });
 
     return () => {
@@ -148,23 +150,25 @@ export default function OfflineBanner({ onRetry }: OfflineBannerProps) {
     }
 
     // Force re-check connection state
-    NetInfo.fetch().then((state) => {
-      const isConnected = Boolean(state.isConnected);
-      const hasInternetAccess = state.isInternetReachable === true ||
-                              (state.isInternetReachable === null && isConnected);
-      const connected = isConnected && hasInternetAccess;
+    NetInfo.fetch()
+      .then((state) => {
+        const isConnected = Boolean(state.isConnected);
+        const hasInternetAccess =
+          state.isInternetReachable === true || (state.isInternetReachable === null && isConnected);
+        const connected = isConnected && hasInternetAccess;
 
-      console.log(`📶 OfflineBanner: Retry network check result:`, {
-        isConnected,
-        isInternetReachable: state.isInternetReachable,
-        connected,
-        type: state.type
+        console.log(`📶 OfflineBanner: Retry network check result:`, {
+          isConnected,
+          isInternetReachable: state.isInternetReachable,
+          connected,
+          type: state.type,
+        });
+
+        updateConnectionState(connected, "retry");
+      })
+      .catch((error) => {
+        console.warn(`📶 OfflineBanner: Retry network check failed:`, error);
       });
-
-      updateConnectionState(connected, 'retry');
-    }).catch((error) => {
-      console.warn(`📶 OfflineBanner: Retry network check failed:`, error);
-    });
   };
 
   if (!showBanner) {

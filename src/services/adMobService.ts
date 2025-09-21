@@ -1,5 +1,4 @@
-import { Platform } from "react-native";
-import { canUseAdMob, buildEnv } from "../utils/buildEnvironment";
+import { canUseAdMob } from "../utils/buildEnvironment";
 import { ADMOB_CONFIG, getAdUnitId } from "../config/admobConfig";
 import { subscriptionService } from "./subscriptionService";
 import { supabase } from "../config/supabase";

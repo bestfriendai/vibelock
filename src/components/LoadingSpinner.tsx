@@ -36,6 +36,7 @@ const LoadingSpinner = React.forwardRef<View, Props>(
           false,
         );
       }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [reduceMotion]);
 
     const animatedStyle = useAnimatedStyle(() => ({

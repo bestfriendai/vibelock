@@ -1,4 +1,4 @@
-import { Audio } from "expo-av";
+import { setAudioModeAsync, requestRecordingPermissionsAsync, getRecordingPermissionsAsync } from "expo-audio";
 import { Platform } from "react-native";
 
 /**
@@ -14,14 +14,13 @@ class AudioModeService {
    */
   async configureForRecording(): Promise<void> {
     try {
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: true,
-        playsInSilentModeIOS: true,
-        staysActiveInBackground: Platform.OS === "ios",
-        interruptionModeIOS: Audio.INTERRUPTION_MODE_IOS_DO_NOT_MIX,
-        shouldDuckAndroid: false,
-        interruptionModeAndroid: Audio.INTERRUPTION_MODE_ANDROID_DO_NOT_MIX,
-        playThroughEarpieceAndroid: false,
+      await setAudioModeAsync({
+        allowsRecording: true,
+        playsInSilentMode: true,
+        shouldPlayInBackground: Platform.OS === "ios",
+        interruptionMode: "doNotMix",
+        interruptionModeAndroid: "doNotMix",
+        shouldRouteThroughEarpiece: false,
       });
 
       this.currentMode = "recording";
@@ -37,14 +36,13 @@ class AudioModeService {
    */
   async configureForPlayback(): Promise<void> {
     try {
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: false,
-        playsInSilentModeIOS: true,
-        staysActiveInBackground: true,
-        interruptionModeIOS: Audio.INTERRUPTION_MODE_IOS_DUCK_OTHERS,
-        shouldDuckAndroid: false,
-        interruptionModeAndroid: Audio.INTERRUPTION_MODE_ANDROID_DUCK_OTHERS,
-        playThroughEarpieceAndroid: false,
+      await setAudioModeAsync({
+        allowsRecording: false,
+        playsInSilentMode: true,
+        shouldPlayInBackground: true,
+        interruptionMode: "duckOthers",
+        interruptionModeAndroid: "duckOthers",
+        shouldRouteThroughEarpiece: false,
       });
 
       this.currentMode = "playback";
@@ -60,14 +58,13 @@ class AudioModeService {
    */
   async resetToIdle(): Promise<void> {
     try {
-      await Audio.setAudioModeAsync({
-        allowsRecordingIOS: false,
-        playsInSilentModeIOS: true,
-        staysActiveInBackground: false,
-        interruptionModeIOS: Audio.INTERRUPTION_MODE_IOS_MIX_WITH_OTHERS,
-        shouldDuckAndroid: true,
-        interruptionModeAndroid: Audio.INTERRUPTION_MODE_ANDROID_DUCK_OTHERS,
-        playThroughEarpieceAndroid: false,
+      await setAudioModeAsync({
+        allowsRecording: false,
+        playsInSilentMode: true,
+        shouldPlayInBackground: false,
+        interruptionMode: "mixWithOthers",
+        interruptionModeAndroid: "duckOthers",
+        shouldRouteThroughEarpiece: false,
       });
 
       this.currentMode = "idle";
@@ -116,8 +113,8 @@ class AudioModeService {
    */
   async requestMicrophonePermissions(): Promise<boolean> {
     try {
-      const { status } = await Audio.requestPermissionsAsync();
-      return status === "granted";
+      const { granted } = await requestRecordingPermissionsAsync();
+      return granted;
     } catch (error) {
       console.error("Failed to request microphone permissions:", error);
       return false;
@@ -129,8 +126,8 @@ class AudioModeService {
    */
   async hasMicrophonePermissions(): Promise<boolean> {
     try {
-      const { status } = await Audio.getPermissionsAsync();
-      return status === "granted";
+      const { granted } = await getRecordingPermissionsAsync();
+      return granted;
     } catch (error) {
       console.error("Failed to check microphone permissions:", error);
       return false;

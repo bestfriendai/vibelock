@@ -18,20 +18,20 @@ export class ChatService {
         .order("last_activity", { ascending: false });
 
       if (error) throw error;
-      return (data || []).map(room => {
+      return (data || []).map((room) => {
         const mappedRoom = mapFieldsToCamelCase(room) as unknown as ChatRoom;
         // Handle lastMessage conversion from Json to Message
-        if (mappedRoom.lastMessage && typeof mappedRoom.lastMessage === 'object') {
+        if (mappedRoom.lastMessage && typeof mappedRoom.lastMessage === "object") {
           mappedRoom.lastMessage = mappedRoom.lastMessage as unknown as Message;
         }
         // Convert string dates to Date objects
-        if (typeof mappedRoom.lastActivity === 'string') {
+        if (typeof mappedRoom.lastActivity === "string") {
           mappedRoom.lastActivity = new Date(mappedRoom.lastActivity);
         }
-        if (typeof mappedRoom.createdAt === 'string') {
+        if (typeof mappedRoom.createdAt === "string") {
           mappedRoom.createdAt = new Date(mappedRoom.createdAt);
         }
-        if (typeof mappedRoom.updatedAt === 'string') {
+        if (typeof mappedRoom.updatedAt === "string") {
           mappedRoom.updatedAt = new Date(mappedRoom.updatedAt);
         }
         return mappedRoom;
@@ -49,17 +49,17 @@ export class ChatService {
 
     const mappedRoom = mapFieldsToCamelCase(data) as unknown as ChatRoom;
     // Handle lastMessage conversion from Json to Message
-    if (mappedRoom.lastMessage && typeof mappedRoom.lastMessage === 'object') {
+    if (mappedRoom.lastMessage && typeof mappedRoom.lastMessage === "object") {
       mappedRoom.lastMessage = mappedRoom.lastMessage as unknown as Message;
     }
     // Convert string dates to Date objects
-    if (typeof mappedRoom.lastActivity === 'string') {
+    if (typeof mappedRoom.lastActivity === "string") {
       mappedRoom.lastActivity = new Date(mappedRoom.lastActivity);
     }
-    if (typeof mappedRoom.createdAt === 'string') {
+    if (typeof mappedRoom.createdAt === "string") {
       mappedRoom.createdAt = new Date(mappedRoom.createdAt);
     }
-    if (typeof mappedRoom.updatedAt === 'string') {
+    if (typeof mappedRoom.updatedAt === "string") {
       mappedRoom.updatedAt = new Date(mappedRoom.updatedAt);
     }
     return mappedRoom;
@@ -73,18 +73,22 @@ export class ChatService {
       (snakeCaseRoom as any).last_activity = snakeCaseRoom.last_activity.toISOString();
     }
 
-    const { data, error } = await supabase.from("chat_rooms_firebase").insert(snakeCaseRoom as any).select().single();
+    const { data, error } = await supabase
+      .from("chat_rooms_firebase")
+      .insert(snakeCaseRoom as any)
+      .select()
+      .single();
 
     if (error) throw error;
     const mappedRoom = mapFieldsToCamelCase(data) as unknown as ChatRoom;
     // Convert string dates to Date objects
-    if (typeof mappedRoom.lastActivity === 'string') {
+    if (typeof mappedRoom.lastActivity === "string") {
       mappedRoom.lastActivity = new Date(mappedRoom.lastActivity);
     }
-    if (typeof mappedRoom.createdAt === 'string') {
+    if (typeof mappedRoom.createdAt === "string") {
       mappedRoom.createdAt = new Date(mappedRoom.createdAt);
     }
-    if (typeof mappedRoom.updatedAt === 'string') {
+    if (typeof mappedRoom.updatedAt === "string") {
       mappedRoom.updatedAt = new Date(mappedRoom.updatedAt);
     }
     return mappedRoom;
@@ -103,13 +107,13 @@ export class ChatService {
     if (error) throw error;
     const mappedRoom = mapFieldsToCamelCase(data) as unknown as ChatRoom;
     // Convert string dates to Date objects
-    if (typeof mappedRoom.lastActivity === 'string') {
+    if (typeof mappedRoom.lastActivity === "string") {
       mappedRoom.lastActivity = new Date(mappedRoom.lastActivity);
     }
-    if (typeof mappedRoom.createdAt === 'string') {
+    if (typeof mappedRoom.createdAt === "string") {
       mappedRoom.createdAt = new Date(mappedRoom.createdAt);
     }
-    if (typeof mappedRoom.updatedAt === 'string') {
+    if (typeof mappedRoom.updatedAt === "string") {
       mappedRoom.updatedAt = new Date(mappedRoom.updatedAt);
     }
     return mappedRoom;
@@ -136,19 +140,19 @@ export class ChatService {
     const { data, error } = await query;
 
     if (error) throw error;
-    return (data || []).map(message => {
-      const mappedMessage = mapFieldsToCamelCase(message) as unknown as Message;
-      // Convert string dates to Date objects
-      if (typeof mappedMessage.timestamp === 'string') {
-        mappedMessage.timestamp = new Date(mappedMessage.timestamp);
-      }
-      return mappedMessage;
-    }).reverse();
+    return (data || [])
+      .map((message) => {
+        const mappedMessage = mapFieldsToCamelCase(message) as unknown as Message;
+        // Convert string dates to Date objects
+        if (typeof mappedMessage.timestamp === "string") {
+          mappedMessage.timestamp = new Date(mappedMessage.timestamp);
+        }
+        return mappedMessage;
+      })
+      .reverse();
   }
 
   async sendMessage(message: Omit<Message, "id" | "createdAt" | "updatedAt">): Promise<Message> {
-    const snakeCaseMessage = mapFieldsToSnakeCase(message);
-
     // Map Message fields to Firebase schema
     const firebaseMessage = {
       chat_room_id: message.chatRoomId,
@@ -170,7 +174,7 @@ export class ChatService {
 
     const mappedMessage = mapFieldsToCamelCase(data) as unknown as Message;
     // Convert string dates to Date objects
-    if (typeof mappedMessage.timestamp === 'string') {
+    if (typeof mappedMessage.timestamp === "string") {
       mappedMessage.timestamp = new Date(mappedMessage.timestamp);
     }
     return mappedMessage;
@@ -187,7 +191,7 @@ export class ChatService {
     if (error) throw error;
     const mappedMessage = mapFieldsToCamelCase(data) as unknown as Message;
     // Convert string dates to Date objects
-    if (typeof mappedMessage.timestamp === 'string') {
+    if (typeof mappedMessage.timestamp === "string") {
       mappedMessage.timestamp = new Date(mappedMessage.timestamp);
     }
     return mappedMessage;
@@ -202,16 +206,19 @@ export class ChatService {
   async getRoomMembers(roomId: string): Promise<RoomMember[]> {
     // Note: chat_members_firebase table is not in the generated types
     // This is a type assertion to handle the missing table definition
-    const { data, error } = await supabase.from("chat_members_firebase" as any).select("*").eq("chat_room_id", roomId);
+    const { data, error } = await supabase
+      .from("chat_members_firebase" as any)
+      .select("*")
+      .eq("chat_room_id", roomId);
 
     if (error) {
       console.warn("Failed to fetch room members (table may not exist):", error);
       return []; // Return empty array if table doesn't exist
     }
-    return (data || []).map(member => {
+    return (data || []).map((member) => {
       const mappedMember = mapFieldsToCamelCase(member) as unknown as RoomMember;
       // Convert string dates to Date objects
-      if (typeof mappedMember.joinedAt === 'string') {
+      if (typeof mappedMember.joinedAt === "string") {
         mappedMember.joinedAt = new Date(mappedMember.joinedAt);
       }
       return mappedMember;
@@ -290,10 +297,10 @@ export class ChatService {
       .limit(limit);
 
     if (error) throw error;
-    return (data || []).map(message => {
+    return (data || []).map((message) => {
       const mappedMessage = mapFieldsToCamelCase(message) as unknown as Message;
       // Convert string dates to Date objects
-      if (typeof mappedMessage.timestamp === 'string') {
+      if (typeof mappedMessage.timestamp === "string") {
         mappedMessage.timestamp = new Date(mappedMessage.timestamp);
       }
       return mappedMessage;

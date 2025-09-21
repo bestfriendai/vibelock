@@ -59,7 +59,7 @@ export default function ChatroomsScreen() {
       isGuestMode: authState.isGuestMode,
       hasUser: !!authState.user,
       isLoading: authState.isLoading,
-      error: authState.error || "none"
+      error: authState.error || "none",
     });
   }, [user, canAccessChat, needsSignIn, chatRooms.length, isLoading, error, connectionStatus]);
 
@@ -194,7 +194,7 @@ export default function ChatroomsScreen() {
     canAccessChat,
     needsSignIn,
     allowDevAccess,
-    filteredCount: filtered.length
+    filteredCount: filtered.length,
   });
 
   return (

@@ -3,7 +3,13 @@
 export interface User {
   id: string;
   email: string;
+  username?: string;
+  firstName?: string;
+  lastName?: string;
+  maskedEmail?: string;
   anonymousId: string;
+  city?: string;
+  state?: string;
   location: {
     city: string;
     state: string;
@@ -21,6 +27,7 @@ export interface User {
   // The user's own gender/category for tagging their profile (optional)
   gender?: "man" | "woman" | "nonbinary" | "lgbtq+" | string;
   createdAt: Date;
+  updatedAt?: Date;
   isBlocked?: boolean;
 }
 
@@ -210,12 +217,12 @@ export interface AppSettings {
 
 // Chat-related types
 export type ChatRoomType = "local" | "global" | "topic";
-export type MessageType = "text" | "image" | "voice" | "document" | "video" | "system" | "join" | "leave";
+export type MessageType = "text" | "image" | "voice" | "document" | "video" | "system" | "join" | "leave" | "typing" | "presence";
 export type UserRole = "member" | "moderator" | "admin";
 export type ConnectionStatus = "connecting" | "connected" | "disconnected" | "error";
 
 // AppState types for React Native
-export type AppStateStatus = 'active' | 'background' | 'inactive' | 'unknown' | 'extension';
+export type AppStateStatus = "active" | "background" | "inactive" | "unknown" | "extension";
 export type AppStateChangeHandler = (nextAppState: AppStateStatus, prevAppState: AppStateStatus) => void;
 
 export interface ChatRoom {
@@ -276,12 +283,13 @@ export type AuthProvider = "google" | "apple" | "facebook" | "email";
 export type ChatMessage = Message;
 
 // Message event type for real-time updates
-export type MessageEventType = "initial" | "new" | "update" | "replace" | "delete";
+export type MessageEventType = "initial" | "new" | "update" | "replace" | "delete" | "error";
 
 export interface MessageEvent {
   type: MessageEventType;
   items: Message[];
   tempId?: string; // For replacement events
+  error?: any; // For error events
 }
 
 // Message delivery and status types
@@ -328,15 +336,23 @@ export interface Message {
   fileSize?: number;
   mimeType?: string;
   thumbnailUri?: string;
+  width?: number;
+  height?: number;
   // Enhanced voice message support
   transcription?: string;
   waveformData?: number[];
+  // Media array for multiple attachments
+  media?: MediaItem[];
+  // Duration field for video/audio messages
+  duration?: number;
   // Editing and forwarding fields
   editedAt?: Date;
   isEdited?: boolean;
   forwardedFromId?: string;
   forwardedFromRoomId?: string;
   forwardedFromSender?: string;
+  // Optimistic update fields
+  isOptimistic?: boolean;
 }
 
 export interface ChatMember {
@@ -357,7 +373,7 @@ export interface NetworkStatus {
   isConnected: boolean;
   isStable: boolean;
   latency: number;
-  networkType?: 'wifi' | 'cellular' | 'ethernet' | 'none' | 'unknown';
+  networkType?: "wifi" | "cellular" | "ethernet" | "none" | "unknown";
   shouldReconnect?: boolean;
 }
 
@@ -485,8 +501,6 @@ export interface AudioPlayerActions {
   stop: () => Promise<void>;
   seek: (position: number) => Promise<void>;
   setPlaybackRate: (rate: PlaybackRate) => Promise<void>;
-  updateProgress: (currentTime: number) => void;
-  onPlaybackStatusUpdate?: (status: any) => void;
 }
 
 export type WaveformData = number[];
@@ -537,10 +551,10 @@ export interface ForwardMessageRequest {
 }
 
 export enum MessageActionType {
-  REPLY = 'reply',
-  EDIT = 'edit',
-  FORWARD = 'forward',
-  COPY = 'copy',
-  DELETE = 'delete',
-  REACT = 'react'
+  REPLY = "reply",
+  EDIT = "edit",
+  FORWARD = "forward",
+  COPY = "copy",
+  DELETE = "delete",
+  REACT = "react",
 }

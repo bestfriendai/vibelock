@@ -24,10 +24,10 @@ export default function NetworkDebugOverlay() {
         isInternetReachable: state.isInternetReachable,
         type: state.type,
         details: state.details,
-        timestamp: new Date().toLocaleTimeString()
+        timestamp: new Date().toLocaleTimeString(),
       };
       setCurrentState(networkState);
-      setNetworkHistory(prev => [networkState, ...prev.slice(0, 9)]); // Keep last 10
+      setNetworkHistory((prev) => [networkState, ...prev.slice(0, 9)]); // Keep last 10
     });
 
     // Listen for changes
@@ -37,10 +37,10 @@ export default function NetworkDebugOverlay() {
         isInternetReachable: state.isInternetReachable,
         type: state.type,
         details: state.details,
-        timestamp: new Date().toLocaleTimeString()
+        timestamp: new Date().toLocaleTimeString(),
       };
       setCurrentState(networkState);
-      setNetworkHistory(prev => [networkState, ...prev.slice(0, 9)]); // Keep last 10
+      setNetworkHistory((prev) => [networkState, ...prev.slice(0, 9)]); // Keep last 10
     });
 
     return unsubscribe;
@@ -48,8 +48,7 @@ export default function NetworkDebugOverlay() {
 
   const getConnectionStatus = (state: NetworkState) => {
     const isConnected = Boolean(state.isConnected);
-    const hasInternetAccess = state.isInternetReachable === true || 
-                            (state.isInternetReachable === null && isConnected);
+    const hasInternetAccess = state.isInternetReachable === true || (state.isInternetReachable === null && isConnected);
     return isConnected && hasInternetAccess;
   };
 
@@ -77,17 +76,13 @@ export default function NetworkDebugOverlay() {
         <View className="mb-3">
           <Text className="text-white font-semibold text-xs mb-1">Current State:</Text>
           <View className="bg-gray-800 rounded p-2">
-            <Text className="text-white text-xs">
-              Connected: {String(currentState.isConnected)}
-            </Text>
-            <Text className="text-white text-xs">
-              Internet: {String(currentState.isInternetReachable)}
-            </Text>
-            <Text className="text-white text-xs">
-              Type: {currentState.type}
-            </Text>
-            <Text className={`text-xs font-bold ${getConnectionStatus(currentState) ? 'text-green-400' : 'text-red-400'}`}>
-              Status: {getConnectionStatus(currentState) ? 'ONLINE' : 'OFFLINE'}
+            <Text className="text-white text-xs">Connected: {String(currentState.isConnected)}</Text>
+            <Text className="text-white text-xs">Internet: {String(currentState.isInternetReachable)}</Text>
+            <Text className="text-white text-xs">Type: {currentState.type}</Text>
+            <Text
+              className={`text-xs font-bold ${getConnectionStatus(currentState) ? "text-green-400" : "text-red-400"}`}
+            >
+              Status: {getConnectionStatus(currentState) ? "ONLINE" : "OFFLINE"}
             </Text>
           </View>
         </View>
@@ -98,7 +93,7 @@ export default function NetworkDebugOverlay() {
         {networkHistory.map((state, index) => (
           <View key={index} className="bg-gray-800 rounded p-2 mb-1">
             <Text className="text-gray-300 text-xs">
-              {state.timestamp} - {getConnectionStatus(state) ? '🟢' : '🔴'}
+              {state.timestamp} - {getConnectionStatus(state) ? "🟢" : "🔴"}
             </Text>
             <Text className="text-white text-xs">
               C:{String(state.isConnected)} I:{String(state.isInternetReachable)} T:{state.type}
@@ -110,7 +105,7 @@ export default function NetworkDebugOverlay() {
       <Pressable
         onPress={() => {
           NetInfo.fetch().then((state) => {
-            console.log('🔍 Manual network check:', state);
+            console.log("🔍 Manual network check:", state);
           });
         }}
         className="bg-blue-600 rounded p-2 mt-2"

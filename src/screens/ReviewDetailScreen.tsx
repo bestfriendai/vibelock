@@ -146,11 +146,11 @@ export default function ReviewDetailScreen() {
           .filter((m) => typeof m?.uri === "string" && /^https?:\/\//.test(m.uri))
           .map((m) => ({
             ...m,
-            type: m.type || (
-              m.uri.includes('.mp4') || m.uri.includes('.mov') || m.uri.includes('.avi') || m.uri.includes('.mkv') 
-              ? 'video' 
-              : 'image'
-            ) as const,
+            type:
+              m.type ||
+              ((m.uri.includes(".mp4") || m.uri.includes(".mov") || m.uri.includes(".avi") || m.uri.includes(".mkv")
+                ? "video"
+                : "image") as const),
           }))
       : [];
 
@@ -191,6 +191,7 @@ export default function ReviewDetailScreen() {
       loadComments(review.id);
     }, 200);
     return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [review, loadComments]);
 
   // Scroll handler for animations - optimized for performance

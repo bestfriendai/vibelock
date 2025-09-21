@@ -306,24 +306,28 @@ export function createHermesSafeDefineProperty() {
 
       if (existing && existing.configurable === false) {
         // Check if we're trying to set the same value
-        if ("value" in descriptor && existing.value === descriptor.value) {
-          console.log(`[HermesCompatibility] Skipping redefinition of ${propertyName} with same value`);
+        if (
+          "value" in descriptor &&
+          existing.value === descriptor.value &&
+          existing.writable === descriptor.writable &&
+          existing.enumerable === descriptor.enumerable
+        ) {
+          console.log(`[HermesCompatibility] Skipping redefinition of ${propertyName} with same descriptor`);
           return obj;
         }
 
-        // Try to work around the issue by deleting first (if possible)
-        try {
-          delete obj[propertyName];
-        } catch (deleteError) {
-          console.warn(`[HermesCompatibility] Cannot redefine non-configurable property ${propertyName}`);
-          return obj;
-        }
+        // For non-configurable properties, only allow if not changing anything
+        console.warn(
+          `[HermesCompatibility] Attempting to redefine non-configurable property ${propertyName} - this may fail`,
+        );
+        // Don't try to delete, just attempt the definition and let it fail if necessary
       }
 
       return originalDefineProperty.call(Object, obj, propertyName, descriptor);
     } catch (error) {
       console.error(`[HermesCompatibility] Property definition failed for ${propertyName}:`, error);
-      throw error;
+      // Don't throw, return obj to allow graceful degradation
+      return obj;
     }
   };
 }
@@ -380,11 +384,9 @@ export function initializeHermesCompatibility(): HermesEngineInfo {
     // Apply workarounds for known issues
     applyHermesWorkarounds();
 
-    // Replace Object.defineProperty with Hermes-safe version
+    // Create safe version but don't replace global Object.defineProperty
+    // Only use it when explicitly needed
     const safeDefineProperty = createHermesSafeDefineProperty();
-    Object.defineProperty = safeDefineProperty;
-
-    // Make the safe function available globally for Babel plugin
     (global as any).__hermesDefinePropertySafe = safeDefineProperty;
   } else {
     console.log("[HermesCompatibility] Non-Hermes engine detected");

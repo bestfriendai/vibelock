@@ -1,6 +1,6 @@
-import { supabase } from '../config/supabase';
-import { Message } from '../types';
-import { AppError, ErrorType } from '../utils/errorHandling';
+import { supabase } from "../config/supabase";
+import { Message } from "../types";
+import { AppError, ErrorType } from "../utils/errorHandling";
 
 const EDIT_TIME_LIMIT_MINUTES = 15;
 
@@ -13,67 +13,56 @@ export class MessageEditService {
   /**
    * Edit a message with proper validation and error handling
    */
-  async editMessage(
-    messageId: string,
-    newContent: string,
-    userId: string
-  ): Promise<Message> {
+  async editMessage(messageId: string, newContent: string, userId: string): Promise<Message> {
     try {
       // Validate new content
       if (!newContent || newContent.trim().length === 0) {
-        throw new AppError(
-          'Content cannot be empty',
-          ErrorType.VALIDATION,
-          'Message content is required'
-        );
+        throw new AppError("Content cannot be empty", ErrorType.VALIDATION, "Message content is required");
       }
 
       // Get the original message
       const { data: originalMessage, error: fetchError } = await supabase
-        .from('chat_messages_firebase')
-        .select('*')
-        .eq('id', messageId)
+        .from("chat_messages_firebase")
+        .select("*")
+        .eq("id", messageId)
         .single();
 
       if (fetchError || !originalMessage) {
         throw new AppError(
-          'Message not found',
+          "Message not found",
           ErrorType.VALIDATION,
-          'The message you are trying to edit does not exist'
+          "The message you are trying to edit does not exist",
         );
       }
 
       // Check edit permissions
-      const permission = await this.checkEditPermission(
-        originalMessage,
-        userId
-      );
+      const permission = await this.checkEditPermission(originalMessage, userId);
 
       if (!permission.canEdit) {
         throw new AppError(
-          permission.reason || 'Cannot edit this message',
+          permission.reason || "Cannot edit this message",
           ErrorType.PERMISSION,
-          permission.reason || 'You do not have permission to edit this message'
+          permission.reason || "You do not have permission to edit this message",
         );
       }
 
       // Update the message
       const { data: updatedMessage, error: updateError } = await supabase
-        .from('chat_messages_firebase')
+        .from("chat_messages_firebase")
         .update({
           content: newContent.trim(),
           is_edited: true,
           edited_at: new Date().toISOString(),
         })
-        .eq('id', messageId)
+        .eq("id", messageId)
         .select()
         .single();
 
       if (updateError) {
         throw new AppError(
-          'Failed to update message',
+          "Failed to update message",
           ErrorType.SERVER,
-          'Failed to save your changes. Please try again.'
+          "Failed to save your changes. Please try again.",
         );
       }
 
@@ -84,14 +73,14 @@ export class MessageEditService {
       // Transform to Message type
       return this.transformToMessage(updatedMessage);
     } catch (error) {
-      console.error('Failed to edit message:', error);
+      console.error("Failed to edit message:", error);
       if (error instanceof AppError) {
         throw error;
       }
       throw new AppError(
-        'An unexpected error occurred',
+        "An unexpected error occurred",
         ErrorType.UNKNOWN,
-        'Failed to edit message. Please try again.'
+        "Failed to edit message. Please try again.",
       );
     }
   }
@@ -99,23 +88,20 @@ export class MessageEditService {
   /**
    * Check if a user has permission to edit a message
    */
-  async checkEditPermission(
-    message: any,
-    userId: string
-  ): Promise<EditPermissionResult> {
+  async checkEditPermission(message: any, userId: string): Promise<EditPermissionResult> {
     // Check if user is the sender
     if (message.sender_id !== userId) {
       return {
         canEdit: false,
-        reason: 'You can only edit your own messages',
+        reason: "You can only edit your own messages",
       };
     }
 
     // Check if message type supports editing (only text messages)
-    if (message.message_type !== 'text') {
+    if (message.message_type !== "text") {
       return {
         canEdit: false,
-        reason: 'Only text messages can be edited',
+        reason: "Only text messages can be edited",
       };
     }
 
@@ -134,7 +120,7 @@ export class MessageEditService {
     if (message.is_deleted) {
       return {
         canEdit: false,
-        reason: 'Deleted messages cannot be edited',
+        reason: "Deleted messages cannot be edited",
       };
     }
 
@@ -146,11 +132,11 @@ export class MessageEditService {
    */
   validateContent(content: string): { isValid: boolean; error?: string } {
     if (!content || content.trim().length === 0) {
-      return { isValid: false, error: 'Message cannot be empty' };
+      return { isValid: false, error: "Message cannot be empty" };
     }
 
     if (content.length > 5000) {
-      return { isValid: false, error: 'Message is too long (max 5000 characters)' };
+      return { isValid: false, error: "Message is too long (max 5000 characters)" };
     }
 
     return { isValid: true };
@@ -159,12 +145,7 @@ export class MessageEditService {
   /**
    * Log message edit for audit purposes
    */
-  private async logEdit(
-    messageId: string,
-    originalContent: string,
-    newContent: string,
-    userId: string
-  ): Promise<void> {
+  private async logEdit(messageId: string, originalContent: string, newContent: string, userId: string): Promise<void> {
     // TODO: Implement when message_edit_logs table is created
     // try {
     //   await supabase.from('message_edit_logs').insert({
@@ -188,7 +169,7 @@ export class MessageEditService {
       id: dbMessage.id,
       chatRoomId: dbMessage.chat_room_id,
       senderId: dbMessage.sender_id,
-      senderName: dbMessage.sender_name || 'Unknown',
+      senderName: dbMessage.sender_name || "Unknown",
       content: dbMessage.content,
       messageType: dbMessage.message_type,
       timestamp: new Date(dbMessage.created_at),
@@ -209,16 +190,12 @@ export class MessageEditService {
   /**
    * Broadcast edit event to other users via real-time
    */
-  async broadcastEdit(
-    messageId: string,
-    roomId: string,
-    newContent: string
-  ): Promise<void> {
+  async broadcastEdit(messageId: string, roomId: string, newContent: string): Promise<void> {
     try {
       const channel = supabase.channel(`room:${roomId}`);
       await channel.send({
-        type: 'broadcast',
-        event: 'message_edited',
+        type: "broadcast",
+        event: "message_edited",
         payload: {
           messageId,
           newContent,
@@ -226,19 +203,14 @@ export class MessageEditService {
         },
       });
     } catch (error) {
-      console.error('Failed to broadcast edit event:', error);
+      console.error("Failed to broadcast edit event:", error);
     }
   }
 
   /**
    * Retry failed edit operation with exponential backoff
    */
-  async retryEdit(
-    messageId: string,
-    newContent: string,
-    userId: string,
-    maxRetries: number = 3
-  ): Promise<Message> {
+  async retryEdit(messageId: string, newContent: string, userId: string, maxRetries: number = 3): Promise<Message> {
     let lastError: Error | null = null;
 
     for (let attempt = 0; attempt < maxRetries; attempt++) {
@@ -249,12 +221,12 @@ export class MessageEditService {
         if (attempt < maxRetries - 1) {
           // Exponential backoff
           const delay = Math.pow(2, attempt) * 1000;
-          await new Promise(resolve => setTimeout(resolve, delay));
+          await new Promise((resolve) => setTimeout(resolve, delay));
         }
       }
     }
 
-    throw lastError || new Error('Failed to edit message after retries');
+    throw lastError || new Error("Failed to edit message after retries");
   }
 }
 

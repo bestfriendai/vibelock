@@ -6,6 +6,43 @@ import { User } from "../types";
 import { AppError, ErrorType, parseSupabaseError } from "./errorHandling";
 
 /**
+ * Retry utility for network operations
+ */
+const retryAsync = async <T>(
+  operation: () => Promise<T>,
+  maxRetries: number = 3,
+  baseDelay: number = 1000,
+): Promise<T> => {
+  let lastError: Error;
+
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error as Error;
+
+      // Check if error is retryable (network-related)
+      const isRetryable =
+        error instanceof Error &&
+        (error.message.includes("network") ||
+          error.message.includes("timeout") ||
+          error.message.includes("fetch") ||
+          error.message.includes("connection"));
+
+      if (!isRetryable || attempt === maxRetries - 1) {
+        throw error;
+      }
+
+      // Exponential backoff
+      const delay = baseDelay * Math.pow(2, attempt) + Math.random() * 500;
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+  }
+
+  throw lastError!;
+};
+
+/**
  * Unified authentication checker that ensures consistency across the app
  * This should be the ONLY way to check authentication in services and async functions
  */
@@ -20,7 +57,7 @@ export const getAuthenticatedUser = async (): Promise<{ user: User | null; supab
       userId: storeState.user?.id?.slice(-4) || "none",
     });
 
-    const supabaseUser = await authService.getUser();
+    const supabaseUser = await retryAsync(() => authService.getUser());
     console.log(`🔍 getAuthenticatedUser - Supabase user:`, {
       hasSupabaseUser: !!supabaseUser,
       supabaseUserId: supabaseUser?.id?.slice(-4) || "none",
@@ -172,7 +209,7 @@ export const getUserDisplayName = (user?: User | null): string => {
  */
 export const refreshSessionIfNeeded = async (): Promise<boolean> => {
   try {
-    const session = await authService.getSession();
+    const session = await retryAsync(() => authService.getSession());
 
     if (!session) {
       return false;
@@ -188,7 +225,7 @@ export const refreshSessionIfNeeded = async (): Promise<boolean> => {
     if (timeUntilExpiry < 300) {
       // Less than 5 minutes
       console.log("🔄 Session expiring soon, refreshing...");
-      const { data, error } = await supabase.auth.refreshSession();
+      const { data, error } = await retryAsync(() => supabase.auth.refreshSession());
 
       if (error) {
         console.warn("Failed to refresh session:", error);

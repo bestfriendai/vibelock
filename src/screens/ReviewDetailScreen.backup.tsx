@@ -165,6 +165,7 @@ export default function ReviewDetailScreen() {
       loadComments(review.id);
     }, 200);
     return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [review, loadComments]);
 
   // Scroll handler for animations - optimized for performance

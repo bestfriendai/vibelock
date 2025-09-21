@@ -1,6 +1,6 @@
 import { supabase, handleSupabaseError } from "../config/supabase";
 import { withRetry } from "../utils/retryLogic";
-import { User, AuthProvider } from "../types";
+import { AuthProvider } from "../types";
 import { initializeUserSubscription } from "../utils/subscriptionUtils";
 import type { AuthResponse, Session, User as SupabaseUser, OAuthResponse } from "@supabase/supabase-js";
 

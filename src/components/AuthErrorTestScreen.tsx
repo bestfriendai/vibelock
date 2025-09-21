@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, Pressable, ScrollView, Alert } from "react-native";
+import { View, Text, Pressable, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import useAuthStore from "../state/authStore";
@@ -18,7 +18,7 @@ export const AuthErrorTestScreen: React.FC = () => {
     try {
       await register("36373@gmail.com", "password123", { city: "Test", state: "Test" }, {});
       addResult("❌ Should have failed with invalid email");
-    } catch (error) {
+    } catch {
       addResult("✅ Invalid email test completed");
     }
   };
@@ -28,7 +28,7 @@ export const AuthErrorTestScreen: React.FC = () => {
     try {
       await register("notanemail", "password123", { city: "Test", state: "Test" }, {});
       addResult("❌ Should have failed with invalid email format");
-    } catch (error) {
+    } catch {
       addResult("✅ Invalid email format test completed");
     }
   };
@@ -38,7 +38,7 @@ export const AuthErrorTestScreen: React.FC = () => {
     try {
       await register("test@example.com", "123", { city: "Test", state: "Test" }, {});
       addResult("❌ Should have failed with short password");
-    } catch (error) {
+    } catch {
       addResult("✅ Short password test completed");
     }
   };
@@ -48,7 +48,7 @@ export const AuthErrorTestScreen: React.FC = () => {
     try {
       await login("nonexistent@example.com", "wrongpassword");
       addResult("❌ Should have failed with invalid credentials");
-    } catch (error) {
+    } catch {
       addResult("✅ Invalid login test completed");
     }
   };
@@ -58,7 +58,7 @@ export const AuthErrorTestScreen: React.FC = () => {
     try {
       await register("", "password123", { city: "Test", state: "Test" }, {});
       addResult("❌ Should have failed with empty email");
-    } catch (error) {
+    } catch {
       addResult("✅ Empty email test completed");
     }
   };

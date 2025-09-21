@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect } from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
@@ -7,8 +7,6 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
   withTiming,
-  FadeIn,
-  FadeOut,
   SlideInDown,
   SlideOutDown,
 } from "react-native-reanimated";
@@ -51,6 +49,7 @@ export const MediaUploadProgress: React.FC<MediaUploadProgressProps> = ({
   // Update progress animation
   useEffect(() => {
     progressAnimation.value = withTiming(progress, { duration: 300 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [progress]);
 
   // Animate stage changes
@@ -58,6 +57,7 @@ export const MediaUploadProgress: React.FC<MediaUploadProgressProps> = ({
     stageScale.value = withSpring(0.9, { duration: 150 }, () => {
       stageScale.value = withSpring(1, { duration: 150 });
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stage]);
 
   const progressBarStyle = useAnimatedStyle(() => {
@@ -109,7 +109,7 @@ export const MediaUploadProgress: React.FC<MediaUploadProgressProps> = ({
       case "failed":
         return colors.status.error;
       default:
-        return colors.brand.primary;
+        return colors.brand.coral;
     }
   };
 
@@ -123,12 +123,7 @@ export const MediaUploadProgress: React.FC<MediaUploadProgressProps> = ({
         {/* Thumbnail Preview */}
         {thumbnailUri && (
           <View style={styles.thumbnailContainer}>
-            <Image
-              source={{ uri: thumbnailUri }}
-              style={styles.thumbnail}
-              contentFit="cover"
-              transition={200}
-            />
+            <Image source={{ uri: thumbnailUri }} style={styles.thumbnail} contentFit="cover" transition={200} />
             {mediaType === "video" && (
               <View style={styles.videoOverlay}>
                 <Ionicons name="play-circle" size={24} color="white" />
@@ -142,9 +137,7 @@ export const MediaUploadProgress: React.FC<MediaUploadProgressProps> = ({
           {/* Stage Header */}
           <View style={styles.stageHeader}>
             <Ionicons name={getStageIcon() as any} size={20} color={getStageColor()} />
-            <Text style={[styles.stageLabel, { color: colors.text.primary }]}>
-              {getStageLabel()}
-            </Text>
+            <Text style={[styles.stageLabel, { color: colors.text.primary }]}>{getStageLabel()}</Text>
           </View>
 
           {/* File Info */}
@@ -157,22 +150,14 @@ export const MediaUploadProgress: React.FC<MediaUploadProgressProps> = ({
           {/* Progress Bar */}
           {stage !== "complete" && stage !== "failed" && (
             <View style={[styles.progressBarContainer, { backgroundColor: colors.surface[600] }]}>
-              <Animated.View
-                style={[
-                  styles.progressBar,
-                  progressBarStyle,
-                  { backgroundColor: getStageColor() },
-                ]}
-              />
+              <Animated.View style={[styles.progressBar, progressBarStyle, { backgroundColor: getStageColor() }]} />
             </View>
           )}
 
           {/* Additional Info */}
           <View style={styles.metaInfo}>
             {fileSize && (
-              <Text style={[styles.metaText, { color: colors.text.muted }]}>
-                {formatFileSize(fileSize)}
-              </Text>
+              <Text style={[styles.metaText, { color: colors.text.muted }]}>{formatFileSize(fileSize)}</Text>
             )}
 
             {compressionRatio && compressionRatio < 1 && (
@@ -188,9 +173,7 @@ export const MediaUploadProgress: React.FC<MediaUploadProgressProps> = ({
             )}
 
             {stage !== "complete" && stage !== "failed" && (
-              <Text style={[styles.metaText, { color: colors.brand.primary }]}>
-                {Math.round(progress)}%
-              </Text>
+              <Text style={[styles.metaText, { color: colors.brand.coral }]}>{Math.round(progress)}%</Text>
             )}
           </View>
 
@@ -205,28 +188,19 @@ export const MediaUploadProgress: React.FC<MediaUploadProgressProps> = ({
         {/* Action Buttons */}
         <View style={styles.actions}>
           {stage === "failed" && onRetry && (
-            <Pressable
-              onPress={onRetry}
-              style={[styles.actionButton, { backgroundColor: colors.brand.primary }]}
-            >
+            <Pressable onPress={onRetry} style={[styles.actionButton, { backgroundColor: colors.brand.coral }]}>
               <Ionicons name="refresh" size={18} color="white" />
             </Pressable>
           )}
 
           {(stage === "processing" || stage === "uploading") && onCancel && (
-            <Pressable
-              onPress={onCancel}
-              style={[styles.actionButton, { backgroundColor: colors.surface[600] }]}
-            >
+            <Pressable onPress={onCancel} style={[styles.actionButton, { backgroundColor: colors.surface[600] }]}>
               <Ionicons name="close" size={18} color={colors.text.primary} />
             </Pressable>
           )}
 
           {stage === "complete" && onDismiss && (
-            <Pressable
-              onPress={onDismiss}
-              style={[styles.actionButton, { backgroundColor: colors.status.success }]}
-            >
+            <Pressable onPress={onDismiss} style={[styles.actionButton, { backgroundColor: colors.status.success }]}>
               <Ionicons name="checkmark" size={18} color="white" />
             </Pressable>
           )}

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, Pressable, Dimensions } from "react-native";
+import React, { useEffect } from "react";
+import { View, Text, Pressable } from "react-native";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -10,7 +10,7 @@ import Animated, {
 import { Ionicons } from "@expo/vector-icons";
 import { ChatRoom } from "../types";
 import { useTheme } from "../providers/ThemeProvider";
-import { formatTime, formatRelativeTime } from "../utils/dateUtils";
+import { formatRelativeTime } from "../utils/dateUtils";
 
 interface Props {
   room: ChatRoom;
@@ -20,8 +20,6 @@ interface Props {
   isTyping?: boolean;
   typingUsers?: string[];
 }
-
-const { width: screenWidth } = Dimensions.get("window");
 
 const typeConfig = {
   local: {
@@ -53,7 +51,6 @@ export default function EnhancedChatRoomCard({
   typingUsers = [],
 }: Props) {
   const { colors, isDarkMode } = useTheme();
-  const [isPressed, setIsPressed] = useState(false);
 
   // Animation values
   const scale = useSharedValue(1);
@@ -67,6 +64,7 @@ export default function EnhancedChatRoomCard({
   useEffect(() => {
     opacity.value = withTiming(1, { duration: 400 });
     translateY.value = withSpring(0, { damping: 15, stiffness: 100 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Typing animation
@@ -76,15 +74,14 @@ export default function EnhancedChatRoomCard({
         typingDots.value = withTiming(0, { duration: 1000 });
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isTyping]);
 
   const handlePressIn = () => {
-    setIsPressed(true);
     scale.value = withSpring(0.98, { damping: 15, stiffness: 200 });
   };
 
   const handlePressOut = () => {
-    setIsPressed(false);
     scale.value = withSpring(1, { damping: 15, stiffness: 200 });
   };
 

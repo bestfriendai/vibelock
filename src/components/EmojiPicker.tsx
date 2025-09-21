@@ -1,10 +1,8 @@
 import React, { useState } from "react";
-import { View, Text, Pressable, Modal, ScrollView, TextInput, Dimensions } from "react-native";
+import { View, Text, Pressable, Modal, ScrollView, TextInput } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useTheme } from "../providers/ThemeProvider";
-
-const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 
 interface EmojiPickerProps {
   visible: boolean;

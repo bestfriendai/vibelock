@@ -39,6 +39,7 @@ export default function ConfirmationModal({
       opacity.value = withTiming(0, { duration: 200 });
       scale.value = withTiming(0.9, { duration: 200 });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
 
   const animatedBackdropStyle = useAnimatedStyle(() => ({

@@ -1,7 +1,6 @@
-import { Audio } from "expo-av";
+import { createAudioPlayer } from "expo-audio";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as FileSystem from "expo-file-system";
-import { Platform } from "react-native";
 
 interface AudioMetadata {
   duration: number;
@@ -25,7 +24,7 @@ const ANALYSIS_INTERVAL_MS = 100;
 
 class AudioAnalysisService {
   private cache = new Map<string, AudioAnalysisResult>();
-  private analysisQueue: Array<{ uri: string; resolve: Function; reject: Function }> = [];
+  private analysisQueue: { uri: string; resolve: Function; reject: Function }[] = [];
   private isProcessingQueue = false;
 
   /**
@@ -40,17 +39,29 @@ class AudioAnalysisService {
       }
 
       // Load audio for analysis
-      const { sound, status } = await Audio.Sound.createAsync(
-        { uri: audioUri },
-        { progressUpdateIntervalMillis: ANALYSIS_INTERVAL_MS }
-      );
+      const player = createAudioPlayer(audioUri, { updateInterval: ANALYSIS_INTERVAL_MS });
 
-      if (!status.isLoaded || !status.durationMillis) {
+      // Wait for the audio to load
+      await new Promise<void>((resolve, reject) => {
+        const checkLoaded = () => {
+          if (player.isLoaded) {
+            resolve();
+          } else if (!player.isLoaded) {
+            // Wait a bit and check again
+            setTimeout(checkLoaded, 100);
+          } else {
+            reject(new Error("Failed to load audio for analysis"));
+          }
+        };
+        checkLoaded();
+      });
+
+      if (!player.isLoaded || !player.duration) {
+        player.remove();
         throw new Error("Failed to load audio for analysis");
       }
 
-      const duration = status.durationMillis / 1000;
-      const sampleInterval = duration / WAVEFORM_SAMPLE_SIZE;
+      const duration = player.duration;
       const waveformData: number[] = [];
 
       // Generate waveform by sampling audio at intervals
@@ -69,7 +80,7 @@ class AudioAnalysisService {
       }
 
       // Clean up
-      await sound.unloadAsync();
+      player.remove();
 
       // Cache the result
       const analysisResult: AudioAnalysisResult = {
@@ -94,14 +105,28 @@ class AudioAnalysisService {
    */
   async getAudioDuration(audioUri: string): Promise<number> {
     try {
-      const { sound, status } = await Audio.Sound.createAsync({ uri: audioUri });
+      const player = createAudioPlayer(audioUri);
 
-      if (!status.isLoaded || !status.durationMillis) {
+      // Wait for the audio to load
+      await new Promise<void>((resolve, reject) => {
+        const checkLoaded = () => {
+          if (player.isLoaded) {
+            resolve();
+          } else {
+            setTimeout(checkLoaded, 100);
+          }
+        };
+        setTimeout(() => reject(new Error("Timeout loading audio")), 5000);
+        checkLoaded();
+      });
+
+      if (!player.isLoaded || !player.duration) {
+        player.remove();
         throw new Error("Failed to load audio for duration");
       }
 
-      const duration = status.durationMillis / 1000;
-      await sound.unloadAsync();
+      const duration = player.duration;
+      player.remove();
 
       return duration;
     } catch (error) {
@@ -113,33 +138,46 @@ class AudioAnalysisService {
   /**
    * Analyze audio levels for real-time monitoring
    */
-  async analyzeAudioLevels(
-    audioUri: string,
-    callback: (level: number) => void,
-    intervalMs = 100
-  ): Promise<() => void> {
+  async analyzeAudioLevels(audioUri: string, callback: (level: number) => void, intervalMs = 100): Promise<() => void> {
     let isAnalyzing = true;
-    let sound: Audio.Sound | null = null;
+    let player: any = null;
+    let intervalId: NodeJS.Timeout | null = null;
 
     const analyze = async () => {
       try {
-        const result = await Audio.Sound.createAsync(
-          { uri: audioUri },
-          {
-            progressUpdateIntervalMillis: intervalMs,
-            shouldPlay: true,
-          },
-          (status) => {
-            if (status.isLoaded && status.isPlaying && isAnalyzing) {
-              // Simulate level analysis based on playback position
-              const position = (status.positionMillis || 0) / (status.durationMillis || 1);
-              const level = 0.3 + Math.sin(position * Math.PI * 4) * 0.3 + Math.random() * 0.2;
-              callback(Math.max(0, Math.min(1, level)));
-            }
-          }
-        );
+        player = createAudioPlayer(audioUri);
 
-        sound = result.sound;
+        // Wait for loading
+        await new Promise<void>((resolve, reject) => {
+          const checkLoaded = () => {
+            if (player.isLoaded) {
+              resolve();
+            } else {
+              setTimeout(checkLoaded, 50);
+            }
+          };
+          setTimeout(() => reject(new Error("Timeout loading audio")), 5000);
+          checkLoaded();
+        });
+
+        if (!player.isLoaded) {
+          throw new Error("Failed to load audio for analysis");
+        }
+
+        // Start playing
+        player.play();
+
+        // Simulate level analysis with interval
+        intervalId = setInterval(() => {
+          if (!isAnalyzing) return;
+
+          if (player.isLoaded && player.playing) {
+            // Simulate level analysis based on playback position
+            const position = player.currentTime / (player.duration || 1);
+            const level = 0.3 + Math.sin(position * Math.PI * 4) * 0.3 + Math.random() * 0.2;
+            callback(Math.max(0, Math.min(1, level)));
+          }
+        }, intervalMs);
       } catch (error) {
         console.error("Error analyzing audio levels:", error);
         callback(0);
@@ -151,10 +189,13 @@ class AudioAnalysisService {
     // Return cleanup function
     return async () => {
       isAnalyzing = false;
-      if (sound) {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+      if (player) {
         try {
-          await sound.stopAsync();
-          await sound.unloadAsync();
+          player.pause();
+          player.remove();
         } catch (error) {
           console.error("Error cleaning up audio analysis:", error);
         }
@@ -167,20 +208,34 @@ class AudioAnalysisService {
    */
   async getAudioMetadata(audioUri: string): Promise<AudioMetadata | null> {
     try {
-      const { sound, status } = await Audio.Sound.createAsync({ uri: audioUri });
+      const player = createAudioPlayer(audioUri);
 
-      if (!status.isLoaded) {
+      // Wait for loading
+      await new Promise<void>((resolve, reject) => {
+        const checkLoaded = () => {
+          if (player.isLoaded) {
+            resolve();
+          } else {
+            setTimeout(checkLoaded, 50);
+          }
+        };
+        setTimeout(() => reject(new Error("Timeout loading audio")), 5000);
+        checkLoaded();
+      });
+
+      if (!player.isLoaded) {
+        player.remove();
         throw new Error("Failed to load audio for metadata");
       }
 
       const metadata: AudioMetadata = {
-        duration: (status.durationMillis || 0) / 1000,
+        duration: player.duration || 0,
       };
 
-      // Note: Platform-specific metadata fields are not directly available from expo-av status
+      // Note: Platform-specific metadata fields are not directly available from expo-audio
       // Additional metadata extraction would require native modules or third-party libraries
 
-      await sound.unloadAsync();
+      player.remove();
 
       return metadata;
     } catch (error) {

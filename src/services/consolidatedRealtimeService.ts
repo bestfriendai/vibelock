@@ -6,7 +6,7 @@
 
 import { supabase } from "../config/supabase";
 import { ChatMessage, ChatMember, MessageEvent, TypingUser } from "../types";
-import { RealtimeChannel, RealtimePresenceState } from "@supabase/supabase-js";
+import { RealtimeChannel } from "@supabase/supabase-js";
 import { AppError, ErrorType } from "../utils/errorHandling";
 import { MessageDeduplicator } from "../utils/messageDeduplication";
 
@@ -41,7 +41,7 @@ class ConsolidatedRealtimeService {
   private isInitialized = false;
   private heartbeatInterval: NodeJS.Timeout | null = null;
   private lastHeartbeat = Date.now();
-  private connectionCallbacks: Array<(status: string, error?: string) => void> = [];
+  private connectionCallbacks: ((status: string, error?: string) => void)[] = [];
 
   async initialize(): Promise<void> {
     if (this.isInitialized) return;
@@ -52,7 +52,10 @@ class ConsolidatedRealtimeService {
     try {
       // Verify authentication with detailed logging
       console.log("🔐 Checking authentication status...");
-      const { data: { user }, error } = await supabase.auth.getUser();
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
 
       if (error) {
         console.error("❌ Authentication error:", error);
@@ -81,7 +84,7 @@ class ConsolidatedRealtimeService {
 
       // Check realtime connection status (but don't fail if not connected yet)
       const isRealtimeConnected = supabase.realtime.isConnected();
-      console.log(`📡 Supabase realtime connection status: ${isRealtimeConnected ? 'connected' : 'disconnected'}`);
+      console.log(`📡 Supabase realtime connection status: ${isRealtimeConnected ? "connected" : "disconnected"}`);
 
       if (!isRealtimeConnected) {
         console.log("📡 Realtime will connect automatically when needed");
@@ -106,10 +109,10 @@ class ConsolidatedRealtimeService {
     this.connectionError = error || null;
 
     if (previousStatus !== status) {
-      console.log(`🔄 Connection status changed: ${previousStatus} → ${status}${error ? ` (${error})` : ''}`);
+      console.log(`🔄 Connection status changed: ${previousStatus} → ${status}${error ? ` (${error})` : ""}`);
 
       // Notify all registered callbacks
-      this.connectionCallbacks.forEach(callback => {
+      this.connectionCallbacks.forEach((callback) => {
         try {
           callback(status, error);
         } catch (e) {
@@ -149,7 +152,8 @@ class ConsolidatedRealtimeService {
       // Check if any subscriptions are stale
       for (const [roomId, subscription] of this.subscriptions.entries()) {
         const timeSinceActivity = Date.now() - subscription.lastActivity;
-        if (timeSinceActivity > 60000) { // 1 minute without activity
+        if (timeSinceActivity > 60000) {
+          // 1 minute without activity
           console.warn(`⚠️ Room ${roomId} subscription appears stale, checking health`);
           this.checkSubscriptionHealth(roomId);
         }
@@ -168,7 +172,10 @@ class ConsolidatedRealtimeService {
       }
 
       // Check authentication status
-      const { data: { user }, error } = await supabase.auth.getUser();
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
       if (error || !user) {
         console.warn("🚨 Authentication lost during health check");
         this.updateConnectionStatus("error", "Authentication lost");
@@ -181,7 +188,6 @@ class ConsolidatedRealtimeService {
         console.log("🔄 Attempting to recover from error state");
         await this.attemptReconnection();
       }
-
     } catch (error) {
       console.warn("⚠️ Health check failed:", error);
       this.updateConnectionStatus("error", "Health check failed");
@@ -204,7 +210,10 @@ class ConsolidatedRealtimeService {
     const delay = Math.min(this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1), 30000); // Exponential backoff, max 30s
 
     console.log(`🔄 Attempting reconnection ${this.reconnectAttempts}/${this.maxReconnectAttempts} in ${delay}ms`);
-    this.updateConnectionStatus("connecting", `Reconnecting... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
+    this.updateConnectionStatus(
+      "connecting",
+      `Reconnecting... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`,
+    );
 
     this.reconnectTimeout = setTimeout(async () => {
       try {
@@ -274,19 +283,27 @@ class ConsolidatedRealtimeService {
         if (attempt < maxRetries) {
           const delay = Math.min(1000 * attempt, 5000); // Exponential backoff, max 5s
           console.log(`⏳ Retrying in ${delay}ms...`);
-          await new Promise(resolve => setTimeout(resolve, delay));
+          await new Promise((resolve) => setTimeout(resolve, delay));
         }
       }
     }
 
     // All retries failed
     console.error(`❌ Failed to join room ${roomId} after ${maxRetries} attempts`);
-    const appError = lastError instanceof AppError ? lastError : new AppError("Failed to join room after multiple attempts", ErrorType.NETWORK);
+    const appError =
+      lastError instanceof AppError
+        ? lastError
+        : new AppError("Failed to join room after multiple attempts", ErrorType.NETWORK);
     callbacks.onError?.(appError);
     throw appError;
   }
 
-  private async attemptJoinRoom(roomId: string, userId: string, userName: string, callbacks: SubscriptionCallbacks): Promise<void> {
+  private async attemptJoinRoom(
+    roomId: string,
+    userId: string,
+    userName: string,
+    callbacks: SubscriptionCallbacks,
+  ): Promise<void> {
     try {
       // Check if realtime is available (but don't fail if not connected yet)
       if (supabase.realtime && !supabase.realtime.isConnected()) {
@@ -296,10 +313,13 @@ class ConsolidatedRealtimeService {
 
       // Initialize deduplicator for this room
       if (!this.deduplicators.has(roomId)) {
-        this.deduplicators.set(roomId, new MessageDeduplicator({
-          maxCacheSize: 500,
-          ttl: 1800000, // 30 minutes
-        }));
+        this.deduplicators.set(
+          roomId,
+          new MessageDeduplicator({
+            maxCacheSize: 500,
+            ttl: 1800000, // 30 minutes
+          }),
+        );
       }
 
       // Create single channel for all room functionality
@@ -319,7 +339,7 @@ class ConsolidatedRealtimeService {
             table: "chat_messages_firebase",
             filter: `chat_room_id=eq.${roomId}`,
           },
-          (payload) => this.handleNewMessage(roomId, payload, callbacks)
+          (payload) => this.handleNewMessage(roomId, payload, callbacks),
         )
         // Listen to message updates
         .on(
@@ -330,7 +350,7 @@ class ConsolidatedRealtimeService {
             table: "chat_messages_firebase",
             filter: `chat_room_id=eq.${roomId}`,
           },
-          (payload) => this.handleMessageUpdate(roomId, payload, callbacks)
+          (payload) => this.handleMessageUpdate(roomId, payload, callbacks),
         )
         // Listen to presence changes
         .on("presence", { event: "sync" }, () => {
@@ -345,10 +365,10 @@ class ConsolidatedRealtimeService {
       const subscriptionResult = await new Promise<string>((resolve, reject) => {
         const timeout = setTimeout(() => {
           console.error(`⏰ Subscription timeout for room ${roomId} after 30 seconds`);
-          reject(new AppError("Connection is taking too long. Please check your internet and try again.", ErrorType.NETWORK));
+          reject(
+            new AppError("Connection is taking too long. Please check your internet and try again.", ErrorType.NETWORK),
+          );
         }, 30000); // Increased to 30 second timeout
-
-        let subscriptionAttempted = false;
 
         const handleSubscriptionStatus = (status: string) => {
           console.log(`📡 Room ${roomId} subscription status: ${status}`);
@@ -384,7 +404,12 @@ class ConsolidatedRealtimeService {
             clearTimeout(timeout);
             console.error(`⏰ Subscription timeout for room ${roomId}`);
             this.updateConnectionStatus("error", `Room ${roomId} subscription timed out`);
-            reject(new AppError("Connection is taking too long. Please check your internet and try again.", ErrorType.NETWORK));
+            reject(
+              new AppError(
+                "Connection is taking too long. Please check your internet and try again.",
+                ErrorType.NETWORK,
+              ),
+            );
           } else if (status === "CLOSED") {
             clearTimeout(timeout);
             console.error(`🚪 Channel closed for room ${roomId}`);
@@ -394,7 +419,6 @@ class ConsolidatedRealtimeService {
 
         try {
           // Attempt subscription
-          subscriptionAttempted = true;
           channel.subscribe(handleSubscriptionStatus);
         } catch (subscribeError) {
           clearTimeout(timeout);
@@ -510,7 +534,11 @@ class ConsolidatedRealtimeService {
     }
   }
 
-  async loadOlderMessages(roomId: string, beforeTimestamp: string, limit: number = 20): Promise<{ messages: ChatMessage[]; hasMore: boolean }> {
+  async loadOlderMessages(
+    roomId: string,
+    beforeTimestamp: string,
+    limit: number = 20,
+  ): Promise<{ messages: ChatMessage[]; hasMore: boolean }> {
     console.log(`📨 Loading older messages for room ${roomId} before ${beforeTimestamp}`);
 
     try {
@@ -556,13 +584,11 @@ class ConsolidatedRealtimeService {
         limit,
         errorMessage: error instanceof Error ? error.message : String(error),
         errorCode: (error as any)?.code,
-        errorDetails: (error as any)?.details
+        errorDetails: (error as any)?.details,
       });
       throw new AppError("Failed to load older messages", ErrorType.NETWORK);
     }
   }
-
-
 
   async sendMessage(
     roomId: string,
@@ -570,7 +596,7 @@ class ConsolidatedRealtimeService {
     senderId: string,
     senderName: string,
     messageType: string = "text",
-    replyTo?: string
+    replyTo?: string,
   ): Promise<void> {
     console.log(`📤 Sending message to room ${roomId}`);
 
@@ -583,6 +609,7 @@ class ConsolidatedRealtimeService {
       senderName,
       content,
       timestamp: new Date(),
+      isRead: false,
       reactions: [],
       isOptimistic: true,
       messageType: messageType as any,
@@ -620,9 +647,7 @@ class ConsolidatedRealtimeService {
         status: "sent",
       };
 
-      const { error } = await supabase
-        .from("chat_messages_firebase")
-        .insert(messageData);
+      const { error } = await supabase.from("chat_messages_firebase").insert(messageData);
 
       if (error) throw error;
 
@@ -633,7 +658,7 @@ class ConsolidatedRealtimeService {
       // Remove failed optimistic message
       this.optimisticMessages.delete(optimisticKey);
       const currentMessages = this.messageCache.get(roomId) || [];
-      const filteredMessages = currentMessages.filter(m => m.id !== tempId);
+      const filteredMessages = currentMessages.filter((m) => m.id !== tempId);
       this.messageCache.set(roomId, filteredMessages);
 
       // Notify about removal
@@ -761,7 +786,7 @@ class ConsolidatedRealtimeService {
 
       // Update cache
       const cachedMessages = this.messageCache.get(roomId) || [];
-      const messageIndex = cachedMessages.findIndex(m => m.id === updatedMessage.id);
+      const messageIndex = cachedMessages.findIndex((m) => m.id === updatedMessage.id);
       if (messageIndex >= 0) {
         cachedMessages[messageIndex] = updatedMessage;
         this.messageCache.set(roomId, cachedMessages);
@@ -790,11 +815,14 @@ class ConsolidatedRealtimeService {
     Object.values(presenceState).forEach((presence: any) => {
       presence.forEach((user: any) => {
         members.push({
+          id: `${roomId}_${user.userId}`,
+          chatRoomId: roomId,
           userId: user.userId,
           userName: user.userName,
           role: "member",
           joinedAt: user.online_at,
           isOnline: true,
+          lastSeen: new Date(),
         });
       });
     });
@@ -873,13 +901,19 @@ class ConsolidatedRealtimeService {
 
   private findOptimisticMessage(roomId: string, realMessage: ChatMessage): string | null {
     for (const [key, optimisticMessage] of this.optimisticMessages.entries()) {
-      if (key.startsWith(`${roomId}_`) &&
-          optimisticMessage.senderId === realMessage.senderId &&
-          optimisticMessage.content === realMessage.content &&
-          Math.abs(
-            (optimisticMessage.timestamp instanceof Date ? optimisticMessage.timestamp.getTime() : new Date(optimisticMessage.timestamp).getTime()) -
-            (realMessage.timestamp instanceof Date ? realMessage.timestamp.getTime() : new Date(realMessage.timestamp).getTime())
-          ) < 10000) {
+      if (
+        key.startsWith(`${roomId}_`) &&
+        optimisticMessage.senderId === realMessage.senderId &&
+        optimisticMessage.content === realMessage.content &&
+        Math.abs(
+          (optimisticMessage.timestamp instanceof Date
+            ? optimisticMessage.timestamp.getTime()
+            : new Date(optimisticMessage.timestamp).getTime()) -
+            (realMessage.timestamp instanceof Date
+              ? realMessage.timestamp.getTime()
+              : new Date(realMessage.timestamp).getTime()),
+        ) < 10000
+      ) {
         return key;
       }
     }
@@ -892,7 +926,7 @@ class ConsolidatedRealtimeService {
 
     // Add to cache as optimistic
     const cachedMessages = this.messageCache.get(roomId) || [];
-    const existingIndex = cachedMessages.findIndex(m => m.id === optimisticMessage.id);
+    const existingIndex = cachedMessages.findIndex((m) => m.id === optimisticMessage.id);
 
     if (existingIndex === -1) {
       // Add if not already in cache
@@ -907,8 +941,8 @@ class ConsolidatedRealtimeService {
 
     // Update cache by replacing the optimistic message with the real one
     const cachedMessages = this.messageCache.get(roomId) || [];
-    const tempId = optimisticKey.split('_')[1]; // Extract temp ID from key
-    const messageIndex = cachedMessages.findIndex(m => m.id === tempId);
+    const tempId = optimisticKey.split("_")[1]; // Extract temp ID from key
+    const messageIndex = cachedMessages.findIndex((m) => m.id === tempId);
 
     if (messageIndex >= 0) {
       cachedMessages[messageIndex] = realMessage;
@@ -940,7 +974,9 @@ class ConsolidatedRealtimeService {
       await this.leaveRoom(roomId);
 
       // Get user info for rejoin
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (user) {
         // Note: We need userId and userName, but they're not stored in subscription
         // This is a limitation - we should store them or get them from the callback
@@ -979,7 +1015,7 @@ class ConsolidatedRealtimeService {
     this.typingDebounceTimeouts.clear();
 
     const roomIds = Array.from(this.subscriptions.keys());
-    await Promise.all(roomIds.map(roomId => this.leaveRoom(roomId)));
+    await Promise.all(roomIds.map((roomId) => this.leaveRoom(roomId)));
 
     this.messageCache.clear();
     this.optimisticMessages.clear();
@@ -1005,14 +1041,16 @@ class ConsolidatedRealtimeService {
     reconnectAttempts: number;
     maxReconnectAttempts: number;
     isReconnecting: boolean;
-    roomDetails: Array<{
+    roomDetails: {
       roomId: string;
       lastActivity: number;
       timeSinceActivity: number;
-    }>;
+    }[];
   } {
-    const totalMessages = Array.from(this.messageCache.values())
-      .reduce((total, messages) => total + messages.length, 0);
+    const totalMessages = Array.from(this.messageCache.values()).reduce(
+      (total, messages) => total + messages.length,
+      0,
+    );
 
     const roomDetails = Array.from(this.subscriptions.entries()).map(([roomId, subscription]) => ({
       roomId,
@@ -1064,9 +1102,7 @@ class ConsolidatedRealtimeService {
 
   // Check if service is healthy
   isHealthy(): boolean {
-    return this.connectionStatus === "connected" &&
-           this.isInitialized &&
-           (Date.now() - this.lastHeartbeat) < 60000; // Heartbeat within last minute
+    return this.connectionStatus === "connected" && this.isInitialized && Date.now() - this.lastHeartbeat < 60000; // Heartbeat within last minute
   }
 
   // Clear typing indicators for a specific user (useful when user leaves)
@@ -1092,6 +1128,40 @@ class ConsolidatedRealtimeService {
     }
   }
 
+  // Stop typing for a specific room (used in app state management)
+  stopTyping(roomId: string): void {
+    const roomTypingUsers = this.typingUsers.get(roomId);
+    if (roomTypingUsers) {
+      // Clear all typing users for this room
+      for (const userId of roomTypingUsers.keys()) {
+        // Clear any associated timeouts
+        const timeoutKey = `${roomId}_${userId}_cleanup`;
+        const existingTimeout = this.typingTimeouts.get(timeoutKey);
+        if (existingTimeout) {
+          clearTimeout(existingTimeout);
+          this.typingTimeouts.delete(timeoutKey);
+        }
+
+        // Clear debounce timeouts
+        const debounceKey = `${roomId}_${userId}`;
+        const debounceTimeout = this.typingDebounceTimeouts.get(debounceKey);
+        if (debounceTimeout) {
+          clearTimeout(debounceTimeout);
+          this.typingDebounceTimeouts.delete(debounceKey);
+        }
+      }
+
+      // Clear the entire room's typing users
+      roomTypingUsers.clear();
+
+      // Notify callback with empty list
+      const subscription = this.subscriptions.get(roomId);
+      if (subscription) {
+        subscription.callbacks.onTyping?.([]);
+      }
+    }
+  }
+
   // Get active room IDs
   getActiveRoomIds(): string[] {
     return Array.from(this.subscriptions.keys());
@@ -1103,7 +1173,7 @@ class ConsolidatedRealtimeService {
   private pausedCallbacks = new Map<string, SubscriptionCallbacks>();
 
   async pauseAll(): Promise<void> {
-    console.log('[ConsolidatedRealtimeService] Pausing all subscriptions');
+    console.log("[ConsolidatedRealtimeService] Pausing all subscriptions");
     this.isPaused = true;
 
     // Store active room IDs and their callbacks
@@ -1129,7 +1199,7 @@ class ConsolidatedRealtimeService {
 
   // Resume all subscriptions (for foreground)
   async resumeAll(userId: string, userName: string): Promise<void> {
-    console.log('[ConsolidatedRealtimeService] Resuming all subscriptions');
+    console.log("[ConsolidatedRealtimeService] Resuming all subscriptions");
     this.isPaused = false;
 
     // Re-join each paused room

@@ -63,7 +63,7 @@ class VideoThumbnailService {
       return result;
     } catch (error) {
       console.warn("Video thumbnail generation failed:", error);
-      return await this.generateThumbnailFallback(videoUri, timeStamp);
+      return await this.generateThumbnailFallback(videoUri, options);
     }
   }
 
@@ -160,9 +160,7 @@ class VideoThumbnailService {
    * Generate multiple thumbnails for video preview (batch processing)
    */
   async generateThumbnails(videoUris: string[], options?: VideoThumbnailOptions): Promise<ThumbnailResult[]> {
-    const results = await Promise.all(
-      videoUris.map(uri => this.generateThumbnail(uri, options))
-    );
+    const results = await Promise.all(videoUris.map((uri) => this.generateThumbnail(uri, options)));
     return results;
   }
 
@@ -186,11 +184,14 @@ class VideoThumbnailService {
   /**
    * Resize thumbnail to specified dimensions
    */
-  private async resizeThumbnail(uri: string, size: { width?: number; height?: number }): Promise<{ uri: string; width: number; height: number }> {
+  private async resizeThumbnail(
+    uri: string,
+    size: { width?: number; height?: number },
+  ): Promise<{ uri: string; width: number; height: number }> {
     const result = await ImageManipulator.manipulateAsync(
       uri,
       [{ resize: { width: size.width, height: size.height } }],
-      { compress: 0.9, format: ImageManipulator.SaveFormat.JPEG }
+      { compress: 0.9, format: ImageManipulator.SaveFormat.JPEG },
     );
     return {
       uri: result.uri,
@@ -265,7 +266,7 @@ class VideoThumbnailService {
   private async cleanupOldCache(): Promise<void> {
     try {
       const keys = await AsyncStorage.getAllKeys();
-      const thumbnailKeys = keys.filter(k => k.startsWith(this.cachePrefix));
+      const thumbnailKeys = keys.filter((k) => k.startsWith(this.cachePrefix));
 
       for (const key of thumbnailKeys) {
         const cached = await AsyncStorage.getItem(key);
@@ -291,7 +292,7 @@ class VideoThumbnailService {
 
     try {
       const keys = await AsyncStorage.getAllKeys();
-      const thumbnailKeys = keys.filter(k => k.startsWith(this.cachePrefix));
+      const thumbnailKeys = keys.filter((k) => k.startsWith(this.cachePrefix));
       await AsyncStorage.multiRemove(thumbnailKeys);
     } catch (error) {
       console.warn("Failed to clear cache:", error);

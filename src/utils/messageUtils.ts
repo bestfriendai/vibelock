@@ -1,21 +1,18 @@
-import { Message } from '../types';
+import { Message } from "../types";
 
 const EDIT_TIME_LIMIT_MINUTES = 15;
 
 /**
  * Check if a message can be edited by the current user
  */
-export function canEditMessage(
-  message: Message,
-  currentUserId: string
-): boolean {
+export function canEditMessage(message: Message, currentUserId: string): boolean {
   // Must be the sender
   if (message.senderId !== currentUserId) {
     return false;
   }
 
   // Only text messages can be edited
-  if (message.messageType !== 'text') {
+  if (message.messageType !== "text") {
     return false;
   }
 
@@ -35,25 +32,25 @@ export function formatEditedTimestamp(editedAt: Date): string {
 
   // Less than a minute
   if (diff < 60 * 1000) {
-    return 'just now';
+    return "just now";
   }
 
   // Less than an hour
   if (diff < 60 * 60 * 1000) {
     const minutes = Math.floor(diff / (60 * 1000));
-    return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
+    return `${minutes} minute${minutes !== 1 ? "s" : ""} ago`;
   }
 
   // Less than a day
   if (diff < 24 * 60 * 60 * 1000) {
     const hours = Math.floor(diff / (60 * 60 * 1000));
-    return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
+    return `${hours} hour${hours !== 1 ? "s" : ""} ago`;
   }
 
   // Less than a week
   if (diff < 7 * 24 * 60 * 60 * 1000) {
     const days = Math.floor(diff / (24 * 60 * 60 * 1000));
-    return `${days} day${days !== 1 ? 's' : ''} ago`;
+    return `${days} day${days !== 1 ? "s" : ""} ago`;
   }
 
   // Default to date
@@ -63,10 +60,7 @@ export function formatEditedTimestamp(editedAt: Date): string {
 /**
  * Format forwarded message attribution
  */
-export function formatForwardedAttribution(
-  forwardedFromSender: string,
-  forwardedFromRoom?: string
-): string {
+export function formatForwardedAttribution(forwardedFromSender: string, forwardedFromRoom?: string): string {
   if (forwardedFromRoom) {
     return `Forwarded from ${forwardedFromSender} in ${forwardedFromRoom}`;
   }
@@ -76,27 +70,25 @@ export function formatForwardedAttribution(
 /**
  * Validate message content
  */
-export function validateMessageContent(
-  content: string
-): { isValid: boolean; error?: string } {
+export function validateMessageContent(content: string): { isValid: boolean; error?: string } {
   if (!content || content.trim().length === 0) {
-    return { isValid: false, error: 'Message cannot be empty' };
+    return { isValid: false, error: "Message cannot be empty" };
   }
 
   if (content.length > 5000) {
-    return { isValid: false, error: 'Message is too long (max 5000 characters)' };
+    return { isValid: false, error: "Message is too long (max 5000 characters)" };
   }
 
   // Check for excessive newlines
   const newlineCount = (content.match(/\n/g) || []).length;
   if (newlineCount > 50) {
-    return { isValid: false, error: 'Too many line breaks' };
+    return { isValid: false, error: "Too many line breaks" };
   }
 
   // Check for spam patterns (basic check)
   const repeatedChars = /(.)\1{50,}/;
   if (repeatedChars.test(content)) {
-    return { isValid: false, error: 'Message contains spam patterns' };
+    return { isValid: false, error: "Message contains spam patterns" };
   }
 
   return { isValid: true };
@@ -105,11 +97,8 @@ export function validateMessageContent(
 /**
  * Generate formatted content for forwarded messages
  */
-export function generateForwardedContent(
-  originalMessage: Message,
-  comment?: string
-): string {
-  let content = '';
+export function generateForwardedContent(originalMessage: Message, comment?: string): string {
+  let content = "";
 
   if (comment && comment.trim()) {
     content += `${comment.trim()}\n\n`;
@@ -119,7 +108,7 @@ export function generateForwardedContent(
   content += `From: ${originalMessage.senderName}\n`;
   content += `Date: ${new Date(originalMessage.timestamp).toLocaleString()}\n\n`;
 
-  if (originalMessage.messageType === 'text') {
+  if (originalMessage.messageType === "text") {
     content += originalMessage.content;
   } else {
     content += `[${originalMessage.messageType.toUpperCase()} MESSAGE]`;
@@ -142,7 +131,7 @@ export function getMessageSearchKeywords(message: Message): string[] {
     const words = message.content
       .toLowerCase()
       .split(/\W+/)
-      .filter(word => word.length > 2);
+      .filter((word) => word.length > 2);
     keywords.push(...words);
   }
 
@@ -156,7 +145,7 @@ export function getMessageSearchKeywords(message: Message): string[] {
     const transcriptionWords = message.transcription
       .toLowerCase()
       .split(/\W+/)
-      .filter(word => word.length > 2);
+      .filter((word) => word.length > 2);
     keywords.push(...transcriptionWords);
   }
 
@@ -167,31 +156,25 @@ export function getMessageSearchKeywords(message: Message): string[] {
 /**
  * Highlight search terms in message content
  */
-export function highlightSearchTerms(
-  content: string,
-  searchQuery: string
-): string {
+export function highlightSearchTerms(content: string, searchQuery: string): string {
   if (!searchQuery || searchQuery.trim().length === 0) {
     return content;
   }
 
   // Escape special regex characters
-  const escapedQuery = searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const escapedQuery = searchQuery.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
   // Create regex for case-insensitive search
-  const regex = new RegExp(`(${escapedQuery})`, 'gi');
+  const regex = new RegExp(`(${escapedQuery})`, "gi");
 
   // Wrap matched terms in highlight tags
-  return content.replace(regex, '<mark>$1</mark>');
+  return content.replace(regex, "<mark>$1</mark>");
 }
 
 /**
  * Check if a message matches search criteria
  */
-export function messageMatchesSearch(
-  message: Message,
-  searchQuery: string
-): boolean {
+export function messageMatchesSearch(message: Message, searchQuery: string): boolean {
   const query = searchQuery.toLowerCase();
 
   // Search in content
@@ -239,14 +222,14 @@ export function getEditTimeRemaining(message: Message): {
  */
 export function sanitizeMessageContent(content: string): string {
   // Remove any HTML tags
-  const withoutHtml = content.replace(/<[^>]*>/g, '');
+  const withoutHtml = content.replace(/<[^>]*>/g, "");
 
   // Convert URLs to clickable links (basic implementation)
   const urlRegex = /(https?:\/\/[^\s]+)/g;
-  const withLinks = withoutHtml.replace(urlRegex, '[LINK]');
+  const withLinks = withoutHtml.replace(urlRegex, "[LINK]");
 
   // Trim excessive whitespace
-  const trimmed = withLinks.replace(/\s+/g, ' ').trim();
+  const trimmed = withLinks.replace(/\s+/g, " ").trim();
 
   return trimmed;
 }
@@ -257,7 +240,7 @@ export function sanitizeMessageContent(content: string): string {
 export function formatMessageForCopy(message: Message): string {
   let formatted = `[${new Date(message.timestamp).toLocaleString()}] ${message.senderName}: `;
 
-  if (message.messageType === 'text') {
+  if (message.messageType === "text") {
     formatted += message.content;
   } else {
     formatted += `[${message.messageType.toUpperCase()} MESSAGE]`;
@@ -267,7 +250,7 @@ export function formatMessageForCopy(message: Message): string {
   }
 
   if (message.isEdited) {
-    formatted += ' (edited)';
+    formatted += " (edited)";
   }
 
   if (message.forwardedFromSender) {
@@ -287,20 +270,20 @@ export function groupMessagesByDate(messages: Message[]): Map<string, Message[]>
   const yesterday = new Date(today);
   yesterday.setDate(yesterday.getDate() - 1);
 
-  messages.forEach(message => {
+  messages.forEach((message) => {
     const messageDate = new Date(message.timestamp);
     messageDate.setHours(0, 0, 0, 0);
 
     let dateKey: string;
     if (messageDate.getTime() === today.getTime()) {
-      dateKey = 'Today';
+      dateKey = "Today";
     } else if (messageDate.getTime() === yesterday.getTime()) {
-      dateKey = 'Yesterday';
+      dateKey = "Yesterday";
     } else {
-      dateKey = messageDate.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: messageDate.getFullYear() !== today.getFullYear() ? 'numeric' : undefined,
+      dateKey = messageDate.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: messageDate.getFullYear() !== today.getFullYear() ? "numeric" : undefined,
       });
     }
 

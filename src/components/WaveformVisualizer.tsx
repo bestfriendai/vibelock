@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from "react";
-import { View, StyleSheet, Pressable, AccessibilityInfo } from "react-native";
+import { View, StyleSheet } from "react-native";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -7,10 +7,10 @@ import Animated, {
   withTiming,
   withRepeat,
   interpolate,
-  Extrapolate,
-  runOnJS,
+  Extrapolation,
   useDerivedValue,
-  withSequence,
+  runOnJS,
+  SharedValue,
 } from "react-native-reanimated";
 import { GestureDetector, Gesture } from "react-native-gesture-handler";
 import * as Haptics from "expo-haptics";
@@ -33,7 +33,6 @@ interface WaveformVisualizerProps {
 
 const DEFAULT_BAR_COUNT = 25;
 const MIN_BAR_HEIGHT = 4;
-const ANIMATION_DURATION = 300;
 
 export const WaveformVisualizer: React.FC<WaveformVisualizerProps> = ({
   mode,
@@ -56,15 +55,9 @@ export const WaveformVisualizer: React.FC<WaveformVisualizerProps> = ({
   const containerWidth = useSharedValue(0);
 
   // Shared animation time value for worklets
-  const animationTime = useSharedValue(0);
-
   // Create a continuously animating value for wave effects
   const waveAnimation = useDerivedValue(() => {
-    return withRepeat(
-      withTiming(2 * Math.PI, { duration: 2000 }),
-      -1,
-      false
-    );
+    return withRepeat(withTiming(2 * Math.PI, { duration: 2000 }), -1, false);
   });
 
   // Generate normalized waveform data
@@ -104,12 +97,12 @@ export const WaveformVisualizer: React.FC<WaveformVisualizerProps> = ({
         stiffness: 100,
       });
     }
-  }, [audioLevel, mode]);
+  }, [audioLevel, mode, audioLevelAnimation]);
 
   // Update playback state animation
   useEffect(() => {
     playbackAnimation.value = withTiming(isPlaying ? 1 : 0, { duration: 200 });
-  }, [isPlaying]);
+  }, [isPlaying, playbackAnimation]);
 
   // Handle tap to seek
   const tapGesture = Gesture.Tap()
@@ -123,83 +116,27 @@ export const WaveformVisualizer: React.FC<WaveformVisualizerProps> = ({
     })
     .enabled(mode === "playback" && !!onSeek);
 
-  const renderBar = (index: number) => {
-    const barHeight = normalizedWaveform[index] * height;
-    const isBeforeProgress = index / barCount <= progress;
-
-    const animatedBarStyle = useAnimatedStyle(() => {
-      let heightMultiplier = 1;
-      let opacity = 1;
-
-      if (mode === "recording") {
-        // Animate bars based on audio level using shared animation value
-        const waveOffset = Math.sin((index / barCount) * Math.PI * 2 + waveAnimation.value) * 0.1;
-        heightMultiplier = interpolate(
-          audioLevelAnimation.value + waveOffset,
-          [0, 1],
-          [0.5, 1.5],
-          Extrapolate.CLAMP
-        );
-
-        // Pulsing opacity effect
-        opacity = interpolate(
-          audioLevelAnimation.value,
-          [0, 0.5, 1],
-          [0.6, 0.8, 1],
-          Extrapolate.CLAMP
-        );
-      } else if (mode === "playback") {
-        // Highlight bars based on progress
-        const barProgress = index / barCount;
-        const isActive = barProgress <= progressAnimation.value;
-
-        opacity = isActive ? 1 : 0.3;
-
-        // Subtle bounce effect for active bars using shared animation value
-        if (isActive && playbackAnimation.value > 0) {
-          heightMultiplier = 1 + Math.sin(waveAnimation.value * 4 + index * 0.2) * 0.05;
-        }
-      }
-
-      return {
-        height: barHeight * heightMultiplier,
-        opacity,
-        transform: [
-          {
-            scaleY: withSpring(heightMultiplier, {
-              damping: 15,
-              stiffness: 150,
-            }),
-          },
-        ],
-      };
-    });
-
-    const barColor = mode === "playback" && isBeforeProgress ? primaryColor : secondaryColor;
-
-    return (
-      <Animated.View
-        key={index}
-        style={[
-          styles.bar,
-          animatedBarStyle,
-          {
-            backgroundColor: barColor,
-            minHeight: MIN_BAR_HEIGHT,
-          },
-        ]}
-      />
-    );
-  };
+  const bars = normalizedWaveform.map((_, index) => (
+    <Bar
+      key={index}
+      index={index}
+      barCount={barCount}
+      height={height}
+      mode={mode}
+      normalizedWaveform={normalizedWaveform}
+      audioLevelAnimation={audioLevelAnimation}
+      playbackAnimation={playbackAnimation}
+      waveAnimation={waveAnimation}
+      progressAnimation={progressAnimation}
+      progress={progress}
+      primaryColor={primaryColor}
+      secondaryColor={secondaryColor}
+    />
+  ));
 
   // Progress indicator for playback mode
   const progressIndicatorStyle = useAnimatedStyle(() => {
-    const position = interpolate(
-      progressAnimation.value,
-      [0, 1],
-      [0, 100],
-      Extrapolate.CLAMP
-    );
+    const position = interpolate(progressAnimation.value, [0, 1], [0, 100], Extrapolation.CLAMP);
 
     return {
       left: `${position}%`,
@@ -235,20 +172,101 @@ export const WaveformVisualizer: React.FC<WaveformVisualizerProps> = ({
           containerWidth.value = event.nativeEvent.layout.width;
         }}
       >
-        <View style={styles.waveformContainer}>
-          {normalizedWaveform.map((_, index) => renderBar(index))}
-        </View>
+        <View style={styles.waveformContainer}>{bars}</View>
 
         {showProgressIndicator && mode === "playback" && (
-          <Animated.View
-            style={[styles.progressIndicator, progressIndicatorStyle]}
-            pointerEvents="none"
-          >
+          <Animated.View style={[styles.progressIndicator, progressIndicatorStyle]} pointerEvents="none">
             <View style={[styles.progressDot, { backgroundColor: primaryColor }]} />
           </Animated.View>
         )}
       </View>
     </GestureDetector>
+  );
+};
+
+interface BarProps {
+  index: number;
+  barCount: number;
+  height: number;
+  mode: "recording" | "playback";
+  normalizedWaveform: number[];
+  audioLevelAnimation: SharedValue<number>;
+  playbackAnimation: SharedValue<number>;
+  waveAnimation: SharedValue<number>;
+  progressAnimation: SharedValue<number>;
+  progress: number;
+  primaryColor: string;
+  secondaryColor: string;
+}
+
+const Bar: React.FC<BarProps> = ({
+  index,
+  barCount,
+  height,
+  mode,
+  normalizedWaveform,
+  audioLevelAnimation,
+  playbackAnimation,
+  waveAnimation,
+  progressAnimation,
+  progress,
+  primaryColor,
+  secondaryColor,
+}) => {
+  const barHeight = (normalizedWaveform[index] || 0) * height;
+
+  const animatedBarStyle = useAnimatedStyle(() => {
+    let heightMultiplier = 1;
+    let opacity = 1;
+
+    if (mode === "recording") {
+      // Animate bars based on audio level using shared animation value
+      const waveOffset = Math.sin((index / barCount) * Math.PI * 2 + waveAnimation.value) * 0.1;
+      heightMultiplier = interpolate(audioLevelAnimation.value + waveOffset, [0, 1], [0.5, 1.5], Extrapolation.CLAMP);
+
+      // Pulsing opacity effect
+      opacity = interpolate(audioLevelAnimation.value, [0, 0.5, 1], [0.6, 0.8, 1], Extrapolation.CLAMP);
+    } else if (mode === "playback") {
+      // Highlight bars based on progress
+      const barProgress = index / barCount;
+      const isActive = barProgress <= progressAnimation.value;
+
+      opacity = isActive ? 1 : 0.3;
+
+      // Subtle bounce effect for active bars using shared animation value
+      if (isActive && playbackAnimation.value > 0) {
+        heightMultiplier = 1 + Math.sin(waveAnimation.value * 4 + index * 0.2) * 0.05;
+      }
+    }
+
+    const isBeforeProgress = index / barCount <= progress;
+    const barColor = mode === "playback" && isBeforeProgress ? primaryColor : secondaryColor;
+
+    return {
+      height: barHeight * heightMultiplier,
+      opacity,
+      backgroundColor: barColor,
+      transform: [
+        {
+          scaleY: withSpring(heightMultiplier, {
+            damping: 15,
+            stiffness: 150,
+          }),
+        },
+      ],
+    };
+  });
+
+  return (
+    <Animated.View
+      style={[
+        styles.bar,
+        {
+          minHeight: MIN_BAR_HEIGHT,
+        },
+        animatedBarStyle,
+      ]}
+    />
   );
 };
 

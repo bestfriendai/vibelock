@@ -1,13 +1,11 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { View, Modal, Pressable, Text, StatusBar, ActivityIndicator, Share } from "react-native";
-import { Image } from "expo-image";
+import { View, Modal, Pressable, Text, StatusBar, Share } from "react-native";
 import { VideoView, useVideoPlayer } from "expo-video";
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Constants from "expo-constants";
 import { MediaItem } from "../types";
 import { useResponsiveScreen } from "../utils/responsive";
-import { formatFileSize } from "../utils/mediaUtils";
 import ComponentErrorBoundary from "./ComponentErrorBoundary";
 import { ZoomableImage } from "./ZoomableImage";
 
@@ -39,26 +37,22 @@ export default function MediaViewer({
   const [videoError, setVideoError] = useState<string | null>(null);
   const [isVideoLoading, setIsVideoLoading] = useState(false);
 
-  // Video player for video media (only for dev builds)
-  const videoPlayer = useVideoPlayer(
-    !isExpoGo && currentMedia?.type === "video" ? currentMedia.uri : null,
-    (player) => {
-      if (!isExpoGo && currentMedia?.type === "video") {
-        setIsVideoLoading(true);
-        setVideoError(null);
+  // Video player for video media
+  const videoPlayer = useVideoPlayer(currentMedia?.type === "video" ? currentMedia.uri : null, (player) => {
+    if (currentMedia?.type === "video") {
+      setIsVideoLoading(true);
+      setVideoError(null);
 
-        // Simple auto-play approach
-        try {
-          player.play();
-          setIsVideoLoading(false);
-        } catch (error) {
-          console.warn("Video player error:", error);
-          setVideoError("Failed to load video");
-          setIsVideoLoading(false);
-        }
+      // Simple auto-play approach
+      try {
+        player.play();
+        setIsVideoLoading(false);
+      } catch {
+        setVideoError("Failed to load video");
+        setIsVideoLoading(false);
       }
-    },
-  );
+    }
+  });
 
   // Reset video state when media changes
   useEffect(() => {
@@ -87,9 +81,7 @@ export default function MediaViewer({
         message: `Check out this ${currentMedia.type}`,
         url: currentMedia.uri,
       });
-    } catch (error) {
-      console.error("Error sharing media:", error);
-    }
+    } catch {}
   }, [currentMedia]);
 
   const handleClose = () => {
@@ -187,47 +179,37 @@ export default function MediaViewer({
             {/* Media Info Overlay */}
             {showInfo && currentMedia && (
               <View className="absolute top-20 left-0 right-0 bg-black/70 p-4">
-                <Text className="text-white text-sm mb-1">
-                  {currentMedia.type === "image" ? "Image" : "Video"}
-                </Text>
+                <Text className="text-white text-sm mb-1">{currentMedia.type === "image" ? "Image" : "Video"}</Text>
                 {currentMedia.width && currentMedia.height && (
                   <Text className="text-white text-sm mb-1">
                     {currentMedia.width} × {currentMedia.height}
                   </Text>
                 )}
                 {currentMedia.duration && (
-                  <Text className="text-white text-sm mb-1">
-                    Duration: {Math.round(currentMedia.duration)}s
-                  </Text>
+                  <Text className="text-white text-sm mb-1">Duration: {Math.round(currentMedia.duration)}s</Text>
                 )}
               </View>
             )}
 
             {/* Action Buttons */}
             <View className="absolute bottom-20 left-0 right-0 flex-row justify-center gap-6 px-4">
-              <Pressable
-                onPress={() => setShowInfo(!showInfo)}
-                className="bg-black/50 rounded-full p-3"
-              >
+              <Pressable onPress={() => setShowInfo(!showInfo)} className="bg-black/50 rounded-full p-3">
                 <Ionicons name="information-circle-outline" size={24} color="white" />
               </Pressable>
-              <Pressable
-                onPress={handleShare}
-                className="bg-black/50 rounded-full p-3"
-              >
+              <Pressable onPress={handleShare} className="bg-black/50 rounded-full p-3">
                 <Ionicons name="share-outline" size={24} color="white" />
               </Pressable>
               {onCommentPress && (
                 <Pressable
-                  onPress={() => onCommentPress(currentMedia, currentIndex)}
+                  onPress={() => currentMedia && onCommentPress(currentMedia, currentIndex)}
                   className="bg-black/50 rounded-full p-3 flex-row items-center"
                 >
                   <Ionicons name="chatbubble-outline" size={24} color="white" />
-                  {commentCounts[currentMedia.id] && commentCounts[currentMedia.id] > 0 && (
-                    <Text className="text-white text-xs ml-1">
-                      {commentCounts[currentMedia.id]}
-                    </Text>
-                  )}
+                  {(() => {
+                    const mediaId = currentMedia?.id;
+                    const count = mediaId ? commentCounts[mediaId] || 0 : 0;
+                    return count > 0 ? <Text className="text-white text-xs ml-1">{count}</Text> : null;
+                  })()}
                 </Pressable>
               )}
             </View>
@@ -281,8 +263,9 @@ export default function MediaViewer({
                   <View className="flex-row items-center space-x-3">
                     {/* Comment count indicator */}
                     {(() => {
-                      const count = currentMedia ? commentCounts[currentMedia.id] : 0;
-                      return count && count > 0 ? (
+                      const mediaId = currentMedia?.id;
+                      const count = mediaId ? commentCounts[mediaId] || 0 : 0;
+                      return count > 0 ? (
                         <View className="flex-row items-center">
                           <Ionicons name="chatbubble" size={14} color="white" />
                           <Text className="text-white text-sm ml-1">{count}</Text>

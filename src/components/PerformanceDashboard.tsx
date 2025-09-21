@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, Pressable, ScrollView, Platform } from 'react-native';
-import { performanceMonitor } from '../utils/performance';
-import { memoryManager } from '../services/memoryManager';
-import { messageVirtualizer } from '../services/messageVirtualizer';
-import { messagePaginationManager } from '../services/messagePaginationService';
-import useChatStore from '../state/chatStore';
+import React, { useState, useEffect } from "react";
+import { View, Text, Pressable, ScrollView, Platform } from "react-native";
+import { performanceMonitor } from "../utils/performance";
+import { memoryManager } from "../services/memoryManager";
+import { messageVirtualizer } from "../services/messageVirtualizer";
+import { messagePaginationManager } from "../services/messagePaginationService";
+import useChatStore from "../state/chatStore";
 
 interface PerformanceDashboardProps {
   visible?: boolean;
@@ -32,7 +32,7 @@ export default function PerformanceDashboard({ visible = __DEV__, onClose }: Per
         performance: Array.from(perfMetrics.entries()),
         virtualization: virtMetrics,
         pagination: pagMetrics,
-        store: storeMetrics
+        store: storeMetrics,
       });
 
       setMemoryReport(memReport);
@@ -53,9 +53,9 @@ export default function PerformanceDashboard({ visible = __DEV__, onClose }: Per
   if (!visible || !__DEV__) return null;
 
   const getStatusColor = (value: number, threshold: number): string => {
-    if (value > threshold * 1.5) return '#ff4444';
-    if (value > threshold) return '#ffaa00';
-    return '#44ff44';
+    if (value > threshold * 1.5) return "#ff4444";
+    if (value > threshold) return "#ffaa00";
+    return "#44ff44";
   };
 
   const formatMemory = (bytes: number): string => {
@@ -64,12 +64,14 @@ export default function PerformanceDashboard({ visible = __DEV__, onClose }: Per
   };
 
   return (
-    <View className={`absolute ${isExpanded ? 'top-20 left-4 right-4 bottom-20' : 'top-20 right-4'} bg-black/90 rounded-lg p-2 z-50`}>
+    <View
+      className={`absolute ${isExpanded ? "top-20 left-4 right-4 bottom-20" : "top-20 right-4"} bg-black/90 rounded-lg p-2 z-50`}
+    >
       <View className="flex-row justify-between items-center mb-2">
         <Text className="text-white font-bold">Performance Monitor</Text>
         <View className="flex-row gap-2">
           <Pressable onPress={() => setIsExpanded(!isExpanded)} className="px-2 py-1 bg-gray-700 rounded">
-            <Text className="text-white text-xs">{isExpanded ? 'Minimize' : 'Expand'}</Text>
+            <Text className="text-white text-xs">{isExpanded ? "Minimize" : "Expand"}</Text>
           </Pressable>
           {onClose && (
             <Pressable onPress={onClose} className="px-2 py-1 bg-red-600 rounded">
@@ -84,12 +86,14 @@ export default function PerformanceDashboard({ visible = __DEV__, onClose }: Per
         <View className="flex-row flex-wrap gap-2">
           <View className="bg-gray-800 rounded px-2 py-1">
             <Text className="text-gray-400 text-xs">FPS</Text>
-            <Text className="text-white text-sm font-mono">{metrics.store?.performance?.fpsTrend || 'N/A'}</Text>
+            <Text className="text-white text-sm font-mono">{metrics.store?.performance?.fpsTrend || "N/A"}</Text>
           </View>
           <View className="bg-gray-800 rounded px-2 py-1">
             <Text className="text-gray-400 text-xs">Memory</Text>
             <Text className="text-white text-sm font-mono">
-              {memoryReport.usedMemory ? `${((memoryReport.usedMemory / memoryReport.totalMemory) * 100).toFixed(1)}%` : 'N/A'}
+              {memoryReport.usedMemory
+                ? `${((memoryReport.usedMemory / memoryReport.totalMemory) * 100).toFixed(1)}%`
+                : "N/A"}
             </Text>
           </View>
           <View className="bg-gray-800 rounded px-2 py-1">
@@ -120,7 +124,9 @@ export default function PerformanceDashboard({ visible = __DEV__, onClose }: Per
               </View>
               {memoryReport.leaks && memoryReport.leaks.length > 0 && (
                 <View className="mt-2 pt-2 border-t border-gray-700">
-                  <Text className="text-red-400 text-xs font-semibold">Leaks Detected: {memoryReport.leaks.length}</Text>
+                  <Text className="text-red-400 text-xs font-semibold">
+                    Leaks Detected: {memoryReport.leaks.length}
+                  </Text>
                 </View>
               )}
             </View>
@@ -133,10 +139,12 @@ export default function PerformanceDashboard({ visible = __DEV__, onClose }: Per
               <View className="flex-row gap-2">
                 {metrics.performance?.map(([label, metric]: [string, any]) => (
                   <View key={label} className="bg-gray-800 rounded p-2 min-w-[120]">
-                    <Text className="text-gray-400 text-xs" numberOfLines={1}>{label}</Text>
+                    <Text className="text-gray-400 text-xs" numberOfLines={1}>
+                      {label}
+                    </Text>
                     <Text className="text-white text-sm font-mono">{metric.average?.toFixed(1)}ms</Text>
                     <Text className="text-gray-500 text-xs">
-                      {metric.trend === 'degrading' ? '📉' : metric.trend === 'improving' ? '📈' : '➡️'} {metric.trend}
+                      {metric.trend === "degrading" ? "📉" : metric.trend === "improving" ? "📈" : "➡️"} {metric.trend}
                     </Text>
                   </View>
                 ))}
@@ -154,7 +162,9 @@ export default function PerformanceDashboard({ visible = __DEV__, onClose }: Per
               </View>
               <View className="flex-row justify-between mb-1">
                 <Text className="text-gray-400 text-xs">Memory Saved</Text>
-                <Text className="text-white text-xs font-mono">{formatMemory(metrics.virtualization?.memSaved || 0)}</Text>
+                <Text className="text-white text-xs font-mono">
+                  {formatMemory(metrics.virtualization?.memSaved || 0)}
+                </Text>
               </View>
               <View className="flex-row justify-between">
                 <Text className="text-gray-400 text-xs">Cache Hit Rate</Text>
@@ -198,7 +208,7 @@ export default function PerformanceDashboard({ visible = __DEV__, onClose }: Per
               <Pressable
                 onPress={() => {
                   const report = performanceMonitor.exportMetrics();
-                  console.log('Performance Report:', report);
+                  console.log("Performance Report:", report);
                 }}
                 className="bg-green-600 rounded px-3 py-1"
               >

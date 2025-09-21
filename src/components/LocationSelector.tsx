@@ -15,7 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { getCurrentLocation, reverseGeocodeLocation, searchLocations, geocodeCityStateCached } from "../utils/location";
 import { useTheme } from "../providers/ThemeProvider";
-import { searchColleges, CollegeSearchResult } from "../services/collegeService";
+import { searchColleges } from "../services/collegeService";
 
 interface Location {
   city: string;
@@ -269,7 +269,7 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
         setLocationError("Unable to determine your location");
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       }
-    } catch (error) {
+    } catch {
       setLocationError("Error getting your location");
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {

@@ -1,6 +1,6 @@
-import { ChatMessage } from '../types';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { performanceMonitor } from '../utils/performance';
+import { ChatMessage } from "../types";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { performanceMonitor } from "../utils/performance";
 
 interface PaginationState {
   cursor: string | null;
@@ -37,12 +37,12 @@ export class MessagePaginationManager {
 
   private async initializeMemoryThreshold() {
     try {
-      const savedThreshold = await AsyncStorage.getItem('messagePaginationThreshold');
+      const savedThreshold = await AsyncStorage.getItem("messagePaginationThreshold");
       if (savedThreshold) {
         this.memoryThreshold = parseInt(savedThreshold, 10);
       }
     } catch (error) {
-      console.error('Failed to load pagination threshold:', error);
+      console.error("Failed to load pagination threshold:", error);
     }
   }
 
@@ -52,7 +52,11 @@ export class MessagePaginationManager {
   async loadNextBatch(
     roomId: string,
     batchSize?: number,
-    loadFunction?: (roomId: string, cursor: string | null, limit: number) => Promise<{ messages: ChatMessage[]; cursor: string | null; hasMore: boolean }>
+    loadFunction?: (
+      roomId: string,
+      cursor: string | null,
+      limit: number,
+    ) => Promise<{ messages: ChatMessage[]; cursor: string | null; hasMore: boolean }>,
   ): Promise<ChatMessage[]> {
     const startTime = Date.now();
 
@@ -66,7 +70,7 @@ export class MessagePaginationManager {
       cursor: null,
       hasMore: true,
       loadedCount: 0,
-      lastLoadTime: 0
+      lastLoadTime: 0,
     };
 
     if (!state.hasMore) {
@@ -88,7 +92,7 @@ export class MessagePaginationManager {
         loadTime: Date.now() - startTime,
         batchSize: messages.length,
         memoryUsage: this.getMemoryUsage(roomId),
-        totalMessages: state.loadedCount + messages.length
+        totalMessages: state.loadedCount + messages.length,
       });
 
       // Trigger cleanup if needed
@@ -108,7 +112,11 @@ export class MessagePaginationManager {
   async preloadNextBatch(
     roomId: string,
     scrollPercentage: number = 80,
-    loadFunction?: (roomId: string, cursor: string | null, limit: number) => Promise<{ messages: ChatMessage[]; cursor: string | null; hasMore: boolean }>
+    loadFunction?: (
+      roomId: string,
+      cursor: string | null,
+      limit: number,
+    ) => Promise<{ messages: ChatMessage[]; cursor: string | null; hasMore: boolean }>,
   ): Promise<void> {
     const state = this.paginationStates.get(roomId);
     if (!state || !state.hasMore || scrollPercentage < 80) {
@@ -126,8 +134,8 @@ export class MessagePaginationManager {
     const preloadSize = Math.floor(this.getOptimalBatchSize(state.loadedCount, deviceSpecs) * 0.7);
 
     // Fire and forget preload
-    this.loadNextBatch(roomId, preloadSize, loadFunction).catch(error => {
-      console.warn('Preload failed:', error);
+    this.loadNextBatch(roomId, preloadSize, loadFunction).catch((error) => {
+      console.warn("Preload failed:", error);
     });
   }
 
@@ -154,14 +162,14 @@ export class MessagePaginationManager {
 
     // Remove oldest messages
     const toRemove = messages.slice(retentionCount);
-    toRemove.forEach(msg => {
+    toRemove.forEach((msg) => {
       roomIndex.delete(msg.id);
     });
 
-    performanceMonitor.recordMetric('messageCleanup', {
+    performanceMonitor.recordMetric("messageCleanup", {
       roomId,
       removed: toRemove.length,
-      remaining: roomIndex.size
+      remaining: roomIndex.size,
     });
 
     return toRemove.length;
@@ -203,7 +211,11 @@ export class MessagePaginationManager {
     roomId: string,
     state: PaginationState,
     batchSize: number,
-    loadFunction?: (roomId: string, cursor: string | null, limit: number) => Promise<{ messages: ChatMessage[]; cursor: string | null; hasMore: boolean }>
+    loadFunction?: (
+      roomId: string,
+      cursor: string | null,
+      limit: number,
+    ) => Promise<{ messages: ChatMessage[]; cursor: string | null; hasMore: boolean }>,
   ): Promise<ChatMessage[]> {
     const retries = this.retryCount.get(roomId) || 0;
 
@@ -218,7 +230,7 @@ export class MessagePaginationManager {
         cursor: result.cursor,
         hasMore: result.hasMore,
         loadedCount: state.loadedCount + result.messages.length,
-        lastLoadTime: Date.now()
+        lastLoadTime: Date.now(),
       };
       this.paginationStates.set(roomId, newState);
 
@@ -235,7 +247,7 @@ export class MessagePaginationManager {
         this.retryCount.set(roomId, retries + 1);
         const delay = Math.pow(2, retries) * 1000;
 
-        await new Promise(resolve => setTimeout(resolve, delay));
+        await new Promise((resolve) => setTimeout(resolve, delay));
         return this.performLoad(roomId, state, batchSize, loadFunction);
       }
 
@@ -253,7 +265,7 @@ export class MessagePaginationManager {
       this.messageIndex.set(roomId, roomIndex);
     }
 
-    messages.forEach(msg => {
+    messages.forEach((msg) => {
       roomIndex!.set(msg.id, msg);
     });
   }
@@ -269,7 +281,7 @@ export class MessagePaginationManager {
 
     // Estimate memory usage (rough calculation)
     let totalSize = 0;
-    roomIndex.forEach(msg => {
+    roomIndex.forEach((msg) => {
       totalSize += JSON.stringify(msg).length * 2; // 2 bytes per character
     });
 
@@ -286,7 +298,7 @@ export class MessagePaginationManager {
       totalMemory: 4096,
       availableMemory: 2048,
       cpuSpeed: 2.4,
-      isLowEndDevice: false
+      isLowEndDevice: false,
     };
   }
 
@@ -296,10 +308,10 @@ export class MessagePaginationManager {
   private async simulateLoad(
     roomId: string,
     cursor: string | null,
-    limit: number
+    limit: number,
   ): Promise<{ messages: ChatMessage[]; cursor: string | null; hasMore: boolean }> {
     // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 300));
+    await new Promise((resolve) => setTimeout(resolve, 300));
 
     const messages: ChatMessage[] = [];
     const startIndex = cursor ? parseInt(cursor, 10) : 0;
@@ -312,18 +324,18 @@ export class MessagePaginationManager {
         senderId: `user-${index % 5}`,
         senderName: `User ${index % 5}`,
         content: `Message ${index} in room ${roomId}`,
-        timestamp: new Date(Date.now() - (index * 60000)),
-        type: 'text',
-        status: 'sent',
+        timestamp: new Date(Date.now() - index * 60000),
+        type: "text",
+        status: "sent",
         reactions: [],
-        metadata: {}
+        metadata: {},
       });
     }
 
     return {
       messages,
       cursor: `${startIndex + limit}`,
-      hasMore: startIndex + limit < 500 // Simulate 500 total messages
+      hasMore: startIndex + limit < 500, // Simulate 500 total messages
     };
   }
 
@@ -338,7 +350,7 @@ export class MessagePaginationManager {
       this.metrics = this.metrics.slice(-100);
     }
 
-    performanceMonitor.recordMetric('messagePagination', metric);
+    performanceMonitor.recordMetric("messagePagination", metric);
   }
 
   /**

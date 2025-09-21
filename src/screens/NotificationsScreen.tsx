@@ -22,8 +22,8 @@ export default function NotificationsScreen() {
         if (Platform.OS === "android" && Platform.Version >= 33) {
           await PermissionsAndroid.request("android.permission.POST_NOTIFICATIONS");
         }
-      } catch (e) {
-        // Ignore errors
+      } catch (error) {
+        console.warn("Permission request failed:", error);
       }
     };
 

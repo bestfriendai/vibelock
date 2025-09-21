@@ -1,5 +1,7 @@
 import { create } from "zustand";
-import { Audio, AVPlaybackStatus } from "expo-av";
+import { createAudioPlayer } from "expo-audio";
+import type { AudioPlayer, AudioStatus } from "expo-audio";
+import type { Subscription } from "expo-modules-core";
 import { subscribeWithSelector } from "zustand/middleware";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -8,7 +10,8 @@ import audioModeService from "../services/audioModeService";
 interface AudioPlayerState {
   currentMessageId: string | null;
   audioUri: string | null;
-  sound: Audio.Sound | null;
+  player: AudioPlayer | null;
+  statusSubscription: Subscription | null;
   isPlaying: boolean;
   isPaused: boolean;
   isLoading: boolean;
@@ -17,7 +20,6 @@ interface AudioPlayerState {
   playbackRate: 0.5 | 1 | 1.5 | 2;
   error: string | null;
   waveformData: number[] | null;
-  progressInterval: NodeJS.Timeout | null;
 }
 
 interface AudioPlayerActions {
@@ -27,12 +29,10 @@ interface AudioPlayerActions {
   stop: () => Promise<void>;
   seek: (position: number) => Promise<void>;
   setPlaybackRate: (rate: 0.5 | 1 | 1.5 | 2) => Promise<void>;
-  updateProgress: (currentTime: number) => void;
   setError: (error: string | null) => void;
   setWaveformData: (data: number[]) => void;
   cleanup: () => Promise<void>;
   reset: () => void;
-  onPlaybackStatusUpdate: (status: AVPlaybackStatus) => void;
 }
 
 type AudioPlayerStore = AudioPlayerState & AudioPlayerActions;
@@ -40,7 +40,8 @@ type AudioPlayerStore = AudioPlayerState & AudioPlayerActions;
 const initialState: AudioPlayerState = {
   currentMessageId: null,
   audioUri: null,
-  sound: null,
+  player: null,
+  statusSubscription: null,
   isPlaying: false,
   isPaused: false,
   isLoading: false,
@@ -49,7 +50,62 @@ const initialState: AudioPlayerState = {
   playbackRate: 1,
   error: null,
   waveformData: null,
-  progressInterval: null,
+};
+
+const waitForPlayerToLoad = (player: AudioPlayer, timeoutMs = 5000): Promise<void> => {
+  if (player.isLoaded) {
+    return Promise.resolve();
+  }
+
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const timeoutId = setTimeout(() => {
+      if (!settled) {
+        settled = true;
+        reject(new Error("Timeout loading audio"));
+      }
+    }, timeoutMs);
+
+    const checkLoaded = () => {
+      if (player.isLoaded) {
+        if (!settled) {
+          settled = true;
+          clearTimeout(timeoutId);
+          resolve();
+        }
+      } else if (!settled) {
+        setTimeout(checkLoaded, 100);
+      }
+    };
+
+    checkLoaded();
+  });
+};
+
+const detachPlayer = async (player: AudioPlayer | null, subscription: Subscription | null) => {
+  subscription?.remove();
+
+  if (!player) {
+    return;
+  }
+
+  try {
+    player.pause();
+  } catch {
+    // ignore pause errors
+  }
+
+  try {
+    await player.seekTo(0);
+  } catch {
+    // ignore seek errors
+  }
+
+  try {
+    player.remove();
+  } catch {
+    // ignore removal errors
+  }
 };
 
 export const useAudioPlayerStore = create<AudioPlayerStore>()(
@@ -59,21 +115,24 @@ export const useAudioPlayerStore = create<AudioPlayerStore>()(
         ...initialState,
 
         play: async (messageId: string, audioUri: string, duration: number) => {
-          const state = get();
-
           try {
-            // Stop current playback if different message
-            if (state.currentMessageId && state.currentMessageId !== messageId) {
+            const previousState = get();
+
+            if (previousState.currentMessageId && previousState.currentMessageId !== messageId) {
               await get().stop();
             }
 
-            // If same message and paused, just resume
-            if (state.currentMessageId === messageId && state.isPaused) {
-              await get().resume();
+            const state = get();
+            const existingPlayer = state.player;
+            const existingSubscription = state.statusSubscription;
+            const currentRate = state.playbackRate;
+
+            if (state.currentMessageId === messageId && state.isPaused && existingPlayer) {
+              existingPlayer.play();
+              set({ isPlaying: true, isPaused: false, error: null });
               return;
             }
 
-            // Set loading state
             set({
               isLoading: true,
               error: null,
@@ -82,132 +141,142 @@ export const useAudioPlayerStore = create<AudioPlayerStore>()(
               duration,
             });
 
-            // Configure audio mode for playback using centralized service
             await audioModeService.configureForPlayback();
 
-            // Load and play audio
-            const { sound } = await Audio.Sound.createAsync(
-              { uri: audioUri },
-              {
-                shouldPlay: true,
-                rate: state.playbackRate,
-                progressUpdateIntervalMillis: 250,
-              },
-              (status) => get().onPlaybackStatusUpdate(status)
-            );
+            let player = existingPlayer;
+            let subscription = existingSubscription;
 
-            // Clear any existing interval before assigning a new one
-            const existingInterval = get().progressInterval;
-            if (existingInterval) {
-              clearInterval(existingInterval);
+            if (!player || get().audioUri !== audioUri) {
+              await detachPlayer(player, subscription);
+
+              player = createAudioPlayer(audioUri, {
+                updateInterval: 250,
+                downloadFirst: true,
+              });
+              player.playbackRate = currentRate;
+
+              subscription = player.addListener("playbackStatusUpdate", (status: AudioStatus) => {
+                set((current) => ({
+                  currentTime: status.currentTime ?? current.currentTime,
+                  duration: status.duration || current.duration,
+                  isPlaying: status.playing,
+                  isPaused: !status.playing && status.isLoaded && !status.didJustFinish,
+                }));
+
+                if (status.didJustFinish && !status.loop) {
+                  get()
+                    .stop()
+                    .catch(() => {});
+                }
+              });
+
+              set({
+                player,
+                statusSubscription: subscription,
+              });
+            } else {
+              player.playbackRate = currentRate;
+              try {
+                await player.seekTo(0);
+              } catch {
+                // ignore seek errors when reusing the existing player
+              }
             }
 
-            // Start progress tracking using get().sound
-            const progressInterval = setInterval(() => {
-              const currentSound = get().sound;
-              if (currentSound) {
-                currentSound.getStatusAsync().then((status) => {
-                  if (status.isLoaded && status.positionMillis !== undefined) {
-                    get().updateProgress(status.positionMillis / 1000);
-                  }
-                });
-              }
-            }, 250);
+            await waitForPlayerToLoad(player);
 
+            player.play();
             set({
-              sound,
               isPlaying: true,
               isPaused: false,
               isLoading: false,
-              progressInterval,
+              duration: duration || player.duration || get().duration,
             });
           } catch (error) {
-            console.error("Error playing audio:", error);
+            if (__DEV__) {
+              console.error("Error playing audio:", error);
+            }
             set({
               isLoading: false,
+              isPlaying: false,
+              isPaused: false,
               error: error instanceof Error ? error.message : "Failed to play audio",
             });
           }
         },
 
         pause: async () => {
-          const { sound } = get();
-          if (!sound) return;
+          const { player } = get();
+          if (!player) return;
 
           try {
-            await sound.pauseAsync();
+            player.pause();
             set({ isPlaying: false, isPaused: true });
           } catch (error) {
-            console.error("Error pausing audio:", error);
+            if (__DEV__) {
+              console.error("Error pausing audio:", error);
+            }
             set({ error: error instanceof Error ? error.message : "Failed to pause audio" });
           }
         },
 
         resume: async () => {
-          const { sound } = get();
-          if (!sound) return;
+          const { player } = get();
+          if (!player) return;
 
           try {
-            await sound.playAsync();
+            player.play();
             set({ isPlaying: true, isPaused: false });
           } catch (error) {
-            console.error("Error resuming audio:", error);
+            if (__DEV__) {
+              console.error("Error resuming audio:", error);
+            }
             set({ error: error instanceof Error ? error.message : "Failed to resume audio" });
           }
         },
 
         stop: async () => {
-          const { sound, progressInterval } = get();
+          const { player, statusSubscription, playbackRate } = get();
 
-          if (progressInterval) {
-            clearInterval(progressInterval);
-          }
-
-          if (sound) {
-            try {
-              await sound.stopAsync();
-              await sound.unloadAsync();
-            } catch (error) {
-              console.error("Error stopping audio:", error);
-            }
-          }
+          await detachPlayer(player, statusSubscription);
 
           set({
             ...initialState,
-            playbackRate: get().playbackRate, // Preserve playback rate preference
+            playbackRate,
           });
         },
 
         seek: async (position: number) => {
-          const { sound, duration } = get();
-          if (!sound) return;
+          const { player, duration } = get();
+          if (!player || duration <= 0) return;
 
           try {
-            const positionMillis = Math.max(0, Math.min(position * duration * 1000, duration * 1000));
-            await sound.setPositionAsync(positionMillis);
-            set({ currentTime: position * duration });
+            const clampedPosition = Math.max(0, Math.min(position, 1));
+            const targetSeconds = clampedPosition * duration;
+            await player.seekTo(targetSeconds);
+            set({ currentTime: targetSeconds });
           } catch (error) {
-            console.error("Error seeking audio:", error);
+            if (__DEV__) {
+              console.error("Error seeking audio:", error);
+            }
             set({ error: error instanceof Error ? error.message : "Failed to seek audio" });
           }
         },
 
         setPlaybackRate: async (rate: 0.5 | 1 | 1.5 | 2) => {
-          const { sound } = get();
+          const { player } = get();
 
           try {
-            if (sound) {
-              await sound.setRateAsync(rate, true);
+            if (player) {
+              player.setPlaybackRate(rate);
             }
             set({ playbackRate: rate });
           } catch (error) {
-            console.error("Error setting playback rate:", error);
+            if (__DEV__) {
+              console.error("Error setting playback rate:", error);
+            }
             set({ error: error instanceof Error ? error.message : "Failed to set playback rate" });
           }
-        },
-
-        updateProgress: (currentTime: number) => {
-          set({ currentTime });
         },
 
         setError: (error: string | null) => {
@@ -223,35 +292,9 @@ export const useAudioPlayerStore = create<AudioPlayerStore>()(
         },
 
         reset: () => {
-          const { progressInterval } = get();
-          if (progressInterval) {
-            clearInterval(progressInterval);
-          }
+          const { player, statusSubscription } = get();
+          void detachPlayer(player, statusSubscription);
           set(initialState);
-        },
-
-        onPlaybackStatusUpdate: (status: AVPlaybackStatus) => {
-          if (!status.isLoaded) {
-            if (status.error) {
-              console.error("Playback error:", status.error);
-              set({ error: status.error });
-            }
-            return;
-          }
-
-          const currentTime = (status.positionMillis || 0) / 1000;
-          const duration = (status.durationMillis || 0) / 1000;
-
-          set({
-            currentTime,
-            duration: duration || get().duration,
-            isPlaying: status.isPlaying || false,
-          });
-
-          // Handle playback completion
-          if (status.didJustFinish && !status.isLooping) {
-            get().stop();
-          }
         },
       }),
       {
@@ -260,7 +303,7 @@ export const useAudioPlayerStore = create<AudioPlayerStore>()(
         partialize: (state) => ({
           playbackRate: state.playbackRate,
         }),
-      }
-    )
-  )
+      },
+    ),
+  ),
 );

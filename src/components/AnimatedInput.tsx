@@ -68,6 +68,7 @@ const AnimatedInput = forwardRef<TextInput, AnimatedInputProps>(
 
     React.useEffect(() => {
       errorAnimation.value = withTiming(error ? 1 : 0, { duration: 200 });
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [error]);
 
     const containerAnimatedStyle = useAnimatedStyle(() => ({
@@ -129,7 +130,11 @@ const AnimatedInput = forwardRef<TextInput, AnimatedInputProps>(
         >
           {leftIcon && (
             <View className="pl-4">
-              {typeof leftIcon === "string" ? <Ionicons name={leftIcon as keyof typeof Ionicons.glyphMap} size={20} color="#9CA3AF" /> : leftIcon}
+              {typeof leftIcon === "string" ? (
+                <Ionicons name={leftIcon as keyof typeof Ionicons.glyphMap} size={20} color="#9CA3AF" />
+              ) : (
+                leftIcon
+              )}
             </View>
           )}
 
@@ -149,7 +154,11 @@ const AnimatedInput = forwardRef<TextInput, AnimatedInputProps>(
 
           {rightIcon && (
             <Pressable className="pr-4" onPress={onRightIconPress}>
-              {typeof rightIcon === "string" ? <Ionicons name={rightIcon as keyof typeof Ionicons.glyphMap} size={20} color="#9CA3AF" /> : rightIcon}
+              {typeof rightIcon === "string" ? (
+                <Ionicons name={rightIcon as keyof typeof Ionicons.glyphMap} size={20} color="#9CA3AF" />
+              ) : (
+                rightIcon
+              )}
             </Pressable>
           )}
         </Animated.View>

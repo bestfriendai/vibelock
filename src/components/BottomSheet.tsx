@@ -2,7 +2,6 @@ import React, { useRef, useImperativeHandle, forwardRef, useState } from "react"
 import {
   Modal,
   View,
-  TouchableOpacity,
   Animated,
   PanResponder,
   Dimensions,

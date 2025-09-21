@@ -94,7 +94,7 @@ class PackageVerifier {
       logSuccess("package.json structure is valid");
 
       // Check for required dependencies
-      const requiredDeps = ["react-native-worklets", "expo-av", "expo", "react-native"];
+      const requiredDeps = ["react-native-worklets", "expo-audio", "expo-video", "expo", "react-native"];
 
       requiredDeps.forEach((dep) => {
         if (packageJson.dependencies && packageJson.dependencies[dep]) {
@@ -126,7 +126,7 @@ class PackageVerifier {
     logSuccess("node_modules directory exists");
 
     // Check specific critical dependencies
-    const criticalDeps = ["react-native-worklets", "expo-av", "expo", "react-native"];
+    const criticalDeps = ["react-native-worklets", "expo-audio", "expo-video", "expo", "react-native"];
 
     criticalDeps.forEach((dep) => {
       const depPath = path.join(nodeModulesPath, dep);
@@ -375,7 +375,7 @@ function checkCriticalDependencies() {
 
   try {
     const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
-    const criticalDeps = ["react-native-worklets", "expo-av"];
+    const criticalDeps = ["react-native-worklets", "expo-audio", "expo-video"];
 
     criticalDeps.forEach((dep) => {
       if (!packageJson.dependencies || !packageJson.dependencies[dep]) {

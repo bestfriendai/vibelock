@@ -1,20 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  ActivityIndicator,
-  Alert,
-} from "react-native";
+import { View, Text, StyleSheet, Pressable, ActivityIndicator, Alert } from "react-native";
 import Clipboard from "@react-native-clipboard/clipboard";
 import { Ionicons } from "@expo/vector-icons";
-import Animated, {
-  useAnimatedStyle,
-  withTiming,
-  withSpring,
-  useSharedValue,
-} from "react-native-reanimated";
+import Animated, { useAnimatedStyle, withTiming, withSpring, useSharedValue } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import { useTheme } from "../providers/ThemeProvider";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -113,11 +101,7 @@ export const VoiceMessageTranscription: React.FC<VoiceMessageTranscriptionProps>
     }
   };
 
-  const saveToCache = async (
-    text: string,
-    conf?: number,
-    lang?: string
-  ) => {
+  const saveToCache = async (text: string, conf?: number, lang?: string) => {
     try {
       const cacheString = await AsyncStorage.getItem(CACHE_KEY);
       const cache: TranscriptionCache = cacheString ? JSON.parse(cacheString) : {};
@@ -155,7 +139,8 @@ export const VoiceMessageTranscription: React.FC<VoiceMessageTranscriptionProps>
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
       // Mock transcription result
-      const mockTranscription = "This is a simulated transcription of the voice message. In production, this would be replaced with actual speech-to-text conversion.";
+      const mockTranscription =
+        "This is a simulated transcription of the voice message. In production, this would be replaced with actual speech-to-text conversion.";
       const mockConfidence = 0.95;
       const mockLanguage = "en-US";
 
@@ -230,27 +215,17 @@ export const VoiceMessageTranscription: React.FC<VoiceMessageTranscriptionProps>
             style={styles.toggleButton}
             disabled={!transcription && !isLoading && !error}
           >
-            <Ionicons
-              name={isExpanded ? "chevron-up" : "chevron-down"}
-              size={16}
-              color={colors.text.muted}
-            />
+            <Ionicons name={isExpanded ? "chevron-up" : "chevron-down"} size={16} color={colors.text.muted} />
             <Text style={[styles.toggleText, { color: colors.text.muted }]}>
               {isLoading
                 ? "Transcribing..."
                 : transcription
-                ? isExpanded
-                  ? "Hide transcript"
-                  : "Show transcript"
-                : "Transcription"}
+                  ? isExpanded
+                    ? "Hide transcript"
+                    : "Show transcript"
+                  : "Transcription"}
             </Text>
-            {isLoading && (
-              <ActivityIndicator
-                size="small"
-                color={colors.text.muted}
-                style={styles.loader}
-              />
-            )}
+            {isLoading && <ActivityIndicator size="small" color={colors.text.muted} style={styles.loader} />}
           </Pressable>
 
           {/* Auto-transcribe toggle */}
@@ -259,18 +234,16 @@ export const VoiceMessageTranscription: React.FC<VoiceMessageTranscriptionProps>
               <Ionicons
                 name={autoTranscribeEnabled ? "checkbox" : "square-outline"}
                 size={18}
-                color={colors.brand.primary}
+                color={colors.brand.coral}
               />
-              <Text style={[styles.autoToggleText, { color: colors.text.muted }]}>
-                Auto
-              </Text>
+              <Text style={[styles.autoToggleText, { color: colors.text.muted }]}>Auto</Text>
             </Pressable>
           )}
 
           {/* Manual transcribe button */}
           {!transcription && !isLoading && !autoTranscribeEnabled && (
             <Pressable onPress={transcribeAudio} style={styles.transcribeButton}>
-              <Ionicons name="mic" size={16} color={colors.brand.primary} />
+              <Ionicons name="mic" size={16} color={colors.brand.coral} />
             </Pressable>
           )}
         </View>
@@ -281,13 +254,9 @@ export const VoiceMessageTranscription: React.FC<VoiceMessageTranscriptionProps>
         <Animated.View style={[styles.content, expandedStyle]}>
           {error ? (
             <View style={styles.errorContainer}>
-              <Text style={[styles.errorText, { color: colors.error }]}>
-                {error}
-              </Text>
+              <Text style={[styles.errorText, { color: colors.text.error }]}>{error}</Text>
               <Pressable onPress={retry} style={styles.retryButton}>
-                <Text style={[styles.retryText, { color: colors.brand.primary }]}>
-                  Retry
-                </Text>
+                <Text style={[styles.retryText, { color: colors.brand.coral }]}>Retry</Text>
               </Pressable>
             </View>
           ) : (
@@ -296,18 +265,14 @@ export const VoiceMessageTranscription: React.FC<VoiceMessageTranscriptionProps>
                 contentHeight.value = event.nativeEvent.layout.height;
               }}
             >
-              <Text style={[styles.transcriptionText, { color: colors.text.primary }]}>
-                {transcription}
-              </Text>
+              <Text style={[styles.transcriptionText, { color: colors.text.primary }]}>{transcription}</Text>
 
               {/* Metadata and actions */}
               <View style={styles.metadata}>
                 {showLanguageIndicator && detectedLanguage && (
                   <View style={styles.languageTag}>
                     <Ionicons name="globe" size={12} color={colors.text.muted} />
-                    <Text style={[styles.languageText, { color: colors.text.muted }]}>
-                      {detectedLanguage}
-                    </Text>
+                    <Text style={[styles.languageText, { color: colors.text.muted }]}>{detectedLanguage}</Text>
                   </View>
                 )}
 
@@ -331,10 +296,8 @@ export const VoiceMessageTranscription: React.FC<VoiceMessageTranscriptionProps>
       {/* Prompt to transcribe */}
       {!transcription && !isLoading && !autoTranscribeEnabled && !error && (
         <Pressable onPress={transcribeAudio} style={styles.promptContainer}>
-          <Ionicons name="mic-outline" size={16} color={colors.brand.primary} />
-          <Text style={[styles.promptText, { color: colors.brand.primary }]}>
-            Tap to transcribe
-          </Text>
+          <Ionicons name="mic-outline" size={16} color={colors.brand.coral} />
+          <Text style={[styles.promptText, { color: colors.brand.coral }]}>Tap to transcribe</Text>
         </Pressable>
       )}
     </View>

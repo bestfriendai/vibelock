@@ -2,7 +2,17 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { mmkvStorage } from "../utils/mmkvStorage";
 import { startTransition } from "react";
-import { ChatRoom, ChatMessage, ChatMember, TypingUser, ConnectionStatus, ChatState, MessageEvent, UserRole } from "../types";
+import {
+  ChatRoom,
+  ChatMessage,
+  Message,
+  ChatMember,
+  TypingUser,
+  ConnectionStatus,
+  ChatState,
+  MessageEvent,
+  UserRole,
+} from "../types";
 import { consolidatedRealtimeService } from "../services/consolidatedRealtimeService";
 import useAuthStore from "./authStore";
 import { requireAuthentication, getUserDisplayName } from "../utils/authUtils";
@@ -182,7 +192,7 @@ const useChatStore = create<ChatStore>()(
 
           // Initialize performance services
           messageVirtualizer.optimizeForDevice({ memory: 4096 });
-          memoryManager.trackComponent('ChatRoom', roomId);
+          memoryManager.trackComponent("ChatRoom", roomId);
           performanceMonitor.startFPSMonitoring();
 
           // Enable aggressive cleanup
@@ -213,10 +223,10 @@ const useChatStore = create<ChatStore>()(
         const memCleaned = await memoryManager.forceCleanup();
         totalCleaned += memCleaned;
 
-        performanceMonitor.recordMetric('memoryCleanup', {
+        performanceMonitor.recordMetric("memoryCleanup", {
           cleaned: totalCleaned,
           roomId,
-          timestamp: Date.now()
+          timestamp: Date.now(),
         });
 
         return totalCleaned;
@@ -233,7 +243,7 @@ const useChatStore = create<ChatStore>()(
           performance: performanceReport,
           virtualizer: virtualizerMetrics,
           pagination: paginationMetrics,
-          timestamp: Date.now()
+          timestamp: Date.now(),
         };
       },
 
@@ -263,25 +273,25 @@ const useChatStore = create<ChatStore>()(
           appStateManager.initialize();
 
           // Register for AppState changes
-          appStateManager.registerListener('chatStore', async (nextState, prevState) => {
+          appStateManager.registerListener("chatStore", async (nextState, prevState) => {
             console.log(`[ChatStore] AppState changed: ${prevState} -> ${nextState}`);
             await get().handleAppStateChange(nextState, prevState);
           });
 
           // Register foreground/background callbacks
-          const unsubscribeForeground = appStateManager.onForeground(async () => {
-            console.log('[ChatStore] App returned to foreground - reconnecting...');
+          const unsubscribeForeground = appStateManager.onForeground ? appStateManager.onForeground(async () => {
+            console.log("[ChatStore] App returned to foreground - reconnecting...");
             await get().reconnectAllRooms();
-          });
+          }) : undefined;
 
-          const unsubscribeBackground = appStateManager.onBackground(() => {
-            console.log('[ChatStore] App going to background - pausing subscriptions...');
+          const unsubscribeBackground = appStateManager.onBackground ? appStateManager.onBackground(() => {
+            console.log("[ChatStore] App going to background - pausing subscriptions...");
             // Clear typing indicators for all rooms
             const currentRoomId = get().currentChatRoom?.id;
             if (currentRoomId) {
               get().setTyping(currentRoomId, false);
             }
-          });
+          }) : undefined;
 
           // Store unsubscribe functions
           set((state) => ({
@@ -300,9 +310,9 @@ const useChatStore = create<ChatStore>()(
 
               // Combine NetInfo and reliable check results
               const isConnected = Boolean(state.isConnected) && reliableCheck.isConnected;
-              const hasInternetAccess = (state.isInternetReachable === true ||
-                                        (state.isInternetReachable === null && isConnected)) &&
-                                       reliableCheck.isStable;
+              const hasInternetAccess =
+                (state.isInternetReachable === true || (state.isInternetReachable === null && isConnected)) &&
+                reliableCheck.isStable;
               const online = isConnected && hasInternetAccess;
 
               console.log(`📶 Network state changed:`, {
@@ -316,7 +326,7 @@ const useChatStore = create<ChatStore>()(
                   latency: reliableCheck.latency,
                 },
                 finalResult: online,
-                details: state.details
+                details: state.details,
               });
 
               if (online) {
@@ -334,7 +344,7 @@ const useChatStore = create<ChatStore>()(
                     const isAuthError = e instanceof Error && e.message.includes("signed in");
                     set({
                       connectionStatus: "error" as ConnectionStatus,
-                      error: isAuthError ? "Authentication required. Please sign in." : "Reconnection failed"
+                      error: isAuthError ? "Authentication required. Please sign in." : "Reconnection failed",
                     });
                   }
                 } else {
@@ -364,7 +374,7 @@ const useChatStore = create<ChatStore>()(
           const unsubscribeConnectionStatus = consolidatedRealtimeService.onConnectionStatusChange((status, error) => {
             set({
               connectionStatus: status as ConnectionStatus,
-              error: error || null
+              error: error || null,
             });
           });
 
@@ -391,7 +401,7 @@ const useChatStore = create<ChatStore>()(
 
               if (retryCount < maxRetries) {
                 console.log(`🔄 Retrying connection in ${retryCount * 1000}ms...`);
-                await new Promise(resolve => setTimeout(resolve, retryCount * 1000));
+                await new Promise((resolve) => setTimeout(resolve, retryCount * 1000));
               } else {
                 throw error;
               }
@@ -401,17 +411,19 @@ const useChatStore = create<ChatStore>()(
           console.warn("❌ Failed to connect to chat service:", error);
 
           // Differentiate between authentication and network/service errors
-          const isAuthError = error instanceof Error && (
-            error.message.includes("signed in") ||
-            error.message.includes("Authentication") ||
-            error.message.includes("AUTHENTICATION_REQUIRED")
-          );
+          const isAuthError =
+            error instanceof Error &&
+            (error.message.includes("signed in") ||
+              error.message.includes("Authentication") ||
+              error.message.includes("AUTHENTICATION_REQUIRED"));
 
           set({
-            connectionStatus: isAuthError ? "error" as ConnectionStatus : "disconnected",
+            connectionStatus: isAuthError ? ("error" as ConnectionStatus) : "disconnected",
             error: isAuthError
               ? "Authentication required. Please sign in to access chat."
-              : (error instanceof Error ? error.message : "Failed to connect to chat service"),
+              : error instanceof Error
+                ? error.message
+                : "Failed to connect to chat service",
           });
           throw error;
         }
@@ -441,7 +453,7 @@ const useChatStore = create<ChatStore>()(
           console.error("❌ Manual reconnection failed:", error);
           set({
             connectionStatus: "error",
-            error: error instanceof Error ? error.message : "Reconnection failed"
+            error: error instanceof Error ? error.message : "Reconnection failed",
           });
         }
       },
@@ -546,7 +558,7 @@ const useChatStore = create<ChatStore>()(
             set({
               connectionStatus: "error" as ConnectionStatus,
               error: "Please sign in to join chat rooms.",
-              isLoading: false
+              isLoading: false,
             });
             return;
           }
@@ -557,24 +569,25 @@ const useChatStore = create<ChatStore>()(
             set({
               connectionStatus: "error" as ConnectionStatus,
               error: "User information not available.",
-              isLoading: false
+              isLoading: false,
             });
             return;
           }
 
           // Ensure user is added to chat_members_firebase table
           console.log(`👥 Adding user to chat room members: ${roomId}`);
-          const { error: memberError } = await supabase
-            .from("chat_members_firebase")
-            .upsert({
+          const { error: memberError } = await supabase.from("chat_members_firebase").upsert(
+            {
               chat_room_id: roomId,
               user_id: user.id,
               role: "member",
               is_active: true,
               joined_at: new Date().toISOString(),
-            }, {
-              onConflict: "chat_room_id,user_id"
-            });
+            },
+            {
+              onConflict: "chat_room_id,user_id",
+            },
+          );
 
           if (memberError) {
             console.warn("⚠️ Failed to add user to room members:", memberError);
@@ -610,9 +623,7 @@ const useChatStore = create<ChatStore>()(
                     case "update":
                       // Update existing message
                       const messages = state.messages[roomId] || [];
-                      allMessages = messages.map(msg =>
-                        event.items.find(updated => updated.id === msg.id) || msg
-                      );
+                      allMessages = messages.map((msg) => event.items.find((updated) => updated.id === msg.id) || msg);
                       break;
 
                     case "replace":
@@ -621,12 +632,10 @@ const useChatStore = create<ChatStore>()(
                       if (event.tempId && event.items.length > 0) {
                         // Replace the optimistic message with the real message
                         const realMessage = event.items[0];
-                        allMessages = currentMsgs.map(msg =>
-                          msg.id === event.tempId ? realMessage : msg
-                        );
+                        allMessages = currentMsgs.map((msg) => (msg.id === event.tempId ? realMessage : msg)).filter((msg): msg is Message => msg !== undefined);
                         // Remove duplicate if the real message already exists
                         const uniqueIds = new Set<string>();
-                        allMessages = allMessages.filter(msg => {
+                        allMessages = allMessages.filter((msg) => {
                           if (uniqueIds.has(msg.id)) return false;
                           uniqueIds.add(msg.id);
                           return true;
@@ -640,8 +649,8 @@ const useChatStore = create<ChatStore>()(
                     case "delete":
                       // Remove deleted messages
                       const currentMessages = state.messages[roomId] || [];
-                      const deletedIds = event.items.map(item => item.id);
-                      allMessages = currentMessages.filter(msg => !deletedIds.includes(msg.id));
+                      const deletedIds = event.items.map((item) => item.id);
+                      allMessages = currentMessages.filter((msg) => !deletedIds.includes(msg.id));
                       break;
 
                     default:
@@ -664,20 +673,20 @@ const useChatStore = create<ChatStore>()(
               // Track message delivery status for new/initial messages
               if (event.type === "initial" || event.type === "new") {
                 const messageIds = event.items
-                  .filter(msg => msg.senderId !== user.id && !msg.isRead)
-                  .map(msg => msg.id);
+                  .filter((msg) => msg.senderId !== user.id && !msg.isRead)
+                  .map((msg) => msg.id);
 
                 if (messageIds.length > 0) {
                   // Mark messages as delivered
-                  messageStatusService.markMessagesAsDelivered(messageIds, user.id).catch(error => {
-                    console.warn('[ChatStore] Failed to mark messages as delivered:', error);
+                  messageStatusService.markMessagesAsDelivered(messageIds, user.id).catch((error) => {
+                    console.warn("[ChatStore] Failed to mark messages as delivered:", error);
                   });
 
                   // If room is currently active/visible, mark as read
                   const currentRoom = get().currentChatRoom;
                   if (currentRoom && currentRoom.id === roomId) {
-                    messageStatusService.markMessagesAsRead(messageIds, user.id).catch(error => {
-                      console.warn('[ChatStore] Failed to mark messages as read:', error);
+                    messageStatusService.markMessagesAsRead(messageIds, user.id).catch((error) => {
+                      console.warn("[ChatStore] Failed to mark messages as read:", error);
                     });
                   }
                 }
@@ -685,7 +694,7 @@ const useChatStore = create<ChatStore>()(
                 // Check capability status and show warning if needed
                 const capabilities = messageStatusService.getCapabilityStatus();
                 if (capabilities.warningShown && !capabilities.supportsDelivered) {
-                  console.log('[ChatStore] Message delivery tracking is limited due to database schema');
+                  console.log("[ChatStore] Message delivery tracking is limited due to database schema");
                   // Optionally set a non-blocking warning in state
                   // set({ warning: 'Message delivery tracking is limited' });
                 }
@@ -706,7 +715,8 @@ const useChatStore = create<ChatStore>()(
               startTransition(() => {
                 set(() => ({
                   typingUsers: typingUsers.filter((user) => {
-                    const timestamp = user.timestamp instanceof Date ? user.timestamp.getTime() : new Date(user.timestamp).getTime();
+                    const timestamp =
+                      user.timestamp instanceof Date ? user.timestamp.getTime() : new Date(user.timestamp).getTime();
                     return Date.now() - timestamp < 5000;
                   }),
                 }));
@@ -728,7 +738,7 @@ const useChatStore = create<ChatStore>()(
             startTransition(() => {
               set((state) => {
                 const messages = state.messages[roomId] || [];
-                const updatedMessages = messages.map(msg => {
+                const updatedMessages = messages.map((msg) => {
                   if (msg.id === status.messageId) {
                     return {
                       ...msg,
@@ -767,19 +777,17 @@ const useChatStore = create<ChatStore>()(
           console.warn("💥 Failed to join chat room:", error);
 
           // Differentiate between authentication and other errors
-          const isAuthError = error instanceof Error && (
-            error.message.includes("signed in") ||
-            error.message.includes("Authentication") ||
-            error.message.includes("AUTHENTICATION_REQUIRED")
-          );
+          const isAuthError =
+            error instanceof Error &&
+            (error.message.includes("signed in") ||
+              error.message.includes("Authentication") ||
+              error.message.includes("AUTHENTICATION_REQUIRED"));
 
           const appError = error instanceof AppError ? error : parseSupabaseError(error);
 
           set({
-            connectionStatus: isAuthError ? "error" as ConnectionStatus : get().connectionStatus,
-            error: isAuthError
-              ? "Authentication required. Please sign in to join chat rooms."
-              : appError.userMessage,
+            connectionStatus: isAuthError ? ("error" as ConnectionStatus) : get().connectionStatus,
+            error: isAuthError ? "Authentication required. Please sign in to join chat rooms." : appError.userMessage,
             isLoading: false, // Reset loading state on error
           });
           throw appError;
@@ -971,14 +979,7 @@ const useChatStore = create<ChatStore>()(
           };
 
           get().addMessage(message as ChatMessage);
-          await consolidatedRealtimeService.sendMessage(
-            roomId,
-            "",
-            user.id,
-            senderName,
-            "voice",
-            undefined,
-          );
+          await consolidatedRealtimeService.sendMessage(roomId, "", user.id, senderName, "voice", undefined);
         } catch (error) {
           console.warn("💥 Failed to send voice message:", error);
           const appError = error instanceof AppError ? error : parseSupabaseError(error);
@@ -994,15 +995,11 @@ const useChatStore = create<ChatStore>()(
 
           // Process media (compress image or generate video thumbnail)
           const { mediaProcessingService } = await import("../services/mediaProcessingService");
-          const processingResult = await mediaProcessingService.processMediaForChat(
-            mediaUri,
-            mediaType,
-            {
-              onProgress: (progress) => {
-                console.log(`Processing ${mediaType}: ${progress}%`);
-              },
-            }
-          );
+          const processingResult = await mediaProcessingService.processMediaForChat(mediaUri, mediaType, {
+            onProgress: (progress) => {
+              console.log(`Processing ${mediaType}: ${progress}%`);
+            },
+          });
 
           // Create optimistic message with thumbnail for immediate UI feedback
           const optimisticMessage: Partial<ChatMessage> = {
@@ -1030,11 +1027,7 @@ const useChatStore = create<ChatStore>()(
           get().addMessage(optimisticMessage as ChatMessage);
 
           // Upload processed media to storage
-          const uploadResult = await storageService.uploadChatMedia(
-            processingResult.processedUri,
-            user.id,
-            roomId
-          );
+          const uploadResult = await storageService.uploadChatMedia(processingResult.processedUri, user.id, roomId);
 
           if (!uploadResult.success || !uploadResult.url) {
             throw new Error("Failed to upload media");
@@ -1046,7 +1039,7 @@ const useChatStore = create<ChatStore>()(
             const thumbnailUpload = await storageService.uploadChatMedia(
               processingResult.thumbnailUri,
               user.id,
-              roomId
+              roomId,
             );
             thumbnailUrl = thumbnailUpload.url;
           }
@@ -1073,14 +1066,7 @@ const useChatStore = create<ChatStore>()(
           }
 
           // Send message through realtime service
-          await consolidatedRealtimeService.sendMessage(
-            roomId,
-            "",
-            user.id,
-            senderName,
-            mediaType,
-            undefined,
-          );
+          await consolidatedRealtimeService.sendMessage(roomId, "", user.id, senderName, mediaType, undefined);
 
           // Clean up temp files
           await mediaProcessingService.cleanupTempFiles();
@@ -1255,7 +1241,7 @@ const useChatStore = create<ChatStore>()(
           const { user } = await requireAuthentication("edit messages");
 
           // Find the original message for optimistic update
-          const originalMessage = prevMessages.find(m => m.id === messageId);
+          const originalMessage = prevMessages.find((m) => m.id === messageId);
           if (!originalMessage) {
             throw new Error("Message not found");
           }
@@ -1264,21 +1250,15 @@ const useChatStore = create<ChatStore>()(
           set((state) => ({
             messages: {
               ...state.messages,
-              [roomId]: (state.messages[roomId] || []).map(m =>
-                m.id === messageId
-                  ? { ...m, content: newContent, isEdited: true, editedAt: new Date() }
-                  : m
+              [roomId]: (state.messages[roomId] || []).map((m) =>
+                m.id === messageId ? { ...m, content: newContent, isEdited: true, editedAt: new Date() } : m,
               ),
             },
           }));
           didOptimisticallyUpdate = true;
 
           // Use the message edit service for validation and database update
-          const updatedMessage = await messageEditService.editMessage(
-            messageId,
-            newContent,
-            user.id
-          );
+          const updatedMessage = await messageEditService.editMessage(messageId, newContent, user.id);
 
           // Broadcast the edit event
           await messageEditService.broadcastEdit(messageId, roomId, newContent);
@@ -1287,14 +1267,11 @@ const useChatStore = create<ChatStore>()(
           set((state) => ({
             messages: {
               ...state.messages,
-              [roomId]: (state.messages[roomId] || []).map(m =>
-                m.id === messageId
-                  ? { ...m, ...updatedMessage, isEdited: true, editedAt: updatedMessage.editedAt }
-                  : m
+              [roomId]: (state.messages[roomId] || []).map((m) =>
+                m.id === messageId ? { ...m, ...updatedMessage, isEdited: true, editedAt: updatedMessage.editedAt } : m,
               ),
             },
           }));
-
         } catch (error) {
           console.warn("💥 Failed to edit message:", error);
           const appError = error instanceof AppError ? error : parseSupabaseError(error);
@@ -1328,7 +1305,9 @@ const useChatStore = create<ChatStore>()(
             chatRoomId: targetRoomId,
             senderId: user.id,
             senderName,
-            content: comment ? `${comment}\n\n--- Forwarded message ---\n${sourceMessage.content}` : `--- Forwarded message ---\n${sourceMessage.content}`,
+            content: comment
+              ? `${comment}\n\n--- Forwarded message ---\n${sourceMessage.content}`
+              : `--- Forwarded message ---\n${sourceMessage.content}`,
             messageType: sourceMessage.messageType,
             timestamp: new Date(timestamp),
             isRead: false,
@@ -1354,23 +1333,18 @@ const useChatStore = create<ChatStore>()(
           }));
 
           // Use the forward service for validation and database operation
-          const newMessage = await messageForwardService.forwardMessage(
-            sourceMessage,
-            targetRoomId,
-            user.id,
-            comment
-          );
+          const newMessage = await messageForwardService.forwardMessage(sourceMessage, targetRoomId, user.id, comment);
 
           // Update with real message from service
           set((state) => ({
             messages: {
               ...state.messages,
-              [targetRoomId]: state.messages[targetRoomId]?.map(m =>
-                m.id === optimisticMessageId ? { ...newMessage, status: "sent", isOwn: true } : m
-              ) || [],
+              [targetRoomId]:
+                state.messages[targetRoomId]?.map((m) =>
+                  m.id === optimisticMessageId ? { ...newMessage, status: "sent", isOwn: true } : m,
+                ) || [],
             },
           }));
-
         } catch (error) {
           console.error("💥 Failed to forward message:", error);
           const appError = error instanceof AppError ? error : parseSupabaseError(error);
@@ -1379,9 +1353,9 @@ const useChatStore = create<ChatStore>()(
           set((state) => ({
             messages: {
               ...state.messages,
-              [targetRoomId]: state.messages[targetRoomId]?.filter(m => !m.id.startsWith('forwarded_')) || [],
+              [targetRoomId]: state.messages[targetRoomId]?.filter((m) => !m.id.startsWith("forwarded_")) || [],
             },
-            error: appError.userMessage
+            error: appError.userMessage,
           }));
 
           throw appError;
@@ -1462,17 +1436,20 @@ const useChatStore = create<ChatStore>()(
               async (room, cursor, limit) => {
                 const result = await consolidatedRealtimeService.loadOlderMessages(
                   room,
-                  cursor || (currentMessages[0]?.timestamp instanceof Date
-                    ? currentMessages[0].timestamp.toISOString()
-                    : currentMessages[0]?.timestamp ? new Date(currentMessages[0].timestamp).toISOString() : new Date().toISOString()),
-                  limit
+                  cursor ||
+                    (currentMessages[0]?.timestamp instanceof Date
+                      ? currentMessages[0].timestamp.toISOString()
+                      : currentMessages[0]?.timestamp
+                        ? new Date(currentMessages[0].timestamp).toISOString()
+                        : new Date().toISOString()),
+                  limit,
                 );
                 return {
                   messages: result.messages,
                   cursor: result.messages[0]?.timestamp.toISOString() || null,
-                  hasMore: result.messages.length === limit
+                  hasMore: result.messages.length === limit,
                 };
-              }
+              },
             );
 
             if (messages.length > 0) {
@@ -1504,9 +1481,10 @@ const useChatStore = create<ChatStore>()(
           }
 
           const oldestMessage = currentMessages[0]!;
-          const cursor = oldestMessage.timestamp instanceof Date
-            ? oldestMessage.timestamp.toISOString()
-            : new Date(oldestMessage.timestamp).toISOString();
+          const cursor =
+            oldestMessage.timestamp instanceof Date
+              ? oldestMessage.timestamp.toISOString()
+              : new Date(oldestMessage.timestamp).toISOString();
           const batchSize = 20;
           const result = await consolidatedRealtimeService.loadOlderMessages(roomId, cursor, batchSize);
           const olderMessages = result.messages;
@@ -1539,11 +1517,12 @@ const useChatStore = create<ChatStore>()(
           }
         } catch (error) {
           console.error("❌ Failed to load older messages:", error);
+          const currentMessages = get().messages[roomId] || [];
           console.error("Error details:", {
             message: error instanceof Error ? error.message : String(error),
             stack: error instanceof Error ? error.stack : undefined,
             roomId,
-            currentMessageCount: currentMessages.length
+            currentMessageCount: currentMessages.length,
           });
 
           const errorMessage = error instanceof Error ? error.message : "Failed to load older messages";
@@ -1603,14 +1582,16 @@ const useChatStore = create<ChatStore>()(
           // Load members directly from Supabase with user details
           const { data: membersData, error } = await supabase
             .from("chat_members_firebase")
-            .select(`
+            .select(
+              `
               *,
               users (
                 id,
                 username,
                 avatar_url
               )
-            `)
+            `,
+            )
             .eq("chat_room_id", roomId)
             .eq("is_active", true);
 
@@ -1794,13 +1775,13 @@ const useChatStore = create<ChatStore>()(
 
       // Reconnect all active rooms after network recovery or foreground
       reconnectAllRooms: async () => {
-        console.log('[ChatStore] Reconnecting all active rooms');
+        console.log("[ChatStore] Reconnecting all active rooms");
 
         try {
           // Use reliable network check first
           const networkStatus = await reliableNetworkCheck();
           if (!networkStatus.isConnected || !networkStatus.isStable) {
-            console.warn('[ChatStore] Network not stable, deferring reconnection');
+            console.warn("[ChatStore] Network not stable, deferring reconnection");
             return;
           }
 
@@ -1818,10 +1799,10 @@ const useChatStore = create<ChatStore>()(
             await get().joinChatRoom(currentChatRoom.id);
           }
 
-          console.log('[ChatStore] Successfully reconnected all rooms');
+          console.log("[ChatStore] Successfully reconnected all rooms");
         } catch (error) {
-          console.error('[ChatStore] Failed to reconnect rooms:', error);
-          set({ error: 'Failed to reconnect to chat rooms' });
+          console.error("[ChatStore] Failed to reconnect rooms:", error);
+          set({ error: "Failed to reconnect to chat rooms" });
         }
       },
 
@@ -1829,7 +1810,7 @@ const useChatStore = create<ChatStore>()(
       cleanup: async () => {
         try {
           // Unregister from AppState manager
-          appStateManager.unregisterListener('chatStore');
+          appStateManager.unregisterListener("chatStore");
 
           // Cleanup AppState callbacks
           const { subscriptions } = get();
@@ -1843,9 +1824,9 @@ const useChatStore = create<ChatStore>()(
           // Cleanup all real-time subscriptions
           const unsubscribePromises = Object.entries(subscriptions).map(async ([roomId, subscription]) => {
             try {
-              if (typeof subscription === 'function') {
+              if (typeof subscription === "function") {
                 subscription();
-              } else if (subscription && typeof subscription.unsubscribe === 'function') {
+              } else if (subscription && typeof subscription.unsubscribe === "function") {
                 await subscription.unsubscribe();
               }
               console.log(`Unsubscribed from ${roomId}`);

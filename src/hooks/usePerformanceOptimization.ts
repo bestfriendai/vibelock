@@ -1,8 +1,8 @@
-import { useEffect, useRef, useCallback, useState } from 'react';
-import { performanceMonitor } from '../utils/performance';
-import { memoryManager } from '../services/memoryManager';
-import { Platform } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useEffect, useRef, useCallback, useState } from "react";
+import { performanceMonitor } from "../utils/performance";
+import { memoryManager } from "../services/memoryManager";
+import { Platform } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 interface PerformanceOptions {
   componentName: string;
@@ -26,7 +26,7 @@ interface PerformanceMetrics {
 
 interface DeviceCapabilities {
   memory: number;
-  cpu: 'low' | 'medium' | 'high';
+  cpu: "low" | "medium" | "high";
   isLowEndDevice: boolean;
 }
 
@@ -36,7 +36,7 @@ interface OptimizationSettings {
   updateCellsBatchingPeriod: number;
   enableAnimations: boolean;
   enableShadows: boolean;
-  imageQuality: 'low' | 'medium' | 'high';
+  imageQuality: "low" | "medium" | "high";
 }
 
 export function usePerformanceOptimization(options: PerformanceOptions) {
@@ -49,7 +49,7 @@ export function usePerformanceOptimization(options: PerformanceOptions) {
     averageRenderTime: 0,
     memoryUsage: 0,
     fps: 60,
-    lastRenderTime: 0
+    lastRenderTime: 0,
   });
   const [deviceCapabilities, setDeviceCapabilities] = useState<DeviceCapabilities | null>(null);
   const [optimizationSettings, setOptimizationSettings] = useState<OptimizationSettings>({
@@ -58,7 +58,7 @@ export function usePerformanceOptimization(options: PerformanceOptions) {
     updateCellsBatchingPeriod: 50,
     enableAnimations: true,
     enableShadows: true,
-    imageQuality: 'high'
+    imageQuality: "high",
   });
 
   // Track component mount/unmount
@@ -74,7 +74,7 @@ export function usePerformanceOptimization(options: PerformanceOptions) {
     const unsubscribe = performanceMonitor.onAlert((alert) => {
       console.warn(`Performance alert in ${options.componentName}:`, alert);
 
-      if (options.enableAutoOptimization && alert.severity === 'critical') {
+      if (options.enableAutoOptimization && alert.severity === "critical") {
         applyAutoOptimization(alert.type);
       }
     });
@@ -87,7 +87,7 @@ export function usePerformanceOptimization(options: PerformanceOptions) {
       }
 
       // Cleanup all subscriptions
-      cleanupFunctions.current.forEach(cleanup => cleanup());
+      cleanupFunctions.current.forEach((cleanup) => cleanup());
       cleanupFunctions.current = [];
 
       // Save performance metrics for future analysis
@@ -115,11 +115,11 @@ export function usePerformanceOptimization(options: PerformanceOptions) {
       // Update metrics
       const avgRenderTime = renderTimes.current.reduce((a, b) => a + b, 0) / renderTimes.current.length;
 
-      setMetrics(prev => ({
+      setMetrics((prev) => ({
         ...prev,
         renderCount: renderCount.current,
         averageRenderTime: avgRenderTime,
-        lastRenderTime: renderTime
+        lastRenderTime: renderTime,
       }));
 
       // Check thresholds
@@ -128,7 +128,7 @@ export function usePerformanceOptimization(options: PerformanceOptions) {
         performanceMonitor.recordMetric(`${options.componentName}_slowRender`, {
           renderTime,
           threshold,
-          renderCount: renderCount.current
+          renderCount: renderCount.current,
         });
       }
     });
@@ -141,9 +141,9 @@ export function usePerformanceOptimization(options: PerformanceOptions) {
     const usage = await memoryManager.getMemoryUsage();
     const percentage = usage.percentage;
 
-    setMetrics(prev => ({
+    setMetrics((prev) => ({
       ...prev,
-      memoryUsage: percentage
+      memoryUsage: percentage,
     }));
 
     // Check memory threshold
@@ -159,58 +159,61 @@ export function usePerformanceOptimization(options: PerformanceOptions) {
   }, [options.componentName, options.enableMemoryTracking, options.thresholds]);
 
   // Optimize settings based on device capabilities
-  const optimizeForDevice = useCallback((capabilities?: DeviceCapabilities) => {
-    const caps = capabilities || deviceCapabilities;
-    if (!caps) return;
+  const optimizeForDevice = useCallback(
+    (capabilities?: DeviceCapabilities) => {
+      const caps = capabilities || deviceCapabilities;
+      if (!caps) return;
 
-    let settings: OptimizationSettings;
+      let settings: OptimizationSettings;
 
-    if (caps.isLowEndDevice) {
-      // Low-end device optimizations
-      settings = {
-        windowSize: 10,
-        maxToRenderPerBatch: 5,
-        updateCellsBatchingPeriod: 100,
-        enableAnimations: false,
-        enableShadows: false,
-        imageQuality: 'low'
-      };
-    } else if (caps.cpu === 'high' && caps.memory > 4096) {
-      // High-end device settings
-      settings = {
-        windowSize: 30,
-        maxToRenderPerBatch: 20,
-        updateCellsBatchingPeriod: 30,
-        enableAnimations: true,
-        enableShadows: true,
-        imageQuality: 'high'
-      };
-    } else {
-      // Medium device settings
-      settings = {
-        windowSize: 21,
-        maxToRenderPerBatch: 10,
-        updateCellsBatchingPeriod: 50,
-        enableAnimations: true,
-        enableShadows: false,
-        imageQuality: 'medium'
-      };
-    }
+      if (caps.isLowEndDevice) {
+        // Low-end device optimizations
+        settings = {
+          windowSize: 10,
+          maxToRenderPerBatch: 5,
+          updateCellsBatchingPeriod: 100,
+          enableAnimations: false,
+          enableShadows: false,
+          imageQuality: "low",
+        };
+      } else if (caps.cpu === "high" && caps.memory > 4096) {
+        // High-end device settings
+        settings = {
+          windowSize: 30,
+          maxToRenderPerBatch: 20,
+          updateCellsBatchingPeriod: 30,
+          enableAnimations: true,
+          enableShadows: true,
+          imageQuality: "high",
+        };
+      } else {
+        // Medium device settings
+        settings = {
+          windowSize: 21,
+          maxToRenderPerBatch: 10,
+          updateCellsBatchingPeriod: 50,
+          enableAnimations: true,
+          enableShadows: false,
+          imageQuality: "medium",
+        };
+      }
 
-    setOptimizationSettings(settings);
+      setOptimizationSettings(settings);
 
-    performanceMonitor.recordMetric(`${options.componentName}_deviceOptimization`, {
-      device: caps,
-      settings
-    });
-  }, [deviceCapabilities, options.componentName]);
+      performanceMonitor.recordMetric(`${options.componentName}_deviceOptimization`, {
+        device: caps,
+        settings,
+      });
+    },
+    [deviceCapabilities, options.componentName],
+  );
 
   // Get current performance metrics
   const getMetrics = useCallback(() => {
     return {
       ...metrics,
       deviceCapabilities,
-      optimizationSettings
+      optimizationSettings,
     };
   }, [metrics, deviceCapabilities, optimizationSettings]);
 
@@ -218,7 +221,7 @@ export function usePerformanceOptimization(options: PerformanceOptions) {
   const detectDeviceCapabilities = async () => {
     try {
       // Check saved capabilities first
-      const saved = await AsyncStorage.getItem('deviceCapabilities');
+      const saved = await AsyncStorage.getItem("deviceCapabilities");
       if (saved) {
         const caps = JSON.parse(saved);
         setDeviceCapabilities(caps);
@@ -231,23 +234,23 @@ export function usePerformanceOptimization(options: PerformanceOptions) {
 
       const capabilities: DeviceCapabilities = {
         memory: benchmark.estimatedMemory,
-        cpu: benchmark.cpuScore > 80 ? 'high' : benchmark.cpuScore > 40 ? 'medium' : 'low',
-        isLowEndDevice: benchmark.cpuScore < 40 || benchmark.estimatedMemory < 2048
+        cpu: benchmark.cpuScore > 80 ? "high" : benchmark.cpuScore > 40 ? "medium" : "low",
+        isLowEndDevice: benchmark.cpuScore < 40 || benchmark.estimatedMemory < 2048,
       };
 
       setDeviceCapabilities(capabilities);
       optimizeForDevice(capabilities);
 
       // Save capabilities
-      await AsyncStorage.setItem('deviceCapabilities', JSON.stringify(capabilities));
+      await AsyncStorage.setItem("deviceCapabilities", JSON.stringify(capabilities));
     } catch (error) {
-      console.error('Failed to detect device capabilities:', error);
+      console.error("Failed to detect device capabilities:", error);
 
       // Default to medium settings
       setDeviceCapabilities({
         memory: 4096,
-        cpu: 'medium',
-        isLowEndDevice: false
+        cpu: "medium",
+        isLowEndDevice: false,
       });
     }
   };
@@ -267,10 +270,10 @@ export function usePerformanceOptimization(options: PerformanceOptions) {
     const duration = endTime - startTime;
 
     // Lower duration = faster CPU
-    const cpuScore = Math.max(0, Math.min(100, 100 - (duration / 10)));
+    const cpuScore = Math.max(0, Math.min(100, 100 - duration / 10));
 
     // Estimate memory (would use actual device APIs in production)
-    const estimatedMemory = Platform.OS === 'ios' ? 4096 : 3072;
+    const estimatedMemory = Platform.OS === "ios" ? 4096 : 3072;
 
     return { cpuScore, estimatedMemory };
   };
@@ -280,33 +283,33 @@ export function usePerformanceOptimization(options: PerformanceOptions) {
     const current = optimizationSettings;
 
     switch (issueType) {
-      case 'render':
-      case 'fps':
+      case "render":
+      case "fps":
         // Reduce rendering complexity
         setOptimizationSettings({
           ...current,
           windowSize: Math.max(5, current.windowSize - 5),
           maxToRenderPerBatch: Math.max(3, current.maxToRenderPerBatch - 2),
-          enableAnimations: false
+          enableAnimations: false,
         });
         break;
 
-      case 'memory':
+      case "memory":
         // Reduce memory usage
         setOptimizationSettings({
           ...current,
           windowSize: Math.max(5, current.windowSize - 10),
-          imageQuality: 'low',
-          enableShadows: false
+          imageQuality: "low",
+          enableShadows: false,
         });
         break;
 
-      case 'scroll':
+      case "scroll":
         // Improve scroll performance
         setOptimizationSettings({
           ...current,
           updateCellsBatchingPeriod: Math.min(200, current.updateCellsBatchingPeriod + 50),
-          maxToRenderPerBatch: Math.max(3, current.maxToRenderPerBatch - 3)
+          maxToRenderPerBatch: Math.max(3, current.maxToRenderPerBatch - 3),
         });
         break;
     }
@@ -320,11 +323,11 @@ export function usePerformanceOptimization(options: PerformanceOptions) {
       const metricsData = {
         componentName: options.componentName,
         metrics,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       };
 
       // Get existing metrics
-      const existing = await AsyncStorage.getItem('performanceMetrics');
+      const existing = await AsyncStorage.getItem("performanceMetrics");
       const allMetrics = existing ? JSON.parse(existing) : [];
 
       // Add new metrics
@@ -335,9 +338,9 @@ export function usePerformanceOptimization(options: PerformanceOptions) {
         allMetrics.splice(0, allMetrics.length - 100);
       }
 
-      await AsyncStorage.setItem('performanceMetrics', JSON.stringify(allMetrics));
+      await AsyncStorage.setItem("performanceMetrics", JSON.stringify(allMetrics));
     } catch (error) {
-      console.error('Failed to save performance metrics:', error);
+      console.error("Failed to save performance metrics:", error);
     }
   };
 
@@ -354,11 +357,11 @@ export function usePerformanceOptimization(options: PerformanceOptions) {
       frameCount++;
 
       if (currentTime >= lastTime + 1000) {
-        const fps = Math.round(frameCount * 1000 / (currentTime - lastTime));
+        const fps = Math.round((frameCount * 1000) / (currentTime - lastTime));
 
-        setMetrics(prev => ({
+        setMetrics((prev) => ({
           ...prev,
-          fps
+          fps,
         }));
 
         // Check FPS threshold
@@ -366,7 +369,7 @@ export function usePerformanceOptimization(options: PerformanceOptions) {
         if (fps < threshold) {
           performanceMonitor.recordMetric(`${options.componentName}_lowFPS`, {
             fps,
-            threshold
+            threshold,
           });
         }
 
@@ -400,6 +403,6 @@ export function usePerformanceOptimization(options: PerformanceOptions) {
     getMetrics,
     metrics,
     deviceCapabilities,
-    optimizationSettings
+    optimizationSettings,
   };
 }

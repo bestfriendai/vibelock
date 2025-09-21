@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -10,16 +10,16 @@ import {
   Vibration,
   Platform,
   KeyboardAvoidingView,
-  SafeAreaView
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
-import { BlurView } from 'expo-blur';
-import { useTheme } from '../providers/ThemeProvider';
+  SafeAreaView,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
+import { BlurView } from "expo-blur";
+import { useTheme } from "../providers/ThemeProvider";
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
-type FeedbackType = 'success' | 'error' | 'warning' | 'info' | 'loading';
+type FeedbackType = "success" | "error" | "warning" | "info" | "loading";
 
 interface FeedbackItem {
   id: string;
@@ -37,7 +37,7 @@ interface FeedbackItem {
 interface FeedbackAction {
   label: string;
   onPress: () => void;
-  style?: 'primary' | 'secondary' | 'destructive';
+  style?: "primary" | "secondary" | "destructive";
 }
 
 interface UserFeedbackContextType {
@@ -56,7 +56,7 @@ const UserFeedbackContext = createContext<UserFeedbackContextType | undefined>(u
 export const useUserFeedback = () => {
   const context = useContext(UserFeedbackContext);
   if (!context) {
-    throw new Error('useUserFeedback must be used within UserFeedbackProvider');
+    throw new Error("useUserFeedback must be used within UserFeedbackProvider");
   }
   return context;
 };
@@ -65,7 +65,7 @@ export const UserFeedbackProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const { colors } = useTheme();
   const [feedbackQueue, setFeedbackQueue] = useState<FeedbackItem[]>([]);
   const [loadingState, setLoadingState] = useState<{ visible: boolean; message?: string }>({
-    visible: false
+    visible: false,
   });
   const [progressState, setProgressState] = useState<{
     visible: boolean;
@@ -79,22 +79,22 @@ export const UserFeedbackProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   // Provide haptic feedback based on type
   const provideHapticFeedback = useCallback((type: FeedbackType) => {
-    if (Platform.OS === 'ios') {
+    if (Platform.OS === "ios") {
       switch (type) {
-        case 'success':
+        case "success":
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
           break;
-        case 'error':
+        case "error":
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
           break;
-        case 'warning':
+        case "warning":
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
           break;
         default:
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       }
-    } else if (Platform.OS === 'android') {
-      Vibration.vibrate(type === 'error' ? 100 : 50);
+    } else if (Platform.OS === "android") {
+      Vibration.vibrate(type === "error" ? 100 : 50);
     }
   }, []);
 
@@ -104,14 +104,14 @@ export const UserFeedbackProvider: React.FC<{ children: React.ReactNode }> = ({ 
   }, []);
 
   const showToast = useCallback(
-    (message: string, type: FeedbackType = 'info', duration: number = 3000) => {
+    (message: string, type: FeedbackType = "info", duration: number = 3000) => {
       const id = `toast-${Date.now()}-${Math.random()}`;
       const newItem: FeedbackItem = {
         id,
         message,
         type,
         duration,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
 
       // Initialize animation value
@@ -119,7 +119,7 @@ export const UserFeedbackProvider: React.FC<{ children: React.ReactNode }> = ({ 
       animatedValues.current.set(id, animValue);
 
       // Add to queue
-      setFeedbackQueue(prev => {
+      setFeedbackQueue((prev) => {
         // Limit queue size to prevent memory issues
         const updated = [...prev, newItem].slice(-5);
         return updated;
@@ -130,7 +130,7 @@ export const UserFeedbackProvider: React.FC<{ children: React.ReactNode }> = ({ 
         toValue: 1,
         useNativeDriver: true,
         tension: 40,
-        friction: 7
+        friction: 7,
       }).start();
 
       // Provide haptic feedback
@@ -147,13 +147,16 @@ export const UserFeedbackProvider: React.FC<{ children: React.ReactNode }> = ({ 
         timeouts.current.set(id, timeout);
       }
     },
-    [provideHapticFeedback, announceForAccessibility]
+    [provideHapticFeedback, announceForAccessibility],
   );
 
-  const showLoading = useCallback((message?: string) => {
-    setLoadingState({ visible: true, message });
-    announceForAccessibility(message || 'Loading...');
-  }, [announceForAccessibility]);
+  const showLoading = useCallback(
+    (message?: string) => {
+      setLoadingState({ visible: true, message });
+      announceForAccessibility(message || "Loading...");
+    },
+    [announceForAccessibility],
+  );
 
   const hideLoading = useCallback(() => {
     setLoadingState({ visible: false });
@@ -161,46 +164,46 @@ export const UserFeedbackProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const showError = useCallback(
     (error: string | Error, actions?: FeedbackAction[]) => {
-      const errorMessage = typeof error === 'string' ? error : error.message;
+      const errorMessage = typeof error === "string" ? error : error.message;
       const id = `error-${Date.now()}`;
       const newItem: FeedbackItem = {
         id,
         message: errorMessage,
-        type: 'error',
+        type: "error",
         actions,
-        timestamp: new Date()
+        timestamp: new Date(),
       };
 
       const animValue = new Animated.Value(0);
       animatedValues.current.set(id, animValue);
 
-      setFeedbackQueue(prev => [...prev, newItem].slice(-5));
+      setFeedbackQueue((prev) => [...prev, newItem].slice(-5));
 
       Animated.spring(animValue, {
         toValue: 1,
-        useNativeDriver: true
+        useNativeDriver: true,
       }).start();
 
-      provideHapticFeedback('error');
+      provideHapticFeedback("error");
       announceForAccessibility(`Error: ${errorMessage}`);
     },
-    [provideHapticFeedback, announceForAccessibility]
+    [provideHapticFeedback, announceForAccessibility],
   );
 
   const showSuccess = useCallback(
     (message: string, duration: number = 2000) => {
-      showToast(message, 'success', duration);
+      showToast(message, "success", duration);
     },
-    [showToast]
+    [showToast],
   );
 
   const showProgress = useCallback(
     (current: number, total: number, message?: string) => {
       setProgressState({ visible: true, current, total, message });
       const percentage = Math.round((current / total) * 100);
-      announceForAccessibility(`Progress: ${percentage}%${message ? ` - ${message}` : ''}`);
+      announceForAccessibility(`Progress: ${percentage}%${message ? ` - ${message}` : ""}`);
     },
-    [announceForAccessibility]
+    [announceForAccessibility],
   );
 
   const hideProgress = useCallback(() => {
@@ -214,10 +217,10 @@ export const UserFeedbackProvider: React.FC<{ children: React.ReactNode }> = ({ 
       Animated.timing(animValue, {
         toValue: 0,
         duration: 200,
-        useNativeDriver: true
+        useNativeDriver: true,
       }).start(() => {
         // Remove from queue
-        setFeedbackQueue(prev => prev.filter(item => item.id !== id));
+        setFeedbackQueue((prev) => prev.filter((item) => item.id !== id));
 
         // Clean up
         animatedValues.current.delete(id);
@@ -231,7 +234,7 @@ export const UserFeedbackProvider: React.FC<{ children: React.ReactNode }> = ({ 
   }, []);
 
   const clearAll = useCallback(() => {
-    feedbackQueue.forEach(item => removeItem(item.id));
+    feedbackQueue.forEach((item) => removeItem(item.id));
     hideLoading();
     hideProgress();
   }, [feedbackQueue, removeItem, hideLoading, hideProgress]);
@@ -239,38 +242,38 @@ export const UserFeedbackProvider: React.FC<{ children: React.ReactNode }> = ({ 
   // Clean up on unmount
   useEffect(() => {
     return () => {
-      timeouts.current.forEach(timeout => clearTimeout(timeout));
+      timeouts.current.forEach((timeout) => clearTimeout(timeout));
     };
   }, []);
 
   const getIconForType = (type: FeedbackType) => {
     switch (type) {
-      case 'success':
-        return 'checkmark-circle';
-      case 'error':
-        return 'close-circle';
-      case 'warning':
-        return 'warning';
-      case 'info':
-        return 'information-circle';
-      case 'loading':
-        return 'reload';
+      case "success":
+        return "checkmark-circle";
+      case "error":
+        return "close-circle";
+      case "warning":
+        return "warning";
+      case "info":
+        return "information-circle";
+      case "loading":
+        return "reload";
       default:
-        return 'information-circle';
+        return "information-circle";
     }
   };
 
   const getColorForType = (type: FeedbackType) => {
     switch (type) {
-      case 'success':
-        return '#4CAF50';
-      case 'error':
-        return '#F44336';
-      case 'warning':
-        return '#FFC107';
-      case 'info':
-        return '#2196F3';
-      case 'loading':
+      case "success":
+        return "#4CAF50";
+      case "error":
+        return "#F44336";
+      case "warning":
+        return "#FFC107";
+      case "info":
+        return "#2196F3";
+      case "loading":
         return colors.text.secondary;
       default:
         return colors.text.primary;
@@ -287,7 +290,7 @@ export const UserFeedbackProvider: React.FC<{ children: React.ReactNode }> = ({ 
         showSuccess,
         showProgress,
         hideProgress,
-        clearAll
+        clearAll,
       }}
     >
       {children}
@@ -307,34 +310,27 @@ export const UserFeedbackProvider: React.FC<{ children: React.ReactNode }> = ({ 
                     {
                       translateY: animValue.interpolate({
                         inputRange: [0, 1],
-                        outputRange: [-100, 0]
-                      })
+                        outputRange: [-100, 0],
+                      }),
                     },
                     {
                       scale: animValue.interpolate({
                         inputRange: [0, 1],
-                        outputRange: [0.8, 1]
-                      })
-                    }
+                        outputRange: [0.8, 1],
+                      }),
+                    },
                   ],
                   opacity: animValue,
-                  bottom: 100 + index * 70
-                }
+                  bottom: 100 + index * 70,
+                },
               ]}
               accessibilityRole="alert"
               accessibilityLiveRegion="assertive"
             >
               <BlurView intensity={90} style={styles.toastBlur}>
-                <View style={[styles.toastContent, { backgroundColor: getColorForType(item.type) + '20' }]}>
-                  <Ionicons
-                    name={getIconForType(item.type) as any}
-                    size={24}
-                    color={getColorForType(item.type)}
-                  />
-                  <Text
-                    style={[styles.toastText, { color: colors.text.primary }]}
-                    numberOfLines={2}
-                  >
+                <View style={[styles.toastContent, { backgroundColor: getColorForType(item.type) + "20" }]}>
+                  <Ionicons name={getIconForType(item.type) as any} size={24} color={getColorForType(item.type)} />
+                  <Text style={[styles.toastText, { color: colors.text.primary }]} numberOfLines={2}>
                     {item.message}
                   </Text>
                   {item.actions && item.actions.length > 0 && (
@@ -346,10 +342,7 @@ export const UserFeedbackProvider: React.FC<{ children: React.ReactNode }> = ({ 
                             action.onPress();
                             removeItem(item.id);
                           }}
-                          style={[
-                            styles.toastAction,
-                            action.style === 'destructive' && styles.toastActionDestructive
-                          ]}
+                          style={[styles.toastAction, action.style === "destructive" && styles.toastActionDestructive]}
                         >
                           <Text style={styles.toastActionText}>{action.label}</Text>
                         </Pressable>
@@ -377,17 +370,17 @@ export const UserFeedbackProvider: React.FC<{ children: React.ReactNode }> = ({ 
           <BlurView intensity={80} style={styles.loadingContent}>
             <Animated.View
               style={{
-                transform: [{
-                  rotate: '45deg'
-                }]
+                transform: [
+                  {
+                    rotate: "45deg",
+                  },
+                ],
               }}
             >
               <Ionicons name="reload" size={32} color={colors.brand.red} />
             </Animated.View>
             {loadingState.message && (
-              <Text style={[styles.loadingText, { color: colors.text.primary }]}>
-                {loadingState.message}
-              </Text>
+              <Text style={[styles.loadingText, { color: colors.text.primary }]}>{loadingState.message}</Text>
             )}
           </BlurView>
         </View>
@@ -403,8 +396,8 @@ export const UserFeedbackProvider: React.FC<{ children: React.ReactNode }> = ({ 
                   styles.progressFill,
                   {
                     width: `${(progressState.current / progressState.total) * 100}%`,
-                    backgroundColor: colors.brand.red
-                  }
+                    backgroundColor: colors.brand.red,
+                  },
                 ]}
               />
             </View>
@@ -412,9 +405,7 @@ export const UserFeedbackProvider: React.FC<{ children: React.ReactNode }> = ({ 
               {Math.round((progressState.current / progressState.total) * 100)}%
             </Text>
             {progressState.message && (
-              <Text style={[styles.progressMessage, { color: colors.text.secondary }]}>
-                {progressState.message}
-              </Text>
+              <Text style={[styles.progressMessage, { color: colors.text.secondary }]}>{progressState.message}</Text>
             )}
           </BlurView>
         </View>
@@ -425,121 +416,121 @@ export const UserFeedbackProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
 const styles = StyleSheet.create({
   toastContainer: {
-    position: 'absolute',
+    position: "absolute",
     left: 0,
     right: 0,
     top: 0,
     bottom: 0,
     zIndex: 9999,
-    elevation: 9999
+    elevation: 9999,
   },
   toastItem: {
-    position: 'absolute',
+    position: "absolute",
     left: 20,
     right: 20,
     borderRadius: 12,
-    overflow: 'hidden',
-    shadowColor: '#000',
+    overflow: "hidden",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
-    elevation: 8
+    elevation: 8,
   },
   toastBlur: {
-    borderRadius: 12
+    borderRadius: 12,
   },
   toastContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     padding: 16,
     borderRadius: 12,
-    minHeight: 60
+    minHeight: 60,
   },
   toastText: {
     flex: 1,
     marginLeft: 12,
     fontSize: 14,
-    fontWeight: '500'
+    fontWeight: "500",
   },
   toastActions: {
-    flexDirection: 'row',
-    marginLeft: 12
+    flexDirection: "row",
+    marginLeft: 12,
   },
   toastAction: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 6,
-    marginLeft: 8
+    marginLeft: 8,
   },
   toastActionDestructive: {
-    backgroundColor: 'rgba(244, 67, 54, 0.2)'
+    backgroundColor: "rgba(244, 67, 54, 0.2)",
   },
   toastActionText: {
     fontSize: 12,
-    fontWeight: '600'
+    fontWeight: "600",
   },
   toastClose: {
     marginLeft: 8,
-    padding: 4
+    padding: 4,
   },
   loadingOverlay: {
-    position: 'absolute',
+    position: "absolute",
     left: 0,
     right: 0,
     top: 0,
     bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     zIndex: 10000,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)'
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   loadingContent: {
     padding: 24,
     borderRadius: 16,
-    alignItems: 'center'
+    alignItems: "center",
   },
   loadingText: {
     marginTop: 12,
     fontSize: 14,
-    fontWeight: '500'
+    fontWeight: "500",
   },
   progressOverlay: {
-    position: 'absolute',
+    position: "absolute",
     left: 0,
     right: 0,
     top: 0,
     bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     zIndex: 10000,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)'
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   progressContent: {
     padding: 24,
     borderRadius: 16,
-    width: SCREEN_WIDTH * 0.8
+    width: SCREEN_WIDTH * 0.8,
   },
   progressBar: {
     height: 6,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
     borderRadius: 3,
-    overflow: 'hidden'
+    overflow: "hidden",
   },
   progressFill: {
-    height: '100%',
-    borderRadius: 3
+    height: "100%",
+    borderRadius: 3,
   },
   progressText: {
     marginTop: 12,
     fontSize: 18,
-    fontWeight: '600',
-    textAlign: 'center'
+    fontWeight: "600",
+    textAlign: "center",
   },
   progressMessage: {
     marginTop: 8,
     fontSize: 14,
-    textAlign: 'center'
-  }
+    textAlign: "center",
+  },
 });
 
 export default UserFeedbackProvider;

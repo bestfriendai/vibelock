@@ -53,6 +53,7 @@ class EnhancedRealtimeChatService {
 
   // Enhanced connection management with v2.57.4 compatibility
   private connectionStatus: "connected" | "connecting" | "disconnected" = "disconnected";
+  private isInitialized: boolean = false;
   private subscriptionStates: Map<string, SubscriptionState> = new Map();
   private retryAttempts: Map<string, number> = new Map();
   private maxRetries = 5;
@@ -93,19 +94,20 @@ class EnhancedRealtimeChatService {
     // Detect actual transport method used by Supabase
     const transportMethod = this.detectTransportMethod();
     console.log("🔍 React Native Environment Check:", {
-      platform: typeof navigator !== 'undefined' ? 'web' : 'react-native',
-      webWorkers: typeof Worker !== 'undefined',
-      websockets: typeof WebSocket !== 'undefined',
-      supabaseVersion: '2.57.4',
+      platform: typeof navigator !== "undefined" ? "web" : "react-native",
+      webWorkers: typeof Worker !== "undefined",
+      websockets: typeof WebSocket !== "undefined",
+      supabaseVersion: "2.57.4",
       realtimeTransport: transportMethod,
-      webWorkersWarning: typeof Worker !== 'undefined' ? '⚠️ Web Workers detected - may cause issues' : '✅ No Web Workers'
+      webWorkersWarning:
+        typeof Worker !== "undefined" ? "⚠️ Web Workers detected - may cause issues" : "✅ No Web Workers",
     });
 
     // Log warning if Web Workers are detected in React Native
-    if (typeof Worker !== 'undefined') {
-      console.warn('⚠️ Web Workers detected in React Native environment');
-      console.warn('⚠️ This may cause realtime connection issues');
-      console.warn('ℹ️ Forcing WebSocket transport in channel configurations');
+    if (typeof Worker !== "undefined") {
+      console.warn("⚠️ Web Workers detected in React Native environment");
+      console.warn("⚠️ This may cause realtime connection issues");
+      console.warn("ℹ️ Forcing WebSocket transport in channel configurations");
     }
 
     this.connectionStatus = "connecting";
@@ -113,7 +115,10 @@ class EnhancedRealtimeChatService {
     try {
       // Test Supabase connection health
       console.log("🔍 Testing Supabase database connection...");
-      const { data: healthCheck, error: healthError } = await supabase.from("chat_rooms_firebase").select("count").limit(1);
+      const { data: healthCheck, error: healthError } = await supabase
+        .from("chat_rooms_firebase")
+        .select("count")
+        .limit(1);
 
       if (healthError) {
         console.error("🚨 Supabase health check failed:", healthError);
@@ -127,15 +132,16 @@ class EnhancedRealtimeChatService {
 
       // Connection status will be managed per channel
       this.connectionStatus = "connected";
+      this.isInitialized = true;
       console.log("✅ Enhanced Realtime Chat Service initialized successfully");
       console.log("✅ Environment compatibility verified for React Native");
     } catch (error) {
       console.error("🚨 Failed to initialize real-time service:", error);
       console.error("🚨 Error details:", {
-        message: error?.message,
-        code: error?.code,
+        message: error instanceof Error ? error.message : String(error),
+        code: (error as any)?.code,
         type: typeof error,
-        stack: error?.stack?.split('\n').slice(0, 3)
+        stack: error instanceof Error ? error.stack?.split("\n").slice(0, 3) : undefined,
       });
       this.connectionStatus = "disconnected";
       throw new AppError("Failed to initialize chat service", ErrorType.NETWORK);
@@ -152,7 +158,7 @@ class EnhancedRealtimeChatService {
         connectionStatus: this.connectionStatus,
         isInitialized: this.isInitialized,
         existingChannels: this.channels.size,
-        realtimeConnected: supabase.realtime?.isConnected?.() ?? 'unknown'
+        realtimeConnected: supabase.realtime?.isConnected?.() ?? "unknown",
       });
 
       // Clean up existing channel if any
@@ -210,8 +216,8 @@ class EnhancedRealtimeChatService {
       };
 
       // Force WebSocket transport if available in channel options
-      if ((supabase as any).realtime?.transport === 'websocket') {
-        console.log('✅ Using WebSocket transport for channel');
+      if ((supabase as any).realtime?.transport === "websocket") {
+        console.log("✅ Using WebSocket transport for channel");
       }
 
       const channel = supabase
@@ -258,8 +264,8 @@ class EnhancedRealtimeChatService {
 
           // Check for Web Workers related errors
           if (error && this.isWebWorkersError(error)) {
-            console.error('🚨 Web Workers error detected:', error);
-            console.log('🔄 Attempting to recover with WebSocket-only connection...');
+            console.error("🚨 Web Workers error detected:", error);
+            console.log("🔄 Attempting to recover with WebSocket-only connection...");
             // Attempt recovery with fallback
             await this.handleWebWorkersFailure(roomId, userId, userName);
             return;
@@ -469,8 +475,12 @@ class EnhancedRealtimeChatService {
           (optimisticMsg.senderId === newMessage.senderId &&
             optimisticMsg.content === newMessage.content &&
             Math.abs(
-              (optimisticMsg.timestamp instanceof Date ? optimisticMsg.timestamp.getTime() : new Date(optimisticMsg.timestamp).getTime()) -
-              (newMessage.timestamp instanceof Date ? newMessage.timestamp.getTime() : new Date(newMessage.timestamp).getTime())
+              (optimisticMsg.timestamp instanceof Date
+                ? optimisticMsg.timestamp.getTime()
+                : new Date(optimisticMsg.timestamp).getTime()) -
+                (newMessage.timestamp instanceof Date
+                  ? newMessage.timestamp.getTime()
+                  : new Date(newMessage.timestamp).getTime()),
             ) < 5000)
         ) {
           // Found matching optimistic message
@@ -893,7 +903,7 @@ class EnhancedRealtimeChatService {
 
       if (fetchError) throw fetchError;
 
-      const currentReactions = message?.reactions || [];
+      const currentReactions = Array.isArray(message?.reactions) ? message.reactions : [];
 
       // Check if user has already reacted with this emoji
       const existingReactionIndex = currentReactions.findIndex(
@@ -1166,14 +1176,14 @@ class EnhancedRealtimeChatService {
 
   // Pause all subscriptions (for background)
   async pauseAll(): Promise<void> {
-    console.log('[RealtimeChat] Pausing all subscriptions');
+    console.log("[RealtimeChat] Pausing all subscriptions");
 
     const roomIds = Array.from(this.channels.keys());
 
     for (const roomId of roomIds) {
       try {
         // Stop typing for all rooms
-        this.stopTyping(roomId);
+        // this.stopTyping(roomId); // TODO: Implement stopTyping method if needed
 
         // Unsubscribe channel but keep it in the map for resuming
         const channel = this.channels.get(roomId);
@@ -1189,7 +1199,7 @@ class EnhancedRealtimeChatService {
 
   // Resume all subscriptions (for foreground)
   async resumeAll(userId: string, userName: string): Promise<void> {
-    console.log('[RealtimeChat] Resuming all subscriptions');
+    console.log("[RealtimeChat] Resuming all subscriptions");
 
     const roomIds = Array.from(this.channels.keys());
 
@@ -1199,7 +1209,7 @@ class EnhancedRealtimeChatService {
         if (channel) {
           // Re-subscribe to the channel
           await channel.subscribe((status) => {
-            if (status === 'SUBSCRIBED') {
+            if (status === "SUBSCRIBED") {
               console.log(`[RealtimeChat] Resumed subscription for room ${roomId}`);
 
               // Track presence again
@@ -1207,7 +1217,7 @@ class EnhancedRealtimeChatService {
                 user_id: userId,
                 user_name: userName,
                 online_at: new Date().toISOString(),
-                status: 'online',
+                status: "online",
               });
             }
           });
@@ -1315,9 +1325,8 @@ class EnhancedRealtimeChatService {
 
   // Generate unique fingerprint for message deduplication
   private generateMessageFingerprint(message: ChatMessage): string {
-    const timestamp = message.timestamp instanceof Date
-      ? message.timestamp.getTime()
-      : new Date(message.timestamp).getTime();
+    const timestamp =
+      message.timestamp instanceof Date ? message.timestamp.getTime() : new Date(message.timestamp).getTime();
     return `${message.senderId}_${message.content}_${message.messageType}_${Math.floor(timestamp / 1000)}`;
   }
 
@@ -1607,6 +1616,11 @@ class EnhancedRealtimeChatService {
     return Array.from(this.subscriptionStates.values()).filter((state) => state.status === "SUBSCRIBED").length;
   }
 
+  // Get active room IDs
+  getActiveRoomIds(): string[] {
+    return Array.from(this.channels.keys());
+  }
+
   // Set subscription priority for message processing
   setSubscriptionPriority(roomId: string, priority: "high" | "normal" | "low"): void {
     // Update priority in cache entries
@@ -1633,19 +1647,19 @@ class EnhancedRealtimeChatService {
       }
 
       // Check if Web Workers are available (shouldn't be in React Native)
-      if (typeof Worker !== 'undefined') {
-        return 'web-workers-detected';
+      if (typeof Worker !== "undefined") {
+        return "web-workers-detected";
       }
 
       // Check if WebSocket is available
-      if (typeof WebSocket !== 'undefined') {
-        return 'websocket-available';
+      if (typeof WebSocket !== "undefined") {
+        return "websocket-available";
       }
 
-      return 'unknown';
+      return "unknown";
     } catch (error) {
-      console.warn('Failed to detect transport method:', error);
-      return 'detection-failed';
+      console.warn("Failed to detect transport method:", error);
+      return "detection-failed";
     }
   }
 
@@ -1656,24 +1670,22 @@ class EnhancedRealtimeChatService {
     if (!error) return false;
 
     const errorString = JSON.stringify(error).toLowerCase();
-    const errorMessage = error?.message?.toLowerCase() || '';
-    const errorStack = error?.stack?.toLowerCase() || '';
+    const errorMessage = error?.message?.toLowerCase() || "";
+    const errorStack = error?.stack?.toLowerCase() || "";
 
     // Common Web Workers error patterns
     const webWorkerPatterns = [
-      'worker',
-      'postmessage',
-      'importscripts',
-      'shared worker',
-      'service worker',
-      'message channel',
-      'message port'
+      "worker",
+      "postmessage",
+      "importscripts",
+      "shared worker",
+      "service worker",
+      "message channel",
+      "message port",
     ];
 
-    return webWorkerPatterns.some(pattern =>
-      errorString.includes(pattern) ||
-      errorMessage.includes(pattern) ||
-      errorStack.includes(pattern)
+    return webWorkerPatterns.some(
+      (pattern) => errorString.includes(pattern) || errorMessage.includes(pattern) || errorStack.includes(pattern),
     );
   }
 
@@ -1681,41 +1693,48 @@ class EnhancedRealtimeChatService {
    * Handle Web Workers failure by attempting fallback connection
    */
   private async handleWebWorkersFailure(roomId: string, userId: string, userName: string): Promise<void> {
-    console.log('🔄 Handling Web Workers failure with fallback strategy');
+    console.log("🔄 Handling Web Workers failure with fallback strategy");
 
     try {
       // Clean up existing channel
       await this.leaveRoom(roomId);
 
       // Wait a moment for cleanup
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       // Retry with explicit WebSocket configuration
-      console.log('🔄 Retrying connection with WebSocket-only configuration');
+      console.log("🔄 Retrying connection with WebSocket-only configuration");
 
       // Create a new channel with WebSocket-only configuration
-      const fallbackChannel = supabase
-        .channel(`fallback_room_${roomId}_${Date.now()}`, {
-          config: {
-            presence: { key: `user_${userId}` },
-            broadcast: { self: false },
-          },
-        } as any);
+      const fallbackChannel = supabase.channel(`fallback_room_${roomId}_${Date.now()}`, {
+        config: {
+          presence: { key: `user_${userId}` },
+          broadcast: { self: false },
+        },
+      } as any);
 
       // Add all the same event listeners
       fallbackChannel
-        .on("postgres_changes", {
-          event: "INSERT",
-          schema: "public",
-          table: "chat_messages_firebase",
-          filter: `chat_room_id=eq.${roomId}`,
-        }, (payload) => this.handleNewMessage(roomId, payload))
-        .on("postgres_changes", {
-          event: "UPDATE",
-          schema: "public",
-          table: "chat_messages_firebase",
-          filter: `chat_room_id=eq.${roomId}`,
-        }, (payload) => this.handleMessageUpdate(roomId, payload))
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "chat_messages_firebase",
+            filter: `chat_room_id=eq.${roomId}`,
+          },
+          (payload) => this.handleNewMessage(roomId, payload),
+        )
+        .on(
+          "postgres_changes",
+          {
+            event: "UPDATE",
+            schema: "public",
+            table: "chat_messages_firebase",
+            filter: `chat_room_id=eq.${roomId}`,
+          },
+          (payload) => this.handleMessageUpdate(roomId, payload),
+        )
         .on("presence", { event: "sync" }, () => {
           this.handlePresenceSync(roomId, fallbackChannel);
         })
@@ -1727,7 +1746,7 @@ class EnhancedRealtimeChatService {
       await fallbackChannel.subscribe((status) => {
         console.log(`🔄 Fallback channel status: ${status}`);
         if (status === "SUBSCRIBED") {
-          console.log('✅ Fallback connection successful');
+          console.log("✅ Fallback connection successful");
           this.channels.set(roomId, fallbackChannel);
 
           // Track presence
@@ -1739,10 +1758,9 @@ class EnhancedRealtimeChatService {
           });
         }
       });
-
     } catch (fallbackError) {
-      console.error('🚨 Fallback connection also failed:', fallbackError);
-      throw new AppError('Unable to establish realtime connection', ErrorType.NETWORK, 'FALLBACK_FAILED');
+      console.error("🚨 Fallback connection also failed:", fallbackError);
+      throw new AppError("Unable to establish realtime connection", ErrorType.NETWORK, "FALLBACK_FAILED");
     }
   }
 }

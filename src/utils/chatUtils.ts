@@ -3,9 +3,9 @@
  * Enhanced with optimizations for large message datasets
  */
 
-import { performanceMonitor } from './performance';
-import { memoryManager } from '../services/memoryManager';
-import { messageVirtualizer } from '../services/messageVirtualizer';
+import { performanceMonitor } from "./performance";
+import { memoryManager } from "../services/memoryManager";
+import { messageVirtualizer } from "../services/messageVirtualizer";
 
 export interface MessageGroup {
   senderId: string;
@@ -125,7 +125,7 @@ export function getCachedOptimizedMessageList(
   // Check cache first
   if (groupingCache.has(cacheKey)) {
     cacheAccessTime.set(cacheKey, Date.now());
-    memoryManager.updateCacheAccess('messageGrouping');
+    memoryManager.updateCacheAccess("messageGrouping");
     return groupingCache.get(cacheKey)!;
   }
 
@@ -157,14 +157,14 @@ export function getCachedOptimizedMessageList(
 
   // Register cache size with memory manager
   const cacheSize = JSON.stringify(optimizedList).length * 2;
-  memoryManager.registerCache('messageGrouping', cacheSize);
+  memoryManager.registerCache("messageGrouping", cacheSize);
 
   const endTime = performance.now();
   if (messages.length > 100) {
-    performanceMonitor.recordMetric('largeMessageGrouping', {
+    performanceMonitor.recordMetric("largeMessageGrouping", {
       messageCount: messages.length,
       processingTime: endTime - startTime,
-      cacheHit: false
+      cacheHit: false,
     });
   }
 
@@ -223,13 +223,9 @@ export function generateOptimisticId(): string {
  */
 export function createVirtualizedMessageList(
   messages: any[],
-  viewportInfo: { scrollOffset: number; viewportHeight: number }
+  viewportInfo: { scrollOffset: number; viewportHeight: number },
 ): any[] {
-  return messageVirtualizer.virtualizeMessages(
-    messages,
-    viewportInfo.viewportHeight,
-    viewportInfo.scrollOffset
-  );
+  return messageVirtualizer.virtualizeMessages(messages, viewportInfo.viewportHeight, viewportInfo.scrollOffset);
 }
 
 /**
@@ -238,14 +234,14 @@ export function createVirtualizedMessageList(
 export function getMessageHeightEstimate(message: any): number {
   let height = 80; // Base height
 
-  if (message.type === 'text' && message.content) {
+  if (message.type === "text" && message.content) {
     const lines = Math.ceil(message.content.length / 40);
     height = Math.min(lines * 20 + 60, 300);
-  } else if (message.type === 'image' || message.type === 'video') {
+  } else if (message.type === "image" || message.type === "video") {
     height = 220; // Default media height
-  } else if (message.type === 'voice') {
+  } else if (message.type === "voice") {
     height = 60;
-  } else if (message.type === 'document') {
+  } else if (message.type === "document") {
     height = 80;
   }
 
@@ -262,11 +258,10 @@ export function getMessageHeightEstimate(message: any): number {
 export function shouldCleanupMessage(
   message: any,
   currentTime: number,
-  retentionPolicy: { maxAge?: number; keepImportant?: boolean } = {}
+  retentionPolicy: { maxAge?: number; keepImportant?: boolean } = {},
 ): boolean {
-  const messageTime = message.timestamp instanceof Date
-    ? message.timestamp.getTime()
-    : new Date(message.timestamp).getTime();
+  const messageTime =
+    message.timestamp instanceof Date ? message.timestamp.getTime() : new Date(message.timestamp).getTime();
 
   const age = currentTime - messageTime;
   const maxAge = retentionPolicy.maxAge || 7 * 24 * 60 * 60 * 1000; // 7 days default
@@ -283,10 +278,7 @@ export function shouldCleanupMessage(
 /**
  * Optimize messages for large dataset
  */
-export function optimizeForLargeDataset(
-  messages: any[],
-  threshold: number = 100
-): any[] {
+export function optimizeForLargeDataset(messages: any[], threshold: number = 100): any[] {
   if (messages.length <= threshold) {
     return messages;
   }
@@ -304,19 +296,19 @@ export function optimizeForLargeDataset(
     const daysOld = messageAge / (24 * 60 * 60 * 1000);
 
     // Summarize very long text for old messages
-    if (message.type === 'text' && message.content?.length > 500) {
+    if (message.type === "text" && message.content?.length > 500) {
       if (daysOld > 7) {
-        optimizedMessage.content = message.content.substring(0, 200) + '...';
+        optimizedMessage.content = message.content.substring(0, 200) + "...";
         optimizedMessage.metadata = {
           ...optimizedMessage.metadata,
           isSummarized: true,
-          originalLength: message.content.length
+          originalLength: message.content.length,
         };
       }
     }
 
     // Remove heavy media metadata for very old messages
-    if (daysOld > 30 && (message.type === 'image' || message.type === 'video')) {
+    if (daysOld > 30 && (message.type === "image" || message.type === "video")) {
       optimizedMessage.media = {
         url: message.media?.url,
         type: message.media?.type,
@@ -327,10 +319,10 @@ export function optimizeForLargeDataset(
     return optimizedMessage;
   });
 
-  performanceMonitor.recordMetric('messageOptimization', {
+  performanceMonitor.recordMetric("messageOptimization", {
     originalCount: messages.length,
     optimizedCount: optimized.length,
-    memorySaved: JSON.stringify(messages).length - JSON.stringify(optimized).length
+    memorySaved: JSON.stringify(messages).length - JSON.stringify(optimized).length,
   });
 
   return optimized;
@@ -348,7 +340,7 @@ export function clearGroupingCache(roomId?: string): void {
         keysToDelete.push(key);
       }
     });
-    keysToDelete.forEach(key => {
+    keysToDelete.forEach((key) => {
       groupingCache.delete(key);
       cacheAccessTime.delete(key);
     });

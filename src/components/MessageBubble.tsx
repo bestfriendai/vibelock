@@ -32,6 +32,7 @@ export default function MessageBubble({ message, onReply, onReact, onLongPress }
     return () => {
       reactionScale.value = 0;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleLongPress = () => {

@@ -4,7 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../providers/ThemeProvider";
 import { errorReportingService } from "../services/errorReporting";
 import { compatibilityChecker } from "../utils/compatibilityUtils";
-import { AppError, ErrorType, parseSupabaseError } from "../utils/errorHandling";
+import { AppError, ErrorType } from "../utils/errorHandling";
 
 interface ThemeColors {
   background: string;
@@ -141,7 +141,6 @@ class ErrorBoundaryClass extends Component<Props, State> {
    */
   static classifyError(error: Error): ErrorClassification {
     const errorMessage = error.message || error.toString();
-    const errorName = error.name || "";
 
     // Check for React Native 0.81.4 specific patterns
     if (RN_0814_ERROR_PATTERNS.initialization.test(errorMessage)) return "initialization";
@@ -300,16 +299,12 @@ class ErrorBoundaryClass extends Component<Props, State> {
     if (!this.errorReportingEnabled) return;
 
     try {
-      const enhancedError = {
-        ...error,
-        context: {
-          errorBoundary: true,
-          errorType: this.state.errorType,
-          recoverable: this.state.canRecover,
-          resetCount: this.state.resetCount,
-          ...this.state.errorContext,
-        },
-        componentStack: errorInfo.componentStack,
+      const enhancedErrorContext = {
+        errorBoundary: true,
+        errorType: this.state.errorType,
+        recoverable: this.state.canRecover,
+        resetCount: this.state.resetCount,
+        ...this.state.errorContext,
       };
 
       await errorReportingService.reportError(error, {
@@ -693,7 +688,7 @@ export default function ErrorBoundary(props: Omit<Props, "theme">) {
         themeObject = { colors: (theme as any).colors };
       }
     }
-  } catch (error) {
+  } catch {
     console.log("ErrorBoundary: Using default theme");
   }
 

@@ -96,29 +96,31 @@ const EnhancedMessageBubble = React.forwardRef<View, Props>(
     const reactionScale = useSharedValue(0);
 
     // Optimized grouping logic: use pre-calculated values when available, fallback to calculation
-    const isFirstInGroup = preCalculatedIsFirst !== undefined
-      ? preCalculatedIsFirst
-      : (() => {
-          // Fallback calculation for backward compatibility
-          const prevTime = previousMessage ? new Date(previousMessage.timestamp).getTime() : 0;
-          const thisTime = new Date(message.timestamp).getTime();
-          const looseThreshold = 5 * 60 * 1000; // 5 minutes
-          const sameSenderAsPrev = !!previousMessage && previousMessage.senderId === message.senderId;
-          const closeToPrev = sameSenderAsPrev && thisTime - prevTime <= looseThreshold;
-          return !sameSenderAsPrev || !closeToPrev;
-        })();
+    const isFirstInGroup =
+      preCalculatedIsFirst !== undefined
+        ? preCalculatedIsFirst
+        : (() => {
+            // Fallback calculation for backward compatibility
+            const prevTime = previousMessage ? new Date(previousMessage.timestamp).getTime() : 0;
+            const thisTime = new Date(message.timestamp).getTime();
+            const looseThreshold = 5 * 60 * 1000; // 5 minutes
+            const sameSenderAsPrev = !!previousMessage && previousMessage.senderId === message.senderId;
+            const closeToPrev = sameSenderAsPrev && thisTime - prevTime <= looseThreshold;
+            return !sameSenderAsPrev || !closeToPrev;
+          })();
 
-    const isLastInGroup = preCalculatedIsLast !== undefined
-      ? preCalculatedIsLast
-      : (() => {
-          // Fallback calculation for backward compatibility
-          const nextTime = nextMessage ? new Date(nextMessage.timestamp).getTime() : 0;
-          const thisTime = new Date(message.timestamp).getTime();
-          const looseThreshold = 5 * 60 * 1000; // 5 minutes
-          const sameSenderAsNext = !!nextMessage && nextMessage.senderId === message.senderId;
-          const closeToNext = sameSenderAsNext && nextTime - thisTime <= looseThreshold;
-          return !sameSenderAsNext || !closeToNext;
-        })();
+    const isLastInGroup =
+      preCalculatedIsLast !== undefined
+        ? preCalculatedIsLast
+        : (() => {
+            // Fallback calculation for backward compatibility
+            const nextTime = nextMessage ? new Date(nextMessage.timestamp).getTime() : 0;
+            const thisTime = new Date(message.timestamp).getTime();
+            const looseThreshold = 5 * 60 * 1000; // 5 minutes
+            const sameSenderAsNext = !!nextMessage && nextMessage.senderId === message.senderId;
+            const closeToNext = sameSenderAsNext && nextTime - thisTime <= looseThreshold;
+            return !sameSenderAsNext || !closeToNext;
+          })();
 
     // Calculate if we should show sender name (for non-own messages)
     const sameSenderAsPrev = !!previousMessage && previousMessage.senderId === message.senderId;
@@ -131,62 +133,65 @@ const EnhancedMessageBubble = React.forwardRef<View, Props>(
     }, [opacity, translateY]);
 
     // Memoized bubble styling with improved grouping and tails
-    const getBubbleStyle = useMemo(() => () => {
-      const baseRadius = 20;
-      const connectorRadius = 6;
+    const getBubbleStyle = useMemo(
+      () => () => {
+        const baseRadius = 20;
+        const connectorRadius = 6;
 
-      if (isOwn) {
-        if (isFirstInGroup && isLastInGroup) {
-          return { borderRadius: baseRadius };
-        } else if (isFirstInGroup) {
-          return {
-            borderTopLeftRadius: baseRadius,
-            borderTopRightRadius: baseRadius,
-            borderBottomLeftRadius: baseRadius,
-            borderBottomRightRadius: connectorRadius,
-          };
-        } else if (isLastInGroup) {
-          return {
-            borderTopLeftRadius: baseRadius,
-            borderTopRightRadius: connectorRadius,
-            borderBottomLeftRadius: baseRadius,
-            borderBottomRightRadius: baseRadius,
-          };
+        if (isOwn) {
+          if (isFirstInGroup && isLastInGroup) {
+            return { borderRadius: baseRadius };
+          } else if (isFirstInGroup) {
+            return {
+              borderTopLeftRadius: baseRadius,
+              borderTopRightRadius: baseRadius,
+              borderBottomLeftRadius: baseRadius,
+              borderBottomRightRadius: connectorRadius,
+            };
+          } else if (isLastInGroup) {
+            return {
+              borderTopLeftRadius: baseRadius,
+              borderTopRightRadius: connectorRadius,
+              borderBottomLeftRadius: baseRadius,
+              borderBottomRightRadius: baseRadius,
+            };
+          } else {
+            return {
+              borderTopLeftRadius: baseRadius,
+              borderTopRightRadius: connectorRadius,
+              borderBottomLeftRadius: baseRadius,
+              borderBottomRightRadius: connectorRadius,
+            };
+          }
         } else {
-          return {
-            borderTopLeftRadius: baseRadius,
-            borderTopRightRadius: connectorRadius,
-            borderBottomLeftRadius: baseRadius,
-            borderBottomRightRadius: connectorRadius,
-          };
+          if (isFirstInGroup && isLastInGroup) {
+            return { borderRadius: baseRadius };
+          } else if (isFirstInGroup) {
+            return {
+              borderTopLeftRadius: baseRadius,
+              borderTopRightRadius: baseRadius,
+              borderBottomLeftRadius: connectorRadius,
+              borderBottomRightRadius: baseRadius,
+            };
+          } else if (isLastInGroup) {
+            return {
+              borderTopLeftRadius: connectorRadius,
+              borderTopRightRadius: baseRadius,
+              borderBottomLeftRadius: baseRadius,
+              borderBottomRightRadius: baseRadius,
+            };
+          } else {
+            return {
+              borderTopLeftRadius: connectorRadius,
+              borderTopRightRadius: baseRadius,
+              borderBottomLeftRadius: connectorRadius,
+              borderBottomRightRadius: baseRadius,
+            };
+          }
         }
-      } else {
-        if (isFirstInGroup && isLastInGroup) {
-          return { borderRadius: baseRadius };
-        } else if (isFirstInGroup) {
-          return {
-            borderTopLeftRadius: baseRadius,
-            borderTopRightRadius: baseRadius,
-            borderBottomLeftRadius: connectorRadius,
-            borderBottomRightRadius: baseRadius,
-          };
-        } else if (isLastInGroup) {
-          return {
-            borderTopLeftRadius: connectorRadius,
-            borderTopRightRadius: baseRadius,
-            borderBottomLeftRadius: baseRadius,
-            borderBottomRightRadius: baseRadius,
-          };
-        } else {
-          return {
-            borderTopLeftRadius: connectorRadius,
-            borderTopRightRadius: baseRadius,
-            borderBottomLeftRadius: connectorRadius,
-            borderBottomRightRadius: baseRadius,
-          };
-        }
-      }
-    }, [isOwn, isFirstInGroup, isLastInGroup]);
+      },
+      [isOwn, isFirstInGroup, isLastInGroup],
+    );
 
     const handlePress = () => {
       setShowTimestamp(!showTimestamp);
@@ -226,7 +231,7 @@ const EnhancedMessageBubble = React.forwardRef<View, Props>(
     const formatDuration = (seconds: number) => {
       const mins = Math.floor(seconds / 60);
       const secs = Math.floor(seconds % 60);
-      return `${mins}:${secs.toString().padStart(2, '0')}`;
+      return `${mins}:${secs.toString().padStart(2, "0")}`;
     };
 
     const renderMessageContent = () => {
@@ -241,7 +246,7 @@ const EnhancedMessageBubble = React.forwardRef<View, Props>(
                 // Mark message as read when voice message starts playing
                 if (!isOwn && message.chatRoomId) {
                   const chatStore = useChatStore.getState();
-                  chatStore.markMessagesAsRead(message.chatRoomId, message.id);
+                  chatStore.markMessagesAsRead(message.chatRoomId);
                 }
               }}
               onPlaybackEnd={() => {
@@ -258,13 +263,14 @@ const EnhancedMessageBubble = React.forwardRef<View, Props>(
           );
 
         case "image": {
-          const mediaWidth = message.media?.width || message.media?.dimensions?.width || 200;
-          const mediaHeight = message.media?.height || message.media?.dimensions?.height || 150;
+          const firstMedia = message.media?.[0];
+          const mediaWidth = firstMedia?.width || 200;
+          const mediaHeight = firstMedia?.height || 150;
           const { width: displayWidth, height: displayHeight } = calculateDisplayDimensions(
             mediaWidth,
             mediaHeight,
             250, // maxWidth
-            400  // maxHeight
+            400, // maxHeight
           );
 
           // Lazy loading: only render media when visible
@@ -338,13 +344,14 @@ const EnhancedMessageBubble = React.forwardRef<View, Props>(
         }
 
         case "video": {
-          const mediaWidth = message.media?.width || message.media?.dimensions?.width || 320;
-          const mediaHeight = message.media?.height || message.media?.dimensions?.height || 240;
+          const firstMedia = message.media?.[0];
+          const mediaWidth = firstMedia?.width || 320;
+          const mediaHeight = firstMedia?.height || 240;
           const { width: displayWidth, height: displayHeight } = calculateDisplayDimensions(
             mediaWidth,
             mediaHeight,
             250, // maxWidth
-            400  // maxHeight
+            400, // maxHeight
           );
 
           // Lazy loading: only render media when visible
@@ -425,7 +432,7 @@ const EnhancedMessageBubble = React.forwardRef<View, Props>(
                     }}
                   >
                     <Text style={{ color: "white", fontSize: 12 }}>
-                      {formatDuration(message.media?.duration || message.audioDuration || 0)}
+                      {formatDuration(message.media?.[0]?.duration || message.audioDuration || 0)}
                     </Text>
                   </View>
                 )}
@@ -499,7 +506,8 @@ const EnhancedMessageBubble = React.forwardRef<View, Props>(
           {message.forwardedFromSender && (
             <View className="mx-3 mb-1">
               <Text className="text-xs font-medium" style={{ color: colors.text.secondary }}>
-                <Ionicons name="arrow-forward" size={10} color={colors.text.secondary} /> Forwarded from {message.forwardedFromSender}
+                <Ionicons name="arrow-forward" size={10} color={colors.text.secondary} /> Forwarded from{" "}
+                {message.forwardedFromSender}
               </Text>
             </View>
           )}

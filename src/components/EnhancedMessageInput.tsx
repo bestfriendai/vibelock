@@ -70,6 +70,7 @@ export default function EnhancedMessageInput({
       damping: 15,
       stiffness: 200,
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [canSend]);
 
   // Animate reply bar
@@ -78,6 +79,7 @@ export default function EnhancedMessageInput({
       damping: 15,
       stiffness: 100,
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [replyingTo]);
 
   // Focus animation
@@ -86,6 +88,7 @@ export default function EnhancedMessageInput({
       damping: 15,
       stiffness: 200,
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isFocused]);
 
   // Typing indicator logic
@@ -156,7 +159,7 @@ export default function EnhancedMessageInput({
       }
       onSendVoice?.(audioUri, duration);
       setInputMode("text");
-    } catch (e) {
+    } catch {
       Alert.alert("Error", "Failed to send voice message. Please try again.");
     } finally {
       setIsVoiceBusy(false);
@@ -216,7 +219,7 @@ export default function EnhancedMessageInput({
 
       onSendMedia?.(media);
       setShowMediaPicker(false);
-    } catch (e) {
+    } catch {
       Alert.alert("Error", "Failed to attach media. Please try again.");
     } finally {
       setIsMediaBusy(false);

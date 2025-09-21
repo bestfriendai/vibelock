@@ -35,7 +35,11 @@ export class SearchService {
   async basicSearch(query: string, table: string, columns: string[]): Promise<any[]> {
     const orConditions = columns.map((col) => `${col}.ilike.%${query}%`).join(",");
 
-    const { data, error } = await (supabase as any).from(table).select("*").or(orConditions).limit(SEARCH_CONFIG.maxResults);
+    const { data, error } = await (supabase as any)
+      .from(table)
+      .select("*")
+      .or(orConditions)
+      .limit(SEARCH_CONFIG.maxResults);
 
     if (error) throw error;
     return data || [];
@@ -62,7 +66,7 @@ export class SearchService {
   async enhancedFullTextSearch(query: string, table: string): Promise<any[]> {
     // TODO: Implement enhanced full-text search when RPC function is available
     // For now, fall back to basic search
-    return this.basicSearch(query, table, ['content']);
+    return this.basicSearch(query, table, ["content"]);
   }
 
   /**
@@ -81,7 +85,7 @@ export class SearchService {
 
     // TODO: Implement hybrid search when RPC function is available
     // For now, fall back to basic search
-    return this.basicSearch(query, table, ['content']);
+    return this.basicSearch(query, table, ["content"]);
   }
 
   /**
@@ -458,7 +462,12 @@ export class SearchService {
   /**
    * Search messages globally across all accessible rooms
    */
-  async searchMessagesGlobal(query: string, userId: string, limit: number = 50, offset: number = 0): Promise<SearchResults> {
+  async searchMessagesGlobal(
+    query: string,
+    userId: string,
+    limit: number = 50,
+    offset: number = 0,
+  ): Promise<SearchResults> {
     try {
       const { data, error } = await supabase.rpc("search_messages_global", {
         p_user_id: userId,

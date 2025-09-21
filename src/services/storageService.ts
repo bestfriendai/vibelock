@@ -117,33 +117,6 @@ class StorageService {
   }
 
   /**
-   * Sanitize folder name to prevent directory traversal and injection attacks
-   */
-  private sanitizeFolder(folder: string): string {
-    if (!folder || typeof folder !== "string") {
-      throw new AppError(
-        "Invalid folder name: folder must be a non-empty string",
-        ErrorType.VALIDATION,
-        "INVALID_FOLDER",
-      );
-    }
-
-    // Apply the same sanitization as for paths
-    const sanitized = this.sanitizePath(folder);
-
-    // Additional folder-specific validation
-    if (sanitized === "." || sanitized === "..") {
-      throw new AppError(
-        "Invalid folder name: relative directory references not allowed",
-        ErrorType.VALIDATION,
-        "INVALID_FOLDER",
-      );
-    }
-
-    return sanitized;
-  }
-
-  /**
    * Comprehensive file validation including size, MIME type, and magic bytes
    */
   private async validateFile(fileUri: string, expectedType: "image" | "video" | "audio"): Promise<void> {

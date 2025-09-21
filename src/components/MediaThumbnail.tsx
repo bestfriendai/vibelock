@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, Pressable, ActivityIndicator } from "react-native";
-import { Image } from "expo-image";
+
 import { Ionicons } from "@expo/vector-icons";
 import { MediaItem } from "../types";
 import { videoThumbnailService } from "../services/videoThumbnailService";
@@ -17,9 +17,7 @@ interface Props {
 
 export default function MediaThumbnail({ media, size = 80, onPress, showPlayIcon = true, onLoad }: Props) {
   const [imageError, setImageError] = useState(false);
-  const [videoThumbnail, setVideoThumbnail] = useState<string | null>(
-    media.thumbnailUri || null
-  );
+  const [videoThumbnail, setVideoThumbnail] = useState<string | null>(media.thumbnailUri || null);
   const [thumbnailLoading, setThumbnailLoading] = useState(false);
   const isVideo = media.type === "video";
 
@@ -45,6 +43,7 @@ export default function MediaThumbnail({ media, size = 80, onPress, showPlayIcon
     } else if (media.thumbnailUri && !videoThumbnail) {
       setVideoThumbnail(media.thumbnailUri);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isVideo, media.uri, media.thumbnailUri, videoThumbnail, thumbnailLoading]);
 
   return (

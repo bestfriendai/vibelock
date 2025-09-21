@@ -1,8 +1,8 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import NetInfo from '@react-native-community/netinfo';
-import * as Device from 'expo-device';
-import * as Application from 'expo-application';
-import { Platform } from 'react-native';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import NetInfo from "@react-native-community/netinfo";
+import * as Device from "expo-device";
+import * as Application from "expo-application";
+import { Platform } from "react-native";
 
 interface MonitoringMetric {
   timestamp: Date;
@@ -12,13 +12,13 @@ interface MonitoringMetric {
 
 interface UserFlow {
   flowName: string;
-  steps: Array<{
+  steps: {
     name: string;
     timestamp: Date;
     duration: number;
     success: boolean;
     metadata?: Record<string, any>;
-  }>;
+  }[];
   startTime: Date;
   endTime?: Date;
   completed: boolean;
@@ -27,7 +27,7 @@ interface UserFlow {
 interface ErrorReport {
   error: Error | string;
   context: Record<string, any>;
-  severity: 'low' | 'medium' | 'high' | 'critical';
+  severity: "low" | "medium" | "high" | "critical";
   timestamp: Date;
   deviceInfo: Record<string, any>;
   networkInfo: Record<string, any>;
@@ -69,9 +69,9 @@ interface HealthReport {
 }
 
 interface Alert {
-  type: 'error' | 'performance' | 'security' | 'availability';
+  type: "error" | "performance" | "security" | "availability";
   message: string;
-  severity: 'low' | 'medium' | 'high' | 'critical';
+  severity: "low" | "medium" | "high" | "critical";
   timestamp: Date;
   resolved: boolean;
 }
@@ -100,7 +100,7 @@ class ProductionMonitor {
     connectionStability: 0.9, // 90% stability
     crashRate: 0.01, // 1% crash rate
     memoryWarning: 0.8, // 80% memory usage
-    responseTime: 3000 // 3 seconds
+    responseTime: 3000, // 3 seconds
   };
 
   constructor() {
@@ -128,11 +128,11 @@ class ProductionMonitor {
       isDevice: Device.isDevice,
       platform: Platform.OS,
       appVersion: Application.nativeApplicationVersion,
-      buildVersion: Application.nativeBuildVersion
+      buildVersion: Application.nativeBuildVersion,
     };
 
     // Monitor network state
-    NetInfo.addEventListener(state => {
+    NetInfo.addEventListener((state) => {
       this.networkState = state;
       this.trackNetworkChange(state);
     });
@@ -164,7 +164,7 @@ class ProductionMonitor {
         flowName,
         steps: [],
         startTime: new Date(),
-        completed: false
+        completed: false,
       };
       this.userFlows.set(flowKey, flow);
     }
@@ -175,7 +175,7 @@ class ProductionMonitor {
       timestamp: new Date(),
       duration: 0,
       success: true,
-      metadata: this.sanitizeMetadata(metadata)
+      metadata: this.sanitizeMetadata(metadata),
     });
 
     // Update step duration when next step starts
@@ -190,7 +190,11 @@ class ProductionMonitor {
   /**
    * Track errors with context
    */
-  trackError(error: Error | string, context: Record<string, any>, severity: 'low' | 'medium' | 'high' | 'critical' = 'medium') {
+  trackError(
+    error: Error | string,
+    context: Record<string, any>,
+    severity: "low" | "medium" | "high" | "critical" = "medium",
+  ) {
     const errorReport: ErrorReport = {
       error: error instanceof Error ? error.message : error,
       context: this.sanitizeMetadata(context),
@@ -199,7 +203,7 @@ class ProductionMonitor {
       deviceInfo: this.deviceInfo,
       networkInfo: this.networkState,
       userSession: this.sessionId,
-      stackTrace: error instanceof Error ? error.stack : undefined
+      stackTrace: error instanceof Error ? error.stack : undefined,
     };
 
     this.errors.push(errorReport);
@@ -208,12 +212,12 @@ class ProductionMonitor {
     this.checkErrorRate();
 
     // Create alert for critical errors
-    if (severity === 'critical') {
-      this.createAlert('error', `Critical error: ${errorReport.error}`, 'critical');
+    if (severity === "critical") {
+      this.createAlert("error", `Critical error: ${errorReport.error}`, "critical");
     }
 
     // Send to remote monitoring service (if configured)
-    this.sendToRemoteMonitoring('error', errorReport);
+    this.sendToRemoteMonitoring("error", errorReport);
   }
 
   /**
@@ -229,7 +233,7 @@ class ProductionMonitor {
       timestamp: new Date(),
       metadata: this.sanitizeMetadata(metadata),
       threshold,
-      exceeded: duration > threshold
+      exceeded: duration > threshold,
     };
 
     this.performanceMetrics.push(metric);
@@ -239,9 +243,9 @@ class ProductionMonitor {
       const degradationFactor = duration / threshold;
       if (degradationFactor > this.thresholds.performanceDegradation) {
         this.createAlert(
-          'performance',
+          "performance",
           `Performance degradation detected: ${operation} is ${degradationFactor.toFixed(1)}x slower than expected`,
-          'medium'
+          "medium",
         );
       }
     }
@@ -260,7 +264,7 @@ class ProductionMonitor {
       screen,
       timestamp: new Date(),
       data: this.sanitizeMetadata(data),
-      sessionId: this.sessionId
+      sessionId: this.sessionId,
     };
 
     this.engagementMetrics.push(metric);
@@ -272,8 +276,8 @@ class ProductionMonitor {
    */
   async generateHealthReport(): Promise<HealthReport> {
     const uptime = Date.now() - this.startTime.getTime();
-    const recentErrors = this.errors.filter(e =>
-      e.timestamp.getTime() > Date.now() - 3600000 // Last hour
+    const recentErrors = this.errors.filter(
+      (e) => e.timestamp.getTime() > Date.now() - 3600000, // Last hour
     );
 
     const authMetrics = this.getAuthMetrics();
@@ -291,10 +295,10 @@ class ProductionMonitor {
         crashRate: this.calculateCrashRate(),
         averageResponseTime: performanceMetrics.avgResponseTime,
         activeUsers: this.getActiveUserCount(),
-        errorRate: recentErrors.length / Math.max(1, this.getTotalOperations())
+        errorRate: recentErrors.length / Math.max(1, this.getTotalOperations()),
       },
-      alerts: this.alerts.filter(a => !a.resolved),
-      recommendations: this.generateRecommendations()
+      alerts: this.alerts.filter((a) => !a.resolved),
+      recommendations: this.generateRecommendations(),
     };
 
     // Store report
@@ -307,16 +311,14 @@ class ProductionMonitor {
    * Get authentication metrics
    */
   private getAuthMetrics(): { successRate: number; failures: number } {
-    const authFlows = Array.from(this.userFlows.values()).filter(f =>
-      f.flowName.includes('Authentication')
-    );
+    const authFlows = Array.from(this.userFlows.values()).filter((f) => f.flowName.includes("Authentication"));
 
-    const successful = authFlows.filter(f => f.completed).length;
+    const successful = authFlows.filter((f) => f.completed).length;
     const total = Math.max(1, authFlows.length);
 
     return {
       successRate: successful / total,
-      failures: total - successful
+      failures: total - successful,
     };
   }
 
@@ -324,17 +326,15 @@ class ProductionMonitor {
    * Get message delivery metrics
    */
   private getMessageMetrics(): { deliveryRate: number; avgLatency: number } {
-    const messageMetrics = this.performanceMetrics.filter(m =>
-      m.operation.includes('message')
-    );
+    const messageMetrics = this.performanceMetrics.filter((m) => m.operation.includes("message"));
 
-    const delivered = messageMetrics.filter(m => !m.exceeded).length;
+    const delivered = messageMetrics.filter((m) => !m.exceeded).length;
     const total = Math.max(1, messageMetrics.length);
     const avgLatency = messageMetrics.reduce((sum, m) => sum + m.duration, 0) / total;
 
     return {
       deliveryRate: delivered / total,
-      avgLatency
+      avgLatency,
     };
   }
 
@@ -342,17 +342,15 @@ class ProductionMonitor {
    * Get connection stability metrics
    */
   private getConnectionMetrics(): { stability: number; disconnections: number } {
-    const connectionEvents = this.metrics.get('network_change') || [];
-    const disconnections = connectionEvents.filter(e =>
-      e.value === false
-    ).length;
+    const connectionEvents = this.metrics.get("network_change") || [];
+    const disconnections = connectionEvents.filter((e) => e.value === false).length;
 
     const totalTime = Date.now() - this.startTime.getTime();
     const disconnectionTime = disconnections * 5000; // Assume 5s per disconnection
 
     return {
-      stability: Math.max(0, 1 - (disconnectionTime / totalTime)),
-      disconnections
+      stability: Math.max(0, 1 - disconnectionTime / totalTime),
+      disconnections,
     };
   }
 
@@ -366,7 +364,7 @@ class ProductionMonitor {
 
     const totalDuration = this.performanceMetrics.reduce((sum, m) => sum + m.duration, 0);
     return {
-      avgResponseTime: totalDuration / this.performanceMetrics.length
+      avgResponseTime: totalDuration / this.performanceMetrics.length,
     };
   }
 
@@ -374,7 +372,7 @@ class ProductionMonitor {
    * Calculate crash rate
    */
   private calculateCrashRate(): number {
-    const criticalErrors = this.errors.filter(e => e.severity === 'critical').length;
+    const criticalErrors = this.errors.filter((e) => e.severity === "critical").length;
     const totalSessions = Math.max(1, this.getActiveUserCount());
     return criticalErrors / totalSessions;
   }
@@ -383,7 +381,7 @@ class ProductionMonitor {
    * Get active user count
    */
   private getActiveUserCount(): number {
-    const uniqueSessions = new Set(this.engagementMetrics.map(e => e.sessionId));
+    const uniqueSessions = new Set(this.engagementMetrics.map((e) => e.sessionId));
     return uniqueSessions.size || 1;
   }
 
@@ -403,31 +401,31 @@ class ProductionMonitor {
       authSuccessRate: this.getAuthMetrics().successRate,
       messageDeliveryRate: this.getMessageMetrics().deliveryRate,
       errorRate: this.errors.length / Math.max(1, this.getTotalOperations()),
-      avgResponseTime: this.getAveragePerformance().avgResponseTime
+      avgResponseTime: this.getAveragePerformance().avgResponseTime,
     };
 
     if (report.authSuccessRate < this.thresholds.authFailureRate) {
-      recommendations.push('Authentication system needs review - high failure rate detected');
+      recommendations.push("Authentication system needs review - high failure rate detected");
     }
 
     if (report.messageDeliveryRate < this.thresholds.messageDeliveryRate) {
-      recommendations.push('Message delivery issues detected - check network and server status');
+      recommendations.push("Message delivery issues detected - check network and server status");
     }
 
     if (report.errorRate > this.thresholds.errorRate) {
-      recommendations.push('High error rate detected - review error logs and implement fixes');
+      recommendations.push("High error rate detected - review error logs and implement fixes");
     }
 
     if (report.avgResponseTime > this.thresholds.responseTime) {
-      recommendations.push('Performance optimization needed - response times exceeding threshold');
+      recommendations.push("Performance optimization needed - response times exceeding threshold");
     }
 
-    if (this.alerts.filter(a => !a.resolved && a.severity === 'critical').length > 0) {
-      recommendations.push('Critical alerts require immediate attention');
+    if (this.alerts.filter((a) => !a.resolved && a.severity === "critical").length > 0) {
+      recommendations.push("Critical alerts require immediate attention");
     }
 
     if (recommendations.length === 0) {
-      recommendations.push('System is performing within acceptable parameters');
+      recommendations.push("System is performing within acceptable parameters");
     }
 
     return recommendations;
@@ -436,19 +434,19 @@ class ProductionMonitor {
   /**
    * Create alert
    */
-  private createAlert(type: Alert['type'], message: string, severity: Alert['severity']) {
+  private createAlert(type: Alert["type"], message: string, severity: Alert["severity"]) {
     const alert: Alert = {
       type,
       message,
       severity,
       timestamp: new Date(),
-      resolved: false
+      resolved: false,
     };
 
     this.alerts.push(alert);
 
     // Auto-resolve low severity alerts after 1 hour
-    if (severity === 'low') {
+    if (severity === "low") {
       setTimeout(() => {
         alert.resolved = true;
       }, 3600000);
@@ -459,17 +457,17 @@ class ProductionMonitor {
    * Check error rate and create alerts
    */
   private checkErrorRate() {
-    const recentErrors = this.errors.filter(e =>
-      e.timestamp.getTime() > Date.now() - 600000 // Last 10 minutes
+    const recentErrors = this.errors.filter(
+      (e) => e.timestamp.getTime() > Date.now() - 600000, // Last 10 minutes
     );
 
     const errorRate = recentErrors.length / Math.max(1, this.getTotalOperations());
 
     if (errorRate > this.thresholds.errorRate) {
       this.createAlert(
-        'error',
+        "error",
         `Error rate (${(errorRate * 100).toFixed(1)}%) exceeds threshold`,
-        errorRate > this.thresholds.errorRate * 2 ? 'high' : 'medium'
+        errorRate > this.thresholds.errorRate * 2 ? "high" : "medium",
       );
     }
   }
@@ -479,7 +477,7 @@ class ProductionMonitor {
    */
   private checkAlerts() {
     // Auto-resolve alerts that haven't recurred
-    this.alerts.forEach(alert => {
+    this.alerts.forEach((alert) => {
       if (!alert.resolved && alert.timestamp.getTime() < Date.now() - 3600000) {
         // Check if issue persists
         const stillActive = this.checkAlertCondition(alert);
@@ -495,15 +493,13 @@ class ProductionMonitor {
    */
   private checkAlertCondition(alert: Alert): boolean {
     switch (alert.type) {
-      case 'error':
+      case "error":
         const errorRate = this.errors.length / Math.max(1, this.getTotalOperations());
         return errorRate > this.thresholds.errorRate;
 
-      case 'performance':
-        const recent = this.performanceMetrics.filter(m =>
-          m.timestamp.getTime() > Date.now() - 600000
-        );
-        return recent.some(m => m.exceeded);
+      case "performance":
+        const recent = this.performanceMetrics.filter((m) => m.timestamp.getTime() > Date.now() - 600000);
+        return recent.some((m) => m.exceeded);
 
       default:
         return false;
@@ -518,11 +514,11 @@ class ProductionMonitor {
 
     // Check critical metrics
     if (report.metrics.crashRate > this.thresholds.crashRate) {
-      this.createAlert('availability', 'High crash rate detected', 'critical');
+      this.createAlert("availability", "High crash rate detected", "critical");
     }
 
     if (report.metrics.connectionStability < this.thresholds.connectionStability) {
-      this.createAlert('availability', 'Connection stability issues', 'high');
+      this.createAlert("availability", "Connection stability issues", "high");
     }
   }
 
@@ -530,13 +526,13 @@ class ProductionMonitor {
    * Track network changes
    */
   private trackNetworkChange(state: any) {
-    this.addMetric('network_change', state.isConnected, {
+    this.addMetric("network_change", state.isConnected, {
       type: state.type,
-      isInternetReachable: state.isInternetReachable
+      isInternetReachable: state.isInternetReachable,
     });
 
     if (!state.isConnected) {
-      this.createAlert('availability', 'Network disconnection detected', 'medium');
+      this.createAlert("availability", "Network disconnection detected", "medium");
     }
   }
 
@@ -546,12 +542,9 @@ class ProductionMonitor {
   private analyzeUserFlow(flow: UserFlow) {
     // Check for incomplete flows
     const flowDuration = Date.now() - flow.startTime.getTime();
-    if (flowDuration > 300000 && !flow.completed) { // 5 minutes
-      this.createAlert(
-        'performance',
-        `User flow "${flow.flowName}" taking too long`,
-        'low'
-      );
+    if (flowDuration > 300000 && !flow.completed) {
+      // 5 minutes
+      this.createAlert("performance", `User flow "${flow.flowName}" taking too long`, "low");
     }
   }
 
@@ -559,12 +552,12 @@ class ProductionMonitor {
    * Analyze performance trends
    */
   private analyzePerformanceTrends() {
-    const recentMetrics = this.performanceMetrics.filter(m =>
-      m.timestamp.getTime() > Date.now() - 600000 // Last 10 minutes
+    const recentMetrics = this.performanceMetrics.filter(
+      (m) => m.timestamp.getTime() > Date.now() - 600000, // Last 10 minutes
     );
 
     const operations = new Map<string, number[]>();
-    recentMetrics.forEach(m => {
+    recentMetrics.forEach((m) => {
       if (!operations.has(m.operation)) {
         operations.set(m.operation, []);
       }
@@ -578,11 +571,7 @@ class ProductionMonitor {
         const threshold = this.getPerformanceThreshold(operation);
 
         if (avg > threshold * 1.5) {
-          this.createAlert(
-            'performance',
-            `Performance degradation trend for ${operation}`,
-            'medium'
-          );
+          this.createAlert("performance", `Performance degradation trend for ${operation}`, "medium");
         }
       }
     });
@@ -592,19 +581,19 @@ class ProductionMonitor {
    * Analyze engagement patterns
    */
   private analyzeEngagementPatterns() {
-    const recentEngagement = this.engagementMetrics.filter(e =>
-      e.timestamp.getTime() > Date.now() - 3600000 // Last hour
+    const recentEngagement = this.engagementMetrics.filter(
+      (e) => e.timestamp.getTime() > Date.now() - 3600000, // Last hour
     );
 
     // Track feature usage
     const featureUsage = new Map<string, number>();
-    recentEngagement.forEach(e => {
+    recentEngagement.forEach((e) => {
       const key = `${e.screen}:${e.action}`;
       featureUsage.set(key, (featureUsage.get(key) || 0) + 1);
     });
 
     // Store for analytics
-    this.addMetric('feature_usage', Object.fromEntries(featureUsage));
+    this.addMetric("feature_usage", Object.fromEntries(featureUsage));
   }
 
   /**
@@ -612,13 +601,13 @@ class ProductionMonitor {
    */
   private getPerformanceThreshold(operation: string): number {
     const thresholds: Record<string, number> = {
-      'auth': 2000,
-      'message-send': 1000,
-      'message-receive': 500,
-      'room-load': 3000,
-      'image-upload': 5000,
-      'voice-record': 100,
-      'search': 1500
+      auth: 2000,
+      "message-send": 1000,
+      "message-receive": 500,
+      "room-load": 3000,
+      "image-upload": 5000,
+      "voice-record": 100,
+      search: 1500,
     };
 
     for (const [key, value] of Object.entries(thresholds)) {
@@ -637,13 +626,13 @@ class ProductionMonitor {
     if (!metadata) return undefined;
 
     const sanitized: Record<string, any> = {};
-    const sensitiveKeys = ['password', 'token', 'secret', 'key', 'auth', 'credential'];
+    const sensitiveKeys = ["password", "token", "secret", "key", "auth", "credential"];
 
     for (const [key, value] of Object.entries(metadata)) {
       const lowerKey = key.toLowerCase();
-      if (sensitiveKeys.some(sensitive => lowerKey.includes(sensitive))) {
-        sanitized[key] = '[REDACTED]';
-      } else if (typeof value === 'object' && value !== null) {
+      if (sensitiveKeys.some((sensitive) => lowerKey.includes(sensitive))) {
+        sanitized[key] = "[REDACTED]";
+      } else if (typeof value === "object" && value !== null) {
         sanitized[key] = this.sanitizeMetadata(value);
       } else {
         sanitized[key] = value;
@@ -664,7 +653,7 @@ class ProductionMonitor {
     this.metrics.get(name)!.push({
       timestamp: new Date(),
       value,
-      metadata
+      metadata,
     });
   }
 
@@ -689,16 +678,11 @@ class ProductionMonitor {
 
       // Keep only last 24 hours of reports
       const cutoff = Date.now() - 86400000;
-      const filtered = reports.filter(r =>
-        new Date(r.timestamp).getTime() > cutoff
-      );
+      const filtered = reports.filter((r) => new Date(r.timestamp).getTime() > cutoff);
 
-      await AsyncStorage.setItem(
-        '@production_health_reports',
-        JSON.stringify(filtered)
-      );
+      await AsyncStorage.setItem("@production_health_reports", JSON.stringify(filtered));
     } catch (error) {
-      console.error('Failed to store health report:', error);
+      console.error("Failed to store health report:", error);
     }
   }
 
@@ -707,7 +691,7 @@ class ProductionMonitor {
    */
   private async getStoredReports(): Promise<HealthReport[]> {
     try {
-      const stored = await AsyncStorage.getItem('@production_health_reports');
+      const stored = await AsyncStorage.getItem("@production_health_reports");
       return stored ? JSON.parse(stored) : [];
     } catch {
       return [];
@@ -719,8 +703,8 @@ class ProductionMonitor {
    */
   private async loadDataCollectionConsent() {
     try {
-      const consent = await AsyncStorage.getItem('@data_collection_consent');
-      this.dataCollectionConsent = consent === 'true';
+      const consent = await AsyncStorage.getItem("@data_collection_consent");
+      this.dataCollectionConsent = consent === "true";
     } catch {
       this.dataCollectionConsent = false;
     }
@@ -731,7 +715,7 @@ class ProductionMonitor {
    */
   async setDataCollectionConsent(consent: boolean) {
     this.dataCollectionConsent = consent;
-    await AsyncStorage.setItem('@data_collection_consent', consent.toString());
+    await AsyncStorage.setItem("@data_collection_consent", consent.toString());
   }
 
   /**
@@ -741,30 +725,20 @@ class ProductionMonitor {
     const cutoff = Date.now() - 86400000; // 24 hours
 
     // Clean errors
-    this.errors = this.errors.filter(e =>
-      e.timestamp.getTime() > cutoff
-    );
+    this.errors = this.errors.filter((e) => e.timestamp.getTime() > cutoff);
 
     // Clean performance metrics
-    this.performanceMetrics = this.performanceMetrics.filter(m =>
-      m.timestamp.getTime() > cutoff
-    );
+    this.performanceMetrics = this.performanceMetrics.filter((m) => m.timestamp.getTime() > cutoff);
 
     // Clean engagement metrics
-    this.engagementMetrics = this.engagementMetrics.filter(e =>
-      e.timestamp.getTime() > cutoff
-    );
+    this.engagementMetrics = this.engagementMetrics.filter((e) => e.timestamp.getTime() > cutoff);
 
     // Clean resolved alerts
-    this.alerts = this.alerts.filter(a =>
-      !a.resolved || a.timestamp.getTime() > cutoff
-    );
+    this.alerts = this.alerts.filter((a) => !a.resolved || a.timestamp.getTime() > cutoff);
 
     // Clean metrics
     this.metrics.forEach((values, key) => {
-      const filtered = values.filter(v =>
-        v.timestamp.getTime() > cutoff
-      );
+      const filtered = values.filter((v) => v.timestamp.getTime() > cutoff);
       this.metrics.set(key, filtered);
     });
   }
@@ -797,7 +771,7 @@ class ProductionMonitor {
       performanceMetrics: this.performanceMetrics,
       engagementMetrics: this.engagementMetrics,
       alerts: this.alerts,
-      healthReports: await this.getStoredReports()
+      healthReports: await this.getStoredReports(),
     };
 
     return JSON.stringify(data, null, 2);

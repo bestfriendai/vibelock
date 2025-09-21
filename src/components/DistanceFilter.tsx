@@ -19,11 +19,6 @@ const distanceOptions = [
 export default function DistanceFilter({ currentDistance, onDistanceChange }: DistanceFilterProps) {
   const [modalVisible, setModalVisible] = useState(false);
 
-  const getCurrentLabel = () => {
-    const option = distanceOptions.find((opt) => opt.value === currentDistance);
-    return option ? option.label : `${currentDistance} miles`;
-  };
-
   const handleDistanceSelect = (distance: number) => {
     onDistanceChange(distance);
     setModalVisible(false);

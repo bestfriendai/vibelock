@@ -3,33 +3,41 @@
 ## Issues Identified and Fixed
 
 ### 1. **Wrong Storage Service Usage** ❌➡️✅
+
 **Problem**: The `reviewsStore.ts` was using the newer `storage.ts` service which requires authentication for all uploads, conflicting with the user preference to "maximize user review posting without barriers."
 
-**Solution**: 
+**Solution**:
+
 - Changed import in `src/state/reviewsStore.ts` from `../services/storage` to `../services/storageService`
 - Updated all upload method calls to use the correct signature: `uploadFile(fileUri, options)` instead of `uploadFile(bucket, path, file)`
 - The `storageService.ts` supports anonymous uploads for review images
 
 ### 2. **RLS Policy Conflict** ❌➡️✅
+
 **Problem**: Supabase RLS policies required authentication for review-images uploads, preventing anonymous users from posting reviews.
 
-**Solution**: 
+**Solution**:
+
 - Created migration `supabase/migrations/20250121000001_allow_anonymous_review_uploads.sql`
 - Updated RLS policies to allow anonymous uploads for review-images bucket
 - Maintained security for update/delete operations (still require authentication)
 
 ### 3. **Outdated Permission Handling** ❌➡️✅
+
 **Problem**: `MediaUploadGrid.tsx` was using deprecated permission APIs instead of modern hooks.
 
 **Solution**:
+
 - Updated to use modern permission hooks: `useCameraPermissions()` and `useMediaLibraryPermissions()`
 - Replaced `requestPermissions()` with `ensurePermission(which: "camera" | "library")`
 - Improved error handling and user feedback
 
 ### 4. **File Upload Method Signature Mismatch** ❌➡️✅
+
 **Problem**: Upload calls were using wrong parameters, causing TypeScript errors and runtime failures.
 
 **Solution**:
+
 - Fixed image upload calls to use proper file URI and options object
 - Added proper temporary file handling for video uploads and thumbnails
 - Ensured proper cleanup of temporary files
@@ -37,6 +45,7 @@
 ## Files Modified
 
 ### Core Fixes
+
 1. **`src/state/reviewsStore.ts`**
    - Changed storage service import
    - Fixed upload method calls for images and videos
@@ -53,6 +62,7 @@
    - Maintains security for other operations
 
 ### Testing & Utilities
+
 4. **`src/utils/uploadTest.ts`** (New)
    - Comprehensive test utility for upload functionality
    - Tests permissions, image picker, and upload flow
@@ -61,6 +71,7 @@
 ## Expo SDK 54 Compatibility ✅
 
 The app is fully compatible with Expo SDK 54:
+
 - Using modern permission hooks (`useCameraPermissions`, `useMediaLibraryPermissions`)
 - Proper `expo-file-system/legacy` usage (still supported in SDK 54)
 - Updated ImagePicker API usage
@@ -76,14 +87,16 @@ The app is fully compatible with Expo SDK 54:
 ## Testing the Fixes
 
 ### Manual Testing
+
 1. **Run the app** and navigate to Create Review screen
 2. **Test image selection** from gallery and camera
 3. **Test video selection** and upload
 4. **Verify uploads** work for both authenticated and anonymous users
 
 ### Automated Testing
+
 ```typescript
-import { runUploadTests } from './src/utils/uploadTest';
+import { runUploadTests } from "./src/utils/uploadTest";
 
 // Run comprehensive upload tests
 await runUploadTests();

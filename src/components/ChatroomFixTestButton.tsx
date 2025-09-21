@@ -1,7 +1,12 @@
 import React, { useState } from "react";
 import { View, Text, Pressable, ScrollView, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { runChatroomTests, startNetworkMonitoring, ScrollTestResult, NetworkTestResult } from "../utils/chatroomScrollTest";
+import {
+  runChatroomTests,
+  startNetworkMonitoring,
+  ScrollTestResult,
+  NetworkTestResult,
+} from "../utils/chatroomScrollTest";
 
 interface TestResultsProps {
   scrollTests: ScrollTestResult[];
@@ -18,14 +23,14 @@ function TestResults({ scrollTests, networkTests, summary }: TestResultsProps) {
   return (
     <ScrollView className="max-h-96 bg-surface-800 rounded-lg p-4 mt-4">
       <Text className="text-text-primary font-bold text-lg mb-3">Test Results</Text>
-      
+
       {/* Summary */}
       <View className="bg-surface-700 rounded-lg p-3 mb-4">
         <Text className="text-text-primary font-semibold mb-2">Summary</Text>
         <Text className="text-text-secondary text-sm">
           Total Tests: {summary.totalTests} | Passed: {summary.passedTests} | Failed: {summary.failedTests}
         </Text>
-        <Text className={`text-sm font-medium ${summary.successRate >= 80 ? 'text-green-400' : 'text-red-400'}`}>
+        <Text className={`text-sm font-medium ${summary.successRate >= 80 ? "text-green-400" : "text-red-400"}`}>
           Success Rate: {summary.successRate}%
         </Text>
       </View>
@@ -36,17 +41,15 @@ function TestResults({ scrollTests, networkTests, summary }: TestResultsProps) {
         {scrollTests.map((test, index) => (
           <View key={index} className="bg-surface-700 rounded-lg p-3 mb-2">
             <View className="flex-row items-center mb-1">
-              <Ionicons 
-                name={test.passed ? "checkmark-circle" : "close-circle"} 
-                size={16} 
-                color={test.passed ? "#10b981" : "#ef4444"} 
+              <Ionicons
+                name={test.passed ? "checkmark-circle" : "close-circle"}
+                size={16}
+                color={test.passed ? "#10b981" : "#ef4444"}
               />
               <Text className="text-text-primary font-medium ml-2">{test.testName}</Text>
             </View>
             <Text className="text-text-secondary text-sm">{test.details}</Text>
-            {test.error && (
-              <Text className="text-red-400 text-xs mt-1">Error: {test.error}</Text>
-            )}
+            {test.error && <Text className="text-red-400 text-xs mt-1">Error: {test.error}</Text>}
           </View>
         ))}
       </View>
@@ -57,10 +60,10 @@ function TestResults({ scrollTests, networkTests, summary }: TestResultsProps) {
         {networkTests.map((test, index) => (
           <View key={index} className="bg-surface-700 rounded-lg p-3 mb-2">
             <View className="flex-row items-center mb-1">
-              <Ionicons 
-                name={test.passed ? "checkmark-circle" : "close-circle"} 
-                size={16} 
-                color={test.passed ? "#10b981" : "#ef4444"} 
+              <Ionicons
+                name={test.passed ? "checkmark-circle" : "close-circle"}
+                size={16}
+                color={test.passed ? "#10b981" : "#ef4444"}
               />
               <Text className="text-text-primary font-medium ml-2">{test.testName}</Text>
             </View>
@@ -95,14 +98,12 @@ export default function ChatroomFixTestButton() {
       Alert.alert(
         "Test Results",
         `${results.summary.passedTests}/${results.summary.totalTests} tests passed (${results.summary.successRate}%)`,
-        [{ text: "OK" }]
+        [{ text: "OK" }],
       );
     } catch (error) {
-      Alert.alert(
-        "Test Error",
-        `Failed to run tests: ${error instanceof Error ? error.message : String(error)}`,
-        [{ text: "OK" }]
-      );
+      Alert.alert("Test Error", `Failed to run tests: ${error instanceof Error ? error.message : String(error)}`, [
+        { text: "OK" },
+      ]);
     } finally {
       setIsRunning(false);
     }
@@ -123,7 +124,7 @@ export default function ChatroomFixTestButton() {
   return (
     <View className="p-4">
       <Text className="text-text-primary font-bold text-xl mb-4">Chatroom Fix Tests</Text>
-      
+
       <Text className="text-text-secondary text-sm mb-4">
         Test the fixes for message scrolling/ordering and network connectivity detection.
       </Text>
@@ -138,9 +139,7 @@ export default function ChatroomFixTestButton() {
           }`}
         >
           <Ionicons name="play" size={16} color="white" />
-          <Text className="text-white font-medium ml-2">
-            {isRunning ? "Running..." : "Run Tests"}
-          </Text>
+          <Text className="text-white font-medium ml-2">{isRunning ? "Running..." : "Run Tests"}</Text>
         </Pressable>
 
         <Pressable
@@ -150,9 +149,7 @@ export default function ChatroomFixTestButton() {
           }`}
         >
           <Ionicons name={isMonitoring ? "stop" : "radio"} size={16} color="white" />
-          <Text className="text-white font-medium ml-2">
-            {isMonitoring ? "Stop Monitor" : "Monitor Network"}
-          </Text>
+          <Text className="text-white font-medium ml-2">{isMonitoring ? "Stop Monitor" : "Monitor Network"}</Text>
         </Pressable>
       </View>
 
@@ -163,10 +160,12 @@ export default function ChatroomFixTestButton() {
       <View className="bg-surface-800 rounded-lg p-4 mt-4">
         <Text className="text-text-primary font-semibold mb-2">What These Tests Check:</Text>
         <Text className="text-text-secondary text-sm mb-2">
-          📜 <Text className="font-medium">Message Scrolling:</Text> Verifies messages are in chronological order (oldest to newest) and auto-scroll configuration is correct.
+          📜 <Text className="font-medium">Message Scrolling:</Text> Verifies messages are in chronological order
+          (oldest to newest) and auto-scroll configuration is correct.
         </Text>
         <Text className="text-text-secondary text-sm">
-          📶 <Text className="font-medium">Network Detection:</Text> Checks for false "no internet" errors and ensures consistent network state detection across components.
+          📶 <Text className="font-medium">Network Detection:</Text> Checks for false "no internet" errors and ensures
+          consistent network state detection across components.
         </Text>
       </View>
     </View>

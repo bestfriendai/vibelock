@@ -1,5 +1,5 @@
-import { performanceMonitor } from '../utils/performance';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { performanceMonitor } from "../utils/performance";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 interface ComponentInstance {
   name: string;
@@ -18,7 +18,7 @@ interface Subscription {
 
 interface Timer {
   id: NodeJS.Timeout;
-  type: 'timeout' | 'interval';
+  type: "timeout" | "interval";
   createdAt: number;
   component: string;
   duration?: number;
@@ -42,11 +42,11 @@ interface MemoryReport {
 }
 
 interface MemoryLeak {
-  type: 'component' | 'subscription' | 'timer' | 'cache';
+  type: "component" | "subscription" | "timer" | "cache";
   id: string;
   description: string;
   duration: number;
-  severity: 'low' | 'medium' | 'high';
+  severity: "low" | "medium" | "high";
 }
 
 export class MemoryManager {
@@ -64,7 +64,7 @@ export class MemoryManager {
     this.thresholds = {
       warning: 0.7, // 70% of device memory
       critical: 0.85, // 85% of device memory
-      maxCacheSize: 50 * 1024 * 1024 // 50MB max cache
+      maxCacheSize: 50 * 1024 * 1024, // 50MB max cache
     };
 
     this.initializeMemoryMonitoring();
@@ -73,12 +73,12 @@ export class MemoryManager {
   private async initializeMemoryMonitoring() {
     // Load saved thresholds
     try {
-      const saved = await AsyncStorage.getItem('memoryThresholds');
+      const saved = await AsyncStorage.getItem("memoryThresholds");
       if (saved) {
         this.thresholds = { ...this.thresholds, ...JSON.parse(saved) };
       }
     } catch (error) {
-      console.error('Failed to load memory thresholds:', error);
+      console.error("Failed to load memory thresholds:", error);
     }
 
     // Start leak detection
@@ -98,13 +98,13 @@ export class MemoryManager {
       name: componentName,
       id: instanceId,
       mountTime: Date.now(),
-      memoryUsage: this.estimateComponentMemory(componentName)
+      memoryUsage: this.estimateComponentMemory(componentName),
     });
 
-    performanceMonitor.recordMetric('componentMount', {
+    performanceMonitor.recordMetric("componentMount", {
       component: componentName,
       instanceId,
-      totalComponents: this.componentInstances.size
+      totalComponents: this.componentInstances.size,
     });
   }
 
@@ -126,11 +126,11 @@ export class MemoryManager {
     component.unmountTime = Date.now();
     const lifetime = component.unmountTime - component.mountTime;
 
-    performanceMonitor.recordMetric('componentUnmount', {
+    performanceMonitor.recordMetric("componentUnmount", {
       component: component.name,
       instanceId,
       lifetime,
-      totalComponents: this.componentInstances.size
+      totalComponents: this.componentInstances.size,
     });
 
     // Clean up after a delay to detect potential leaks
@@ -150,7 +150,7 @@ export class MemoryManager {
       id,
       type,
       createdAt: Date.now(),
-      component
+      component,
     });
   }
 
@@ -164,13 +164,13 @@ export class MemoryManager {
   /**
    * Track a timer
    */
-  trackTimer(id: NodeJS.Timeout, type: 'timeout' | 'interval', component: string, duration?: number): void {
+  trackTimer(id: NodeJS.Timeout, type: "timeout" | "interval", component: string, duration?: number): void {
     this.timers.set(id, {
       id,
       type,
       createdAt: Date.now(),
       component,
-      duration
+      duration,
     });
   }
 
@@ -192,24 +192,26 @@ export class MemoryManager {
     this.componentInstances.forEach((component, id) => {
       if (component.unmountTime) {
         const timeSinceUnmount = now - component.unmountTime;
-        if (timeSinceUnmount > 10000) { // 10 seconds
+        if (timeSinceUnmount > 10000) {
+          // 10 seconds
           leaks.push({
-            type: 'component',
+            type: "component",
             id,
             description: `Component ${component.name} not cleaned up after unmount`,
             duration: timeSinceUnmount,
-            severity: timeSinceUnmount > 30000 ? 'high' : 'medium'
+            severity: timeSinceUnmount > 30000 ? "high" : "medium",
           });
         }
       } else {
         const lifetime = now - component.mountTime;
-        if (lifetime > 300000) { // 5 minutes
+        if (lifetime > 300000) {
+          // 5 minutes
           leaks.push({
-            type: 'component',
+            type: "component",
             id,
             description: `Component ${component.name} mounted for too long`,
             duration: lifetime,
-            severity: lifetime > 600000 ? 'high' : 'low'
+            severity: lifetime > 600000 ? "high" : "low",
           });
         }
       }
@@ -218,13 +220,14 @@ export class MemoryManager {
     // Check for orphaned subscriptions
     this.subscriptions.forEach((sub, id) => {
       const age = now - sub.createdAt;
-      if (age > 300000) { // 5 minutes
+      if (age > 300000) {
+        // 5 minutes
         leaks.push({
-          type: 'subscription',
+          type: "subscription",
           id,
           description: `${sub.type} subscription from ${sub.component} is orphaned`,
           duration: age,
-          severity: age > 600000 ? 'high' : 'medium'
+          severity: age > 600000 ? "high" : "medium",
         });
       }
     });
@@ -232,21 +235,22 @@ export class MemoryManager {
     // Check for long-running timers
     this.timers.forEach((timer) => {
       const age = now - timer.createdAt;
-      if (timer.type === 'interval' && age > 300000) { // 5 minutes for intervals
+      if (timer.type === "interval" && age > 300000) {
+        // 5 minutes for intervals
         leaks.push({
-          type: 'timer',
+          type: "timer",
           id: timer.id.toString(),
           description: `Long-running interval from ${timer.component}`,
           duration: age,
-          severity: age > 600000 ? 'high' : 'medium'
+          severity: age > 600000 ? "high" : "medium",
         });
-      } else if (timer.type === 'timeout' && timer.duration && timer.duration > 60000 && age > timer.duration + 10000) {
+      } else if (timer.type === "timeout" && timer.duration && timer.duration > 60000 && age > timer.duration + 10000) {
         leaks.push({
-          type: 'timer',
+          type: "timer",
           id: timer.id.toString(),
           description: `Timeout from ${timer.component} should have fired`,
           duration: age,
-          severity: 'medium'
+          severity: "medium",
         });
       }
     });
@@ -256,24 +260,25 @@ export class MemoryManager {
     this.cacheRegistry.forEach((cache, name) => {
       totalCacheSize += cache.size;
       const age = now - cache.lastAccess;
-      if (age > 600000 && cache.size > 1024 * 1024) { // 10 minutes and > 1MB
+      if (age > 600000 && cache.size > 1024 * 1024) {
+        // 10 minutes and > 1MB
         leaks.push({
-          type: 'cache',
+          type: "cache",
           id: name,
           description: `Cache ${name} not accessed recently (${Math.round(cache.size / 1024)}KB)`,
           duration: age,
-          severity: cache.size > 5 * 1024 * 1024 ? 'high' : 'low'
+          severity: cache.size > 5 * 1024 * 1024 ? "high" : "low",
         });
       }
     });
 
     if (totalCacheSize > this.thresholds.maxCacheSize) {
       leaks.push({
-        type: 'cache',
-        id: 'total',
+        type: "cache",
+        id: "total",
         description: `Total cache size exceeded (${Math.round(totalCacheSize / 1024 / 1024)}MB)`,
         duration: 0,
-        severity: 'high'
+        severity: "high",
       });
     }
 
@@ -292,7 +297,7 @@ export class MemoryManager {
     return {
       used,
       total,
-      percentage: used / total
+      percentage: used / total,
     };
   }
 
@@ -312,27 +317,29 @@ export class MemoryManager {
       }
     });
 
-    toDelete.forEach(id => this.componentInstances.delete(id));
+    toDelete.forEach((id) => this.componentInstances.delete(id));
 
     // Clean up old subscriptions
     const subToDelete: string[] = [];
     this.subscriptions.forEach((sub, id) => {
-      if (now - sub.createdAt > 600000) { // 10 minutes
+      if (now - sub.createdAt > 600000) {
+        // 10 minutes
         subToDelete.push(id);
       }
     });
 
-    subToDelete.forEach(id => this.subscriptions.delete(id));
+    subToDelete.forEach((id) => this.subscriptions.delete(id));
 
     // Clean up old cache entries
     const cacheToDelete: string[] = [];
     this.cacheRegistry.forEach((cache, name) => {
-      if (now - cache.lastAccess > 600000) { // 10 minutes
+      if (now - cache.lastAccess > 600000) {
+        // 10 minutes
         cacheToDelete.push(name);
       }
     });
 
-    cacheToDelete.forEach(name => this.cacheRegistry.delete(name));
+    cacheToDelete.forEach((name) => this.cacheRegistry.delete(name));
 
     // Trigger garbage collection if available
     if (global.gc) {
@@ -343,10 +350,10 @@ export class MemoryManager {
     const endSize = this.componentInstances.size + this.subscriptions.size + this.timers.size;
     const cleaned = startSize - endSize;
 
-    performanceMonitor.recordMetric('memoryCleanup', {
+    performanceMonitor.recordMetric("memoryCleanup", {
       cleaned,
       remaining: endSize,
-      cachesCleaned: cacheToDelete.length
+      cachesCleaned: cacheToDelete.length,
     });
 
     return cleaned;
@@ -367,7 +374,7 @@ export class MemoryManager {
       subscriptionCount: this.subscriptions.size,
       timerCount: this.timers.size,
       leaks,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     };
   }
 
@@ -377,7 +384,7 @@ export class MemoryManager {
   registerCache(name: string, size: number): void {
     this.cacheRegistry.set(name, {
       size,
-      lastAccess: Date.now()
+      lastAccess: Date.now(),
     });
   }
 
@@ -394,18 +401,18 @@ export class MemoryManager {
   /**
    * Check if memory threshold is exceeded
    */
-  async checkMemoryPressure(): Promise<'normal' | 'warning' | 'critical'> {
+  async checkMemoryPressure(): Promise<"normal" | "warning" | "critical"> {
     const usage = await this.getMemoryUsage();
 
     if (usage.percentage > this.thresholds.critical) {
-      this.alertMemoryPressure('critical', usage.percentage);
-      return 'critical';
+      this.alertMemoryPressure("critical", usage.percentage);
+      return "critical";
     } else if (usage.percentage > this.thresholds.warning) {
-      this.alertMemoryPressure('warning', usage.percentage);
-      return 'warning';
+      this.alertMemoryPressure("warning", usage.percentage);
+      return "warning";
     }
 
-    return 'normal';
+    return "normal";
   }
 
   /**
@@ -420,23 +427,23 @@ export class MemoryManager {
       const leaks = this.detectLeaks();
 
       if (leaks.length > 0) {
-        const highSeverityLeaks = leaks.filter(l => l.severity === 'high');
+        const highSeverityLeaks = leaks.filter((l) => l.severity === "high");
 
         if (highSeverityLeaks.length > 0) {
-          console.warn('High severity memory leaks detected:', highSeverityLeaks);
+          console.warn("High severity memory leaks detected:", highSeverityLeaks);
           await this.forceCleanup();
         }
 
-        performanceMonitor.recordMetric('memoryLeaks', {
+        performanceMonitor.recordMetric("memoryLeaks", {
           count: leaks.length,
           high: highSeverityLeaks.length,
-          types: [...new Set(leaks.map(l => l.type))]
+          types: [...new Set(leaks.map((l) => l.type))],
         });
       }
 
       // Check memory pressure
       const pressure = await this.checkMemoryPressure();
-      if (pressure === 'critical') {
+      if (pressure === "critical") {
         await this.forceCleanup();
       }
 
@@ -466,7 +473,7 @@ export class MemoryManager {
       MessageInput: 1 * 1024 * 1024, // 1MB
       FlashList: 2 * 1024 * 1024, // 2MB
       Modal: 1 * 1024 * 1024, // 1MB
-      default: 100 * 1024 // 100KB default
+      default: 100 * 1024, // 100KB default
     };
 
     return estimates[componentName] || estimates.default;
@@ -479,7 +486,7 @@ export class MemoryManager {
     let total = 0;
 
     // Component memory
-    this.componentInstances.forEach(component => {
+    this.componentInstances.forEach((component) => {
       if (!component.unmountTime) {
         total += component.memoryUsage || 0;
       }
@@ -492,7 +499,7 @@ export class MemoryManager {
     total += this.timers.size * 5 * 1024; // 5KB per timer
 
     // Cache memory
-    this.cacheRegistry.forEach(cache => {
+    this.cacheRegistry.forEach((cache) => {
       total += cache.size;
     });
 
@@ -516,8 +523,9 @@ export class MemoryManager {
       const recent = this.memorySnapshots.slice(-10);
       const growth = recent[recent.length - 1] - recent[0];
 
-      if (growth > 10 * 1024 * 1024) { // 10MB growth
-        console.warn('Significant memory growth detected:', Math.round(growth / 1024 / 1024), 'MB');
+      if (growth > 10 * 1024 * 1024) {
+        // 10MB growth
+        console.warn("Significant memory growth detected:", Math.round(growth / 1024 / 1024), "MB");
       }
     }
   }
@@ -525,7 +533,7 @@ export class MemoryManager {
   /**
    * Alert memory pressure
    */
-  private alertMemoryPressure(level: 'warning' | 'critical', percentage: number): void {
+  private alertMemoryPressure(level: "warning" | "critical", percentage: number): void {
     const alertKey = `${level}-${Math.floor(percentage * 10)}`;
 
     if (!this.memoryAlerts.has(alertKey)) {
@@ -533,10 +541,10 @@ export class MemoryManager {
 
       console.warn(`Memory ${level}: ${Math.round(percentage * 100)}% usage`);
 
-      performanceMonitor.recordMetric('memoryPressure', {
+      performanceMonitor.recordMetric("memoryPressure", {
         level,
         percentage,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
 
       // Clear alert after 5 minutes
@@ -549,9 +557,9 @@ export class MemoryManager {
   /**
    * Get memory trends
    */
-  getMemoryTrends(): { snapshots: number[]; trend: 'stable' | 'growing' | 'shrinking' } {
+  getMemoryTrends(): { snapshots: number[]; trend: "stable" | "growing" | "shrinking" } {
     if (this.memorySnapshots.length < 2) {
-      return { snapshots: this.memorySnapshots, trend: 'stable' };
+      return { snapshots: this.memorySnapshots, trend: "stable" };
     }
 
     const recent = this.memorySnapshots.slice(-10);
@@ -559,12 +567,12 @@ export class MemoryManager {
     const first = recent[0];
     const last = recent[recent.length - 1];
 
-    let trend: 'stable' | 'growing' | 'shrinking' = 'stable';
+    let trend: "stable" | "growing" | "shrinking" = "stable";
 
     if (last > first * 1.1) {
-      trend = 'growing';
+      trend = "growing";
     } else if (last < first * 0.9) {
-      trend = 'shrinking';
+      trend = "shrinking";
     }
 
     return { snapshots: this.memorySnapshots, trend };

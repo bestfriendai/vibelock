@@ -39,6 +39,7 @@ export default function ResetPasswordScreen() {
     // Form entrance
     formOpacity.value = withDelay(400, withTiming(1, { duration: 600 }));
     formTranslateY.value = withDelay(400, withSpring(0, { damping: 15, stiffness: 200 }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const validatePassword = (password: string) => {

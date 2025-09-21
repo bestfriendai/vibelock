@@ -4,7 +4,6 @@ import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { MediaItem } from "../types";
-import { videoThumbnailService } from "../services/videoThumbnailService";
 import { formatVideoDurationFromMs, validateVideoFile } from "../utils/videoUtils";
 import { imageCompressionService } from "../services/imageCompressionService";
 import MediaViewer from "./MediaViewer";
@@ -15,11 +14,14 @@ import Animated, {
   withTiming,
   withSequence,
   withRepeat,
-  runOnJS,
 } from "react-native-reanimated";
 import { useResponsiveScreen } from "../utils/responsive";
 import { handleMediaUploadError, showMediaErrorAlert } from "../utils/mediaErrorHandling";
-import { launchImageLibraryWithWorkaround, isPHPhotosError3164, getPHPhotosErrorMessage } from "../utils/imagePickerWorkaround";
+import {
+  launchImageLibraryWithWorkaround,
+  isPHPhotosError3164,
+  getPHPhotosErrorMessage,
+} from "../utils/imagePickerWorkaround";
 
 interface Props {
   media: MediaItem[];
@@ -120,11 +122,10 @@ export default function MediaUploadGrid({ media, onMediaChange, maxItems = 6, re
     try {
       const result = await ImagePicker.launchCameraAsync({
         mediaTypes: type === "photo" ? ["images"] : ["videos"],
-        allowsEditing: true,
+        allowsEditing: false,
         aspect: [4, 3],
         quality: 0.8,
         videoMaxDuration: 60,
-        allowsEditing: false,
       });
 
       if (!result.canceled && result.assets[0]) {
@@ -168,7 +169,6 @@ export default function MediaUploadGrid({ media, onMediaChange, maxItems = 6, re
 
     setIsLoading(true);
     try {
-
       const remainingSlots = maxItems - media.length;
 
       // Use the workaround utility to handle PHPhotosErrorDomain 3164
@@ -252,15 +252,11 @@ export default function MediaUploadGrid({ media, onMediaChange, maxItems = 6, re
 
       // Use the enhanced error handling for PHPhotosErrorDomain issues
       if (isPHPhotosError3164(error)) {
-        Alert.alert(
-          "Photo Library Access Issue",
-          getPHPhotosErrorMessage(error),
-          [
-            { text: "Cancel", style: "cancel" },
-            { text: "Try Again", onPress: () => openLibrary() },
-            { text: "Open Settings", onPress: () => Linking.openSettings?.() },
-          ]
-        );
+        Alert.alert("Photo Library Access Issue", getPHPhotosErrorMessage(error), [
+          { text: "Cancel", style: "cancel" },
+          { text: "Try Again", onPress: () => openLibrary() },
+          { text: "Open Settings", onPress: () => Linking.openSettings?.() },
+        ]);
       } else {
         handleMediaError(error, "media library selection");
       }

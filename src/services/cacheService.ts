@@ -109,7 +109,6 @@ class CacheService {
    * Cleanup expired entries and manage memory
    */
   private async cleanup(): Promise<void> {
-    const now = Date.now();
     const expiredKeys: string[] = [];
 
     // Find expired entries
