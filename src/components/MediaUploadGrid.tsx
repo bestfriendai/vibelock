@@ -19,6 +19,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { useResponsiveScreen } from "../utils/responsive";
 import { handleMediaUploadError, showMediaErrorAlert } from "../utils/mediaErrorHandling";
+import { launchImageLibraryWithWorkaround, isPHPhotosError3164, getPHPhotosErrorMessage } from "../utils/imagePickerWorkaround";
 
 interface Props {
   media: MediaItem[];
@@ -180,7 +181,9 @@ export default function MediaUploadGrid({ media, onMediaChange, maxItems = 6, re
       }
 
       const remainingSlots = maxItems - media.length;
-      const result = await ImagePicker.launchImageLibraryAsync({
+
+      // Use the workaround utility to handle PHPhotosErrorDomain 3164
+      const result = await launchImageLibraryWithWorkaround({
         mediaTypes: ["images", "videos"],
         allowsMultipleSelection: remainingSlots > 1,
         selectionLimit: remainingSlots,
@@ -188,6 +191,8 @@ export default function MediaUploadGrid({ media, onMediaChange, maxItems = 6, re
         aspect: [4, 3],
         quality: 0.8,
         videoMaxDuration: 60,
+        maxRetries: 3,
+        retryDelay: 500,
       });
 
       if (!result.canceled && result.assets.length > 0) {
@@ -253,8 +258,23 @@ export default function MediaUploadGrid({ media, onMediaChange, maxItems = 6, re
 
         onMediaChange([...media, ...newMediaItems]);
       }
-    } catch (error) {
-      handleMediaError(error, "media library selection");
+    } catch (error: any) {
+      console.warn("Media library selection error:", error);
+
+      // Use the enhanced error handling for PHPhotosErrorDomain issues
+      if (isPHPhotosError3164(error)) {
+        Alert.alert(
+          "Photo Library Access Issue",
+          getPHPhotosErrorMessage(error),
+          [
+            { text: "Cancel", style: "cancel" },
+            { text: "Try Again", onPress: () => openLibrary() },
+            { text: "Open Settings", onPress: () => Linking.openSettings?.() },
+          ]
+        );
+      } else {
+        handleMediaError(error, "media library selection");
+      }
     } finally {
       setIsLoading(false);
     }

@@ -7,6 +7,7 @@ import * as Haptics from "expo-haptics";
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from "react-native-reanimated";
 import { useTheme } from "../providers/ThemeProvider";
 import { AppError, ErrorType } from "../utils/errorHandling";
+import { launchImageLibraryWithWorkaround, isPHPhotosError3164, getPHPhotosErrorMessage } from "../utils/imagePickerWorkaround";
 
 const { width: screenWidth } = Dimensions.get("window");
 
@@ -172,12 +173,16 @@ export const MediaPicker: React.FC<MediaPickerProps> = ({ onMediaSelect, onClose
 
     try {
       setIsLoading(true);
-      const result = await ImagePicker.launchImageLibraryAsync({
+
+      // Use the workaround utility to handle PHPhotosErrorDomain 3164
+      const result = await launchImageLibraryWithWorkaround({
         mediaTypes: ImagePicker.MediaTypeOptions.All,
         allowsEditing: true,
         aspect: [4, 3],
         quality: 0.8,
         allowsMultipleSelection: false,
+        maxRetries: 3,
+        retryDelay: 500,
       });
 
       if (!result.canceled && result.assets[0]) {
@@ -210,18 +215,19 @@ export const MediaPicker: React.FC<MediaPickerProps> = ({ onMediaSelect, onClose
     } catch (error: any) {
       console.warn("Gallery error:", error);
 
-      // Handle PHPhotosErrorDomain errors specifically
-      if (error?.message?.includes("PHPhotosErrorDomain")) {
-        if (error?.message?.includes("3164")) {
-          Alert.alert(
-            "Photo Library Access Denied",
-            "Please allow photo library access in Settings > Privacy & Security > Photos > LockerRoom.",
-            [
-              { text: "Cancel", style: "cancel" },
-              { text: "Open Settings", onPress: () => Linking.openSettings?.() },
-            ]
-          );
-        } else if (error?.message?.includes("3311")) {
+      // Use the enhanced error handling for PHPhotosErrorDomain issues
+      if (isPHPhotosError3164(error)) {
+        Alert.alert(
+          "Photo Library Access Issue",
+          getPHPhotosErrorMessage(error),
+          [
+            { text: "Cancel", style: "cancel" },
+            { text: "Try Again", onPress: () => pickImageFromGallery() },
+            { text: "Open Settings", onPress: () => Linking.openSettings?.() },
+          ]
+        );
+      } else if (error?.message?.includes("PHPhotosErrorDomain")) {
+        if (error?.message?.includes("3311")) {
           Alert.alert(
             "Network Required",
             "Network access is required to load photos from iCloud. Please check your internet connection."
