@@ -5,8 +5,7 @@
  * Manages service initialization order, health checks, performance monitoring, and graceful degradation.
  */
 
-import { Platform } from "react-native";
-import { supabase, performHealthCheck } from "../config/supabase";
+import { performHealthCheck } from "../config/supabase";
 import { compatibilityChecker, PerformanceMonitor } from "../utils/compatibilityUtils";
 import { errorReportingService } from "./errorReporting";
 import { notificationService } from "./notificationService";
@@ -222,6 +221,16 @@ class InitializationService {
       initialize: this.initializeRealtimeChat.bind(this),
       healthCheck: this.checkRealtimeChatHealth.bind(this),
     });
+
+    this.registerService({
+      name: "background_tasks",
+      required: false,
+      timeout: 5000,
+      retryAttempts: 1,
+      dependencies: [],
+      initialize: this.initializeBackgroundTasks.bind(this),
+      healthCheck: this.checkBackgroundTasksHealth.bind(this),
+    });
   }
 
   /**
@@ -435,7 +444,7 @@ class InitializationService {
    * Initialize optional services with parallel execution
    */
   private async initializeOptionalServices(): Promise<void> {
-    const optionalServices = ["notifications", "admob", "subscriptions", "realtime_chat"];
+    const optionalServices = ["notifications", "admob", "subscriptions", "realtime_chat", "background_tasks"];
 
     // Initialize optional services in parallel for better performance
     const promises = optionalServices.map(async (serviceName) => {
@@ -747,6 +756,48 @@ class InitializationService {
 
   private async initializeRealtimeChat(): Promise<void> {
     await enhancedRealtimeChatService.initialize();
+  }
+
+  /**
+   * Initialize background tasks with proper error handling
+   */
+  private async initializeBackgroundTasks(): Promise<void> {
+    try {
+      console.log("[InitializationService] Initializing background tasks...");
+
+      // Check if expo-task-manager is available before importing
+      try {
+        await import("expo-task-manager");
+        console.log("[InitializationService] Background task manager initialized successfully");
+      } catch (importError) {
+        console.warn(
+          "[InitializationService] expo-task-manager not available, skipping background task initialization",
+        );
+        // This is expected if expo-task-manager is not installed
+      }
+    } catch (error) {
+      console.warn("[InitializationService] Background task initialization failed:", error);
+      // Don't throw error for background task failures
+    }
+  }
+
+  /**
+   * Check background tasks health
+   */
+  private async checkBackgroundTasksHealth(): Promise<boolean> {
+    try {
+      // Check if expo-task-manager is available
+      try {
+        await import("expo-task-manager");
+        return true;
+      } catch (importError) {
+        console.warn("[InitializationService] expo-task-manager not available, background tasks unavailable");
+        return false;
+      }
+    } catch (error) {
+      console.warn("[InitializationService] Background tasks health check failed:", error);
+      return false;
+    }
   }
 
   // Health check methods

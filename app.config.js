@@ -56,7 +56,7 @@ export default {
           },
         ],
         ITSAppUsesNonExemptEncryption: false,
-        UIBackgroundModes: ["background-fetch", "remote-notification", "background-processing"],
+        // Background modes removed - no background processing implemented in codebase
       },
       requireFullScreen: false,
       userInterfaceStyle: "automatic",
@@ -160,9 +160,9 @@ export default {
         {
           android: {
             hermesEnabled: true,
-            compileSdkVersion: 35,
-            targetSdkVersion: 35,
-            buildToolsVersion: "35.0.0",
+            compileSdkVersion: 36,
+            targetSdkVersion: 36,
+            buildToolsVersion: "36.0.0",
             proguardMinifyEnabled: true,
           },
           ios: {
