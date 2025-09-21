@@ -34,6 +34,10 @@ export default function MediaUploadGrid({ media, onMediaChange, maxItems = 6, re
   const [isLoading, setIsLoading] = useState(false);
   const screenData = useResponsiveScreen();
 
+  // Modern permission hooks (SDK 54)
+  const [cameraPermission, requestCameraPermission] = ImagePicker.useCameraPermissions();
+  const [libraryPermission, requestLibraryPermission] = ImagePicker.useMediaLibraryPermissions();
+
   const addButtonScale = useSharedValue(1);
   const spinRotation = useSharedValue(0);
 
@@ -49,33 +53,30 @@ export default function MediaUploadGrid({ media, onMediaChange, maxItems = 6, re
   const GRID_GAP = screenData.responsive.cardGap;
   const ITEM_SIZE = (screenData.width - GRID_PADDING - GRID_GAP * (ITEMS_PER_ROW - 1)) / ITEMS_PER_ROW;
 
-  const requestPermissions = async () => {
+  const ensurePermission = async (which: "camera" | "library"): Promise<boolean> => {
     try {
-      const { status: cameraStatus } = await ImagePicker.requestCameraPermissionsAsync();
-      const { status: libraryStatus } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-      if (cameraStatus !== "granted" || libraryStatus !== "granted") {
-        Alert.alert(
-          "Permissions Required",
-          "Please grant camera and photo library permissions to add media to your review.",
-          [
-            { text: "Cancel", style: "cancel" },
-            { text: "Open Settings", onPress: () => Linking.openSettings?.() },
-          ],
-        );
-        return false;
-      }
-      return true;
-    } catch (error) {
-      console.warn("Permission request failed:", error);
-      Alert.alert(
-        "Permission Error",
-        "Unable to request permissions. Please check your device settings.",
-        [
+      if (which === "camera") {
+        if (cameraPermission?.granted) return true;
+        const res = await requestCameraPermission();
+        if (res?.granted) return true;
+        Alert.alert("Camera Permission Needed", "Grant camera access to take photos or videos.", [
           { text: "Cancel", style: "cancel" },
           { text: "Open Settings", onPress: () => Linking.openSettings?.() },
-        ],
-      );
+        ]);
+        return false;
+      } else {
+        if (libraryPermission?.granted) return true;
+        const res = await requestLibraryPermission();
+        if (res?.granted) return true;
+        Alert.alert("Library Permission Needed", "Grant media library access to choose photos or videos.", [
+          { text: "Cancel", style: "cancel" },
+          { text: "Open Settings", onPress: () => Linking.openSettings?.() },
+        ]);
+        return false;
+      }
+    } catch (e) {
+      console.warn("Permission request failed", e);
+      Alert.alert("Error", "Failed to request permissions. Please try again.");
       return false;
     }
   };
@@ -112,7 +113,7 @@ export default function MediaUploadGrid({ media, onMediaChange, maxItems = 6, re
   };
 
   const openCamera = async (type: "photo" | "video") => {
-    const hasPermission = await requestPermissions();
+    const hasPermission = (await ensurePermission("camera")) && (await ensurePermission("library"));
     if (!hasPermission) return;
 
     setIsLoading(true);
@@ -161,24 +162,11 @@ export default function MediaUploadGrid({ media, onMediaChange, maxItems = 6, re
   };
 
   const openLibrary = async () => {
-    const hasPermission = await requestPermissions();
+    const hasPermission = await ensurePermission("library");
     if (!hasPermission) return;
 
     setIsLoading(true);
     try {
-      // Double-check permissions before launching library
-      const { status } = await ImagePicker.getMediaLibraryPermissionsAsync();
-      if (status !== "granted") {
-        Alert.alert(
-          "Permission Required",
-          "Photo library access is required to select media.",
-          [
-            { text: "Cancel", style: "cancel" },
-            { text: "Open Settings", onPress: () => Linking.openSettings?.() },
-          ],
-        );
-        return;
-      }
 
       const remainingSlots = maxItems - media.length;
 

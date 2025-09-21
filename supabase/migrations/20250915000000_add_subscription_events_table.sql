@@ -3,7 +3,7 @@
 
 -- Create subscription_events table for tracking all subscription-related events
 CREATE TABLE IF NOT EXISTS subscription_events (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   event_type TEXT NOT NULL CHECK (event_type IN (
     'subscription_started',

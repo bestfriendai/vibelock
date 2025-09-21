@@ -8,7 +8,7 @@ import * as VideoThumbnails from "expo-video-thumbnails";
 import { Review, FilterOptions, GreenFlag, RedFlag, MediaItem, SocialMediaHandles, Sentiment } from "../types";
 import { filterReviewsByDistanceAsync } from "../utils/location";
 import { reviewsService } from "../services/reviews";
-import { storageService } from "../services/storage";
+import { storageService } from "../services/storageService";
 import useAuthStore from "./authStore";
 import { notificationService } from "../services/notificationService";
 import { AppError, parseSupabaseError } from "../utils/errorHandling";
@@ -476,8 +476,12 @@ const useReviewsStore = create<ReviewsStore>()(
                 }
 
                 const filename = `reviews/${Date.now()}_${Math.random().toString(36).substring(7)}.jpg`;
-                const uploadResult = await storageService.uploadFile("review-images", filename, arrayBuffer);
-                const downloadURL = typeof uploadResult === 'string' ? uploadResult : uploadResult.url;
+                const uploadResult = await storageService.uploadFile(manipulatedImage.uri, {
+                  bucket: "review-images",
+                  fileName: filename,
+                  contentType: "image/jpeg"
+                });
+                const downloadURL = uploadResult.url || "";
 
                 uploadedMedia.push({
                   ...mediaItem,
@@ -517,8 +521,19 @@ const useReviewsStore = create<ReviewsStore>()(
                   const thumbBuf = await thumbResp.arrayBuffer();
                   if (thumbBuf && thumbBuf.byteLength > 0) {
                     const thumbName = `reviews/${Date.now()}_${Math.random().toString(36).substring(7)}_thumb.jpg`;
-                    const thumbResult = await storageService.uploadFile("review-images", thumbName, thumbBuf);
-                    thumbnailUrl = typeof thumbResult === 'string' ? thumbResult : thumbResult.url;
+                    // Create a temporary file for the thumbnail
+                    const tempThumbPath = `${FileSystem.cacheDirectory}${thumbName}`;
+                    await FileSystem.writeAsStringAsync(tempThumbPath, Buffer.from(thumbBuf).toString("base64"), {
+                      encoding: FileSystem.EncodingType.Base64,
+                    });
+                    const thumbResult = await storageService.uploadFile(tempThumbPath, {
+                      bucket: "review-images",
+                      fileName: thumbName,
+                      contentType: "image/jpeg",
+                    });
+                    thumbnailUrl = thumbResult.url || "";
+                    // Clean up temp file
+                    await FileSystem.deleteAsync(tempThumbPath, { idempotent: true });
                   }
                 } catch (thumbErr) {
                   console.warn("⚠️ Failed to generate/upload video thumbnail:", thumbErr);
@@ -526,9 +541,20 @@ const useReviewsStore = create<ReviewsStore>()(
 
                 const ext = mime === "video/quicktime" ? "mov" : "mp4";
                 const filename = `reviews/${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
+                // Create a temporary file for the video
+                const tempVideoPath = `${FileSystem.cacheDirectory}${filename}`;
+                await FileSystem.writeAsStringAsync(tempVideoPath, Buffer.from(arrayBuffer).toString("base64"), {
+                  encoding: FileSystem.EncodingType.Base64,
+                });
                 // Use review-images bucket (unrestricted MIME types)
-                const uploadResult = await storageService.uploadFile("review-images", filename, arrayBuffer);
-                const downloadURL = typeof uploadResult === 'string' ? uploadResult : uploadResult.url;
+                const uploadResult = await storageService.uploadFile(tempVideoPath, {
+                  bucket: "review-images",
+                  fileName: filename,
+                  contentType: mime,
+                });
+                const downloadURL = uploadResult.url || "";
+                // Clean up temp file
+                await FileSystem.deleteAsync(tempVideoPath, { idempotent: true });
 
                 uploadedMedia.push({
                   ...mediaItem,

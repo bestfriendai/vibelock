@@ -89,7 +89,7 @@ class ProductionMonitor {
   private networkState: any = null;
   private deviceInfo: Record<string, any> = {};
   private analyticsEnabled: boolean = true;
-  private dataCo llectionConsent: boolean = false;
+  private dataCollectionConsent: boolean = false;
 
   // Thresholds for monitoring
   private thresholds = {
