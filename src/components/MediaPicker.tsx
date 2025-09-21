@@ -207,9 +207,31 @@ export const MediaPicker: React.FC<MediaPickerProps> = ({ onMediaSelect, onClose
           }
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.warn("Gallery error:", error);
-      Alert.alert("Error", "Failed to pick media. Please try again.");
+
+      // Handle PHPhotosErrorDomain errors specifically
+      if (error?.message?.includes("PHPhotosErrorDomain")) {
+        if (error?.message?.includes("3164")) {
+          Alert.alert(
+            "Photo Library Access Denied",
+            "Please allow photo library access in Settings > Privacy & Security > Photos > LockerRoom.",
+            [
+              { text: "Cancel", style: "cancel" },
+              { text: "Open Settings", onPress: () => Linking.openSettings?.() },
+            ]
+          );
+        } else if (error?.message?.includes("3311")) {
+          Alert.alert(
+            "Network Required",
+            "Network access is required to load photos from iCloud. Please check your internet connection."
+          );
+        } else {
+          Alert.alert("Photo Library Error", "Unable to access photo library. Please try again.");
+        }
+      } else {
+        Alert.alert("Error", "Failed to pick media. Please try again.");
+      }
     } finally {
       setIsLoading(false);
     }

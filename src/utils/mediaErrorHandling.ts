@@ -56,6 +56,30 @@ export const createMediaError = (
 export const handleMediaUploadError = (error: any, context: string = "media upload"): MediaError => {
   console.warn(`Media upload error in ${context}:`, error);
 
+  // Handle iOS PHPhotosErrorDomain errors specifically
+  if (error?.message?.includes("PHPhotosErrorDomain")) {
+    if (error?.message?.includes("3164") || error?.message?.includes("AccessUserDenied")) {
+      return createMediaError(
+        "Photo library access denied. Please allow access in Settings > Privacy & Security > Photos.",
+        "PERMISSION_DENIED",
+        false
+      );
+    }
+    if (error?.message?.includes("3311") || error?.message?.includes("NetworkAccessRequired")) {
+      return createMediaError(
+        "Network access required to load photos from iCloud. Please check your internet connection.",
+        "NETWORK_ERROR",
+        true
+      );
+    }
+    // Generic PHPhotos error
+    return createMediaError(
+      "Unable to access photo library. Please try again or check your permissions.",
+      "PERMISSION_DENIED",
+      false
+    );
+  }
+
   // Avoid complex error class construction that can fail in worklet contexts
   if (
     error?.message?.includes("network") ||

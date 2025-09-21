@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Pressable, Text, Alert, ActionSheetIOS, Platform } from "react-native";
+import { View, Pressable, Text, Alert, ActionSheetIOS, Platform, Linking } from "react-native";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
@@ -49,18 +49,34 @@ export default function MediaUploadGrid({ media, onMediaChange, maxItems = 6, re
   const ITEM_SIZE = (screenData.width - GRID_PADDING - GRID_GAP * (ITEMS_PER_ROW - 1)) / ITEMS_PER_ROW;
 
   const requestPermissions = async () => {
-    const { status: cameraStatus } = await ImagePicker.requestCameraPermissionsAsync();
-    const { status: libraryStatus } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    try {
+      const { status: cameraStatus } = await ImagePicker.requestCameraPermissionsAsync();
+      const { status: libraryStatus } = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-    if (cameraStatus !== "granted" || libraryStatus !== "granted") {
+      if (cameraStatus !== "granted" || libraryStatus !== "granted") {
+        Alert.alert(
+          "Permissions Required",
+          "Please grant camera and photo library permissions to add media to your review.",
+          [
+            { text: "Cancel", style: "cancel" },
+            { text: "Open Settings", onPress: () => Linking.openSettings?.() },
+          ],
+        );
+        return false;
+      }
+      return true;
+    } catch (error) {
+      console.warn("Permission request failed:", error);
       Alert.alert(
-        "Permissions Required",
-        "Please grant camera and photo library permissions to add media to your review.",
-        [{ text: "OK" }],
+        "Permission Error",
+        "Unable to request permissions. Please check your device settings.",
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Open Settings", onPress: () => Linking.openSettings?.() },
+        ],
       );
       return false;
     }
-    return true;
   };
 
   const showMediaOptions = () => {
@@ -149,6 +165,20 @@ export default function MediaUploadGrid({ media, onMediaChange, maxItems = 6, re
 
     setIsLoading(true);
     try {
+      // Double-check permissions before launching library
+      const { status } = await ImagePicker.getMediaLibraryPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert(
+          "Permission Required",
+          "Photo library access is required to select media.",
+          [
+            { text: "Cancel", style: "cancel" },
+            { text: "Open Settings", onPress: () => Linking.openSettings?.() },
+          ],
+        );
+        return;
+      }
+
       const remainingSlots = maxItems - media.length;
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ["images", "videos"],
