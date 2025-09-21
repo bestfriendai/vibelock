@@ -105,6 +105,10 @@ export default function BrowseScreen({ navigation, route }: Props) {
 
     const done = startTimer("browse:initialLoad");
     try {
+      // Use requestIdleCallback for better performance if available
+      if (typeof requestIdleCallback !== 'undefined') {
+        await new Promise(resolve => requestIdleCallback(resolve));
+      }
       await loadReviews(true);
     } catch (error: any) {
       if (error.name !== "AbortError") {

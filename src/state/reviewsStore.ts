@@ -151,10 +151,14 @@ const useReviewsStore = create<ReviewsStore>()(
         overrideLocation?: { city: string; state: string; coordinates?: { latitude: number; longitude: number } },
       ) => {
         try {
-          set({ isLoading: true, error: null });
-
+          // Early return if already loading to prevent duplicate requests
           const currentState = get();
-          const { filters } = get();
+          if (currentState.isLoading && !refresh) {
+            return;
+          }
+
+          set({ isLoading: true, error: null });
+          const { filters } = currentState;
 
           // Get user preference and location from auth store if available, or use override
           let userPrefCategory: string | undefined;
