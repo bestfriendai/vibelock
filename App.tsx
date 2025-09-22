@@ -273,7 +273,7 @@ const InitializationError: React.FC<{
 };
 
 export default function App() {
-  const { initializeAuthListener } = useAuthStore();
+  const { initializeAuthListener, isAuthenticated } = useAuthStore();
   const { cleanup: cleanupChat } = useChatStore();
   const { initializeRevenueCat, identifyRevenueCatUser } = useSubscriptionStore();
 
@@ -389,6 +389,38 @@ export default function App() {
       i18n.off("languageChanged", handleLanguageChange);
     };
   }, []);
+
+  // Initialize location detection for authenticated users
+  useEffect(() => {
+    const initializeUserLocation = async () => {
+      try {
+        const user = useAuthStore.getState().user;
+        if (user && (user.location?.city === "Unknown" || !user.location?.city)) {
+          const { locationService } = await import("./src/services/locationService");
+          const result = await locationService.detectLocation();
+
+          if (result.success && result.location) {
+            const authState = useAuthStore.getState();
+            await authState.updateUserLocation({
+              city: result.location.city,
+              state: result.location.state,
+              coordinates: result.location.coordinates,
+              type: result.location.type,
+              fullName: result.location.fullName,
+              institutionType: result.location.institutionType,
+            });
+            console.log("✅ User location initialized:", result.location);
+          }
+        }
+      } catch (error) {
+        console.log("Location initialization skipped:", error);
+      }
+    };
+
+    // Delay location init slightly to ensure auth is ready
+    const timer = setTimeout(initializeUserLocation, 2000);
+    return () => clearTimeout(timer);
+  }, [isAuthenticated]);
 
   // Enhanced app state management with React Native 0.81.4 compatibility
   useEffect(() => {

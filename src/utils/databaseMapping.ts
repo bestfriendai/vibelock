@@ -27,7 +27,7 @@ export function mapDatabaseReviewToReview(dbReview: any): Review | null {
 
     // Handle location field - prioritize structured location over string
     let reviewedPersonLocation = {
-      city: "Unknown",
+      city: "",
       state: "",
       coordinates: undefined as { latitude: number; longitude: number } | undefined,
     };
@@ -39,7 +39,7 @@ export function mapDatabaseReviewToReview(dbReview: any): Review | null {
         try {
           const parsed = JSON.parse(structuredLocation);
           reviewedPersonLocation = {
-            city: parsed.city || "Unknown",
+            city: parsed.city || "",
             state: parsed.state || "",
             coordinates: parsed.coordinates,
           };
@@ -49,7 +49,7 @@ export function mapDatabaseReviewToReview(dbReview: any): Review | null {
         }
       } else if (typeof structuredLocation === "object") {
         reviewedPersonLocation = {
-          city: structuredLocation.city || "Unknown",
+          city: structuredLocation.city || "",
           state: structuredLocation.state || "",
           coordinates: structuredLocation.coordinates,
         };
@@ -59,6 +59,9 @@ export function mapDatabaseReviewToReview(dbReview: any): Review | null {
     else if (dbReview.location) {
       reviewedPersonLocation.city = dbReview.location;
     }
+
+    // If still no location, keep empty strings (will show as blank rather than "Unknown")
+    // The UI components should handle empty strings appropriately
 
     // Handle social media - database stores as JSON
     let socialMedia = undefined;

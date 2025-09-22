@@ -27,7 +27,18 @@ export default function BrowseScreen({ navigation, route }: Props) {
   const insets = useSafeAreaInsets();
   const { user, updateUserLocation } = useAuthStore();
   const { colors } = useTheme();
-  const [currentLocation, setCurrentLocation] = useState<LocationData | null>(null);
+  const [currentLocation, setCurrentLocation] = useState<LocationData | null>(
+    user?.location
+      ? {
+          city: user.location.city,
+          state: user.location.state || "",
+          fullName: user.location.fullName || `${user.location.city}, ${user.location.state || ""}`,
+          coordinates: user.location.coordinates,
+          type: user.location.type,
+          institutionType: user.location.institutionType,
+        }
+      : null,
+  );
   const [locationLoading, setLocationLoading] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -147,12 +158,20 @@ export default function BrowseScreen({ navigation, route }: Props) {
             <LocationSelector
               key={`${currentLocation?.city}-${currentLocation?.state}`}
               currentLocation={
-                currentLocation || {
-                  city: "Unknown",
-                  state: "",
-                  fullName: "Location unavailable",
-                  coordinates: undefined,
-                }
+                currentLocation ||
+                (user?.location
+                  ? {
+                      city: user.location.city,
+                      state: user.location.state || "",
+                      fullName: user.location.fullName || `${user.location.city}, ${user.location.state || ""}`,
+                      coordinates: user.location.coordinates,
+                    }
+                  : {
+                      city: "",
+                      state: "",
+                      fullName: "Detecting location...",
+                      coordinates: undefined,
+                    })
               }
               onLocationChange={async (location) => {
                 if (__DEV__) {
@@ -163,14 +182,14 @@ export default function BrowseScreen({ navigation, route }: Props) {
 
                   // Immediately reload reviews with new location (no waiting for auth store update)
                   await loadReviews(true, {
-                    city: location?.city || "Unknown",
+                    city: location?.city || user?.location?.city || "",
                     state: location?.state || "",
                     coordinates: location?.coordinates || undefined,
                   });
 
                   // Update user location in auth store (async, for persistence)
                   updateUserLocation({
-                    city: location?.city || "Unknown",
+                    city: location?.city || user?.location?.city || "",
                     state: location?.state || "",
                     coordinates: location?.coordinates || undefined,
                     type: location?.type || undefined,

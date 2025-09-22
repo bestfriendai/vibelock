@@ -180,14 +180,30 @@ const useAuthStore = create<AuthStore>()(
 
           // If no profile exists, create a basic one
           if (!userProfile) {
+            // Try to detect user's location automatically
+            let detectedLocation = {
+              city: "Unknown",
+              state: "Unknown",
+            };
+
+            try {
+              const { locationService } = await import("../services/locationService");
+              const locationResult = await locationService.detectLocation();
+              if (locationResult.success && locationResult.location) {
+                detectedLocation = {
+                  city: locationResult.location.city,
+                  state: locationResult.location.state,
+                };
+              }
+            } catch (error) {
+              console.log("Location detection failed, using defaults:", error);
+            }
+
             const basicProfile: Partial<User> = {
               id: supabaseUser.id,
               email: supabaseUser.email || email,
               anonymousId: uuidv4(),
-              location: {
-                city: "Unknown",
-                state: "Unknown",
-              },
+              location: detectedLocation,
               genderPreference: "all",
             };
 
@@ -451,6 +467,33 @@ const useAuthStore = create<AuthStore>()(
               }
 
               if (userProfile) {
+                // Check if location needs updating (is still Unknown)
+                if (userProfile.location?.city === "Unknown" || !userProfile.location?.city) {
+                  try {
+                    const { locationService } = await import("../services/locationService");
+                    const locationResult = await locationService.detectLocation();
+                    if (locationResult.success && locationResult.location) {
+                      // Update the user's location in the database
+                      await usersService.updateProfile(userProfile.id, {
+                        city: locationResult.location.city,
+                        state: locationResult.location.state,
+                        latitude: locationResult.location.coordinates?.latitude,
+                        longitude: locationResult.location.coordinates?.longitude,
+                      } as any);
+
+                      // Update local state with detected location
+                      userProfile.location = {
+                        city: locationResult.location.city,
+                        state: locationResult.location.state,
+                        coordinates: locationResult.location.coordinates,
+                      };
+                      console.log("✅ Auto-updated user location:", userProfile.location);
+                    }
+                  } catch (error) {
+                    console.log("Location auto-update failed:", error);
+                  }
+                }
+
                 set((state) => ({
                   ...state,
                   user: userProfile,
