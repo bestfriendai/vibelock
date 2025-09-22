@@ -64,9 +64,10 @@ export default function ImageCarousel({
 
   // Cleanup prefetched images on unmount
   useEffect(() => {
+    const currentRef = prefetchedUrisRef.current;
     return () => {
       // Clear prefetch cache on unmount to prevent memory leaks
-      prefetchedUrisRef.current.clear();
+      currentRef.clear();
     };
   }, []);
 

@@ -1,68 +1,61 @@
-
 <!doctype html>
 <html lang="en">
-
-<head>
+  <head>
     <title>Code coverage report for state/reviewsStore.ts</title>
     <meta charset="utf-8" />
     <link rel="stylesheet" href="../prettify.css" />
     <link rel="stylesheet" href="../base.css" />
     <link rel="shortcut icon" type="image/x-icon" href="../favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <style type='text/css'>
-        .coverage-summary .sorter {
-            background-image: url(../sort-arrow-sprite.png);
-        }
+    <style type="text/css">
+      .coverage-summary .sorter {
+        background-image: url(../sort-arrow-sprite.png);
+      }
     </style>
-</head>
-    
-<body>
-<div class='wrapper'>
-    <div class='pad1'>
+  </head>
+
+  <body>
+    <div class="wrapper">
+      <div class="pad1">
         <h1><a href="../index.html">All files</a> / <a href="index.html">state</a> reviewsStore.ts</h1>
-        <div class='clearfix'>
-            
-            <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
-                <span class="quiet">Statements</span>
-                <span class='fraction'>0/245</span>
-            </div>
-        
-            
-            <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
-                <span class="quiet">Branches</span>
-                <span class='fraction'>0/228</span>
-            </div>
-        
-            
-            <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
-                <span class="quiet">Functions</span>
-                <span class='fraction'>0/37</span>
-            </div>
-        
-            
-            <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
-                <span class="quiet">Lines</span>
-                <span class='fraction'>0/238</span>
-            </div>
-        
-            
+        <div class="clearfix">
+          <div class="fl pad1y space-right2">
+            <span class="strong">0% </span>
+            <span class="quiet">Statements</span>
+            <span class="fraction">0/245</span>
+          </div>
+
+          <div class="fl pad1y space-right2">
+            <span class="strong">0% </span>
+            <span class="quiet">Branches</span>
+            <span class="fraction">0/236</span>
+          </div>
+
+          <div class="fl pad1y space-right2">
+            <span class="strong">0% </span>
+            <span class="quiet">Functions</span>
+            <span class="fraction">0/37</span>
+          </div>
+
+          <div class="fl pad1y space-right2">
+            <span class="strong">0% </span>
+            <span class="quiet">Lines</span>
+            <span class="fraction">0/238</span>
+          </div>
         </div>
         <p class="quiet">
-            Press <em>n</em> or <em>j</em> to go to the next uncovered block, <em>b</em>, <em>p</em> or <em>k</em> for the previous block.
+          Press <em>n</em> or <em>j</em> to go to the next uncovered block, <em>b</em>, <em>p</em> or <em>k</em> for the
+          previous block.
         </p>
         <template id="filterTemplate">
-            <div class="quiet">
-                Filter:
-                <input type="search" id="fileSearch">
-            </div>
+          <div class="quiet">
+            Filter:
+            <input type="search" id="fileSearch" />
+          </div>
         </template>
-    </div>
-    <div class='status-line low'></div>
-    <pre><table class="coverage">
+      </div>
+      <div class="status-line low"></div>
+      <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
 <a name='L3'></a><a href='#L3'>3</a>
@@ -1773,7 +1766,7 @@ const useReviewsStore = <span class="cstat-no" title="statement not covered" >cr
 <span class="cstat-no" title="statement not covered" >            if (!overrideLocation) {</span>
 <span class="cstat-no" title="statement not covered" >              userLocation = authStore.user?.location;</span>
             }
-          } catch {
+          } catch (error) {
 <span class="cstat-no" title="statement not covered" >            userPrefCategory = undefined;</span>
 <span class="cstat-no" title="statement not covered" >            if (!overrideLocation) {</span>
 <span class="cstat-no" title="statement not covered" >              userLocation = undefined;</span>
@@ -1899,7 +1892,7 @@ const useReviewsStore = <span class="cstat-no" title="statement not covered" >cr
 &nbsp;
                 // Sort by creation date (most recent first) after distance filtering
 <span class="cstat-no" title="statement not covered" >                newReviews = distanceFiltered.sort(</span>
-<span class="fstat-no" title="function not covered" >                  (a</span>, b) =&gt; <span class="cstat-no" title="statement not covered" >new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),</span>
+<span class="fstat-no" title="function not covered" >                  (a</span>, b) =&gt; <span class="cstat-no" title="statement not covered" >new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime(),</span>
                 );
 &nbsp;
 <span class="cstat-no" title="statement not covered" >                if (__DEV__) {</span>
@@ -2231,7 +2224,7 @@ const useReviewsStore = <span class="cstat-no" title="statement not covered" >cr
 <span class="cstat-no" title="statement not covered" >        try {</span>
           const review = <span class="cstat-no" title="statement not covered" >get().reviews.find(<span class="fstat-no" title="function not covered" >(r</span>) =&gt; <span class="cstat-no" title="statement not covered" >r.id === id)</span>;</span>
 <span class="cstat-no" title="statement not covered" >          if (review) {</span>
-            const newLikeCount = <span class="cstat-no" title="statement not covered" >review.likeCount + 1;</span>
+            const newLikeCount = <span class="cstat-no" title="statement not covered" >(review.likeCount || 0) + 1;</span>
 &nbsp;
             // Update in database
 <span class="cstat-no" title="statement not covered" >            await reviewsService.updateReview(id, { likeCount: newLikeCount });</span>
@@ -2290,7 +2283,7 @@ const useReviewsStore = <span class="cstat-no" title="statement not covered" >cr
             reviews: Array.isArray(ps.reviews) ? ps.reviews : [],
             filters: ps.filters ?? { category: "all", radius: 50, sortBy: "recent" },
           };
-        } catch {
+        } catch (error) {
 <span class="cstat-no" title="statement not covered" >          return { reviews: [], filters: { category: "all", radius: 50, sortBy: "recent" } };</span>
         }
       },
@@ -2303,7 +2296,7 @@ const useReviewsStore = <span class="cstat-no" title="statement not covered" >cr
 &nbsp;
           // Remove reviews older than a month
 <span class="cstat-no" title="statement not covered" >          state.reviews = state.reviews.filter(<span class="fstat-no" title="function not covered" >(r</span>eview) =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >            return new Date(review.createdAt).getTime() &gt; oneMonthAgo;</span>
+<span class="cstat-no" title="statement not covered" >            return new Date(review.createdAt || 0).getTime() &gt; oneMonthAgo;</span>
           });
 &nbsp;
 <span class="cstat-no" title="statement not covered" >          if (__DEV__) {</span>
@@ -2318,21 +2311,22 @@ const useReviewsStore = <span class="cstat-no" title="statement not covered" >cr
 export default useReviewsStore;
 &nbsp;</pre></td></tr></table></pre>
 
-                <div class='push'></div><!-- for sticky footer -->
-            </div><!-- /wrapper -->
-            <div class='footer quiet pad2 space-top1 center small'>
-                Code coverage generated by
-                <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-09-22T02:28:17.185Z
-            </div>
-        <script src="../prettify.js"></script>
-        <script>
-            window.onload = function () {
-                prettyPrint();
-            };
-        </script>
-        <script src="../sorter.js"></script>
-        <script src="../block-navigation.js"></script>
-    </body>
+      <div class="push"></div>
+      <!-- for sticky footer -->
+    </div>
+    <!-- /wrapper -->
+    <div class="footer quiet pad2 space-top1 center small">
+      Code coverage generated by
+      <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
+      at 2025-09-22T04:19:37.759Z
+    </div>
+    <script src="../prettify.js"></script>
+    <script>
+      window.onload = function () {
+        prettyPrint();
+      };
+    </script>
+    <script src="../sorter.js"></script>
+    <script src="../block-navigation.js"></script>
+  </body>
 </html>
-    

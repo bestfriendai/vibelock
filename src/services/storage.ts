@@ -325,7 +325,7 @@ export class StorageService {
 
   // Enhanced method to get all files with pagination
   async getAllFiles(bucket: string, folder?: string, batchSize: number = 100): Promise<FileObject[]> {
-    const allFiles: FileObject[] = [];
+    const allFiles: FileObject[] = []; // TODO: Define local FileObject type[] = [];
     let offset = 0;
     let hasMore = true;
 

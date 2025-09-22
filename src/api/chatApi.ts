@@ -28,9 +28,9 @@ class ChatApiService {
 
   // Chat Rooms API
   async getChatRooms(): Promise<ChatApiResponse<ChatRoom[]>> {
-    await this.simulateNetworkDelay();
-
     try {
+      await this.simulateNetworkDelay();
+
       const rooms: ChatRoom[] = [
         {
           id: "room_local_dc",
@@ -172,7 +172,7 @@ class ChatApiService {
         data: rooms,
         success: true,
       };
-    } catch (error) {
+    } catch {
       return {
         data: [],
         success: false,
@@ -182,9 +182,9 @@ class ChatApiService {
   }
 
   async getChatRoom(roomId: string): Promise<ChatApiResponse<ChatRoom | null>> {
-    await this.simulateNetworkDelay();
-
     try {
+      await this.simulateNetworkDelay();
+
       const rooms = await this.getChatRooms();
       const room = rooms.data.find((r) => r.id === roomId);
 
@@ -192,7 +192,7 @@ class ChatApiService {
         data: room || null,
         success: true,
       };
-    } catch (error) {
+    } catch {
       return {
         data: null,
         success: false,
@@ -207,9 +207,9 @@ class ChatApiService {
     page = 1,
     limit = 50,
   ): Promise<ChatApiResponse<PaginatedResponse<ChatMessage>>> {
-    await this.simulateNetworkDelay();
-
     try {
+      await this.simulateNetworkDelay();
+
       // Generate mock messages for the room
       const mockMessages: ChatMessage[] = this.generateMockMessages(roomId, limit);
 
@@ -225,7 +225,7 @@ class ChatApiService {
         },
         success: true,
       };
-    } catch (error) {
+    } catch {
       return {
         data: {
           data: [],
@@ -243,9 +243,9 @@ class ChatApiService {
     senderId: string,
     senderName: string,
   ): Promise<ChatApiResponse<ChatMessage>> {
-    await this.simulateNetworkDelay(200);
-
     try {
+      await this.simulateNetworkDelay(200);
+
       const message: ChatMessage = {
         id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
         chatRoomId: roomId,
@@ -262,7 +262,7 @@ class ChatApiService {
         data: message,
         success: true,
       };
-    } catch (error) {
+    } catch {
       return {
         data: {} as ChatMessage,
         success: false,
@@ -273,9 +273,9 @@ class ChatApiService {
 
   // Members API
   async getChatMembers(roomId: string): Promise<ChatApiResponse<ChatMember[]>> {
-    await this.simulateNetworkDelay();
-
     try {
+      await this.simulateNetworkDelay();
+
       const mockMembers: ChatMember[] = [
         {
           id: "member_1",
@@ -327,7 +327,7 @@ class ChatApiService {
         data: mockMembers,
         success: true,
       };
-    } catch (error) {
+    } catch {
       return {
         data: [],
         success: false,
@@ -337,16 +337,16 @@ class ChatApiService {
   }
 
   async joinChatRoom(roomId: string, userId: string): Promise<ChatApiResponse<boolean>> {
-    await this.simulateNetworkDelay();
-
     try {
+      await this.simulateNetworkDelay();
+
       // Simulate joining room
       return {
         data: true,
         success: true,
         message: "Successfully joined chat room",
       };
-    } catch (error) {
+    } catch {
       return {
         data: false,
         success: false,
@@ -356,16 +356,16 @@ class ChatApiService {
   }
 
   async leaveChatRoom(roomId: string, userId: string): Promise<ChatApiResponse<boolean>> {
-    await this.simulateNetworkDelay();
-
     try {
+      await this.simulateNetworkDelay();
+
       // Simulate leaving room
       return {
         data: true,
         success: true,
         message: "Successfully left chat room",
       };
-    } catch (error) {
+    } catch {
       return {
         data: false,
         success: false,

@@ -42,7 +42,6 @@ interface State {
   errorContext: ErrorContext;
 }
 
-// Enhanced error classification for RN 0.81.4 + Expo 54
 type ErrorClassification =
   | "initialization"
   | "compatibility"
@@ -56,15 +55,17 @@ type ErrorClassification =
   | "general";
 
 interface ErrorContext {
-  phase: string;
+  phase: "unknown" | "runtime";
   services: string[];
-  compatibility: any;
-  memoryUsage?: any;
+  compatibility: {
+    isCompatible: boolean;
+    issues: string[];
+    platform: string;
+  };
   platform: string;
   isInitialized: boolean;
 }
 
-// React Native 0.81.4 specific error patterns
 const RN_0814_ERROR_PATTERNS = {
   hermes: /hermes|jsi|turbomodule/i,
   newArchitecture: /fabric|turbomodule|codegen/i,
@@ -105,12 +106,10 @@ class ErrorBoundaryClass extends Component<Props, State> {
       },
     };
 
-    // Check if error reporting is available
     this.errorReportingEnabled = errorReportingService.isInitialized();
   }
 
   override componentDidMount() {
-    // Listen for app state changes for auto-recovery
     this.appStateSubscription = AppState.addEventListener("change", this.handleAppStateChange);
   }
 
@@ -137,13 +136,9 @@ class ErrorBoundaryClass extends Component<Props, State> {
     };
   }
 
-  /**
-   * Classify error type for better handling
-   */
   static classifyError(error: Error): ErrorClassification {
     const errorMessage = error.message || error.toString();
 
-    // Check for React Native 0.81.4 specific patterns
     if (RN_0814_ERROR_PATTERNS.initialization.test(errorMessage)) return "initialization";
     if (RN_0814_ERROR_PATTERNS.compatibility.test(errorMessage)) return "compatibility";
     if (RN_0814_ERROR_PATTERNS.hermes.test(errorMessage)) return "compatibility";
@@ -153,8 +148,6 @@ class ErrorBoundaryClass extends Component<Props, State> {
     if (RN_0814_ERROR_PATTERNS.memory.test(errorMessage)) return "memory";
     if (RN_0814_ERROR_PATTERNS.permission.test(errorMessage)) return "permission";
     if (RN_0814_ERROR_PATTERNS.network.test(errorMessage)) return "network";
-
-    // Check for specific error types
     if (error instanceof AppError) {
       switch (error.type) {
         case ErrorType.INITIALIZATION:
@@ -169,26 +162,18 @@ class ErrorBoundaryClass extends Component<Props, State> {
           return "general";
       }
     }
-
-    // Legacy classification
     if (errorMessage.includes("View config") || errorMessage.includes("AutoLayout")) {
       return "view_config";
     }
-
     if (errorMessage.includes("component") && errorMessage.includes("not found")) {
       return "component_registration";
     }
-
     return "general";
   }
 
-  /**
-   * Gather error context for better diagnostics
-   */
   static gatherErrorContext(error: Error): ErrorContext {
     try {
       const compatibility = compatibilityChecker.checkCompatibility();
-
       return {
         phase: "runtime",
         services: [],
@@ -212,26 +197,18 @@ class ErrorBoundaryClass extends Component<Props, State> {
     }
   }
 
-  /**
-   * Assess if error is recoverable
-   */
   static assessRecoverability(error: Error, errorType: ErrorClassification): boolean {
-    // Some error types are more recoverable than others
     switch (errorType) {
       case "network":
       case "permission":
       case "view_config":
         return true;
-
       case "memory":
       case "native_module":
       case "compatibility":
         return false;
-
       case "initialization":
-        // Initialization errors might be recoverable depending on the specific error
         return !error.message.includes("critical");
-
       default:
         return true;
     }
@@ -244,27 +221,18 @@ class ErrorBoundaryClass extends Component<Props, State> {
       },
     });
     this.setState({ errorInfo });
-
-    // Enhanced logging for development
     if (__DEV__) {
       this.logDevelopmentError(error, errorInfo);
     }
 
-    // Report error to error reporting service
     this.reportError(error, errorInfo);
-
-    // Call custom error handler
     this.props.onError?.(error, errorInfo);
 
-    // Attempt auto-recovery if enabled
     if (this.props.enableAutoRecovery && this.state.canRecover) {
       this.attemptAutoRecovery();
     }
   }
 
-  /**
-   * Enhanced development logging
-   */
   private logDevelopmentError(error: Error, errorInfo: React.ErrorInfo) {
     console.group("🚨 ErrorBoundary caught an error");
     console.error("Error:", error);
@@ -272,8 +240,6 @@ class ErrorBoundaryClass extends Component<Props, State> {
     console.log("Error Classification:", this.state.errorType);
     console.log("Error Context:", this.state.errorContext);
     console.log("Recoverable:", this.state.canRecover);
-
-    // Provide specific guidance based on error type
     switch (this.state.errorType) {
       case "compatibility":
         console.warn("💡 Compatibility issue detected. Check React Native 0.81.4 + Expo 54 compatibility.");
@@ -294,27 +260,16 @@ class ErrorBoundaryClass extends Component<Props, State> {
         console.warn("💡 Network error detected. Check connectivity and API endpoints.");
         break;
     }
-
     console.groupEnd();
   }
 
-  /**
-   * Report error to error reporting service
-   */
   private async reportError(error: Error, errorInfo: React.ErrorInfo) {
     if (!this.errorReportingEnabled) return;
 
     try {
-      const enhancedErrorContext = {
-        errorBoundary: true,
-        errorType: this.state.errorType,
-        recoverable: this.state.canRecover,
-        resetCount: this.state.resetCount,
-        ...this.state.errorContext,
-      };
-
       await errorReportingService.reportError(error, {
         context: "error_boundary",
+        errorBoundary: true,
         errorType: this.state.errorType,
         recoverable: this.state.canRecover,
         resetCount: this.state.resetCount,
@@ -326,29 +281,21 @@ class ErrorBoundaryClass extends Component<Props, State> {
     }
   }
 
-  /**
-   * Handle app state changes for recovery
-   */
   private handleAppStateChange = (nextAppState: AppStateStatus) => {
     this.setState({ appState: nextAppState });
 
-    // Attempt recovery when app becomes active
     if (nextAppState === "active" && this.state.hasError && this.state.canRecover) {
       console.log("App became active, attempting recovery");
       this.attemptRecovery();
     }
   };
 
-  /**
-   * Attempt automatic recovery
-   */
   private attemptAutoRecovery() {
     if (this.state.recoveryAttempts >= (this.props.maxRecoveryAttempts || 3)) {
       console.log("Max recovery attempts reached");
       return;
     }
 
-    // Delay recovery based on error type
     const delay = this.getRecoveryDelay();
 
     this.recoveryTimer = setTimeout(() => {
@@ -356,25 +303,19 @@ class ErrorBoundaryClass extends Component<Props, State> {
     }, delay);
   }
 
-  /**
-   * Get recovery delay based on error type
-   */
   private getRecoveryDelay(): number {
     switch (this.state.errorType) {
       case "network":
-        return 2000; // Quick retry for network errors
+        return 2000;
       case "view_config":
-        return 1000; // Quick retry for view config errors
+        return 1000;
       case "initialization":
-        return 5000; // Longer delay for initialization errors
+        return 5000;
       default:
         return 3000;
     }
   }
 
-  /**
-   * Manual recovery attempt
-   */
   private attemptRecovery = () => {
     if (this.state.isRecovering) return;
 
@@ -383,7 +324,6 @@ class ErrorBoundaryClass extends Component<Props, State> {
       recoveryAttempts: this.state.recoveryAttempts + 1,
     });
 
-    // Perform recovery actions based on error type
     setTimeout(() => {
       this.setState({
         hasError: false,
@@ -393,14 +333,10 @@ class ErrorBoundaryClass extends Component<Props, State> {
         isRecovering: false,
       });
 
-      // Notify parent of recovery
       this.props.onRecovery?.();
     }, 1000);
   };
 
-  /**
-   * Show diagnostic information
-   */
   private showDiagnostics = () => {
     const diagnosticInfo = compatibilityChecker.getDiagnosticInfo();
     const errorDetails = {
@@ -421,9 +357,6 @@ class ErrorBoundaryClass extends Component<Props, State> {
     Alert.alert("Error Diagnostics", JSON.stringify(errorDetails, null, 2), [{ text: "OK" }]);
   };
 
-  /**
-   * Get user-friendly error message
-   */
   private getErrorMessage(): { title: string; message: string; actionText: string } {
     const baseMessages = {
       initialization: {
@@ -478,7 +411,7 @@ class ErrorBoundaryClass extends Component<Props, State> {
       },
     };
 
-    return baseMessages[this.state.errorType] || baseMessages.general;
+    return baseMessages[this.state.errorType as keyof typeof baseMessages] || baseMessages.general;
   }
 
   override render() {
@@ -509,7 +442,6 @@ class ErrorBoundaryClass extends Component<Props, State> {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.content}>
-            {/* Error Icon */}
             <View
               style={[styles.iconContainer, { backgroundColor: (theme.colors.error || theme.colors.primary) + "20" }]}
             >
@@ -526,19 +458,16 @@ class ErrorBoundaryClass extends Component<Props, State> {
               />
             </View>
 
-            {/* Error Title and Message */}
             <Text style={[styles.title, { color: theme.colors.text }]}>{errorMessage.title}</Text>
 
             <Text style={[styles.message, { color: theme.colors.textSecondary }]}>{errorMessage.message}</Text>
 
-            {/* Recovery Status */}
             {this.state.isRecovering && (
               <View style={[styles.recoveryContainer, { backgroundColor: theme.colors.warning + "20" }]}>
                 <Text style={[styles.recoveryText, { color: theme.colors.warning }]}>Attempting recovery...</Text>
               </View>
             )}
 
-            {/* Action Buttons */}
             <View style={styles.buttonContainer}>
               {this.state.canRecover && this.state.recoveryAttempts < maxAttempts && (
                 <Pressable
@@ -562,14 +491,12 @@ class ErrorBoundaryClass extends Component<Props, State> {
               )}
             </View>
 
-            {/* Recovery Attempts Counter */}
             {this.state.recoveryAttempts > 0 && (
               <Text style={[styles.attemptsText, { color: theme.colors.textSecondary }]}>
                 Recovery attempts: {this.state.recoveryAttempts}/{maxAttempts}
               </Text>
             )}
 
-            {/* Development Error Details */}
             {(this.props.showDetailedErrors || __DEV__) && this.state.error && (
               <View style={[styles.errorDetails, { backgroundColor: theme.colors.surface }]}>
                 <Text style={[styles.errorDetailsTitle, { color: theme.colors.text }]}>Error Details</Text>
@@ -679,13 +606,11 @@ const styles = StyleSheet.create({
   },
 });
 
-// Enhanced wrapper component with better theme handling
 export default function ErrorBoundary(props: Omit<Props, "theme">) {
   let themeObject: { colors: ThemeColors } | undefined;
 
   try {
     const theme = useTheme();
-
     if (theme && typeof theme === "object") {
       const themeValue = (theme as any).theme;
       if (themeValue && typeof themeValue === "object" && themeValue.colors) {
@@ -694,11 +619,10 @@ export default function ErrorBoundary(props: Omit<Props, "theme">) {
         themeObject = { colors: (theme as any).colors };
       }
     }
-  } catch (error) {
+  } catch {
     console.log("ErrorBoundary: Using default theme");
   }
 
-  // Default theme with enhanced colors for RN 0.81.4
   if (!themeObject) {
     themeObject = {
       colors: {

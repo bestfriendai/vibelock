@@ -45,21 +45,23 @@ export async function generateImage(
     });
 
     if (!response.ok) {
-      let errorData;
+      let errorData = null;
       try {
         errorData = await response.json();
-      } catch (error) {
+      } catch {
         errorData = { message: "Unknown error" };
       }
+
       const safeError = errorData || { message: "Unknown error" };
       console.warn("[AssetGenerationService] Error response:", safeError);
+
       throw new Error(`Image generation API error: ${response.status} ${JSON.stringify(safeError)}`);
     }
 
     let result;
     try {
       result = await response.json();
-    } catch (error) {
+    } catch {
       throw new Error("Failed to parse API response");
     }
 

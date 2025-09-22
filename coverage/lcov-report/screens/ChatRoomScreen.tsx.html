@@ -1,68 +1,61 @@
-
 <!doctype html>
 <html lang="en">
-
-<head>
+  <head>
     <title>Code coverage report for screens/ChatRoomScreen.tsx</title>
     <meta charset="utf-8" />
     <link rel="stylesheet" href="../prettify.css" />
     <link rel="stylesheet" href="../base.css" />
     <link rel="shortcut icon" type="image/x-icon" href="../favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <style type='text/css'>
-        .coverage-summary .sorter {
-            background-image: url(../sort-arrow-sprite.png);
-        }
+    <style type="text/css">
+      .coverage-summary .sorter {
+        background-image: url(../sort-arrow-sprite.png);
+      }
     </style>
-</head>
-    
-<body>
-<div class='wrapper'>
-    <div class='pad1'>
+  </head>
+
+  <body>
+    <div class="wrapper">
+      <div class="pad1">
         <h1><a href="../index.html">All files</a> / <a href="index.html">screens</a> ChatRoomScreen.tsx</h1>
-        <div class='clearfix'>
-            
-            <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
-                <span class="quiet">Statements</span>
-                <span class='fraction'>0/316</span>
-            </div>
-        
-            
-            <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
-                <span class="quiet">Branches</span>
-                <span class='fraction'>0/229</span>
-            </div>
-        
-            
-            <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
-                <span class="quiet">Functions</span>
-                <span class='fraction'>0/72</span>
-            </div>
-        
-            
-            <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
-                <span class="quiet">Lines</span>
-                <span class='fraction'>0/301</span>
-            </div>
-        
-            
+        <div class="clearfix">
+          <div class="fl pad1y space-right2">
+            <span class="strong">0% </span>
+            <span class="quiet">Statements</span>
+            <span class="fraction">0/316</span>
+          </div>
+
+          <div class="fl pad1y space-right2">
+            <span class="strong">0% </span>
+            <span class="quiet">Branches</span>
+            <span class="fraction">0/229</span>
+          </div>
+
+          <div class="fl pad1y space-right2">
+            <span class="strong">0% </span>
+            <span class="quiet">Functions</span>
+            <span class="fraction">0/72</span>
+          </div>
+
+          <div class="fl pad1y space-right2">
+            <span class="strong">0% </span>
+            <span class="quiet">Lines</span>
+            <span class="fraction">0/301</span>
+          </div>
         </div>
         <p class="quiet">
-            Press <em>n</em> or <em>j</em> to go to the next uncovered block, <em>b</em>, <em>p</em> or <em>k</em> for the previous block.
+          Press <em>n</em> or <em>j</em> to go to the next uncovered block, <em>b</em>, <em>p</em> or <em>k</em> for the
+          previous block.
         </p>
         <template id="filterTemplate">
-            <div class="quiet">
-                Filter:
-                <input type="search" id="fileSearch">
-            </div>
+          <div class="quiet">
+            Filter:
+            <input type="search" id="fileSearch" />
+          </div>
         </template>
-    </div>
-    <div class='status-line low'></div>
-    <pre><table class="coverage">
+      </div>
+      <div class="status-line low"></div>
+      <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
 <a name='L3'></a><a href='#L3'>3</a>
@@ -1952,7 +1945,7 @@ function <span class="fstat-no" title="function not covered" >toDateSafe(</span>
 <span class="cstat-no" title="statement not covered" >    if (typeof value === "number") <span class="cstat-no" title="statement not covered" >return new Date(value &lt; 1e12 ? value * 1000 : value);</span></span>
 <span class="cstat-no" title="statement not covered" >    if (typeof value === "string") <span class="cstat-no" title="statement not covered" >return new Date(value);</span></span>
 <span class="cstat-no" title="statement not covered" >    return new Date();</span>
-  } catch {
+  } catch (error) {
 <span class="cstat-no" title="statement not covered" >    return new Date();</span>
   }
 }
@@ -2120,7 +2113,7 @@ export default function <span class="fstat-no" title="function not covered" >Cha
 <span class="cstat-no" title="statement not covered" >          if (mountedRef.current) {</span>
 <span class="cstat-no" title="statement not covered" >            setIsSubscribed(result);</span>
           }
-        } catch {
+        } catch (error) {
 <span class="cstat-no" title="statement not covered" >          if (mountedRef.current) {</span>
 <span class="cstat-no" title="statement not covered" >            setIsSubscribed(false);</span>
           }
@@ -2769,8 +2762,8 @@ export default function <span class="fstat-no" title="function not covered" >Cha
 <span class="cstat-no" title="statement not covered" >            if (selectedMessage?.content) {</span>
 <span class="cstat-no" title="statement not covered" >              Clipboard.setStringAsync(selectedMessage.content);</span>
             }
-          } catch (e) {
-<span class="cstat-no" title="statement not covered" >            console.warn("Failed to copy message:", e);</span>
+          } catch (error) {
+<span class="cstat-no" title="statement not covered" >            console.warn("Failed to copy message:", error);</span>
           } finally {
 <span class="cstat-no" title="statement not covered" >            setIsActionsModalVisible(false);</span>
           }
@@ -2780,8 +2773,8 @@ export default function <span class="fstat-no" title="function not covered" >Cha
 <span class="cstat-no" title="statement not covered" >            if (selectedMessage?.id) {</span>
 <span class="cstat-no" title="statement not covered" >              await useChatStore.getState().deleteMessage?.(roomId, selectedMessage.id);</span>
             }
-          } catch (e) {
-<span class="cstat-no" title="statement not covered" >            console.warn("Failed to delete message:", e);</span>
+          } catch (error) {
+<span class="cstat-no" title="statement not covered" >            console.warn("Failed to delete message:", error);</span>
           } finally {
 <span class="cstat-no" title="statement not covered" >            setIsActionsModalVisible(false);</span>
           }
@@ -2831,21 +2824,22 @@ export default function <span class="fstat-no" title="function not covered" >Cha
 }
 &nbsp;</pre></td></tr></table></pre>
 
-                <div class='push'></div><!-- for sticky footer -->
-            </div><!-- /wrapper -->
-            <div class='footer quiet pad2 space-top1 center small'>
-                Code coverage generated by
-                <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-09-22T02:28:17.185Z
-            </div>
-        <script src="../prettify.js"></script>
-        <script>
-            window.onload = function () {
-                prettyPrint();
-            };
-        </script>
-        <script src="../sorter.js"></script>
-        <script src="../block-navigation.js"></script>
-    </body>
+      <div class="push"></div>
+      <!-- for sticky footer -->
+    </div>
+    <!-- /wrapper -->
+    <div class="footer quiet pad2 space-top1 center small">
+      Code coverage generated by
+      <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
+      at 2025-09-22T04:19:37.759Z
+    </div>
+    <script src="../prettify.js"></script>
+    <script>
+      window.onload = function () {
+        prettyPrint();
+      };
+    </script>
+    <script src="../sorter.js"></script>
+    <script src="../block-navigation.js"></script>
+  </body>
 </html>
-    

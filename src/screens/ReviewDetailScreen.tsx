@@ -611,26 +611,22 @@ export default function ReviewDetailScreen() {
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
 
-      {/* Media Viewer Modal */}
-      {reviewWithMedia && reviewWithMedia.media && (
-        <MediaViewer
-          visible={showMediaViewer}
-          media={reviewWithMedia.media}
-          initialIndex={selectedMediaIndex}
-          onClose={() => setShowMediaViewer(false)}
-        />
-      )}
+      {/* Media Viewer Modal - Always render to maintain consistent hook count */}
+      <MediaViewer
+        visible={showMediaViewer && !!reviewWithMedia?.media}
+        media={reviewWithMedia?.media || []}
+        initialIndex={selectedMediaIndex}
+        onClose={() => setShowMediaViewer(false)}
+      />
 
-      {/* Report Modal */}
-      {review && (
-        <ReportModal
-          visible={showReportModal}
-          onClose={() => setShowReportModal(false)}
-          itemId={review.id}
-          itemType="review"
-          itemName={`Review of ${review.reviewedPersonName}`}
-        />
-      )}
+      {/* Report Modal - Always render to maintain consistent hook count */}
+      <ReportModal
+        visible={showReportModal && !!review}
+        onClose={() => setShowReportModal(false)}
+        itemId={review?.id || ""}
+        itemType="review"
+        itemName={review ? `Review of ${review.reviewedPersonName}` : ""}
+      />
     </View>
   );
 }

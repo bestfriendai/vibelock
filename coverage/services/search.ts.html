@@ -1,68 +1,61 @@
-
 <!doctype html>
 <html lang="en">
-
-<head>
+  <head>
     <title>Code coverage report for services/search.ts</title>
     <meta charset="utf-8" />
     <link rel="stylesheet" href="../prettify.css" />
     <link rel="stylesheet" href="../base.css" />
     <link rel="shortcut icon" type="image/x-icon" href="../favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <style type='text/css'>
-        .coverage-summary .sorter {
-            background-image: url(../sort-arrow-sprite.png);
-        }
+    <style type="text/css">
+      .coverage-summary .sorter {
+        background-image: url(../sort-arrow-sprite.png);
+      }
     </style>
-</head>
-    
-<body>
-<div class='wrapper'>
-    <div class='pad1'>
+  </head>
+
+  <body>
+    <div class="wrapper">
+      <div class="pad1">
         <h1><a href="../index.html">All files</a> / <a href="index.html">services</a> search.ts</h1>
-        <div class='clearfix'>
-            
-            <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
-                <span class="quiet">Statements</span>
-                <span class='fraction'>0/150</span>
-            </div>
-        
-            
-            <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
-                <span class="quiet">Branches</span>
-                <span class='fraction'>0/178</span>
-            </div>
-        
-            
-            <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
-                <span class="quiet">Functions</span>
-                <span class='fraction'>0/27</span>
-            </div>
-        
-            
-            <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
-                <span class="quiet">Lines</span>
-                <span class='fraction'>0/130</span>
-            </div>
-        
-            
+        <div class="clearfix">
+          <div class="fl pad1y space-right2">
+            <span class="strong">0% </span>
+            <span class="quiet">Statements</span>
+            <span class="fraction">0/149</span>
+          </div>
+
+          <div class="fl pad1y space-right2">
+            <span class="strong">0% </span>
+            <span class="quiet">Branches</span>
+            <span class="fraction">0/186</span>
+          </div>
+
+          <div class="fl pad1y space-right2">
+            <span class="strong">0% </span>
+            <span class="quiet">Functions</span>
+            <span class="fraction">0/27</span>
+          </div>
+
+          <div class="fl pad1y space-right2">
+            <span class="strong">0% </span>
+            <span class="quiet">Lines</span>
+            <span class="fraction">0/129</span>
+          </div>
         </div>
         <p class="quiet">
-            Press <em>n</em> or <em>j</em> to go to the next uncovered block, <em>b</em>, <em>p</em> or <em>k</em> for the previous block.
+          Press <em>n</em> or <em>j</em> to go to the next uncovered block, <em>b</em>, <em>p</em> or <em>k</em> for the
+          previous block.
         </p>
         <template id="filterTemplate">
-            <div class="quiet">
-                Filter:
-                <input type="search" id="fileSearch">
-            </div>
+          <div class="quiet">
+            Filter:
+            <input type="search" id="fileSearch" />
+          </div>
         </template>
-    </div>
-    <div class='status-line low'></div>
-    <pre><table class="coverage">
+      </div>
+      <div class="status-line low"></div>
+      <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
 <a name='L3'></a><a href='#L3'>3</a>
@@ -680,7 +673,8 @@
 <a name='L615'></a><a href='#L615'>615</a>
 <a name='L616'></a><a href='#L616'>616</a>
 <a name='L617'></a><a href='#L617'>617</a>
-<a name='L618'></a><a href='#L618'>618</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L618'></a><a href='#L618'>618</a>
+<a name='L619'></a><a href='#L619'>619</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1283,7 +1277,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1298,7 +1293,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import supabase from "../config/supabase";
-import { SearchResults, Profile } from "../types";
+import { SearchResults, SearchResult, Profile } from "../types";
 import { mapFieldsToCamelCase } from "../utils/fieldMapping";
 import { withRetry } from "../utils/retryLogic";
 &nbsp;
@@ -1530,7 +1525,7 @@ export class SearchService {
 <span class="cstat-no" title="statement not covered" >        reviewData = data || [];</span>
       }
 &nbsp;
-      const reviews = <span class="cstat-no" title="statement not covered" >reviewData.map(<span class="fstat-no" title="function not covered" >(i</span>tem) =&gt; (<span class="cstat-no" title="statement not covered" >{</span></span>
+      const reviews = <span class="cstat-no" title="statement not covered" >reviewData.map(<span class="fstat-no" title="function not covered" >(i</span>tem: any) =&gt; (<span class="cstat-no" title="statement not covered" >{</span></span>
         id: item.id,
         type: "review" as const,
         title: item.reviewed_person_name,
@@ -1645,7 +1640,7 @@ export class SearchService {
 &nbsp;
 <span class="cstat-no" title="statement not covered" >      if (messageError) <span class="cstat-no" title="statement not covered" >throw messageError;</span></span>
 &nbsp;
-      const reviews = <span class="cstat-no" title="statement not covered" >(reviewData || []).map(<span class="fstat-no" title="function not covered" >(i</span>tem) =&gt; (<span class="cstat-no" title="statement not covered" >{</span></span>
+      const reviews = <span class="cstat-no" title="statement not covered" >(reviewData || []).map(<span class="fstat-no" title="function not covered" >(i</span>tem: any) =&gt; (<span class="cstat-no" title="statement not covered" >{</span></span>
         id: item.id,
         type: "review" as const,
         title: item.reviewed_person_name,
@@ -1662,13 +1657,13 @@ export class SearchService {
         },
       }));
 &nbsp;
-      const comments = <span class="cstat-no" title="statement not covered" >(commentData || []).map(<span class="fstat-no" title="function not covered" >(i</span>tem) =&gt; (<span class="cstat-no" title="statement not covered" >{</span></span>
+      const comments = <span class="cstat-no" title="statement not covered" >(commentData || []).map(<span class="fstat-no" title="function not covered" >(i</span>tem: any) =&gt; (<span class="cstat-no" title="statement not covered" >{</span></span>
         id: item.id,
         type: "comment" as const,
         title: `Comment on ${item.review?.reviewed_person_name || "Review"}`,
         content: item.content,
         snippet: item.content.substring(0, 150),
-        createdAt: new Date(item.created_at),
+        createdAt: item.created_at ? new Date(item.created_at) : new Date(),
         metadata: {
           commentId: item.id,
           reviewId: item.review_id || undefined,
@@ -1676,16 +1671,16 @@ export class SearchService {
         },
       }));
 &nbsp;
-      const messages = <span class="cstat-no" title="statement not covered" >(messageData || []).map(<span class="fstat-no" title="function not covered" >(i</span>tem) =&gt; (<span class="cstat-no" title="statement not covered" >{</span></span>
+      const messages = <span class="cstat-no" title="statement not covered" >(messageData || []).map(<span class="fstat-no" title="function not covered" >(i</span>tem: any) =&gt; (<span class="cstat-no" title="statement not covered" >{</span></span>
         id: item.id,
         type: "message" as const,
         title: `Message in ${item.chat_rooms_firebase?.name || "Chat"}`,
         content: item.content,
         snippet: item.content.substring(0, 150),
-        createdAt: new Date(item.created_at),
+        createdAt: new Date(item.timestamp || new Date()),
         metadata: {
           messageId: item.id,
-          roomId: item.chat_room_id || undefined,
+          roomId: item.chat_room_id ?? undefined,
           roomName: item.chat_rooms_firebase?.name,
           senderId: item.sender_id || undefined,
           senderName: item.sender_name || "Anonymous",
@@ -1706,7 +1701,7 @@ export class SearchService {
    */
 <span class="fstat-no" title="function not covered" >  as</span>ync searchMessages(roomId: string, query: string, limit: number = <span class="branch-0 cbranch-no" title="branch not covered" >50,</span> offset: number = <span class="branch-0 cbranch-no" title="branch not covered" >0)</span>: Promise&lt;SearchResults&gt; {
 <span class="cstat-no" title="statement not covered" >    try {</span>
-      const { data, error } = <span class="cstat-no" title="statement not covered" >await supabase.rpc("search_messages_in_room", {</span>
+      const { data, error } = <span class="cstat-no" title="statement not covered" >await (supabase.rpc as any)("search_messages_in_room", {</span>
         p_room_id: roomId,
         p_query: query,
         p_limit: limit,
@@ -1726,13 +1721,13 @@ export class SearchService {
 &nbsp;
 <span class="cstat-no" title="statement not covered" >        if (fallbackError) <span class="cstat-no" title="statement not covered" >throw fallbackError;</span></span>
 &nbsp;
-        const messages = <span class="cstat-no" title="statement not covered" >(fallbackData || []).map(<span class="fstat-no" title="function not covered" >(i</span>tem) =&gt; (<span class="cstat-no" title="statement not covered" >{</span></span>
+        const messages = <span class="cstat-no" title="statement not covered" >(fallbackData || []).map(<span class="fstat-no" title="function not covered" >(i</span>tem: any) =&gt; (<span class="cstat-no" title="statement not covered" >{</span></span>
           id: item.id,
           type: "message" as const,
           title: `Message in ${item.chat_rooms_firebase?.name || "Chat"}`,
           content: item.content,
           snippet: item.content.substring(0, 150),
-          createdAt: new Date(item.created_at),
+          createdAt: item.timestamp ? new Date(item.timestamp) : new Date(),
           metadata: {
             messageId: item.id,
             roomId: item.chat_room_id,
@@ -1745,13 +1740,13 @@ export class SearchService {
 <span class="cstat-no" title="statement not covered" >        return {</span>
           reviews: [],
           comments: [],
-          messages,
+          messages: messages as SearchResult[],
           total: messages.length,
         };
       }
 &nbsp;
       // Map RPC results to SearchResults format
-      const messages = <span class="cstat-no" title="statement not covered" >(data || []).map(<span class="fstat-no" title="function not covered" >(i</span>tem) =&gt; (<span class="cstat-no" title="statement not covered" >{</span></span>
+      const messages = <span class="cstat-no" title="statement not covered" >(data || []).map(<span class="fstat-no" title="function not covered" >(i</span>tem: any) =&gt; (<span class="cstat-no" title="statement not covered" >{</span></span>
         id: item.message_id,
         type: "message" as const,
         title: `Message from ${item.sender_name}`,
@@ -1790,7 +1785,7 @@ export class SearchService {
     offset: number = <span class="branch-0 cbranch-no" title="branch not covered" >0,</span>
   ): Promise&lt;SearchResults&gt; {
 <span class="cstat-no" title="statement not covered" >    try {</span>
-      const { data, error } = <span class="cstat-no" title="statement not covered" >await supabase.rpc("search_messages_global", {</span>
+      const { data, error } = <span class="cstat-no" title="statement not covered" >await (supabase.rpc as any)("search_messages_global", {</span>
         p_user_id: userId,
         p_query: query,
         p_limit: limit,
@@ -1809,13 +1804,13 @@ export class SearchService {
 &nbsp;
 <span class="cstat-no" title="statement not covered" >        if (fallbackError) <span class="cstat-no" title="statement not covered" >throw fallbackError;</span></span>
 &nbsp;
-        const messages = <span class="cstat-no" title="statement not covered" >(fallbackData || []).map(<span class="fstat-no" title="function not covered" >(i</span>tem) =&gt; (<span class="cstat-no" title="statement not covered" >{</span></span>
+        const messages = <span class="cstat-no" title="statement not covered" >(fallbackData || []).map(<span class="fstat-no" title="function not covered" >(i</span>tem: any) =&gt; (<span class="cstat-no" title="statement not covered" >{</span></span>
           id: item.id,
           type: "message" as const,
           title: `Message in ${item.chat_rooms_firebase?.name || "Chat"}`,
           content: item.content,
           snippet: item.content.substring(0, 150),
-          createdAt: new Date(item.created_at),
+          createdAt: item.timestamp ? new Date(item.timestamp) : new Date(),
           metadata: {
             messageId: item.id,
             roomId: item.chat_room_id,
@@ -1828,13 +1823,13 @@ export class SearchService {
 <span class="cstat-no" title="statement not covered" >        return {</span>
           reviews: [],
           comments: [],
-          messages,
+          messages: messages as SearchResult[],
           total: messages.length,
         };
       }
 &nbsp;
       // Map RPC results to SearchResults format
-      const messages = <span class="cstat-no" title="statement not covered" >(data || []).map(<span class="fstat-no" title="function not covered" >(i</span>tem) =&gt; (<span class="cstat-no" title="statement not covered" >{</span></span>
+      const messages = <span class="cstat-no" title="statement not covered" >(data || []).map(<span class="fstat-no" title="function not covered" >(i</span>tem: any) =&gt; (<span class="cstat-no" title="statement not covered" >{</span></span>
         id: item.message_id,
         type: "message" as const,
         title: `Message in ${item.room_name}`,
@@ -1870,7 +1865,7 @@ export class SearchService {
 <span class="cstat-no" title="statement not covered" >    try {</span>
 <span class="cstat-no" title="statement not covered" >      if (partialQuery.length &lt; 2) <span class="cstat-no" title="statement not covered" >return [];</span></span>
 &nbsp;
-      const { data, error } = <span class="cstat-no" title="statement not covered" >await supabase.rpc("get_search_suggestions", {</span>
+      const { data, error } = <span class="cstat-no" title="statement not covered" >await (supabase.rpc as any)("get_search_suggestions", {</span>
         p_prefix: partialQuery,
         p_limit: limit,
       });
@@ -1900,12 +1895,13 @@ export class SearchService {
       // Only log in production or when analytics is enabled
 <span class="cstat-no" title="statement not covered" >      if (process.env.NODE_ENV !== "production") <span class="cstat-no" title="statement not covered" >return;</span></span>
 &nbsp;
-<span class="cstat-no" title="statement not covered" >      await supabase.from("search_analytics").insert({</span>
-        search_query: query.substring(0, 100), // Truncate long queries
-        search_type: searchType,
-        results_count: resultCount,
-        execution_time_ms: executionTime,
-      });
+      // TODO: search_analytics table doesn't exist yet
+      // await supabase.from("search_analytics").insert({
+      //   search_query: query.substring(0, 100), // Truncate long queries
+      //   search_type: searchType,
+      //   results_count: resultCount,
+      //   execution_time_ms: executionTime,
+      // });
     } catch (error) {
       // Silently fail analytics logging to not impact user experience
 <span class="cstat-no" title="statement not covered" >      console.warn("Failed to log search analytics:", error);</span>
@@ -1916,21 +1912,22 @@ export class SearchService {
 export const searchService = <span class="cstat-no" title="statement not covered" >new SearchService();</span>
 &nbsp;</pre></td></tr></table></pre>
 
-                <div class='push'></div><!-- for sticky footer -->
-            </div><!-- /wrapper -->
-            <div class='footer quiet pad2 space-top1 center small'>
-                Code coverage generated by
-                <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-09-22T02:28:17.418Z
-            </div>
-        <script src="../prettify.js"></script>
-        <script>
-            window.onload = function () {
-                prettyPrint();
-            };
-        </script>
-        <script src="../sorter.js"></script>
-        <script src="../block-navigation.js"></script>
-    </body>
+      <div class="push"></div>
+      <!-- for sticky footer -->
+    </div>
+    <!-- /wrapper -->
+    <div class="footer quiet pad2 space-top1 center small">
+      Code coverage generated by
+      <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
+      at 2025-09-22T04:19:37.967Z
+    </div>
+    <script src="../prettify.js"></script>
+    <script>
+      window.onload = function () {
+        prettyPrint();
+      };
+    </script>
+    <script src="../sorter.js"></script>
+    <script src="../block-navigation.js"></script>
+  </body>
 </html>
-    

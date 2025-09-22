@@ -203,7 +203,7 @@ export class ReviewsService {
 
   async likeReview(reviewId: string, userId: string): Promise<void> {
     // TODO: review_likes table missing
-    // const { error } = await supabase.from("review_likes").insert({
+    // const { error } = // TODO: review_likes table missing - await supabase.from("review_likes").insert({
     //   review_id: reviewId,
     //   user_id: userId,
     // });
@@ -214,7 +214,7 @@ export class ReviewsService {
 
   async unlikeReview(reviewId: string, userId: string): Promise<void> {
     // TODO: review_likes table missing
-    // const { error } = await supabase.from("review_likes").delete().eq("review_id", reviewId).eq("user_id", userId);
+    // const { error } = // TODO: review_likes table missing - await supabase.from("review_likes").delete().eq("review_id", reviewId).eq("user_id", userId);
     // if (error) throw error;
 
     console.warn("unlikeReview: review_likes table not implemented yet");
