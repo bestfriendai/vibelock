@@ -62,7 +62,6 @@ export class E2ETestRunner {
    * Run complete user flow test
    */
   async runCompleteUserFlow(): Promise<TestReport> {
-    console.log("🚀 Starting E2E Test Runner");
     this.startTime = new Date();
     this.results = [];
 
@@ -92,8 +91,6 @@ export class E2ETestRunner {
    * Test authentication flow
    */
   async testAuthenticationFlow(): Promise<void> {
-    console.log("📝 Testing Authentication Flow");
-
     const steps: TestStep[] = [
       {
         name: "User Registration",
@@ -166,8 +163,6 @@ export class E2ETestRunner {
    * Test chatroom navigation
    */
   async testChatroomNavigation(): Promise<void> {
-    console.log("📍 Testing Chatroom Navigation");
-
     const steps: TestStep[] = [
       {
         name: "Load Chatrooms List",
@@ -226,8 +221,6 @@ export class E2ETestRunner {
    * Test message sending functionality
    */
   async testMessageSending(): Promise<void> {
-    console.log("💬 Testing Message Sending");
-
     const steps: TestStep[] = [
       {
         name: "Send Text Message",
@@ -294,8 +287,6 @@ export class E2ETestRunner {
    * Test real-time updates
    */
   async testRealTimeUpdates(): Promise<void> {
-    console.log("⚡ Testing Real-Time Updates");
-
     const steps: TestStep[] = [
       {
         name: "Receive Real-Time Message",
@@ -346,8 +337,6 @@ export class E2ETestRunner {
    * Test advanced features
    */
   async testAdvancedFeatures(): Promise<void> {
-    console.log("🎯 Testing Advanced Features");
-
     const steps: TestStep[] = [
       {
         name: "Message Editing",
@@ -390,8 +379,6 @@ export class E2ETestRunner {
    * Test error handling
    */
   async testErrorHandling(): Promise<void> {
-    console.log("🔧 Testing Error Handling");
-
     const steps: TestStep[] = [
       {
         name: "Network Disconnection",
@@ -438,8 +425,6 @@ export class E2ETestRunner {
    * Test performance metrics
    */
   async testPerformance(): Promise<void> {
-    console.log("📊 Testing Performance");
-
     const steps: TestStep[] = [
       {
         name: "App Launch Time",
@@ -486,8 +471,6 @@ export class E2ETestRunner {
    * Test accessibility compliance
    */
   async testAccessibility(): Promise<void> {
-    console.log("♿ Testing Accessibility");
-
     const steps: TestStep[] = [
       {
         name: "VoiceOver Support",
@@ -577,7 +560,7 @@ export class E2ETestRunner {
       }
 
       this.results.push(result);
-      console.log(`${result.success ? "✅" : "❌"} ${step.name} (${result.duration}ms)`);
+      console.log(`Test completed: ${result.step} - ${result.success ? "PASS" : "FAIL"} (${result.duration}ms)`);
     }
   }
 
@@ -609,7 +592,6 @@ export class E2ETestRunner {
 
       return fileUri;
     } catch (error) {
-      console.warn("Failed to capture screenshot:", error);
       return undefined;
     }
   }
@@ -684,20 +666,23 @@ export class E2ETestRunner {
    * Log test report
    */
   private logReport(report: TestReport): void {
-    console.log("\n" + "=".repeat(50));
-    console.log("📋 E2E TEST REPORT");
-    console.log("=".repeat(50));
-    console.log(`Total Tests: ${report.totalTests}`);
-    console.log(`✅ Passed: ${report.passed} (${((report.passed / report.totalTests) * 100).toFixed(1)}%)`);
-    console.log(`❌ Failed: ${report.failed} (${((report.failed / report.totalTests) * 100).toFixed(1)}%)`);
+    console.log("\n" + "=".repeat(60));
+    console.log("📊 E2E TEST REPORT");
+    console.log("=".repeat(60));
+    console.log(
+      `✅ Passed: ${report.passed}/${report.totalTests} (${((report.passed / report.totalTests) * 100).toFixed(1)}%)`,
+    );
+    console.log(
+      `❌ Failed: ${report.failed}/${report.totalTests} (${((report.failed / report.totalTests) * 100).toFixed(1)}%)`,
+    );
     console.log(`⏱️  Duration: ${(report.duration / 1000).toFixed(2)}s`);
-    console.log("\n📊 Performance Metrics:");
+    console.log("\n📈 Performance Metrics:");
     Object.entries(report.performance).forEach(([key, value]) => {
-      console.log(`  ${key}: ${typeof value === "number" ? value.toFixed(2) : value}`);
+      console.log(`  ${key}: ${value}`);
     });
     console.log("\n💡 Recommendations:");
     report.recommendations.forEach((rec) => console.log(`  • ${rec}`));
-    console.log("=".repeat(50) + "\n");
+    console.log("=".repeat(60) + "\n");
   }
 
   /**
@@ -713,7 +698,7 @@ export class E2ETestRunner {
         await supabase.auth.signOut();
       }
     } catch (error) {
-      console.warn("Cleanup error:", error);
+      console.error("Error during user cleanup:", error);
     }
 
     // Clear screenshots
@@ -721,7 +706,7 @@ export class E2ETestRunner {
       try {
         await FileSystem.deleteAsync(screenshot, { idempotent: true });
       } catch (error) {
-        console.warn("Failed to delete screenshot:", error);
+        console.error("Error deleting screenshot:", error);
       }
     }
   }

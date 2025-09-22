@@ -101,7 +101,6 @@ export class FileDownloader {
       const file = files[i];
 
       if (!file) {
-        console.warn(`File at index ${i} is undefined`);
         continue;
       }
 
@@ -118,7 +117,6 @@ export class FileDownloader {
         // Download the file
         await this.downloadFile(file.url, file.filename, fileProgressCallback);
       } catch (error) {
-        console.warn(`Failed to download file ${file.filename || file.url}:`, error);
         // Continue with other files even if one fails
       }
     }

@@ -99,7 +99,6 @@ class ImageCompressionService {
         compressionRatio: originalSize > 0 ? compressedSize / originalSize : 1,
       };
     } catch (error) {
-      console.warn("Image compression failed:", error);
       return {
         success: false,
         error: error instanceof Error ? error.message : "Compression failed",

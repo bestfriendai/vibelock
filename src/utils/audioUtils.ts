@@ -239,12 +239,15 @@ export async function compressAudioForUpload(
     }
 
     // In production, you would implement actual audio compression here
-    // using native modules or a compression service
-    console.log(`Audio compression needed for ${uri} (${fileSizeInMB.toFixed(2)}MB)`);
+    // using native modules or a compression service.
+    // Placeholder: skip compression in this environment and return the original URI.
+    console.debug(
+      `compressAudioForUpload: skipping compression (size=${fileSizeInMB.toFixed(2)}MB, quality=${quality})`,
+    );
 
     return uri;
   } catch (error) {
-    console.error("Audio compression failed");
+    console.error("Audio compression failed", error);
     throw new Error("Audio compression failed");
   }
 }
@@ -334,7 +337,6 @@ export async function cleanupTempAudioFiles(olderThanMs: number = 24 * 60 * 60 *
         const age = now - fileInfo.modificationTime * 1000;
         if (age > olderThanMs) {
           await FileSystem.deleteAsync(filePath, { idempotent: true });
-          console.log(`Cleaned up old audio file: ${file}`);
         }
       }
     }

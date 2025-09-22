@@ -50,12 +50,6 @@ export async function handleRevenueCatWebhook(
   eventData: RevenueCatWebhookEvent,
 ): Promise<{ success: boolean; message: string }> {
   try {
-    console.log(`Processing RevenueCat webhook: ${eventType}`, {
-      userId: eventData.event.app_user_id,
-      productId: eventData.event.product_id,
-      environment: eventData.event.environment,
-    });
-
     // Validate webhook data
     if (!eventData.event.app_user_id) {
       throw new Error("Missing app_user_id in webhook event");
@@ -64,7 +58,6 @@ export async function handleRevenueCatWebhook(
     // Process the webhook event
     await subscriptionService.handleWebhookEvent(eventType, eventData.event);
 
-    console.log(`Successfully processed RevenueCat webhook: ${eventType}`);
     return {
       success: true,
       message: `Webhook ${eventType} processed successfully`,
@@ -87,7 +80,6 @@ export async function handleRevenueCatWebhook(
 export function validateRevenueCatWebhook(payload: string, signature: string, secret: string): boolean {
   // TODO: Implement proper webhook signature validation
   // This is a placeholder - implement actual validation based on RevenueCat docs
-  console.warn("Webhook signature validation not implemented");
   return true;
 }
 

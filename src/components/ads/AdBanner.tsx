@@ -44,7 +44,6 @@ export const AdBanner: React.FC<AdBannerProps> = ({ placement = "bottom", size =
         // Show ads if user is not premium and AdMob is available
         setShowAd(shouldShowAds && canUseAdMob());
       } catch (error) {
-        console.warn("Failed to check ad status:", error);
         // Default to showing ads if check fails (for non-premium users)
         setShowAd(canUseAdMob());
       } finally {
@@ -86,8 +85,12 @@ export const AdBanner: React.FC<AdBannerProps> = ({ placement = "bottom", size =
         requestOptions={{
           requestNonPersonalizedAdsOnly: true,
         }}
-        onAdLoaded={() => console.log("Banner ad loaded")}
-        onAdFailedToLoad={(error) => console.warn("Banner ad failed to load: ", error)}
+        onAdLoaded={() => {
+          // Ad loaded successfully
+        }}
+        onAdFailedToLoad={(error) => {
+          // Ad failed to load
+        }}
       />
     </View>
   );

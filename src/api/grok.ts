@@ -17,8 +17,6 @@ import { generateGrokResponse } from "./secure-ai-service";
  * This function is maintained for backward compatibility but now uses secure proxy
  */
 export const getGrokClient = () => {
-  console.warn("getGrokClient is deprecated. Use generateGrokResponse from secure-ai-service instead.");
-
   throw new Error(
     "Direct Grok client usage is disabled for security. Use generateGrokResponse from secure-ai-service instead.",
   );

@@ -34,7 +34,6 @@ const validateSession = (session: Session | null): boolean => {
 };
 
 const handleAuthError = (error: any): never => {
-  console.warn("Auth operation failed:", error);
   const message = handleSupabaseError(error);
   const authError = new Error(message) as AuthError;
   authError.status = error?.status;
@@ -119,7 +118,6 @@ export class AuthService {
           try {
             await initializeUserSubscription(result.user.id);
           } catch (subscriptionError) {
-            console.warn("Failed to initialize subscription for new user:", subscriptionError);
             // Don't throw here as the main signup was successful
           }
         }
@@ -142,7 +140,6 @@ export class AuthService {
         handleAuthError(error);
       }
     } catch (error) {
-      console.warn("Sign out error:", error);
       // Don't throw on sign out errors - still clear local session
       throw error;
     }
@@ -212,7 +209,6 @@ export class AuthService {
     const session = data?.session;
 
     if (session && !validateSession(session)) {
-      console.warn("Invalid session structure detected");
       return null;
     }
 
@@ -283,9 +279,7 @@ export class AuthService {
     // Ensure sign out after account deletion
     try {
       await this.signOut();
-    } catch (signOutError) {
-      console.warn("Error during sign out after account deletion:", signOutError);
-    }
+    } catch (signOutError) {}
   }
 
   // Enhanced auth state change listener with v2.57.4 event handling
@@ -296,14 +290,12 @@ export class AuthService {
       try {
         // Validate session structure if present
         if (session && !validateSession(session)) {
-          console.warn("Invalid session structure in auth state change");
           callback(event, null);
           return;
         }
 
         callback(event, session);
       } catch (error) {
-        console.warn("Error in auth state change callback:", error);
         callback("ERROR", null);
       }
     });

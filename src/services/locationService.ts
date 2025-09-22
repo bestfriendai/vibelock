@@ -68,7 +68,6 @@ class LocationService {
       return this.getFallbackLocation();
     } catch (error) {
       const appError = error instanceof AppError ? error : parseSupabaseError(error);
-      console.warn("Location detection failed:", appError.userMessage);
       return this.getFallbackLocation();
     }
   }
@@ -275,11 +274,9 @@ class LocationService {
       await AsyncStorage.setItem(LocationService.LOCATION_CACHE_KEY, JSON.stringify(cacheData));
 
       if (__DEV__) {
-        console.log("📍 Location cached with reduced precision for privacy");
       }
     } catch (error) {
       const appError = error instanceof AppError ? error : parseSupabaseError(error);
-      console.warn("Failed to cache location:", appError.userMessage);
     }
   }
 
@@ -291,11 +288,9 @@ class LocationService {
       await AsyncStorage.removeItem(LocationService.LOCATION_CACHE_KEY);
 
       if (__DEV__) {
-        console.log("🧹 Location cache cleared");
       }
     } catch (error) {
       const appError = error instanceof AppError ? error : parseSupabaseError(error);
-      console.warn("Failed to clear location cache:", appError.userMessage);
     }
   }
 
@@ -319,17 +314,13 @@ class LocationService {
         await AsyncStorage.removeItem(LocationService.LOCATION_CACHE_KEY);
 
         if (__DEV__) {
-          console.log("🧹 Expired location cache cleaned up");
         }
       }
     } catch (error) {
-      console.warn("Failed to cleanup location cache:", error);
       // Clear corrupted cache
       try {
         await AsyncStorage.removeItem(LocationService.LOCATION_CACHE_KEY);
-      } catch (clearError) {
-        console.warn("Failed to clear corrupted location cache:", clearError);
-      }
+      } catch (clearError) {}
     }
   }
 }

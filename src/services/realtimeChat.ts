@@ -89,32 +89,17 @@ class EnhancedRealtimeChatService {
   private priorityQueues: Map<string, { high: ChatMessage[]; normal: ChatMessage[]; low: ChatMessage[] }> = new Map();
 
   async initialize() {
-    console.log("🚀 Initializing Enhanced Supabase Real-time Chat Service v2.57.4");
-
     // Detect actual transport method used by Supabase
     const transportMethod = this.detectTransportMethod();
-    console.log("🔍 React Native Environment Check:", {
-      platform: typeof navigator !== "undefined" ? "web" : "react-native",
-      webWorkers: typeof Worker !== "undefined",
-      websockets: typeof WebSocket !== "undefined",
-      supabaseVersion: "2.57.4",
-      realtimeTransport: transportMethod,
-      webWorkersWarning:
-        typeof Worker !== "undefined" ? "⚠️ Web Workers detected - may cause issues" : "✅ No Web Workers",
-    });
-
     // Log warning if Web Workers are detected in React Native
     if (typeof Worker !== "undefined") {
-      console.warn("⚠️ Web Workers detected in React Native environment");
-      console.warn("⚠️ This may cause realtime connection issues");
-      console.warn("ℹ️ Forcing WebSocket transport in channel configurations");
+      console.warn("[RealtimeChat] Web Workers detected in React Native environment");
     }
 
     this.connectionStatus = "connecting";
 
     try {
       // Test Supabase connection health
-      console.log("🔍 Testing Supabase database connection...");
       const { data: healthCheck, error: healthError } = await supabase
         .from("chat_rooms_firebase")
         .select("count")
@@ -126,15 +111,11 @@ class EnhancedRealtimeChatService {
       }
 
       // Test realtime connection
-      console.log("🔍 Testing Supabase realtime connection...");
       const realtimeStatus = supabase.realtime?.isConnected?.() ?? false;
-      console.log("🔍 Realtime connection status:", realtimeStatus);
-
       // Connection status will be managed per channel
       this.connectionStatus = "connected";
       this.isInitialized = true;
-      console.log("✅ Enhanced Realtime Chat Service initialized successfully");
-      console.log("✅ Environment compatibility verified for React Native");
+      console.log("✅ Real-time service initialized successfully");
     } catch (error) {
       console.error("🚨 Failed to initialize real-time service:", error);
       console.error("🚨 Error details:", {
@@ -150,9 +131,7 @@ class EnhancedRealtimeChatService {
 
   async joinRoom(roomId: string, userId: string, userName: string): Promise<RealtimeChannel> {
     try {
-      console.log(`🚪 Joining chat room: ${roomId} as ${userName}`);
-      console.log(`🔍 Join Room Debug:`, {
-        roomId: roomId?.slice(-8),
+      console.log("🔄 Joining room", {
         userId: userId?.slice(-8),
         userName,
         connectionStatus: this.connectionStatus,
@@ -162,7 +141,6 @@ class EnhancedRealtimeChatService {
       });
 
       // Clean up existing channel if any
-      console.log(`🧹 Cleaning up existing channel for room ${roomId}...`);
       await this.leaveRoom(roomId);
 
       // Validate subscription state before joining
@@ -217,7 +195,7 @@ class EnhancedRealtimeChatService {
 
       // Force WebSocket transport if available in channel options
       if ((supabase as any).realtime?.transport === "websocket") {
-        console.log("✅ Using WebSocket transport for channel");
+        console.log("[RealtimeChat] WebSocket transport confirmed");
       }
 
       const channel = supabase
@@ -249,10 +227,10 @@ class EnhancedRealtimeChatService {
           this.handlePresenceSync(roomId, channel);
         })
         .on("presence", { event: "join" }, ({ key, newPresences }) => {
-          console.log(`👋 User joined: ${key}`, newPresences);
+          console.log(`[RealtimeChat] User joined: ${key}`);
         })
         .on("presence", { event: "leave" }, ({ key, leftPresences }) => {
-          console.log(`👋 User left: ${key}`, leftPresences);
+          console.log(`[RealtimeChat] User left: ${key}`);
         })
         // Listen to typing indicators
         .on("broadcast", { event: "typing" }, (payload) => {
@@ -260,12 +238,9 @@ class EnhancedRealtimeChatService {
         })
         // Enhanced subscription status handling with v2.57.4 state management
         .subscribe(async (status, error) => {
-          console.log(`🔄 Subscription status change for room ${roomId}: ${status}`);
-
           // Check for Web Workers related errors
           if (error && this.isWebWorkersError(error)) {
             console.error("🚨 Web Workers error detected:", error);
-            console.log("🔄 Attempting to recover with WebSocket-only connection...");
             // Attempt recovery with fallback
             await this.handleWebWorkersFailure(roomId, userId, userName);
             return;
@@ -273,23 +248,20 @@ class EnhancedRealtimeChatService {
 
           const subscriptionState = this.subscriptionStates.get(roomId);
           if (subscriptionState) {
-            console.log(`🔄 Updating subscription state from ${subscriptionState.status} to ${status}`);
             subscriptionState.status = status as any;
             subscriptionState.lastStateChange = Date.now();
           } else {
-            console.warn(`🔄 No subscription state found for room ${roomId} during status change`);
+            console.warn(`[RealtimeChat] No subscription state found for room ${roomId}`);
           }
 
           // Validate state transition (but don't fail on invalid transitions)
           if (!this.isValidStateTransition(roomId, status)) {
-            console.warn(`[RealtimeChat] Invalid state transition for ${roomId}: ${status} - continuing anyway`);
             // Don't treat state transition issues as fatal errors
             // Just log and continue - the subscription might still work
+            console.warn(`[RealtimeChat] Unexpected state transition for ${roomId}: ${status}`);
           }
 
           if (status === "SUBSCRIBED") {
-            console.log(`✅ Successfully subscribed to room ${roomId}`);
-
             // Update quota usage
             this.quotaMonitoring.messageCount++;
             if (subscriptionState) {
@@ -325,14 +297,11 @@ class EnhancedRealtimeChatService {
 
             this.retryAttempts.delete(roomId);
           } else if (status === "CHANNEL_ERROR") {
-            console.warn(`❌ Channel error for room ${roomId}:`, error);
             const classifiedError = classifyError(error);
             this.handleSubscriptionError(roomId, classifiedError);
           } else if (status === "TIMED_OUT") {
-            console.warn(`⏰ Channel timeout for room ${roomId}`);
             this.handleSubscriptionTimeout(roomId);
           } else if (status === "CLOSED") {
-            console.warn(`🔒 Channel closed for room ${roomId}`);
             this.handleChannelClosed(roomId);
           }
         });
@@ -340,7 +309,6 @@ class EnhancedRealtimeChatService {
       this.channels.set(roomId, channel);
       return channel;
     } catch (error: any) {
-      console.warn(`Failed to join room ${roomId}:`, error);
       throw new AppError(`Failed to join chat room: ${error?.message || "Unknown error"}`, ErrorType.NETWORK);
     }
   }
@@ -372,7 +340,6 @@ class EnhancedRealtimeChatService {
         .limit(limit);
 
       if (error) {
-        console.warn(`❌ Error loading messages for room ${roomId}:`, error);
         throw error;
       }
 
@@ -402,19 +369,14 @@ class EnhancedRealtimeChatService {
 
         // Notify callback with initial messages (this replaces all messages)
         const callback = this.messageCallbacks.get(roomId);
-        console.log(`📨 loadInitialMessages: Found ${formattedMessages.length} messages for room ${roomId}`);
-        console.log(`📨 loadInitialMessages: Callback exists: ${!!callback}`);
-
         if (callback) {
-          console.log(`📨 loadInitialMessages: Calling callback with ${formattedMessages.length} messages`);
           // For initial load, we need to replace all messages
           callback({ type: "initial", items: formattedMessages });
         } else {
-          console.warn(`📨 loadInitialMessages: No callback registered for room ${roomId}`);
+          console.warn(`[RealtimeChat] No message callback registered for room ${roomId}`);
         }
       }
     } catch (error) {
-      console.warn(`Failed to load messages for room ${roomId}:`, error);
       throw new AppError("Failed to load chat messages", ErrorType.SERVER);
     }
   }
@@ -436,7 +398,6 @@ class EnhancedRealtimeChatService {
       // Return in ascending order (oldest -> newest) so caller can prepend
       return messages ? messages.map((msg) => this.formatMessage(msg)).reverse() : [];
     } catch (error) {
-      console.warn(`Failed to load older messages for room ${roomId}:`, error);
       return [];
     }
   }
@@ -453,7 +414,6 @@ class EnhancedRealtimeChatService {
 
       // Check if message already exists by ID
       if (cache.has(messageId)) {
-        console.log(`🔄 Duplicate message ignored by ID: ${messageId}`);
         return;
       }
 
@@ -462,7 +422,6 @@ class EnhancedRealtimeChatService {
 
       // Check for duplicate by fingerprint
       if (fingerprints.has(fingerprint)) {
-        console.log(`🔄 Duplicate message ignored by fingerprint`);
         return;
       }
 
@@ -527,7 +486,7 @@ class EnhancedRealtimeChatService {
         this.cleanupOldMessages(roomId);
       }
     } catch (error) {
-      console.warn("Error handling new message:", error);
+      console.error(`[RealtimeChat] Error handling new message for room ${roomId}:`, error);
     }
   }
 
@@ -634,7 +593,7 @@ class EnhancedRealtimeChatService {
         callback({ type: "update", items: [updatedMessage] });
       }
     } catch (error) {
-      console.warn("Error handling message update:", error);
+      console.error(`[RealtimeChat] Error handling message update for room ${roomId}:`, error);
     }
   }
 
@@ -665,7 +624,7 @@ class EnhancedRealtimeChatService {
         callback(members);
       }
     } catch (error) {
-      console.warn("Error handling presence sync:", error);
+      console.error(`[RealtimeChat] Error handling presence sync for room ${roomId}:`, error);
     }
   }
 
@@ -712,7 +671,7 @@ class EnhancedRealtimeChatService {
         }
       }
     } catch (error) {
-      console.warn("Error handling typing broadcast:", error);
+      console.error(`[RealtimeChat] Error handling typing broadcast for room ${roomId}:`, error);
     }
   }
 
@@ -762,7 +721,7 @@ class EnhancedRealtimeChatService {
         this.typingDebounceTimeouts.delete(debounceKey);
       }
     } catch (error) {
-      console.warn("Failed to send typing indicator:", error);
+      console.error(`[RealtimeChat] Error setting typing indicator for room ${roomId}:`, error);
     }
   }
 
@@ -781,8 +740,6 @@ class EnhancedRealtimeChatService {
     audioDuration?: number,
   ): Promise<void> {
     try {
-      console.log(`📤 Sending message to room ${roomId}`);
-
       // Check quota before sending
       const quotaStatus = checkQuotaLimits(this.quotaMonitoring);
       if (!quotaStatus.allowed) {
@@ -793,22 +750,14 @@ class EnhancedRealtimeChatService {
       const subscriptionState = this.subscriptionStates.get(roomId);
       const activeChannel = this.channels.get(roomId);
 
-      console.log(
-        `📤 sendMessage: Room ${roomId} - State:`,
-        subscriptionState?.status,
-        `Channel exists:`,
-        !!activeChannel,
-      );
-
       // If we have an active channel, allow sending regardless of state tracking
       // This handles cases where state tracking is out of sync with actual channel status
       if (activeChannel) {
-        console.log(`📤 sendMessage: Active channel found, allowing message send`);
+        console.log(`[RealtimeChat] Channel active for room ${roomId}, proceeding with send`);
       } else if (subscriptionState) {
         // If no active channel but we have state, check if it's in a valid state
         const allowedStates = ["SUBSCRIBED", "CONNECTING"];
         if (!allowedStates.includes(subscriptionState.status)) {
-          console.warn(`📤 sendMessage: No active channel and invalid state: ${subscriptionState.status}`);
           throw new AppError(
             `Cannot send message: not connected to room (status: ${subscriptionState.status})`,
             ErrorType.NETWORK,
@@ -817,7 +766,6 @@ class EnhancedRealtimeChatService {
         }
       } else {
         // No channel and no state - definitely not connected
-        console.warn(`📤 sendMessage: No channel or subscription state for room ${roomId}`);
         throw new AppError("Cannot send message: not connected to room", ErrorType.NETWORK, "NOT_CONNECTED");
       }
 
@@ -843,7 +791,6 @@ class EnhancedRealtimeChatService {
       const sendLatency = Date.now() - startTime;
 
       if (error) {
-        console.warn("❌ Error sending message:", error);
         const classifiedError = classifyError(error);
 
         // Track error in subscription state
@@ -881,9 +828,8 @@ class EnhancedRealtimeChatService {
         })
         .eq("id", roomId);
 
-      console.log("✅ Message sent successfully");
+      console.log(`[RealtimeChat] Message sent successfully to room ${roomId}`);
     } catch (error: any) {
-      console.warn("💥 Failed to send message:", error);
       const classifiedError =
         error instanceof AppError
           ? error
@@ -926,7 +872,6 @@ class EnhancedRealtimeChatService {
 
       if (updateError) throw updateError;
     } catch (error: any) {
-      console.warn("Failed to send reaction:", error);
       throw new AppError(`Failed to send reaction: ${error?.message || "Unknown error"}`, ErrorType.NETWORK);
     }
   }
@@ -954,13 +899,6 @@ class EnhancedRealtimeChatService {
     }
 
     // Log error for monitoring
-    console.warn(`[RealtimeChat] Subscription error for ${roomId}:`, {
-      type: error.type,
-      code: error.code,
-      message: error.message,
-      retryable: error.retryable,
-    });
-
     // Handle based on error type
     if (error.retryable && this.shouldRetryConnection(roomId)) {
       this.scheduleRetry(roomId, error);
@@ -974,7 +912,6 @@ class EnhancedRealtimeChatService {
    * Handle subscription timeout with enhanced recovery
    */
   private handleSubscriptionTimeout(roomId: string): void {
-    console.warn(`[RealtimeChat] Subscription timeout for ${roomId}`);
     const timeoutError = new AppError("Subscription timeout", ErrorType.NETWORK, "SUBSCRIPTION_TIMEOUT", 408, true);
     this.handleSubscriptionError(roomId, timeoutError);
   }
@@ -983,7 +920,6 @@ class EnhancedRealtimeChatService {
    * Handle channel closed event
    */
   private handleChannelClosed(roomId: string): void {
-    console.warn(`[RealtimeChat] Channel closed for ${roomId}`);
     const subscriptionState = this.subscriptionStates.get(roomId);
     if (subscriptionState) {
       subscriptionState.status = "CLOSED";
@@ -1029,7 +965,7 @@ class EnhancedRealtimeChatService {
 
     const delay = Math.min(Math.pow(2, attempts) * 1000, 30000); // Cap at 30 seconds
 
-    console.log(`[RealtimeChat] Scheduling retry for ${roomId} in ${delay}ms (attempt ${attempts + 1})`);
+    console.log(`[RealtimeChat] Scheduling retry for ${roomId} with delay ${delay}ms`);
 
     const timeout = setTimeout(() => {
       this.attemptReconnection(roomId);
@@ -1071,7 +1007,6 @@ class EnhancedRealtimeChatService {
   }
 
   private handleChannelTimeout(roomId: string): void {
-    console.log(`⏰ Channel timeout for room ${roomId}, attempting reconnection`);
     this.handleSubscriptionTimeout(roomId);
   }
 
@@ -1093,12 +1028,9 @@ class EnhancedRealtimeChatService {
         subscriptionState.lastStateChange = Date.now();
       }
 
-      console.log(`🔄 Attempting reconnection to room ${roomId}`);
-
       // Reconnection logic would trigger new joinRoom call from the UI layer
       // This just cleans up the old connection state
     } catch (error) {
-      console.warn(`Failed to prepare reconnection for room ${roomId}:`, error);
       const classifiedError = classifyError(error);
       this.handleSubscriptionError(roomId, classifiedError);
     }
@@ -1115,7 +1047,6 @@ class EnhancedRealtimeChatService {
     // Retry any failed connections when the main connection is restored
     this.retryAttempts.forEach((attempts, roomId) => {
       if (attempts > 0) {
-        console.log(`🔄 Retrying failed connection to room ${roomId}`);
         this.reconnectToRoom(roomId);
       }
     });
@@ -1125,7 +1056,6 @@ class EnhancedRealtimeChatService {
     // Schedule a global reconnection attempt
     setTimeout(() => {
       if (this.connectionStatus === "disconnected") {
-        console.log("🔄 Attempting to reconnect to Supabase Realtime");
         this.initialize();
       }
     }, 5000);
@@ -1168,16 +1098,14 @@ class EnhancedRealtimeChatService {
         this.reconnectTimeouts.delete(roomId);
       }
 
-      console.log(`👋 Left room ${roomId}`);
+      console.log(`[RealtimeChat] Left room ${roomId} successfully`);
     } catch (error) {
-      console.warn(`Failed to leave room ${roomId}:`, error);
+      console.error(`[RealtimeChat] Error leaving room ${roomId}:`, error);
     }
   }
 
   // Pause all subscriptions (for background)
   async pauseAll(): Promise<void> {
-    console.log("[RealtimeChat] Pausing all subscriptions");
-
     const roomIds = Array.from(this.channels.keys());
 
     for (const roomId of roomIds) {
@@ -1189,7 +1117,7 @@ class EnhancedRealtimeChatService {
         const channel = this.channels.get(roomId);
         if (channel) {
           await channel.unsubscribe();
-          console.log(`[RealtimeChat] Paused subscription for room ${roomId}`);
+          console.log(`[RealtimeChat] Paused room ${roomId}`);
         }
       } catch (error) {
         console.error(`[RealtimeChat] Error pausing room ${roomId}:`, error);
@@ -1199,8 +1127,6 @@ class EnhancedRealtimeChatService {
 
   // Resume all subscriptions (for foreground)
   async resumeAll(userId: string, userName: string): Promise<void> {
-    console.log("[RealtimeChat] Resuming all subscriptions");
-
     const roomIds = Array.from(this.channels.keys());
 
     for (const roomId of roomIds) {
@@ -1210,8 +1136,6 @@ class EnhancedRealtimeChatService {
           // Re-subscribe to the channel
           await channel.subscribe((status) => {
             if (status === "SUBSCRIBED") {
-              console.log(`[RealtimeChat] Resumed subscription for room ${roomId}`);
-
               // Track presence again
               channel.track({
                 user_id: userId,
@@ -1270,9 +1194,9 @@ class EnhancedRealtimeChatService {
       this.subscriptionStates.clear();
 
       this.connectionStatus = "disconnected";
-      console.log("🧹 Enhanced real-time chat service cleaned up");
+      console.log("[RealtimeChat] Cleanup completed");
     } catch (error) {
-      console.warn("Failed to cleanup real-time service:", error);
+      console.error("[RealtimeChat] Error during cleanup:", error);
     }
   }
 
@@ -1335,7 +1259,7 @@ class EnhancedRealtimeChatService {
     const optimisticMessages = this.optimisticMessages.get(roomId);
     if (optimisticMessages) {
       optimisticMessages.delete(tempId);
-      console.log(`✅ Replaced optimistic message ${tempId} with real message ${realMessage.id}`);
+      console.log(`[RealtimeChat] Replaced optimistic message ${tempId} with real message ${realMessage.id}`);
     }
 
     // Notify callback about the replacement with proper event type
@@ -1421,7 +1345,6 @@ class EnhancedRealtimeChatService {
         }
 
         if (!isHealthy) {
-          console.warn(`[RealtimeChat] Unhealthy connection detected for ${roomId}`);
           if (subscriptionState) {
             subscriptionState.status = "CHANNEL_ERROR";
             subscriptionState.lastStateChange = Date.now();
@@ -1460,7 +1383,6 @@ class EnhancedRealtimeChatService {
 
     // Allow same-state transitions to handle reconnections and multiple subscription attempts
     if (currentStatus === newStatus) {
-      console.log(`[RealtimeChat] Same-state transition allowed for ${roomId}: ${currentStatus} -> ${newStatus}`);
       return true;
     }
 
@@ -1475,7 +1397,7 @@ class EnhancedRealtimeChatService {
     const isValid = validTransitions[currentStatus]?.includes(newStatus) || false;
 
     if (!isValid) {
-      console.warn(`[RealtimeChat] Invalid state transition for ${roomId}: ${currentStatus} -> ${newStatus}`);
+      console.warn(`[RealtimeChat] Invalid state transition from ${currentStatus} to ${newStatus}`);
     }
 
     return isValid;
@@ -1658,7 +1580,6 @@ class EnhancedRealtimeChatService {
 
       return "unknown";
     } catch (error) {
-      console.warn("Failed to detect transport method:", error);
       return "detection-failed";
     }
   }
@@ -1693,8 +1614,6 @@ class EnhancedRealtimeChatService {
    * Handle Web Workers failure by attempting fallback connection
    */
   private async handleWebWorkersFailure(roomId: string, userId: string, userName: string): Promise<void> {
-    console.log("🔄 Handling Web Workers failure with fallback strategy");
-
     try {
       // Clean up existing channel
       await this.leaveRoom(roomId);
@@ -1703,8 +1622,6 @@ class EnhancedRealtimeChatService {
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
       // Retry with explicit WebSocket configuration
-      console.log("🔄 Retrying connection with WebSocket-only configuration");
-
       // Create a new channel with WebSocket-only configuration
       const fallbackChannel = supabase.channel(`fallback_room_${roomId}_${Date.now()}`, {
         config: {
@@ -1744,9 +1661,7 @@ class EnhancedRealtimeChatService {
 
       // Subscribe with error handling
       await fallbackChannel.subscribe((status) => {
-        console.log(`🔄 Fallback channel status: ${status}`);
         if (status === "SUBSCRIBED") {
-          console.log("✅ Fallback connection successful");
           this.channels.set(roomId, fallbackChannel);
 
           // Track presence

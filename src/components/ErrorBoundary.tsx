@@ -100,7 +100,11 @@ class ErrorBoundaryClass extends Component<Props, State> {
       errorContext: {
         phase: "unknown",
         services: [],
-        compatibility: {},
+        compatibility: {
+          isCompatible: true,
+          issues: [],
+          platform: "unknown",
+        },
         platform: "unknown",
         isInitialized: false,
       },
@@ -186,11 +190,14 @@ class ErrorBoundaryClass extends Component<Props, State> {
         isInitialized: true,
       };
     } catch (contextError) {
-      console.warn("Failed to gather error context:", contextError);
       return {
         phase: "unknown",
         services: [],
-        compatibility: {},
+        compatibility: {
+          isCompatible: true,
+          issues: [],
+          platform: "unknown",
+        },
         platform: "unknown",
         isInitialized: false,
       };
@@ -237,27 +244,18 @@ class ErrorBoundaryClass extends Component<Props, State> {
     console.group("🚨 ErrorBoundary caught an error");
     console.error("Error:", error);
     console.error("Error Info:", errorInfo);
-    console.log("Error Classification:", this.state.errorType);
-    console.log("Error Context:", this.state.errorContext);
-    console.log("Recoverable:", this.state.canRecover);
     switch (this.state.errorType) {
       case "compatibility":
-        console.warn("💡 Compatibility issue detected. Check React Native 0.81.4 + Expo 54 compatibility.");
         break;
       case "view_config":
-        console.warn("💡 View config error detected. Check component registration and native dependencies.");
         break;
       case "native_module":
-        console.warn("💡 Native module error detected. Verify module installation and linking.");
         break;
       case "initialization":
-        console.warn("💡 Initialization error detected. Check app startup sequence and service dependencies.");
         break;
       case "memory":
-        console.warn("💡 Memory error detected. Check for memory leaks and optimize performance.");
         break;
       case "network":
-        console.warn("💡 Network error detected. Check connectivity and API endpoints.");
         break;
     }
     console.groupEnd();
@@ -276,23 +274,19 @@ class ErrorBoundaryClass extends Component<Props, State> {
         ...this.state.errorContext,
         componentStack: errorInfo.componentStack,
       });
-    } catch (reportingError) {
-      console.warn("Failed to report error:", reportingError);
-    }
+    } catch (reportingError) {}
   }
 
   private handleAppStateChange = (nextAppState: AppStateStatus) => {
     this.setState({ appState: nextAppState });
 
     if (nextAppState === "active" && this.state.hasError && this.state.canRecover) {
-      console.log("App became active, attempting recovery");
       this.attemptRecovery();
     }
   };
 
   private attemptAutoRecovery() {
     if (this.state.recoveryAttempts >= (this.props.maxRecoveryAttempts || 3)) {
-      console.log("Max recovery attempts reached");
       return;
     }
 
@@ -619,9 +613,7 @@ export default function ErrorBoundary(props: Omit<Props, "theme">) {
         themeObject = { colors: (theme as any).colors };
       }
     }
-  } catch {
-    console.log("ErrorBoundary: Using default theme");
-  }
+  } catch {}
 
   if (!themeObject) {
     themeObject = {

@@ -18,8 +18,6 @@ import { generateOpenAIResponse } from "./secure-ai-service";
  * This function is maintained for backward compatibility but now uses secure proxy
  */
 export const getOpenAIClient = () => {
-  console.warn("getOpenAIClient is deprecated. Use generateOpenAIResponse from secure-ai-service instead.");
-
   throw new Error(
     "Direct OpenAI client usage is disabled for security. Use generateOpenAIResponse from secure-ai-service instead.",
   );

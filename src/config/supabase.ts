@@ -101,20 +101,15 @@ const validateSupabaseConfig = (): ValidationCache => {
     validation.isValid = false;
 
     console.error("🚨 CRITICAL: Supabase URL missing!");
-    console.log("📋 Setup Guide:");
     SETUP_GUIDANCE.EXPO_PUBLIC_SUPABASE_URL.steps.forEach((step) => {
-      console.log(`   ${step}`);
+      console.info("Supabase setup step:", step);
     });
-    console.log(`💡 Tip: ${SETUP_GUIDANCE.EXPO_PUBLIC_SUPABASE_URL.troubleshooting}\n\n`);
   } else {
     configuredCount++;
 
     // Validate URL format
     if (!supabaseUrl.match(/^https:\/\/[a-z0-9-]+\.supabase\.co$/)) {
       validation.warnings.push("Supabase URL format may be incorrect");
-      console.warn("⚠️ URL format warning:", SETUP_GUIDANCE.EXPO_PUBLIC_SUPABASE_URL.troubleshooting);
-    } else {
-      console.log("✅ Supabase URL format valid");
     }
   }
 
@@ -124,11 +119,9 @@ const validateSupabaseConfig = (): ValidationCache => {
     validation.isValid = false;
 
     console.error("🚨 CRITICAL: Supabase anon key missing!");
-    console.log("📋 Setup Guide:");
     SETUP_GUIDANCE.EXPO_PUBLIC_SUPABASE_ANON_KEY.steps.forEach((step) => {
-      console.log(`   ${step}`);
+      console.info("Supabase anon key step:", step);
     });
-    console.log(`💡 Tip: ${SETUP_GUIDANCE.EXPO_PUBLIC_SUPABASE_ANON_KEY.troubleshooting}\n\n`);
   } else {
     configuredCount++;
 
@@ -136,14 +129,10 @@ const validateSupabaseConfig = (): ValidationCache => {
     const keyType = detectApiKeyType(supabaseAnonKey);
     if (keyType === "unknown") {
       validation.warnings.push("Unrecognized API key format");
-      console.warn("⚠️ Key format warning:", SETUP_GUIDANCE.EXPO_PUBLIC_SUPABASE_ANON_KEY.troubleshooting);
     } else {
-      console.log(`✅ Detected ${keyType} API key format`);
-
       // Warn if using secret key instead of anon key
       if (keyType === "secret") {
         validation.warnings.push("Using secret key instead of anon key - security risk!");
-        console.warn("🚨 SECURITY WARNING: Using secret key in client! Use anon key instead.");
       }
     }
   }
@@ -151,10 +140,8 @@ const validateSupabaseConfig = (): ValidationCache => {
   // Important validation: Project ID
   if (!projectId) {
     validation.warnings.push("EXPO_PUBLIC_PROJECT_ID missing - push notifications won't work");
-    console.warn("⚠️ Project ID missing - push notifications disabled");
-    console.log("📋 Setup Guide:");
     SETUP_GUIDANCE.EXPO_PUBLIC_PROJECT_ID.steps.forEach((step) => {
-      console.log(`   ${step}`);
+      console.info("Supabase project id step:", step);
     });
   } else {
     configuredCount++;
@@ -162,9 +149,6 @@ const validateSupabaseConfig = (): ValidationCache => {
     // Validate project ID format (UUID)
     if (!projectId.match(/^[a-f0-9-]{36}$/)) {
       validation.warnings.push("Project ID format may be incorrect");
-      console.warn("⚠️ Project ID format warning:", SETUP_GUIDANCE.EXPO_PUBLIC_PROJECT_ID.troubleshooting);
-    } else {
-      console.log("✅ Project ID format valid");
     }
   }
 
@@ -172,20 +156,15 @@ const validateSupabaseConfig = (): ValidationCache => {
   validation.completenessScore = Math.round((configuredCount / totalRequired) * 100);
 
   // Log validation summary
-  console.log(`📋 Supabase Configuration Status: ${validation.completenessScore}% complete`);
-  console.log(`📋 API Version: ${SUPABASE_API_VERSION}`);
-
   if (validation.warnings.length > 0) {
-    console.log(`⚠️ ${validation.warnings.length} warnings found`);
+    console.warn("Supabase config warnings:", validation.warnings);
   }
 
   if (validation.errors.length > 0) {
     console.error(`🚨 ${validation.errors.length} critical errors found`);
 
     if (__DEV__) {
-      console.log("\n\n🔧 Quick Fix Commands:");
-      console.log("   npm run verify:env  # Check all environment variables");
-      console.log("   cp .env.example .env  # Create .env from template\n\n");
+      console.debug("Supabase validation errors:", validation.errors);
     }
   }
 
@@ -228,15 +207,10 @@ const getProductionConfig = (): ProductionConfig => {
 const productionConfig = getProductionConfig();
 
 if (__DEV__) {
-  console.log("[Supabase Config] URL:", supabaseUrl);
-  console.log("[Supabase Config] Anon Key:", supabaseAnonKey?.substring(0, 20) + "...");
-  console.log("[Supabase Config] Production Config:", productionConfig);
-  console.log("[Supabase Config] Realtime Transport: WebSocket (React Native mode)");
-  console.log("[Supabase Config] Web Workers: Disabled");
-
+  console.debug("Supabase initial validation:", initialValidation);
   // Check for Web Workers availability (should not be available in React Native)
   if (typeof Worker !== "undefined") {
-    console.warn("⚠️ Web Workers detected in React Native environment - this may cause issues");
+    console.warn("Detected Worker in React Native environment - unexpected.");
   }
 }
 
@@ -306,8 +280,6 @@ export type { SupabaseClient } from "@supabase/supabase-js";
 
 // Enhanced Supabase error handler for v2.57.4
 export const handleSupabaseError = (error: any): string => {
-  console.warn("Supabase error:", error);
-
   // Handle v2.57.4 specific error codes
   if (error?.code) {
     switch (error.code) {
@@ -324,7 +296,6 @@ export const handleSupabaseError = (error: any): string => {
       case "42501":
         return "Insufficient permissions for this operation.";
       default:
-        console.warn(`Unhandled error code: ${error.code}`);
     }
   }
 
@@ -481,25 +452,19 @@ export const performHealthCheck = async (): Promise<{ healthy: boolean; details:
     try {
       const { error: authError } = await supabase.auth.getUser();
       healthDetails.auth = !authError || authError.message === "Auth session missing!";
-    } catch (error) {
-      console.warn("Auth health check failed:", error);
-    }
+    } catch (error) {}
 
     // Test database connection with a simple query
     try {
       const { error: dbError } = await supabase.from("users").select("count").limit(1);
       healthDetails.database = !dbError;
-    } catch (error) {
-      console.warn("Database health check failed:", error);
-    }
+    } catch (error) {}
 
     // Test storage API
     try {
       const { data: buckets, error: storageError } = await supabase.storage.listBuckets();
       healthDetails.storage = !storageError;
-    } catch (error) {
-      console.warn("Storage health check failed:", error);
-    }
+    } catch (error) {}
 
     // Test realtime connection status and transport method
     const realtimeConnected = supabase.realtime?.isConnected() ?? false;
@@ -508,9 +473,7 @@ export const performHealthCheck = async (): Promise<{ healthy: boolean; details:
     // Log transport method being used
     if (__DEV__ && realtimeConnected) {
       const transport = (supabase.realtime as any)?._transport || "unknown";
-      console.log(`[Health Check] Realtime transport: ${transport}`);
       if (transport !== "websocket") {
-        console.warn("⚠️ Realtime not using WebSocket transport - may cause issues in React Native");
       }
     }
 
@@ -522,7 +485,6 @@ export const performHealthCheck = async (): Promise<{ healthy: boolean; details:
     // Check for Web Workers (should not be present in React Native)
     healthDetails.webWorkersDetected = typeof Worker !== "undefined";
     if (healthDetails.webWorkersDetected) {
-      console.warn("⚠️ Web Workers detected - forcing WebSocket transport");
     }
 
     // Get actual transport method if available
@@ -534,7 +496,6 @@ export const performHealthCheck = async (): Promise<{ healthy: boolean; details:
     const isHealthy = coreServicesHealthy;
 
     if (!healthDetails.realtime) {
-      console.warn("⚠️ Realtime is not connected - real-time features may not work");
       // Don't fail the health check for realtime issues
     }
 
@@ -557,14 +518,11 @@ export const validateConnection = async (): Promise<boolean> => {
     const { healthy } = await performHealthCheck();
 
     if (!healthy) {
-      console.warn("⚠️ Supabase connection validation failed");
       return false;
     }
 
-    console.log("✅ Supabase connection validated successfully");
     return true;
   } catch (error) {
-    console.warn("❌ Connection validation error:", error);
     return false;
   }
 };
@@ -600,19 +558,16 @@ export const trackConnection = (type: "open" | "close" | "error", error?: any): 
       connectionCount++;
       connectionMetrics.totalConnections++;
       connectionMetrics.activeConnections++;
-      console.log(`[Supabase] Connection opened. Active: ${connectionMetrics.activeConnections}`);
       break;
 
     case "close":
       connectionCount = Math.max(0, connectionCount - 1);
       connectionMetrics.activeConnections = Math.max(0, connectionMetrics.activeConnections - 1);
-      console.log(`[Supabase] Connection closed. Active: ${connectionMetrics.activeConnections}`);
       break;
 
     case "error":
       connectionMetrics.failedConnections++;
       connectionMetrics.lastError = error?.message || "Unknown error";
-      console.warn(`[Supabase] Connection error:`, error);
       break;
   }
 };
@@ -760,8 +715,7 @@ export const performEnhancedHealthCheck = async (): Promise<{ healthy: boolean; 
 if (__DEV__) {
   validateConnection().then((isValid) => {
     if (!isValid) {
-      console.warn("🚨 Supabase connection issues detected. Some features may not work correctly.");
-      console.log("\n\n" + environmentValidation.generateStatusReport());
+      console.warn("Supabase connection validation failed in development environment");
     }
   });
 }

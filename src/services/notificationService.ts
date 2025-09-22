@@ -95,7 +95,6 @@ class NotificationService {
       }
 
       if (finalStatus !== "granted") {
-        console.warn("Push notification permissions not granted");
         // Store permission status for later retry
         await this.storeDeniedPermissionStatus();
         // Don't throw error, just log and continue
@@ -110,17 +109,13 @@ class NotificationService {
           this.setupNotificationListeners();
         }
       } else {
-        console.warn("Push notifications only work on physical devices");
         if (__DEV__) {
           Alert.alert("Info", "Push notifications require a physical device.");
         }
       }
 
       this.isInitialized = true;
-      console.log("Notification service initialized successfully");
     } catch (error) {
-      console.warn("Failed to initialize notification service:", error);
-
       // Don't throw error in production to prevent app crashes
       if (__DEV__) {
         const appError = error instanceof AppError ? error : parseSupabaseError(error);
@@ -175,11 +170,7 @@ class NotificationService {
           showBadge: true,
         }),
       ]);
-
-      console.log("Android notification channels created successfully");
-    } catch (error) {
-      console.warn("Failed to create Android notification channels:", error);
-    }
+    } catch (error) {}
   }
 
   /**
@@ -188,23 +179,18 @@ class NotificationService {
   private setupNotificationListeners(): void {
     // Prevent duplicate listeners
     if (this.notificationListeners.length > 0) {
-      console.log("Notification listeners already set up, skipping");
       return;
     }
 
     // Listen for notifications received while app is foregrounded
-    const receivedListener = Notifications.addNotificationReceivedListener((notification) => {
-      console.log("Notification received:", notification);
-    });
+    const receivedListener = Notifications.addNotificationReceivedListener((notification) => {});
 
     // Listen for user interactions with notifications
     const responseListener = Notifications.addNotificationResponseReceivedListener((response) => {
-      console.log("Notification response:", response);
       // Handle notification tap here
     });
 
     this.notificationListeners.push(receivedListener, responseListener);
-    console.log("✅ Notification listeners set up successfully");
   }
 
   /**
@@ -213,7 +199,6 @@ class NotificationService {
   private async getPushToken(): Promise<string | null> {
     try {
       if (!Device.isDevice) {
-        console.warn("Must use physical device for push notifications");
         return null;
       }
 
@@ -250,15 +235,13 @@ class NotificationService {
       }
 
       this.pushToken = token.data;
-      console.log("Push token retrieved successfully:", token.data.substring(0, 20) + "...");
+      console.log("Push token retrieved", { token: token.data?.slice?.(0, 8) + "..." });
       return token.data;
     } catch (error) {
-      console.warn("Failed to get push token:", error);
-
       // Retry mechanism for transient failures
       if (this.retryAttempts < this.maxRetries && !(error instanceof AppError && error.type === ErrorType.SERVER)) {
         this.retryAttempts++;
-        console.log(`Retrying push token retrieval (attempt ${this.retryAttempts}/${this.maxRetries})`);
+        console.warn("Failed to get push token, retrying", { attempt: this.retryAttempts, err: error });
 
         await new Promise((resolve) => setTimeout(resolve, this.retryDelay * this.retryAttempts));
         return this.getPushToken();
@@ -282,7 +265,6 @@ class NotificationService {
     try {
       const { supabaseUser } = await import("../utils/authUtils").then((m) => m.getAuthenticatedUser());
       if (!supabaseUser) {
-        console.warn("User not authenticated, cannot register push token");
         return;
       }
 
@@ -305,7 +287,6 @@ class NotificationService {
       );
 
       if (error) {
-        console.warn("Failed to register push token:", error);
         throw new AppError(
           "Failed to register push token",
           ErrorType.SERVER,
@@ -314,10 +295,8 @@ class NotificationService {
           true,
         );
       } else {
-        console.log("Push token registered successfully");
       }
     } catch (error) {
-      console.warn("Error registering push token:", error);
       const appError = error instanceof AppError ? error : parseSupabaseError(error);
       throw appError;
     }
@@ -357,7 +336,6 @@ class NotificationService {
 
       return cleanDeviceId;
     } catch (error) {
-      console.warn("Failed to get device ID:", error);
       // Fallback with timestamp for uniqueness
       return `${Platform.OS}-fallback-${Date.now().toString(36)}`;
     }
@@ -377,9 +355,7 @@ class NotificationService {
         },
         trigger: null, // Send immediately
       });
-    } catch (error) {
-      console.warn("Failed to send local notification:", error);
-    }
+    } catch (error) {}
   }
 
   /**
@@ -397,7 +373,6 @@ class NotificationService {
       });
 
       if (error) {
-        console.warn("Failed to create notification via RPC, falling back to direct insert:", error);
         // Safe fallback for dev environments where a permissive policy may exist
         const { error: insertError } = await supabase.from("notifications").insert({
           user_id: userId,
@@ -410,7 +385,6 @@ class NotificationService {
         });
 
         if (insertError) {
-          console.warn("Failed to create notification:", insertError);
           throw new AppError(
             "Failed to create notification",
             ErrorType.SERVER,
@@ -421,7 +395,6 @@ class NotificationService {
         }
       }
     } catch (error) {
-      console.warn("Error creating notification:", error);
       const appError = error instanceof AppError ? error : parseSupabaseError(error);
       throw appError;
     }
@@ -440,13 +413,11 @@ class NotificationService {
         .limit(limit);
 
       if (error) {
-        console.warn("Failed to get notifications:", error);
         return [];
       }
 
       return data || [];
     } catch (error) {
-      console.warn("Error getting notifications:", error);
       return [];
     }
   }
@@ -459,7 +430,6 @@ class NotificationService {
       const { error } = await supabase.from("notifications").update({ is_read: true }).eq("id", notificationId);
 
       if (error) {
-        console.warn("Failed to mark notification as read:", error);
         throw new AppError(
           "Failed to mark notification as read",
           ErrorType.SERVER,
@@ -469,7 +439,6 @@ class NotificationService {
         );
       }
     } catch (error) {
-      console.warn("Error marking notification as read:", error);
       const appError = error instanceof AppError ? error : parseSupabaseError(error);
       throw appError;
     }
@@ -487,7 +456,6 @@ class NotificationService {
         .eq("is_read", false);
 
       if (error) {
-        console.warn("Failed to mark all notifications as read:", error);
         throw new AppError(
           "Failed to mark all notifications as read",
           ErrorType.SERVER,
@@ -497,7 +465,6 @@ class NotificationService {
         );
       }
     } catch (error) {
-      console.warn("Error marking all notifications as read:", error);
       const appError = error instanceof AppError ? error : parseSupabaseError(error);
       throw appError;
     }
@@ -515,13 +482,11 @@ class NotificationService {
         .eq("is_read", false);
 
       if (error) {
-        console.warn("Failed to get unread count:", error);
         return 0;
       }
 
       return count || 0;
     } catch (error) {
-      console.warn("Error getting unread count:", error);
       return 0;
     }
   }
@@ -545,11 +510,8 @@ class NotificationService {
         .eq("device_id", deviceId);
 
       if (error) {
-        console.warn("Failed to remove push token:", error);
       }
-    } catch (error) {
-      console.warn("Error removing push token:", error);
-    }
+    } catch (error) {}
   }
 
   /**
@@ -573,11 +535,8 @@ class NotificationService {
       );
 
       if (error) {
-        console.warn("Failed to update chat room subscription:", error);
       }
-    } catch (error) {
-      console.warn("Error updating chat room subscription:", error);
-    }
+    } catch (error) {}
   }
 
   async getChatRoomSubscription(roomId: string): Promise<boolean> {
@@ -599,7 +558,6 @@ class NotificationService {
 
       return !!data?.is_subscribed;
     } catch (error) {
-      console.warn("Error fetching chat room subscription:", error);
       return false;
     }
   }
@@ -611,9 +569,7 @@ class NotificationService {
 
       const currentSubscription = await this.getChatRoomSubscription(roomId);
       await this.setChatRoomSubscription(roomId, !currentSubscription);
-    } catch (error) {
-      console.warn("Error toggling chat room subscription:", error);
-    }
+    } catch (error) {}
   }
 
   /**
@@ -642,7 +598,6 @@ class NotificationService {
     if (index > -1) {
       subscription.remove();
       this.notificationListeners.splice(index, 1);
-      console.log("🧹 Removed notification listener");
     }
   }
 
@@ -650,13 +605,10 @@ class NotificationService {
    * Clean up all notification listeners
    */
   cleanup() {
-    console.log("🧹 Cleaning up notification service");
     this.notificationListeners.forEach((subscription) => {
       try {
         subscription.remove();
-      } catch (error) {
-        console.warn("Failed to remove notification listener:", error);
-      }
+      } catch (error) {}
     });
     this.notificationListeners = [];
     this.pushToken = null;
@@ -669,10 +621,7 @@ class NotificationService {
   private async storeDeniedPermissionStatus(): Promise<void> {
     try {
       // Could store in AsyncStorage for retry prompts later
-      console.log("📵 Notification permissions denied - stored for future retry");
-    } catch (error) {
-      console.warn("Failed to store denied permission status:", error);
-    }
+    } catch (error) {}
   }
 
   /**
@@ -683,7 +632,6 @@ class NotificationService {
       const { status } = await Notifications.getPermissionsAsync();
       return status === "undetermined";
     } catch (error) {
-      console.warn("Failed to check permission status:", error);
       return false;
     }
   }

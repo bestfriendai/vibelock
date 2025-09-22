@@ -8,30 +8,30 @@
       "developmentClient": true,
       "distribution": "internal",
       "ios": {
-        "resourceClass": "m-medium"
+        "resourceClass": "medium"
       },
       "android": {
-        "resourceClass": "m-medium"
+        "resourceClass": "medium"
       }
     },
     "preview": {
       "distribution": "internal",
       "ios": {
-        "resourceClass": "m-medium",
+        "resourceClass": "medium",
         "simulator": true
       },
       "android": {
-        "resourceClass": "m-medium"
+        "resourceClass": "medium"
       }
     },
     "production": {
       "autoIncrement": true,
       "ios": {
-        "resourceClass": "m-medium"
+        "resourceClass": "medium"
       },
       "android": {
         "resourceClass": "m-medium",
-        "buildType": "aab"
+        "buildType": "app-bundle"
       }
     },
     "production-simulator": {
@@ -47,7 +47,6 @@
         "appleId": "trappat@gmail.com"
       },
       "android": {
-        // Upload your service account key using: eas secret:create --scope project --name GOOGLE_SERVICE_ACCOUNT_KEY --type file --value ./path/to/your-service-account-key.json
         "serviceAccountKeyPath": "GOOGLE_SERVICE_ACCOUNT_KEY",
         "track": "production"
       }

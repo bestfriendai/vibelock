@@ -219,7 +219,6 @@ class RealtimeSubscriptionManager {
               503,
               true,
             );
-            console.warn("Maximum concurrent subscriptions reached");
             callbacks.onError?.(error);
             return false;
           }
@@ -239,7 +238,6 @@ class RealtimeSubscriptionManager {
         existing.lastActivity = Date.now();
 
         if (this.config.enableMetrics) {
-          console.log(`[RealtimeManager] Reusing existing subscription for ${subscriptionKey}`);
         }
 
         return true;
@@ -255,7 +253,6 @@ class RealtimeSubscriptionManager {
         // Reuse existing connection
         const sharedSub = this.subscriptions.get(sharedConnectionKey)!;
         channel = sharedSub.channel;
-        console.log(`[RealtimeManager] Reusing connection for room ${roomId} via ${sharedConnectionKey}`);
       } else {
         // Create new subscription
         channel = supabase.channel(`room:${roomId}`, {
@@ -332,7 +329,6 @@ class RealtimeSubscriptionManager {
         // Update quota usage
         this.quotaMonitor.messageCount++;
 
-        console.log(`✅ Successfully subscribed to room ${roomId}`);
         return true;
       } else {
         const classifiedError = classifyError(subscribeResponse);
@@ -404,8 +400,6 @@ class RealtimeSubscriptionManager {
 
       // Remove from subscriptions
       this.subscriptions.delete(subscriptionKey);
-
-      console.log(`✅ Unsubscribed from room ${roomId}`);
     } catch (error) {
       console.error(`❌ Error unsubscribing from room ${roomId}:`, error);
     }
@@ -509,7 +503,6 @@ class RealtimeSubscriptionManager {
           try {
             callback(payload);
           } catch (error) {
-            console.warn("Error in message callback:", error);
             subscriptionInfo.performanceMetrics.errorCount++;
             subscriptionInfo.performanceMetrics.errorRate =
               subscriptionInfo.performanceMetrics.errorCount / subscriptionInfo.performanceMetrics.totalMessages;
@@ -638,10 +631,6 @@ class RealtimeSubscriptionManager {
     subscriptionInfo.retryCount++;
     const delay = this.config.retryDelay * Math.pow(2, subscriptionInfo.retryCount - 1);
 
-    console.log(
-      `Retrying connection to room ${subscriptionInfo.roomId} in ${delay}ms (attempt ${subscriptionInfo.retryCount})`,
-    );
-
     const subscriptionKey = `${subscriptionInfo.roomId}:${subscriptionInfo.userId}`;
     const timeout = setTimeout(async () => {
       try {
@@ -683,7 +672,6 @@ class RealtimeSubscriptionManager {
   private validateSubscriptionStates(): void {
     for (const [key, subscription] of this.subscriptions.entries()) {
       if (!validateSubscriptionState(key, this.subscriptions)) {
-        console.warn(`[RealtimeManager] Invalid subscription state for ${key}: ${subscription.status}`);
         subscription.status = "error";
       }
     }
@@ -719,9 +707,7 @@ class RealtimeSubscriptionManager {
       .sort((a, b) => b.priority - a.priority)
       .slice(0, Math.ceil(cleanupCandidates.length * 0.3)) // Clean up max 30% at once
       .forEach(async ({ key, subscription }) => {
-        console.log(
-          `Cleaning up subscription: ${key} (priority: ${subscription.priority}, errors: ${subscription.performanceMetrics.errorCount})`,
-        );
+        console.log(`Cleaning up inactive subscription for ${key}`);
         await this.unsubscribe(subscription.roomId, subscription.userId);
       });
   }
@@ -755,13 +741,11 @@ class RealtimeSubscriptionManager {
       const isHealthy = await checkConnectionHealth(subscription.channel);
 
       if (!isHealthy) {
-        console.warn(`[RealtimeManager] Unhealthy connection detected: ${key}`);
         subscription.status = "error";
         subscription.performanceMetrics.errorCount++;
 
         // Attempt recovery for critical connections
         if (subscription.priority === "high") {
-          console.log(`[RealtimeManager] Attempting recovery for high-priority connection: ${key}`);
           await this.handleConnectionError(subscription);
         }
       }
@@ -790,7 +774,6 @@ class RealtimeSubscriptionManager {
     if (now - this.quotaMonitor.lastReset > (this.config.quotaResetInterval ?? 2592000000)) {
       this.quotaMonitor.messageCount = 0;
       this.quotaMonitor.lastReset = now;
-      console.log(`[RealtimeManager] Quota counter reset`);
     }
 
     // Calculate usage percentage
@@ -804,7 +787,7 @@ class RealtimeSubscriptionManager {
       );
     } else if (this.quotaMonitor.messageCount > this.quotaMonitor.warningThreshold) {
       console.warn(
-        `[RealtimeManager] WARNING: Quota usage at ${this.performanceMetrics.quotaUsagePercentage.toFixed(1)}%`,
+        `[RealtimeManager] Warning: Quota usage at ${this.performanceMetrics.quotaUsagePercentage.toFixed(1)}%`,
       );
     }
   }
@@ -813,8 +796,6 @@ class RealtimeSubscriptionManager {
    * Enhanced cleanup with comprehensive resource management
    */
   async cleanup(): Promise<void> {
-    console.log(`[RealtimeManager] Starting cleanup of ${this.subscriptions.size} subscriptions`);
-
     // Prioritize cleanup by subscription priority
     const subscriptionEntries = Array.from(this.subscriptions.entries()).sort(([, a], [, b]) => {
       const priorityOrder = { low: 0, normal: 1, high: 2 };
@@ -847,8 +828,6 @@ class RealtimeSubscriptionManager {
     this.circuitBreakerState.clear();
     this.connectionSharing.clear();
     this.connectionPool.clear();
-
-    console.log(`[RealtimeManager] Cleanup completed`);
   }
 
   /**
@@ -885,7 +864,6 @@ class RealtimeSubscriptionManager {
 
     if (state.failures >= this.config.circuitBreakerThreshold) {
       state.isOpen = true;
-      console.warn(`[RealtimeManager] Circuit breaker opened for ${subscriptionKey}`);
     }
   }
 
@@ -910,7 +888,6 @@ class RealtimeSubscriptionManager {
     this.performanceMetrics.totalErrors = totalErrors;
 
     if (this.config.enableMetrics) {
-      console.log(`[RealtimeManager] Performance metrics:`, this.performanceMetrics);
     }
   }
 
@@ -930,7 +907,7 @@ class RealtimeSubscriptionManager {
 
     if (totalMemoryKB > this.config.memoryThreshold * 1024) {
       // Convert MB to KB
-      console.warn(`[RealtimeManager] High memory usage: ${totalMemoryKB.toFixed(2)}KB`);
+      console.warn(`[RealtimeManager] Memory usage warning: ${totalMemoryKB}KB`);
 
       // Trigger aggressive cleanup
       this.cleanupInactiveSubscriptions();
@@ -945,7 +922,6 @@ class RealtimeSubscriptionManager {
     const subscription = this.subscriptions.get(subscriptionKey);
     if (subscription) {
       subscription.priority = priority;
-      console.log(`[RealtimeManager] Updated subscription priority for ${subscriptionKey}: ${priority}`);
     }
   }
 

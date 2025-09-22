@@ -74,8 +74,6 @@ class SupabaseRealtimeService {
 
     // Enhanced error handling for Supabase Realtime v2.57.4
     // Listen for overall connection status changes
-    console.log("[WebSocket] Initializing Supabase Realtime listeners v2.57.4");
-
     // Setup heartbeat to monitor connection health
     this.setupHeartbeat();
 
@@ -84,7 +82,6 @@ class SupabaseRealtimeService {
       // Monitor realtime connection state
       const originalConnect = supabase.realtime.connect.bind(supabase.realtime);
       supabase.realtime.connect = () => {
-        console.log("[WebSocket] Realtime connecting...");
         this.trackConnectionAttempt();
         return originalConnect();
       };
@@ -98,11 +95,8 @@ class SupabaseRealtimeService {
    */
   async connect(userId: string, callbacks: WebSocketServiceCallbacks, userName?: string) {
     if (this.connectionStatus === "connecting" || this.connectionStatus === "connected") {
-      console.log("⚠️ Already connecting or connected to Supabase Realtime");
       return;
     }
-
-    console.log("🔌 Connecting to Supabase Realtime v2.57.4...", { userId, userName });
 
     // Clear any existing reconnection timeout
     if (this.reconnectTimeout) {
@@ -128,8 +122,6 @@ class SupabaseRealtimeService {
 
       this.updateConnectionStatus("connected");
       this.clearConnectionErrors();
-
-      console.log("✅ Successfully connected to Supabase Realtime");
     } catch (error: any) {
       console.error("❌ Failed to connect to Supabase Realtime:", error);
       this.trackConnectionError(error.message || "Failed to connect to realtime");
@@ -144,8 +136,6 @@ class SupabaseRealtimeService {
    * Disconnect from all Supabase realtime channels with enhanced cleanup
    */
   async disconnect() {
-    console.log("🧹 Disconnecting from Supabase Realtime...");
-
     // Clear all timeouts and intervals
     if (this.typingTimeout) {
       clearTimeout(this.typingTimeout);
@@ -168,27 +158,27 @@ class SupabaseRealtimeService {
 
       if (this.messagesChannel) {
         channelCleanupPromises.push(
-          supabase
-            .removeChannel(this.messagesChannel)
-            .catch((err) => console.warn("Error removing messages channel:", err)),
+          supabase.removeChannel(this.messagesChannel).catch((err) => {
+            console.error(err);
+          }),
         );
         this.messagesChannel = null;
       }
 
       if (this.presenceChannel) {
         channelCleanupPromises.push(
-          supabase
-            .removeChannel(this.presenceChannel)
-            .catch((err) => console.warn("Error removing presence channel:", err)),
+          supabase.removeChannel(this.presenceChannel).catch((err) => {
+            console.error(err);
+          }),
         );
         this.presenceChannel = null;
       }
 
       if (this.typingChannel) {
         channelCleanupPromises.push(
-          supabase
-            .removeChannel(this.typingChannel)
-            .catch((err) => console.warn("Error removing typing channel:", err)),
+          supabase.removeChannel(this.typingChannel).catch((err) => {
+            console.error(err);
+          }),
         );
         this.typingChannel = null;
       }
@@ -198,9 +188,7 @@ class SupabaseRealtimeService {
         Promise.all(channelCleanupPromises),
         this.createTimeoutPromise(5000, "Channel cleanup timeout"),
       ]);
-    } catch (error) {
-      console.warn("Error during channel cleanup:", error);
-    }
+    } catch (error) {}
 
     // Reset state
     this.connectionStatus = "disconnected";
@@ -214,8 +202,6 @@ class SupabaseRealtimeService {
 
     this.callbacks?.onConnectionStatusChange("disconnected");
     this.callbacks = null;
-
-    console.log("✅ Disconnected from Supabase Realtime");
   }
 
   /**
@@ -225,8 +211,6 @@ class SupabaseRealtimeService {
     if (!this.currentUserId || !this.callbacks) {
       throw new Error("Must be connected before joining a room");
     }
-
-    console.log("🏠 Joining chat room:", chatRoomId);
 
     // Leave previous room if any
     if (this.currentChatRoomId && this.currentChatRoomId !== chatRoomId) {
@@ -250,8 +234,6 @@ class SupabaseRealtimeService {
 
       // Notify callbacks
       this.callbacks.onUserJoin(this.currentUserId, this.currentUserName!, chatRoomId);
-
-      console.log("✅ Successfully joined room:", chatRoomId);
     } catch (error: any) {
       console.error("❌ Failed to join room:", error);
       this.callbacks.onError(`Failed to join room: ${error.message}`);
@@ -266,8 +248,6 @@ class SupabaseRealtimeService {
       return;
     }
 
-    console.log("🚪 Leaving chat room:", chatRoomId);
-
     try {
       // Untrack presence
       if (this.presenceChannel) {
@@ -281,8 +261,6 @@ class SupabaseRealtimeService {
       if (this.currentChatRoomId === chatRoomId) {
         this.currentChatRoomId = null;
       }
-
-      console.log("✅ Successfully left room:", chatRoomId);
     } catch (error: any) {
       console.error("❌ Failed to leave room:", error);
       this.callbacks.onError(`Failed to leave room: ${error.message}`);
@@ -354,8 +332,6 @@ class SupabaseRealtimeService {
 
         this.callbacks?.onMessage(realMessage);
       }
-
-      console.log("✅ Message sent successfully");
     } catch (error: any) {
       console.error("❌ Failed to send message:", error);
 
@@ -420,8 +396,6 @@ class SupabaseRealtimeService {
         throw new Error("Supabase realtime client not initialized");
       }
 
-      console.log("🔌 Setting up realtime channels...");
-
       // Global messages channel for database changes with enhanced error handling
       const channelName = `chat_messages_global_${Date.now()}`;
       this.messagesChannel = supabase.channel(channelName, {
@@ -452,14 +426,11 @@ class SupabaseRealtimeService {
           },
           (payload) => this.handleMessageChange(payload),
         ).subscribe((status) => {
-          console.log("📨 Messages channel status:", status);
-
           switch (status) {
             case "SUBSCRIBED":
               if (!hasResolved) {
                 hasResolved = true;
                 clearTimeout(timeout);
-                console.log("✅ Successfully subscribed to messages channel");
                 this.updateConnectionStatus("connected");
                 resolve();
               }
@@ -480,7 +451,6 @@ class SupabaseRealtimeService {
               break;
 
             case "CLOSED":
-              console.log("📨 Messages channel closed");
               if (this.connectionStatus === "connected") {
                 this.updateConnectionStatus("disconnected");
                 this.attemptReconnection();
@@ -488,7 +458,6 @@ class SupabaseRealtimeService {
               break;
 
             case "TIMED_OUT":
-              console.warn("⏰ Messages channel timed out");
               if (!hasResolved) {
                 hasResolved = true;
                 clearTimeout(timeout);
@@ -499,13 +468,11 @@ class SupabaseRealtimeService {
               break;
 
             default:
-              console.log(`📨 Messages channel status: ${status}`);
           }
         });
       });
 
       await subscriptionPromise;
-      console.log("✅ Realtime channels setup completed");
     } catch (error: any) {
       console.error("❌ Failed to setup realtime channels:", error);
 
@@ -514,7 +481,7 @@ class SupabaseRealtimeService {
         try {
           await supabase.removeChannel(this.messagesChannel);
         } catch (cleanupError) {
-          console.warn("Warning: Failed to cleanup messages channel:", cleanupError);
+          console.error(cleanupError);
         }
         this.messagesChannel = null;
       }
@@ -528,8 +495,6 @@ class SupabaseRealtimeService {
    */
   private async setupRoomChannels(chatRoomId: string) {
     try {
-      console.log(`🏠 Setting up room channels for: ${chatRoomId}`);
-
       // Room presence channel with enhanced configuration
       const presenceChannelName = `room_presence_${chatRoomId}_${Date.now()}`;
       this.presenceChannel = supabase.channel(presenceChannelName, {
@@ -564,14 +529,11 @@ class SupabaseRealtimeService {
             this.handlePresenceLeave(key, leftPresences);
           })
           .subscribe((status) => {
-            console.log("👥 Presence channel status:", status);
-
             switch (status) {
               case "SUBSCRIBED":
                 if (!hasResolved) {
                   hasResolved = true;
                   clearTimeout(timeout);
-                  console.log("✅ Presence channel subscribed");
                   resolve();
                 }
                 break;
@@ -585,7 +547,6 @@ class SupabaseRealtimeService {
                 }
                 break;
               case "CLOSED":
-                console.log("👥 Presence channel closed");
                 break;
               case "TIMED_OUT":
                 if (!hasResolved) {
@@ -613,14 +574,11 @@ class SupabaseRealtimeService {
         this.typingChannel!.on("broadcast", { event: "typing" }, (payload) => {
           this.handleTypingEvent(payload.payload as BroadcastPayload);
         }).subscribe((status) => {
-          console.log("⌨️ Typing channel status:", status);
-
           switch (status) {
             case "SUBSCRIBED":
               if (!hasResolved) {
                 hasResolved = true;
                 clearTimeout(timeout);
-                console.log("✅ Typing channel subscribed");
                 resolve();
               }
               break;
@@ -634,7 +592,6 @@ class SupabaseRealtimeService {
               }
               break;
             case "CLOSED":
-              console.log("⌨️ Typing channel closed");
               break;
             case "TIMED_OUT":
               if (!hasResolved) {
@@ -651,7 +608,6 @@ class SupabaseRealtimeService {
 
       // Wait for both channels to be ready
       await Promise.all([presencePromise, typingPromise]);
-      console.log("✅ Room channels setup completed");
     } catch (error: any) {
       console.error("❌ Failed to setup room channels:", error);
 
@@ -660,7 +616,7 @@ class SupabaseRealtimeService {
         try {
           await supabase.removeChannel(this.presenceChannel);
         } catch (cleanupError) {
-          console.warn("Warning: Failed to cleanup presence channel:", cleanupError);
+          console.error(cleanupError);
         }
         this.presenceChannel = null;
       }
@@ -669,7 +625,7 @@ class SupabaseRealtimeService {
         try {
           await supabase.removeChannel(this.typingChannel);
         } catch (cleanupError) {
-          console.warn("Warning: Failed to cleanup typing channel:", cleanupError);
+          console.error(cleanupError);
         }
         this.typingChannel = null;
       }
@@ -713,7 +669,6 @@ class SupabaseRealtimeService {
       case "DELETE":
         if (oldRecord) {
           // Handle message deletion if needed
-          console.log("Message deleted:", oldRecord.id);
         }
         break;
     }
@@ -728,7 +683,6 @@ class SupabaseRealtimeService {
     const state = this.presenceChannel.presenceState();
     const onlineUsers = Object.keys(state).filter((key) => key !== this.currentUserId);
 
-    console.log("👥 Presence sync - online users:", onlineUsers);
     this.callbacks.onOnlineStatusChange(onlineUsers);
   }
 
@@ -740,7 +694,6 @@ class SupabaseRealtimeService {
 
     const presence = newPresences[0];
     if (presence && this.currentChatRoomId) {
-      console.log("👋 User joined:", presence);
       this.callbacks.onUserJoin(
         presence.user_id,
         presence.user_name || `User_${presence.user_id.slice(0, 8)}`,
@@ -756,7 +709,6 @@ class SupabaseRealtimeService {
     if (!this.callbacks || key === this.currentUserId) return;
 
     if (this.currentChatRoomId) {
-      console.log("👋 User left:", key);
       this.callbacks.onUserLeave(key, this.currentChatRoomId);
     }
   }
@@ -816,10 +768,7 @@ class SupabaseRealtimeService {
     const jitter = Math.random() * 1000; // Add jitter to prevent thundering herd
     const delay = Math.min(baseDelay + jitter, 30000);
 
-    console.log(
-      `🔄 Attempting reconnection (${this.reconnectAttempts}/${this.maxReconnectAttempts}) in ${Math.round(delay)}ms...`,
-    );
-
+    console.log(`🔄 Reconnection attempt ${this.reconnectAttempts} in ${Math.round(delay)}ms...`);
     // Clear any existing timeout
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout);
@@ -831,7 +780,6 @@ class SupabaseRealtimeService {
           // Check if we should continue attempting reconnection
           const recentErrors = this.getRecentConnectionErrors();
           if (recentErrors.length > 3) {
-            console.warn("🚨 Too many recent connection errors, extending delay");
             this.reconnectDelay = Math.min(this.reconnectDelay * 1.5, 10000);
           }
 
@@ -955,7 +903,7 @@ class SupabaseRealtimeService {
           throw error;
         }
 
-        console.warn(`Authentication check failed (attempt ${attempts}/${maxAttempts}):`, error);
+        console.error(`Auth attempt ${attempts} failed:`, error);
         await new Promise((resolve) => setTimeout(resolve, 1000 * attempts));
       }
     }
@@ -978,7 +926,6 @@ class SupabaseRealtimeService {
         throw new Error("No internet connection. Please check your network and try again.");
       }
       // Other errors might still indicate connectivity, so we'll proceed
-      console.warn("Network connectivity check inconclusive:", error);
     }
   }
 
@@ -1019,7 +966,6 @@ class SupabaseRealtimeService {
 
       // If too much time has passed since last heartbeat, consider connection unhealthy
       if (timeSinceLastHeartbeat > 60000) {
-        console.warn("🚨 Connection health check failed - no heartbeat for", timeSinceLastHeartbeat, "ms");
         this.updateConnectionStatus("error", "Connection health check failed");
         this.attemptReconnection();
         return;
@@ -1027,7 +973,6 @@ class SupabaseRealtimeService {
 
       // Check if realtime is still connected
       if (supabase.realtime && !supabase.realtime.isConnected()) {
-        console.warn("🚨 Realtime connection lost");
         this.updateConnectionStatus("error", "Realtime connection lost");
         this.attemptReconnection();
         return;
@@ -1038,21 +983,16 @@ class SupabaseRealtimeService {
       const unhealthyChannels = channels.filter((channel) => channel && (channel as any).state === "CHANNEL_ERROR");
 
       if (unhealthyChannels.length > 0) {
-        console.warn("🚨 Unhealthy channels detected:", unhealthyChannels.length);
         this.updateConnectionStatus("error", "Some channels are in error state");
         this.attemptReconnection();
       }
-    } catch (error) {
-      console.warn("Error during health check:", error);
-    }
+    } catch (error) {}
   }
 
   /**
    * Track connection attempt for metrics
    */
-  private trackConnectionAttempt(): void {
-    console.log(`[WebSocket] Connection attempt #${this.reconnectAttempts + 1}`);
-  }
+  private trackConnectionAttempt(): void {}
 
   /**
    * Track connection error with timestamp
@@ -1070,8 +1010,6 @@ class SupabaseRealtimeService {
     // Keep only recent errors (last 10 minutes)
     const tenMinutesAgo = Date.now() - 10 * 60 * 1000;
     this.connectionErrors = this.connectionErrors.filter((e) => e.timestamp > tenMinutesAgo);
-
-    console.warn(`[WebSocket] Error tracked:`, errorEntry);
   }
 
   /**
@@ -1095,11 +1033,7 @@ class SupabaseRealtimeService {
    * Log connection attempt summary for debugging
    */
   private logConnectionSummary(): void {
-    console.log("[WebSocket] Connection Summary:");
-    console.log(`  Total attempts: ${this.reconnectAttempts}`);
-    console.log(`  Recent errors: ${this.getRecentConnectionErrors().length}`);
-    console.log(`  Last error: ${this.lastConnectionError}`);
-    console.log(`  Connection errors:`, this.connectionErrors);
+    console.log(`Connection summary: ${this.connectionErrors.length} errors`);
   }
 
   /**
@@ -1116,7 +1050,6 @@ class SupabaseRealtimeService {
     const channelErrors = recentErrors.filter((e) => e.error.includes("channel"));
 
     if (channelErrors.length >= 2) {
-      console.warn("🚨 Multiple channel errors detected, triggering reconnection");
       this.updateConnectionStatus("error", "Multiple channel failures");
       this.attemptReconnection();
     } else {
@@ -1130,8 +1063,6 @@ class SupabaseRealtimeService {
    */
   private async recoverChannel(channelType: "messages" | "presence" | "typing"): Promise<void> {
     try {
-      console.log(`🔄 Attempting to recover ${channelType} channel...`);
-
       switch (channelType) {
         case "messages":
           if (this.messagesChannel) {
@@ -1159,8 +1090,6 @@ class SupabaseRealtimeService {
           }
           break;
       }
-
-      console.log(`✅ ${channelType} channel recovered successfully`);
     } catch (error) {
       console.error(`❌ Failed to recover ${channelType} channel:`, error);
       // If recovery fails, trigger full reconnection

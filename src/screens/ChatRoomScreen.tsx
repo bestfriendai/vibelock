@@ -96,8 +96,6 @@ export default function ChatRoomScreen() {
   // Component-wide cleanup effect
   useEffect(() => {
     return () => {
-      console.log("🧹 ChatRoomScreen component unmounting - final cleanup");
-
       // Ensure all timeouts are cleared
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current);
@@ -148,8 +146,8 @@ export default function ChatRoomScreen() {
   }, [scrollManager]);
 
   useEffect(() => {
-    console.log("🔍 ChatRoomScreen useEffect triggered:", {
-      roomId: roomId?.slice(-8),
+    performanceMonitor.recordMetric("chatroom:enter", {
+      roomId,
       canAccessChat,
       needsSignIn,
       hasUser: !!user,
@@ -158,20 +156,11 @@ export default function ChatRoomScreen() {
     });
 
     if (roomId && canAccessChat && !needsSignIn && user) {
-      console.log(`🚪 Attempting to join room: ${roomId.slice(-8)}`);
       // Reset pagination state when entering a new room
       setHasMoreMessages(true);
       joinChatRoom(roomId);
-    } else {
-      console.log("❌ Cannot join room - missing requirements:", {
-        hasRoomId: !!roomId,
-        canAccessChat,
-        needsSignIn,
-        hasUser: !!user,
-      });
     }
     return () => {
-      console.log("🧹 ChatRoomScreen cleanup initiated");
       mountedRef.current = false;
 
       // Clear all timeouts
@@ -197,8 +186,6 @@ export default function ChatRoomScreen() {
       if (roomId && canAccessChat && !needsSignIn && user) {
         leaveChatRoom(roomId);
       }
-
-      console.log("✅ ChatRoomScreen cleanup completed");
     };
   }, [roomId, canAccessChat, needsSignIn, user, joinChatRoom, leaveChatRoom]);
 
@@ -284,7 +271,6 @@ export default function ChatRoomScreen() {
         }
         autoScrollTimeoutRef.current = setTimeout(() => {
           if (mountedRef.current && listRef.current) {
-            console.log("🔄 Initial auto-scroll to bottom");
             try {
               // Try scrolling to the last message index
               const lastIndex = optimizedMessages.length - 1;
@@ -294,7 +280,6 @@ export default function ChatRoomScreen() {
                 listRef.current.scrollToEnd({ animated: false });
               }
             } catch (error) {
-              console.warn("Direct scroll failed, using scrollManager:", error);
               scrollManager.scrollToEnd({ animated: false });
             }
             hasAutoScrolledRef.current = true;
@@ -311,7 +296,6 @@ export default function ChatRoomScreen() {
           }
           scrollTimeoutRef.current = setTimeout(() => {
             if (mountedRef.current && listRef.current) {
-              console.log("🔄 New message auto-scroll to bottom");
               try {
                 // Try scrolling to the last message index
                 const lastIndex = optimizedMessages.length - 1;
@@ -321,7 +305,6 @@ export default function ChatRoomScreen() {
                   listRef.current.scrollToEnd({ animated: true });
                 }
               } catch (error) {
-                console.warn("Direct scroll failed, using scrollManager:", error);
                 scrollManager.scrollToEnd({ animated: true });
               }
             }
@@ -450,12 +433,9 @@ export default function ChatRoomScreen() {
       // Update hasMoreMessages based on the result
       if (!result.hasMore) {
         setHasMoreMessages(false);
-        console.log("📨 No more older messages to load");
-      } else {
-        console.log(`📨 Loaded ${result.loadedCount} older messages, more available`);
       }
     } catch (error) {
-      console.warn("Failed to load older messages:", error);
+      console.error("Error loading older messages:", error);
     } finally {
       setIsLoadingOlderMessages(false);
     }
@@ -660,7 +640,6 @@ export default function ChatRoomScreen() {
               optimizedMessages.length > 10 &&
               timeSinceLastLoad > 1000
             ) {
-              console.log("🔄 Auto-loading older messages on scroll...");
               lastLoadTimeRef.current = now;
               handleLoadOlderMessages();
             }
@@ -861,7 +840,6 @@ export default function ChatRoomScreen() {
               Clipboard.setStringAsync(selectedMessage.content);
             }
           } catch (error) {
-            console.warn("Failed to copy message:", error);
           } finally {
             setIsActionsModalVisible(false);
           }
@@ -872,7 +850,6 @@ export default function ChatRoomScreen() {
               await useChatStore.getState().deleteMessage?.(roomId, selectedMessage.id);
             }
           } catch (error) {
-            console.warn("Failed to delete message:", error);
           } finally {
             setIsActionsModalVisible(false);
           }

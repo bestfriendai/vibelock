@@ -10,7 +10,7 @@ export function measurePerformance<T>(operation: string, callback: () => T): T {
     const duration = stop();
 
     if (duration > 100) {
-      console.warn(`Slow operation detected: ${operation} took ${duration.toFixed(1)}ms`);
+      console.warn(`${operation} took ${duration}ms`);
     }
 
     return result;
@@ -180,7 +180,6 @@ export function monitorScrollPerformance(scrollHandler: (event: any) => void): (
       });
 
       if (lagCount / scrollEvents > 0.2) {
-        console.warn("Poor scroll performance detected");
       }
     }
 

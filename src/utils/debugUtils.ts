@@ -24,7 +24,6 @@ class DebugUtils {
    * Debug realtime connection comprehensively
    */
   async debugRealtimeConnection(): Promise<DebugReport[]> {
-    console.log("🔍 Starting comprehensive realtime connection debug...");
     this.reports = [];
     this.isDebugging = true;
 
@@ -263,7 +262,6 @@ class DebugUtils {
    * Debug Web Workers compatibility
    */
   async debugWebWorkersCompatibility(): Promise<DebugReport[]> {
-    console.log("🔍 Debugging Web Workers compatibility...");
     this.reports = [];
 
     try {
@@ -310,7 +308,6 @@ class DebugUtils {
    * Debug network connectivity
    */
   async debugNetworkConnectivity(): Promise<DebugReport[]> {
-    console.log("🔍 Debugging network connectivity...");
     this.reports = [];
 
     try {
@@ -359,7 +356,6 @@ class DebugUtils {
    * Debug AppState transitions
    */
   async debugAppStateTransitions(): Promise<DebugReport[]> {
-    console.log("🔍 Debugging AppState transitions...");
     this.reports = [];
 
     try {
@@ -379,8 +375,6 @@ class DebugUtils {
       );
 
       // Monitor state changes for 5 seconds
-      console.log("📱 Monitoring AppState changes for 5 seconds...");
-
       const listener = AppState.addEventListener("change", (nextState) => {
         this.addReport("appstate", "pass", `AppState changed to: ${nextState}`);
       });
@@ -398,8 +392,6 @@ class DebugUtils {
    * Generate comprehensive connection report
    */
   async generateConnectionReport(): Promise<string> {
-    console.log("📊 Generating comprehensive connection report...");
-
     const sections = [
       { name: "Realtime Connection", fn: () => this.debugRealtimeConnection() },
       { name: "Web Workers", fn: () => this.debugWebWorkersCompatibility() },
@@ -460,7 +452,6 @@ class DebugUtils {
       }
     }
 
-    console.log(report);
     return report;
   }
 
@@ -480,9 +471,7 @@ class DebugUtils {
 
     // Log immediately
     const icon = status === "pass" ? "✅" : status === "fail" ? "❌" : "⚠️";
-    console.log(`${icon} [${category}] ${message}`);
     if (details) {
-      console.log("   Details:", details);
     }
   }
 
@@ -491,33 +480,26 @@ class DebugUtils {
    */
   async quickConnectionTest(): Promise<boolean> {
     try {
-      console.log("⚡ Running quick connection test...");
-
       // 1. Check network
       const network = await reliableNetworkCheck();
       if (!network.isOnline) {
-        console.log("❌ Network offline");
         return false;
       }
 
       // 2. Check Supabase
       const { error } = await supabase.from("chat_rooms_firebase").select("count").limit(1);
       if (error) {
-        console.log("❌ Supabase unreachable");
         return false;
       }
 
       // 3. Check realtime
       const isConnected = supabase.realtime?.isConnected?.() ?? false;
       if (!isConnected) {
-        console.log("⚠️ Realtime not connected");
         return false;
       }
 
-      console.log("✅ Connection test passed");
       return true;
     } catch (error) {
-      console.log("❌ Connection test failed:", error);
       return false;
     }
   }

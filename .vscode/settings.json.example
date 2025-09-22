@@ -22,12 +22,26 @@
   "mcp": {
     "servers": {
       "revenuecat": {
-        "type": "http",
-        "url": "https://mcp.revenuecat.ai/mcp",
-        "headers": {
-          "Authorization": "Bearer ${REVENUECAT_API_KEY}"
+        "type": "stdio",
+        "command": "npx",
+        "args": ["revenuecat-mcp"],
+        "env": {
+          "REVENUECAT_API_KEY": "${env:REVENUECAT_API_KEY}",
+          "REVENUECAT_PROJECT_ID": "${env:REVENUECAT_PROJECT_ID}",
+          "REVENUECAT_APP_ID_IOS": "${env:REVENUECAT_APP_ID_IOS}",
+          "REVENUECAT_APP_ID_ANDROID": "${env:REVENUECAT_APP_ID_ANDROID}"
         }
+      },
+      "filesystem": {
+        "type": "stdio",
+        "command": "npx",
+        "args": ["-y", "@modelcontextprotocol/server-filesystem", "${workspaceFolder}"]
       }
     }
+  },
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
   }
 }

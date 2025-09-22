@@ -46,12 +46,10 @@ class ConsolidatedRealtimeService {
   async initialize(): Promise<void> {
     if (this.isInitialized) return;
 
-    console.log("🚀 Initializing Consolidated Real-time Service");
     this.updateConnectionStatus("connecting");
 
     try {
       // Verify authentication with detailed logging
-      console.log("🔐 Checking authentication status...");
       const {
         data: { user },
         error,
@@ -67,7 +65,7 @@ class ConsolidatedRealtimeService {
         throw new AppError("No authenticated user found - please sign in", ErrorType.AUTH);
       }
 
-      console.log(`✅ Authentication verified for user: ${user.id.slice(-8)}`);
+      console.log(`✅ Initializing consolidated realtime service for user ${user.id}`);
 
       // Check if Supabase realtime is available
       if (!supabase.realtime) {
@@ -76,25 +74,20 @@ class ConsolidatedRealtimeService {
       }
 
       // Log realtime configuration for debugging
-      console.log("📡 Supabase realtime configuration:", {
-        isConnected: supabase.realtime.isConnected(),
+      console.log("📡 Realtime configuration:", {
         channels: supabase.realtime.channels?.length || 0,
         accessToken: !!supabase.realtime.accessToken,
       });
 
       // Check realtime connection status (but don't fail if not connected yet)
       const isRealtimeConnected = supabase.realtime.isConnected();
-      console.log(`📡 Supabase realtime connection status: ${isRealtimeConnected ? "connected" : "disconnected"}`);
-
       if (!isRealtimeConnected) {
-        console.log("📡 Realtime will connect automatically when needed");
       }
 
       this.updateConnectionStatus("connected");
       this.isInitialized = true;
       this.reconnectAttempts = 0; // Reset on successful connection
       this.startHeartbeat();
-      console.log("✅ Consolidated Real-time Service initialized successfully");
     } catch (error) {
       console.error("❌ Failed to initialize real-time service:", error);
       const errorMessage = error instanceof Error ? error.message : "Failed to initialize";
@@ -109,15 +102,13 @@ class ConsolidatedRealtimeService {
     this.connectionError = error || null;
 
     if (previousStatus !== status) {
-      console.log(`🔄 Connection status changed: ${previousStatus} → ${status}${error ? ` (${error})` : ""}`);
+      console.log(`🔄 Connection status changed: ${previousStatus} → ${status}${error ? ` : ${error}` : ""}`);
 
       // Notify all registered callbacks
       this.connectionCallbacks.forEach((callback) => {
         try {
           callback(status, error);
-        } catch (error) {
-          console.warn("Error in connection status callback:", error);
-        }
+        } catch (error) {}
       });
     }
   }
@@ -154,7 +145,6 @@ class ConsolidatedRealtimeService {
         const timeSinceActivity = Date.now() - subscription.lastActivity;
         if (timeSinceActivity > 60000) {
           // 1 minute without activity
-          console.warn(`⚠️ Room ${roomId} subscription appears stale, checking health`);
           this.checkSubscriptionHealth(roomId);
         }
       }
@@ -165,7 +155,6 @@ class ConsolidatedRealtimeService {
     try {
       // Check if Supabase realtime is still connected
       if (supabase.realtime && !supabase.realtime.isConnected()) {
-        console.warn("🚨 Supabase realtime connection lost");
         this.updateConnectionStatus("error", "Realtime connection lost");
         await this.attemptReconnection();
         return;
@@ -177,7 +166,6 @@ class ConsolidatedRealtimeService {
         error,
       } = await supabase.auth.getUser();
       if (error || !user) {
-        console.warn("🚨 Authentication lost during health check");
         this.updateConnectionStatus("error", "Authentication lost");
         await this.attemptReconnection();
         return;
@@ -185,11 +173,9 @@ class ConsolidatedRealtimeService {
 
       // Check if we have active subscriptions but connection status is error
       if (this.connectionStatus === "error" && this.subscriptions.size > 0) {
-        console.log("🔄 Attempting to recover from error state");
         await this.attemptReconnection();
       }
     } catch (error) {
-      console.warn("⚠️ Health check failed:", error);
       this.updateConnectionStatus("error", "Health check failed");
       await this.attemptReconnection();
     }
@@ -209,7 +195,6 @@ class ConsolidatedRealtimeService {
     this.reconnectAttempts++;
     const delay = Math.min(this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1), 30000); // Exponential backoff, max 30s
 
-    console.log(`🔄 Attempting reconnection ${this.reconnectAttempts}/${this.maxReconnectAttempts} in ${delay}ms`);
     this.updateConnectionStatus(
       "connecting",
       `Reconnecting... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`,
@@ -227,7 +212,6 @@ class ConsolidatedRealtimeService {
           await this.rejoinRoom(roomId);
         }
 
-        console.log("✅ Reconnection successful");
         this.reconnectAttempts = 0; // Reset on success
       } catch (error) {
         console.error(`❌ Reconnection attempt ${this.reconnectAttempts} failed:`, error);
@@ -264,25 +248,18 @@ class ConsolidatedRealtimeService {
       await this.leaveRoom(roomId);
     }
 
-    console.log(`🚪 Joining room ${roomId} as ${userName}`);
-
     // Retry logic for subscription failures
     const maxRetries = 3;
     let lastError: Error | null = null;
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        console.log(`🔄 Join attempt ${attempt}/${maxRetries} for room ${roomId}`);
         await this.attemptJoinRoom(roomId, userId, userName, callbacks);
-        console.log(`✅ Successfully joined room ${roomId} on attempt ${attempt}`);
         return; // Success, exit retry loop
       } catch (error) {
         lastError = error as Error;
-        console.warn(`❌ Join attempt ${attempt}/${maxRetries} failed for room ${roomId}:`, error);
-
         if (attempt < maxRetries) {
           const delay = Math.min(1000 * attempt, 5000); // Exponential backoff, max 5s
-          console.log(`⏳ Retrying in ${delay}ms...`);
           await new Promise((resolve) => setTimeout(resolve, delay));
         }
       }
@@ -307,7 +284,6 @@ class ConsolidatedRealtimeService {
     try {
       // Check if realtime is available (but don't fail if not connected yet)
       if (supabase.realtime && !supabase.realtime.isConnected()) {
-        console.log("📡 Realtime not connected, will attempt to connect during subscription...");
         // Don't throw error here - let the subscription attempt handle the connection
       }
 
@@ -371,8 +347,6 @@ class ConsolidatedRealtimeService {
         }, 30000); // Increased to 30 second timeout
 
         const handleSubscriptionStatus = (status: string) => {
-          console.log(`📡 Room ${roomId} subscription status: ${status}`);
-
           if (status === "SUBSCRIBED") {
             clearTimeout(timeout);
 
@@ -384,7 +358,6 @@ class ConsolidatedRealtimeService {
                 online_at: new Date().toISOString(),
               });
             } catch (presenceError) {
-              console.warn(`⚠️ Failed to track presence for room ${roomId}:`, presenceError);
               // Don't fail the subscription for presence errors
             }
 
@@ -438,8 +411,6 @@ class ConsolidatedRealtimeService {
         isActive: true,
         lastActivity: Date.now(),
       });
-
-      console.log(`✅ Successfully joined room ${roomId}`);
     } catch (error) {
       console.error(`❌ Failed to join room ${roomId}:`, error);
       const appError = error instanceof AppError ? error : new AppError("Failed to join room", ErrorType.NETWORK);
@@ -451,8 +422,6 @@ class ConsolidatedRealtimeService {
   async leaveRoom(roomId: string): Promise<void> {
     const subscription = this.subscriptions.get(roomId);
     if (!subscription) return;
-
-    console.log(`🚪 Leaving room ${roomId}`);
 
     try {
       // Untrack presence
@@ -488,16 +457,12 @@ class ConsolidatedRealtimeService {
       this.subscriptions.delete(roomId);
       this.messageCache.delete(roomId);
       this.deduplicators.delete(roomId);
-
-      console.log(`✅ Successfully left room ${roomId}`);
     } catch (error) {
       console.error(`❌ Failed to leave room ${roomId}:`, error);
     }
   }
 
   async loadInitialMessages(roomId: string, limit: number = 50): Promise<ChatMessage[]> {
-    console.log(`📨 Loading initial messages for room ${roomId}`);
-
     try {
       const { data, error } = await supabase
         .from("chat_messages_firebase")
@@ -526,7 +491,6 @@ class ConsolidatedRealtimeService {
         });
       }
 
-      console.log(`📨 Loaded ${messages.length} initial messages for room ${roomId}`);
       return messages;
     } catch (error) {
       console.error(`❌ Failed to load messages for room ${roomId}:`, error);
@@ -539,8 +503,6 @@ class ConsolidatedRealtimeService {
     beforeTimestamp: string,
     limit: number = 20,
   ): Promise<{ messages: ChatMessage[]; hasMore: boolean }> {
-    console.log(`📨 Loading older messages for room ${roomId} before ${beforeTimestamp}`);
-
     try {
       const { data, error } = await supabase
         .from("chat_messages_firebase")
@@ -573,8 +535,6 @@ class ConsolidatedRealtimeService {
       }
 
       const hasMore = messages.length === limit;
-      console.log(`📨 Loaded ${messages.length} older messages for room ${roomId}, hasMore: ${hasMore}`);
-
       return { messages, hasMore };
     } catch (error) {
       console.error(`❌ Failed to load older messages for room ${roomId}:`, error);
@@ -598,8 +558,6 @@ class ConsolidatedRealtimeService {
     messageType: string = "text",
     replyTo?: string,
   ): Promise<void> {
-    console.log(`📤 Sending message to room ${roomId}`);
-
     // Create optimistic message
     const tempId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const optimisticMessage: ChatMessage = {
@@ -650,8 +608,6 @@ class ConsolidatedRealtimeService {
       const { error } = await supabase.from("chat_messages_firebase").insert(messageData);
 
       if (error) throw error;
-
-      console.log(`✅ Message sent successfully to room ${roomId}`);
     } catch (error) {
       console.error(`❌ Failed to send message:`, error);
 
@@ -736,7 +692,6 @@ class ConsolidatedRealtimeService {
 
       // Check for duplicates
       if (deduplicator && deduplicator.isDuplicate(message)) {
-        console.log(`🔄 Duplicate message ignored: ${message.id}`);
         return;
       }
 
@@ -964,8 +919,6 @@ class ConsolidatedRealtimeService {
     const subscription = this.subscriptions.get(roomId);
     if (!subscription) return;
 
-    console.log(`🔄 Rejoining room ${roomId}`);
-
     try {
       // Store callback for rejoin
       const callbacks = subscription.callbacks;
@@ -980,7 +933,6 @@ class ConsolidatedRealtimeService {
       if (user) {
         // Note: We need userId and userName, but they're not stored in subscription
         // This is a limitation - we should store them or get them from the callback
-        console.warn("⚠️ Rejoin requires userId and userName - using fallback");
         await this.joinRoom(roomId, user.id, user.email || "Unknown", callbacks);
       }
     } catch (error) {
@@ -990,8 +942,6 @@ class ConsolidatedRealtimeService {
 
   // Cleanup method
   async cleanup(): Promise<void> {
-    console.log("🧹 Cleaning up consolidated real-time service");
-
     if (this.heartbeatInterval) {
       clearInterval(this.heartbeatInterval);
       this.heartbeatInterval = null;
@@ -1088,14 +1038,12 @@ class ConsolidatedRealtimeService {
   async forceReconnectRoom(roomId: string): Promise<void> {
     const subscription = this.subscriptions.get(roomId);
     if (subscription) {
-      console.log(`🔄 Force reconnecting room ${roomId}`);
       await this.rejoinRoom(roomId);
     }
   }
 
   // Force full reconnection (useful for manual retry)
   async forceReconnect(): Promise<void> {
-    console.log("🔄 Force reconnecting all services");
     this.reconnectAttempts = 0; // Reset attempts for manual reconnection
     await this.attemptReconnection();
   }
@@ -1173,7 +1121,6 @@ class ConsolidatedRealtimeService {
   private pausedCallbacks = new Map<string, SubscriptionCallbacks>();
 
   async pauseAll(): Promise<void> {
-    console.log("[ConsolidatedRealtimeService] Pausing all subscriptions");
     this.isPaused = true;
 
     // Store active room IDs and their callbacks
@@ -1187,7 +1134,6 @@ class ConsolidatedRealtimeService {
       // Unsubscribe the channel
       try {
         await subscription.channel.unsubscribe();
-        console.log(`[ConsolidatedRealtimeService] Paused subscription for room ${roomId}`);
       } catch (error) {
         console.error(`[ConsolidatedRealtimeService] Error pausing room ${roomId}:`, error);
       }
@@ -1199,7 +1145,6 @@ class ConsolidatedRealtimeService {
 
   // Resume all subscriptions (for foreground)
   async resumeAll(userId: string, userName: string): Promise<void> {
-    console.log("[ConsolidatedRealtimeService] Resuming all subscriptions");
     this.isPaused = false;
 
     // Re-join each paused room
@@ -1208,7 +1153,6 @@ class ConsolidatedRealtimeService {
         const callbacks = this.pausedCallbacks.get(roomId);
         if (callbacks) {
           await this.joinRoom(roomId, userId, userName, callbacks);
-          console.log(`[ConsolidatedRealtimeService] Resumed subscription for room ${roomId}`);
         }
       } catch (error) {
         console.error(`[ConsolidatedRealtimeService] Error resuming room ${roomId}:`, error);

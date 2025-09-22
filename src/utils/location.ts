@@ -222,7 +222,6 @@ export async function geocodeCityStateCached(city: string, state?: string): Prom
     }
     return null;
   } catch (error) {
-    console.warn("geocodeCityStateCached failed:", error);
     return null;
   }
 }
@@ -266,9 +265,6 @@ export async function filterReviewsByDistanceAsync<T extends { reviewedPersonLoc
   }
   if (!userCoords) {
     // If we cannot geocode user location, return all reviews since server-side filtering should have pre-filtered by city/state
-    console.warn(
-      "filterReviewsByDistanceAsync: missing user coordinates; returning server-filtered results without distance filtering",
-    );
     return reviews;
   }
 
@@ -320,13 +316,11 @@ export async function getCurrentLocation(): Promise<Coordinates | null> {
     // Check if location services are enabled
     const servicesEnabled = await ExpoLocation.hasServicesEnabledAsync();
     if (!servicesEnabled) {
-      console.warn("Location services are disabled");
       return null;
     }
 
     const { status } = await ExpoLocation.requestForegroundPermissionsAsync();
     if (status !== "granted") {
-      console.warn("Location permission not granted");
       return null;
     }
 
@@ -340,7 +334,6 @@ export async function getCurrentLocation(): Promise<Coordinates | null> {
       longitude: location.coords.longitude,
     };
   } catch (error) {
-    console.warn("Error getting location:", error);
     return null;
   }
 }
@@ -363,7 +356,6 @@ export async function reverseGeocodeLocation(coordinates: Coordinates): Promise<
     }
     return null;
   } catch (error) {
-    console.warn("Error reverse geocoding:", error);
     return null;
   }
 }
@@ -405,7 +397,6 @@ export async function searchLocations(query: string): Promise<LocationData[]> {
 
     return results;
   } catch (error) {
-    console.warn("Error searching locations:", error);
     return [];
   }
 }

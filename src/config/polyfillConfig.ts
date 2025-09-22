@@ -42,7 +42,6 @@ export const POLYFILL_CONFIGS: PolyfillConfig[] = [
       if (hasOwnPropertySafe(global, "crypto") && (global as any).crypto?.getRandomValues) {
         const cryptoDescriptor = Object.getOwnPropertyDescriptor(global, "crypto");
         if (cryptoDescriptor && cryptoDescriptor.configurable === false) {
-          console.warn("[PolyfillConfig] crypto global is non-configurable, storing reference");
           (global as any).__originalCrypto = (global as any).crypto;
         }
         return checkPropertyConfigurable(global, "crypto");
@@ -57,7 +56,6 @@ export const POLYFILL_CONFIGS: PolyfillConfig[] = [
       return !!(global as any).crypto?.getRandomValues;
     },
     fallbackStrategy: () => {
-      console.warn("[PolyfillConfig] crypto polyfill failed, using fallback");
       if ((global as any).__originalCrypto) {
         try {
           (global as any).crypto = (global as any).__originalCrypto;
@@ -77,7 +75,6 @@ export const POLYFILL_CONFIGS: PolyfillConfig[] = [
       if (hasOwnPropertySafe(global, "URL")) {
         const urlDescriptor = Object.getOwnPropertyDescriptor(global, "URL");
         if (urlDescriptor && urlDescriptor.configurable === false) {
-          console.warn("[PolyfillConfig] URL global is non-configurable, storing reference");
           (global as any).__originalURL = (global as any).URL;
         }
         return checkPropertyConfigurable(global, "URL");
@@ -102,7 +99,6 @@ export const POLYFILL_CONFIGS: PolyfillConfig[] = [
       }
     },
     fallbackStrategy: () => {
-      console.warn("[PolyfillConfig] URL polyfill failed, using fallback");
       if ((global as any).__originalURL) {
         try {
           (global as any).URL = (global as any).__originalURL;
@@ -153,8 +149,6 @@ function loadPolyfillSafe(config: PolyfillConfig): PolyfillLoadResult {
     if (engine.isHermes) {
       const compatibilityIssues = checkModuleHermesCompatibility(config.name);
       if (compatibilityIssues.length > 0) {
-        console.warn(`[PolyfillConfig] Compatibility issues detected for ${config.name}:`, compatibilityIssues);
-
         // Apply workarounds for detected issues
         for (const issue of compatibilityIssues) {
           if (issue.workaround) {
@@ -165,8 +159,6 @@ function loadPolyfillSafe(config: PolyfillConfig): PolyfillLoadResult {
     }
 
     // Attempt to load the polyfill
-    console.log(`[PolyfillConfig] Loading polyfill: ${config.name}`);
-
     // Use static imports to avoid Metro bundler issues with dynamic requires
     switch (config.name) {
       case "react-native-get-random-values":
@@ -176,7 +168,6 @@ function loadPolyfillSafe(config: PolyfillConfig): PolyfillLoadResult {
         require("react-native-url-polyfill/auto");
         break;
       default:
-        console.warn(`[PolyfillConfig] Unknown polyfill: ${config.name}, skipping dynamic load`);
         break;
     }
 
@@ -186,7 +177,6 @@ function loadPolyfillSafe(config: PolyfillConfig): PolyfillLoadResult {
     }
 
     result.success = true;
-    console.log(`[PolyfillConfig] Successfully loaded polyfill: ${config.name}`);
   } catch (error) {
     result.error = error instanceof Error ? error : new Error(String(error));
     console.error(`[PolyfillConfig] Failed to load polyfill ${config.name}:`, error);
@@ -209,8 +199,6 @@ function loadPolyfillSafe(config: PolyfillConfig): PolyfillLoadResult {
  * Load all polyfills in the correct order with error handling
  */
 export function loadPolyfills(): PolyfillLoadResult[] {
-  console.log("[PolyfillConfig] Starting polyfill loading sequence");
-
   // Sort by priority (lower numbers first)
   const sortedConfigs = [...POLYFILL_CONFIGS].sort((a, b) => a.priority - b.priority);
 
@@ -241,13 +229,9 @@ export function loadPolyfills(): PolyfillLoadResult[] {
   const skipped = results.filter((r) => r.skipped).length;
   const failed = results.filter((r) => !r.success && !r.skipped).length;
 
-  console.log(
-    `[PolyfillConfig] Polyfill loading complete: ${successful} successful, ${skipped} skipped, ${failed} failed`,
-  );
-
   if (failed > 0) {
     const failedNames = results.filter((r) => !r.success && !r.skipped).map((r) => r.name);
-    console.warn(`[PolyfillConfig] Failed polyfills: ${failedNames.join(", ")}`);
+    console.warn(`[PolyfillConfig] Failed to load polyfills: ${failedNames.join(", ")}`);
   }
 
   return results;
@@ -257,8 +241,6 @@ export function loadPolyfills(): PolyfillLoadResult[] {
  * Load polyfills synchronously (for critical polyfills that must load before app start)
  */
 export function loadPolyfillsSync(): PolyfillLoadResult[] {
-  console.log("[PolyfillConfig] Starting synchronous polyfill loading");
-
   const sortedConfigs = [...POLYFILL_CONFIGS].sort((a, b) => a.priority - b.priority);
   const results: PolyfillLoadResult[] = [];
 
@@ -293,8 +275,6 @@ export function loadPolyfillsSync(): PolyfillLoadResult[] {
       }
 
       // Synchronous require (only works for CommonJS modules)
-      console.log(`[PolyfillConfig] Loading polyfill synchronously: ${config.name}`);
-
       // Use static imports to avoid Metro bundler issues with dynamic requires
       switch (config.name) {
         case "react-native-get-random-values":
@@ -304,7 +284,6 @@ export function loadPolyfillsSync(): PolyfillLoadResult[] {
           require("react-native-url-polyfill/auto");
           break;
         default:
-          console.warn(`[PolyfillConfig] Unknown polyfill: ${config.name}, skipping dynamic load`);
           break;
       }
 
@@ -314,7 +293,6 @@ export function loadPolyfillsSync(): PolyfillLoadResult[] {
       }
 
       result.success = true;
-      console.log(`[PolyfillConfig] Successfully loaded polyfill synchronously: ${config.name}`);
     } catch (error) {
       result.error = error instanceof Error ? error : new Error(String(error));
       console.error(`[PolyfillConfig] Failed to load polyfill synchronously ${config.name}:`, error);
@@ -340,8 +318,6 @@ export function loadPolyfillsSync(): PolyfillLoadResult[] {
  * Check if all required polyfills are loaded and working
  */
 export function validatePolyfills(): boolean {
-  console.log("[PolyfillConfig] Validating polyfills");
-
   let allValid = true;
 
   for (const config of POLYFILL_CONFIGS) {
@@ -358,7 +334,6 @@ export function validatePolyfills(): boolean {
     }
   }
 
-  console.log(`[PolyfillConfig] Polyfill validation ${allValid ? "passed" : "failed"}`);
   return allValid;
 }
 

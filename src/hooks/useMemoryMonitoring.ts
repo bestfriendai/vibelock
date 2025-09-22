@@ -15,7 +15,6 @@ export function useMemoryMonitoring(threshold = 150) {
         return;
       }
 
-      console.warn("Memory pressure detected, running cleanup...");
       lastCleanupRef.current = now;
 
       // Clear caches

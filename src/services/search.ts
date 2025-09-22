@@ -22,11 +22,8 @@ export class SearchService {
       // TODO: Check pg_trgm extension when pg_extension table is accessible
       // const { data: extensions } = await supabase.from("pg_extension").select("extname").eq("extname", "pg_trgm");
       // if (!extensions || extensions.length === 0) {
-      //   console.warn("pg_trgm extension may not be enabled. Consider enabling it for better search performance.");
-      // }
-    } catch (error) {
-      console.warn("Could not check pg_trgm extension status:", error);
-    }
+      //   // }
+    } catch (error) {}
   }
 
   /**
@@ -104,13 +101,11 @@ export class SearchService {
         .limit(SEARCH_CONFIG.maxResults);
 
       if (error) {
-        console.warn("Full-text search failed, falling back to basic search:", error);
         return this.basicSearch(query, table, [textColumn]);
       }
 
       return data || [];
     } catch (error) {
-      console.warn("Full-text search not available, using basic search:", error);
       return this.basicSearch(query, table, [textColumn]);
     }
   }
@@ -194,27 +189,21 @@ export class SearchService {
               reviewData = await this.basicSearch(query, "reviews_firebase", ["reviewed_person_name", "review_text"]);
               break;
           }
-        } catch (error) {
-          console.warn(`${searchMode} search failed:`, error);
-        }
+        } catch (error) {}
       } else {
         // Legacy behavior with useFullText and useSimilarity flags
         if (useFullText) {
           // Try full-text search first
           try {
             reviewData = await this.fullTextSearch(query, "reviews_firebase", "review_text");
-          } catch (error) {
-            console.warn("Full-text search failed:", error);
-          }
+          } catch (error) {}
         }
 
         if (useSimilarity && reviewData.length === 0) {
           // Try similarity search
           try {
             reviewData = await this.similaritySearch(query, "reviews_firebase", "review_text");
-          } catch (error) {
-            console.warn("Similarity search failed:", error);
-          }
+          } catch (error) {}
         }
       }
 
@@ -415,7 +404,6 @@ export class SearchService {
       });
 
       if (error) {
-        console.warn("RPC search failed, falling back to basic search:", error);
         // Fallback to basic search
         const { data: fallbackData, error: fallbackError } = await supabase
           .from("chat_messages_firebase")
@@ -499,7 +487,6 @@ export class SearchService {
       });
 
       if (error) {
-        console.warn("Global RPC search failed, falling back to basic search:", error);
         // Fallback to basic search
         const { data: fallbackData, error: fallbackError } = await supabase
           .from("chat_messages_firebase")
@@ -577,13 +564,11 @@ export class SearchService {
       });
 
       if (error) {
-        console.warn("Search suggestions failed:", error);
         return [];
       }
 
       return (data || []).map((item: any) => item.suggestion);
     } catch (error) {
-      console.warn("Search suggestions not available:", error);
       return [];
     }
   }
@@ -610,7 +595,6 @@ export class SearchService {
       // });
     } catch (error) {
       // Silently fail analytics logging to not impact user experience
-      console.warn("Failed to log search analytics:", error);
     }
   }
 }

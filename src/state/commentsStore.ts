@@ -109,8 +109,6 @@ const useCommentsStore = create<CommentsStore>()(
             }
 
             const user = storeState.user;
-            console.log("💬 Creating comment for user:", user.id);
-
             const commentData: Omit<ReviewComment, "id" | "createdAt" | "updatedAt"> = {
               reviewId,
               authorId: user.id,
@@ -191,7 +189,6 @@ const useCommentsStore = create<CommentsStore>()(
                 }
               }
             } catch (persistErr) {
-              console.warn("Failed to save comment or create notifications:", persistErr);
               // Rollback optimistic comment on failure
               set((state) => ({
                 comments: {
@@ -240,7 +237,6 @@ const useCommentsStore = create<CommentsStore>()(
 
               // Update in Supabase - Note: This functionality needs to be implemented in reviewsService
               // For now, we'll skip the database update as the service doesn't support comment updates
-              console.warn("Comment like/dislike update not implemented in reviewsService");
             }
           } catch (error) {
             const appError = error instanceof AppError ? error : parseSupabaseError(error);
@@ -281,7 +277,6 @@ const useCommentsStore = create<CommentsStore>()(
 
               // Update in Supabase - Note: This functionality needs to be implemented in reviewsService
               // For now, we'll skip the database update as the service doesn't support comment updates
-              console.warn("Comment like/dislike update not implemented in reviewsService");
             }
           } catch (error) {
             const appError = error instanceof AppError ? error : parseSupabaseError(error);
@@ -363,8 +358,6 @@ const useCommentsStore = create<CommentsStore>()(
                 filter: `review_id=eq.${reviewId}`,
               },
               (payload: any) => {
-                console.log("Comment change received:", payload.eventType, payload.new?.id || payload.old?.id);
-
                 if (payload.eventType === "INSERT") {
                   const newComment = mapRowToComment(payload.new);
                   set((state) => ({
@@ -454,7 +447,6 @@ const useCommentsStore = create<CommentsStore>()(
           });
 
           if (__DEV__) {
-            console.log("🧹 Comments store: Cleaned up old persisted data");
           }
         }
       },

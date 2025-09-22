@@ -75,7 +75,6 @@ class SecureAIService {
         throw error;
       }
 
-      console.warn("AI Service Error:", error);
       throw new AppError("Failed to communicate with AI service", ErrorType.NETWORK, "AI_SERVICE_ERROR");
     }
   }
@@ -169,7 +168,6 @@ class SecureAIService {
 
         return { response, provider };
       } catch (error) {
-        console.warn(`AI provider ${provider} failed:`, error);
         // Continue to next provider
       }
     }

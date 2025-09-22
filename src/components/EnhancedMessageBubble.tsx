@@ -252,7 +252,6 @@ const EnhancedMessageBubble = React.forwardRef<View, Props>(
               }}
               onPlaybackEnd={() => {
                 // Optional: Add analytics or other cleanup
-                console.log(`Voice message ${message.id} playback ended`);
               }}
               showWaveform={true}
               showSeekBar={true}

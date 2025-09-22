@@ -190,7 +190,6 @@ async function checkNetworkWithNetInfo(): Promise<{
       computed: isConnected && hasInternetAccess,
     };
   } catch (error) {
-    console.warn("NetInfo check failed:", error);
     return {
       isConnected: null,
       isInternetReachable: null,
@@ -279,7 +278,6 @@ export async function reliableNetworkCheck(): Promise<NetworkCheckResult> {
       timestamp,
     };
   } catch (error) {
-    console.warn("Reliable network check failed:", error);
     return {
       isOnline: false,
       isConnected: false,
@@ -301,17 +299,15 @@ export async function waitForStableConnection(maxAttempts: number = 10, delayMs:
     const result = await reliableNetworkCheck();
 
     if (result.isConnected && result.isStable) {
-      console.log(`[Network] Stable connection established after ${i + 1} attempts`);
       return true;
     }
 
     if (i < maxAttempts - 1) {
-      console.log(`[Network] Waiting for stable connection (attempt ${i + 1}/${maxAttempts})`);
+      console.log(`Waiting for stable connection... Attempt ${i + 1}/${maxAttempts}`);
       await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
   }
 
-  console.warn("[Network] Could not establish stable connection");
   return false;
 }
 
@@ -342,8 +338,6 @@ export function createRealtimeNetworkMonitor(
 
     // Detect network type change (WiFi to cellular, etc.)
     if (previousNetworkType && previousNetworkType !== currentType) {
-      console.log(`[Network] Type changed: ${previousNetworkType} -> ${currentType}`);
-
       // Check if we need to reconnect
       const result = await reliableNetworkCheck();
 
@@ -397,7 +391,6 @@ export async function quickNetworkCheck(): Promise<boolean> {
     const hasInternetAccess = state.isInternetReachable === true || (state.isInternetReachable === null && isConnected);
     return isConnected && hasInternetAccess;
   } catch (error) {
-    console.warn("Quick network check failed:", error);
     return false;
   }
 }

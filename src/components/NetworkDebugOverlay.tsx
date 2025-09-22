@@ -104,9 +104,7 @@ export default function NetworkDebugOverlay() {
 
       <Pressable
         onPress={() => {
-          NetInfo.fetch().then((state) => {
-            console.log("🔍 Manual network check:", state);
-          });
+          NetInfo.fetch();
         }}
         className="bg-blue-600 rounded p-2 mt-2"
       >

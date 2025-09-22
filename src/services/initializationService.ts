@@ -278,7 +278,6 @@ class InitializationService {
       return;
     }
 
-    console.log("🚀 Starting app initialization...");
     PerformanceMonitor.startMeasurement("total_initialization");
 
     try {
@@ -299,7 +298,6 @@ class InitializationService {
       this.state.metrics.totalTime = PerformanceMonitor.endMeasurement("total_initialization") || 0;
       this.state.progress = 100;
 
-      console.log("✅ App initialization completed successfully");
       this.notifyListeners();
     } catch (error) {
       this.state.metrics.failureCount++;
@@ -319,7 +317,6 @@ class InitializationService {
    * Execute a specific initialization phase
    */
   private async executePhase(phase: InitializationPhase): Promise<void> {
-    console.log(`📋 Executing phase: ${phase}`);
     this.state.phase = phase;
     this.state.phaseStartTime = Date.now();
     this.notifyListeners();
@@ -425,7 +422,6 @@ class InitializationService {
       this.state.metrics.serviceTimings.set(serviceName, serviceTime);
 
       this.state.services.set(serviceName, ServiceStatus.READY);
-      console.log(`✅ ${serviceName} service initialized`);
     } catch (error) {
       this.state.metrics.retryCount++;
 
@@ -435,7 +431,6 @@ class InitializationService {
       } else {
         this.state.services.set(serviceName, ServiceStatus.DEGRADED);
         this.state.warnings.push(`Optional service ${serviceName} failed: ${error}`);
-        console.warn(`⚠️ Optional service ${serviceName} failed:`, error);
       }
     }
   }
@@ -450,9 +445,7 @@ class InitializationService {
     const promises = optionalServices.map(async (serviceName) => {
       try {
         await this.initializeService(serviceName);
-      } catch (error) {
-        console.warn(`Optional service ${serviceName} failed:`, error);
-      }
+      } catch (error) {}
     });
 
     await Promise.allSettled(promises);
@@ -462,8 +455,6 @@ class InitializationService {
    * Run comprehensive health checks
    */
   private async runHealthChecks(): Promise<void> {
-    console.log("🔍 Running health checks...");
-
     const healthChecks: Promise<HealthCheckResult>[] = [];
 
     for (const [serviceName, config] of this.services) {
@@ -484,8 +475,6 @@ class InitializationService {
         this.state.warnings.push(`Health check failed for ${serviceName}`);
       }
     });
-
-    console.log(`🏥 Health checks: ${healthyServices}/${totalServices} services healthy`);
   }
 
   /**
@@ -520,16 +509,12 @@ class InitializationService {
 
     // Apply any final optimizations
     compatibilityChecker.applyWorkarounds();
-
-    console.log("🎯 Initialization finalized");
   }
 
   /**
    * Attempt graceful degradation on initialization failure
    */
   private async attemptGracefulDegradation(): Promise<void> {
-    console.log("🔄 Attempting graceful degradation...");
-
     // Try to keep essential services running
     const criticalServices = ["supabase", "error_reporting", "auth_store"];
     let criticalServicesReady = 0;
@@ -541,11 +526,9 @@ class InitializationService {
     }
 
     if (criticalServicesReady >= 2) {
-      console.log("✅ Graceful degradation successful - core functionality available");
       this.state.warnings.push("Running in degraded mode - some features may not be available");
       this.initialized = true;
     } else {
-      console.log("❌ Graceful degradation failed - critical services unavailable");
     }
   }
 
@@ -588,30 +571,18 @@ class InitializationService {
 
   private async initializePropertyConflictDetection(): Promise<void> {
     try {
-      console.log("[InitializationService] Starting property conflict detection...");
-
       // Get any property conflicts that occurred during app startup
       const conflicts = getPropertyConflicts();
 
       if (conflicts.length > 0) {
-        console.warn(`[InitializationService] Found ${conflicts.length} property conflicts:`, conflicts);
-
         // Log each conflict for debugging
         for (const conflict of conflicts) {
-          console.warn(
-            `[InitializationService] Property conflict: ${conflict.targetObject}.${conflict.propertyName}`,
-            "Existing:",
-            conflict.existingDescriptor,
-            "Attempted:",
-            conflict.attemptedDescriptor,
-          );
         }
 
         // For now, continue initialization but track the issues
         // In production, we might want to halt initialization for critical conflicts
         this.state.warnings.push("Property conflicts detected during startup");
       } else {
-        console.log("[InitializationService] No property conflicts detected");
       }
 
       // Clear conflicts for the next phase
@@ -624,26 +595,16 @@ class InitializationService {
 
   private async initializeHermesCompatibility(): Promise<void> {
     try {
-      console.log("[InitializationService] Checking Hermes compatibility...");
-
       // Detect Hermes engine and get engine info
       const hermesInfo = detectHermesEngine();
-      console.log("[InitializationService] Hermes engine info:", hermesInfo);
-
       if (hermesInfo.isHermes) {
         // Detect any Hermes-specific property conflicts
         const hermesIssues = detectHermesPropertyConflicts();
 
         if (hermesIssues.length > 0) {
-          console.warn(
-            `[InitializationService] Found ${hermesIssues.length} Hermes compatibility issues:`,
-            hermesIssues,
-          );
-
           // Apply workarounds for critical issues
           const criticalIssues = hermesIssues.filter((issue) => issue.severity === "critical");
           if (criticalIssues.length > 0) {
-            console.log("[InitializationService] Applying workarounds for critical Hermes issues...");
             applyHermesWorkarounds();
           }
 
@@ -655,7 +616,6 @@ class InitializationService {
           }
         }
       } else {
-        console.log("[InitializationService] Not running on Hermes engine");
       }
     } catch (error) {
       console.error("[InitializationService] Hermes compatibility check failed:", error);
@@ -666,18 +626,12 @@ class InitializationService {
 
   private async initializePolyfillValidation(): Promise<void> {
     try {
-      console.log("[InitializationService] Validating polyfills...");
-
       // Validate that all required polyfills are working
       const polyfillsValid = validatePolyfills();
 
       if (!polyfillsValid) {
-        console.warn("[InitializationService] Some polyfills failed validation");
-
         // Get detailed status of each polyfill
         const polyfillStatus = getPolyfillStatus();
-        console.log("[InitializationService] Polyfill status:", polyfillStatus);
-
         // Check for critical polyfill failures
         const failedPolyfills = Object.entries(polyfillStatus)
           .filter(([name, status]) => !status)
@@ -692,7 +646,6 @@ class InitializationService {
           }
         }
       } else {
-        console.log("[InitializationService] All polyfills validated successfully");
       }
     } catch (error) {
       console.error("[InitializationService] Polyfill validation failed:", error);
@@ -722,9 +675,9 @@ class InitializationService {
 
     // Log successful initialization with any warnings
     if (healthResult.details && !healthResult.details.realtime) {
-      console.warn("✅ Supabase initialized successfully (realtime features limited)");
+      console.log("Supabase initialized with warnings: realtime not available");
     } else {
-      console.log("✅ Supabase initialized successfully (all features available)");
+      console.log("Supabase fully initialized");
     }
   }
 
@@ -751,7 +704,6 @@ class InitializationService {
   private async initializeSubscriptions(): Promise<void> {
     // Subscription service doesn't have an initialize method, it's ready to use
     // Subscription store also doesn't have an initialize method, so we just mark it as ready
-    console.log("✅ Subscription services ready");
   }
 
   private async initializeRealtimeChat(): Promise<void> {
@@ -763,20 +715,13 @@ class InitializationService {
    */
   private async initializeBackgroundTasks(): Promise<void> {
     try {
-      console.log("[InitializationService] Initializing background tasks...");
-
       // Check if expo-task-manager is available before importing
       try {
         await import("expo-task-manager");
-        console.log("[InitializationService] Background task manager initialized successfully");
       } catch (importError) {
-        console.warn(
-          "[InitializationService] expo-task-manager not available, skipping background task initialization",
-        );
         // This is expected if expo-task-manager is not installed
       }
     } catch (error) {
-      console.warn("[InitializationService] Background task initialization failed:", error);
       // Don't throw error for background task failures
     }
   }
@@ -791,11 +736,9 @@ class InitializationService {
         await import("expo-task-manager");
         return true;
       } catch (importError) {
-        console.warn("[InitializationService] expo-task-manager not available, background tasks unavailable");
         return false;
       }
     } catch (error) {
-      console.warn("[InitializationService] Background tasks health check failed:", error);
       return false;
     }
   }
@@ -848,22 +791,15 @@ class InitializationService {
    * Cleanup all services (for app shutdown)
    */
   async cleanup(): Promise<void> {
-    console.log("🧹 Cleaning up services...");
-
     const cleanupPromises: Promise<void>[] = [];
 
     for (const [serviceName, config] of this.services) {
       if (config.cleanup && this.state.services.get(serviceName) === ServiceStatus.READY) {
-        cleanupPromises.push(
-          config.cleanup().catch((error) => {
-            console.warn(`Cleanup failed for ${serviceName}:`, error);
-          }),
-        );
+        cleanupPromises.push(config.cleanup().catch((error) => {}));
       }
     }
 
     await Promise.allSettled(cleanupPromises);
-    console.log("✅ Cleanup completed");
   }
 }
 

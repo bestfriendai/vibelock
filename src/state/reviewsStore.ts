@@ -12,7 +12,7 @@ import { storageService } from "../services/storageService";
 import useAuthStore from "./authStore";
 import { notificationService } from "../services/notificationService";
 import { AppError, parseSupabaseError } from "../utils/errorHandling";
-import { withMediaErrorHandling, handleMediaUploadError } from "../utils/mediaErrorHandling";
+import { handleMediaUploadError } from "../utils/mediaErrorHandling";
 
 // Constants for data limits
 const MAX_PERSISTED_REVIEWS = 100;
@@ -149,22 +149,19 @@ const useReviewsStore = create<ReviewsStore>()(
 
       loadReview: async (id: string): Promise<Review | null> => {
         try {
-          console.log("🐛 loadReview called with id:", id);
-
           if (__DEV__) {
-            console.log("🧭 Loading review by ID:", id);
+            console.log("Loading review with ID:", id);
           }
 
           // Use reviewsService to get the specific review
           const result = await reviewsService.getReview(id);
 
           if (__DEV__) {
-            console.log("✅ Review loaded successfully:", result ? "Found" : "Not found");
+            console.log("Review loaded successfully:", result?.id);
           }
 
           return result;
         } catch (error) {
-          console.warn("💥 Failed to load review:", error);
           const appError = error instanceof AppError ? error : parseSupabaseError(error);
 
           // Don't update store error state for individual review loading failures
@@ -206,7 +203,7 @@ const useReviewsStore = create<ReviewsStore>()(
             if (!overrideLocation) {
               userLocation = authStore.user?.location;
             }
-          } catch (error) {
+          } catch {
             userPrefCategory = undefined;
             if (!overrideLocation) {
               userLocation = undefined;
@@ -234,13 +231,11 @@ const useReviewsStore = create<ReviewsStore>()(
           // Apply location filters based on strategy
           if (showAllActive) {
             // "Show all" mode: no location filtering at all
-            console.log("🌐 Show all mode - no location filtering");
           } else if (userLocation?.city && userLocation?.state) {
             if (radiusFilteringActive) {
               // For radius filtering: don't apply server-side location filters
               // Let client-side distance filtering handle geographic boundaries worldwide
               // This allows cross-city, cross-state, and international results within the radius
-              console.log("🌍 Radius filtering active - using worldwide search with distance filtering");
             } else {
               // For non-radius filtering: filter by exact city+state
               serverFilters.city = userLocation.city;
@@ -249,15 +244,6 @@ const useReviewsStore = create<ReviewsStore>()(
           }
 
           if (__DEV__) {
-            console.log("🧭 Reviews load filters:", {
-              categoryToFilter,
-              serverFilters,
-              userLocation,
-              radius: filters.radius,
-              offset: refresh ? 0 : currentState.reviews.length,
-              radiusFilteringActive,
-              showAllActive,
-            });
           }
 
           // Load from Supabase with fallback strategy
@@ -271,7 +257,7 @@ const useReviewsStore = create<ReviewsStore>()(
             newReviews = result.data;
 
             if (__DEV__) {
-              console.log("🌐 Show all reviews loaded:", newReviews.length);
+              console.log("Show all mode: loaded reviews", newReviews.length);
             }
           } else if (radiusFilteringActive && userLocation) {
             // Strategy 1: Location-first approach - get ALL reviews with coordinates, then filter by distance
@@ -290,7 +276,6 @@ const useReviewsStore = create<ReviewsStore>()(
 
             // Ensure user location has coordinates for distance filtering
             if (!userLocation) {
-              console.warn("❌ User location is undefined, cannot perform radius filtering");
               // Fall back to non-radius filtering
               const offset = refresh ? 0 : currentState.reviews.length;
               const result = await reviewsService.getReviews({
@@ -302,14 +287,11 @@ const useReviewsStore = create<ReviewsStore>()(
             } else {
               let locationWithCoords = userLocation;
               if (!userLocation.coordinates) {
-                console.log("🔍 User location missing coordinates, attempting to geocode...");
                 const { geocodeCityStateCached } = await import("../utils/location");
                 const coords = await geocodeCityStateCached(userLocation.city, userLocation.state);
                 if (coords) {
                   locationWithCoords = { ...userLocation, coordinates: coords };
-                  console.log("✅ Successfully geocoded user location:", coords);
                 } else {
-                  console.warn("❌ Failed to geocode user location, falling back to server-filtered results");
                   // Fall back to non-radius filtering
                   const offset = refresh ? 0 : currentState.reviews.length;
                   const result = await reviewsService.getReviews({
@@ -336,15 +318,14 @@ const useReviewsStore = create<ReviewsStore>()(
                 );
 
                 if (__DEV__) {
-                  console.log("📏 Location-first distance filtering:", {
-                    worldwideReviews: worldwideSet.length,
-                    withinRadius: distanceFiltered.length,
-                    finalResults: newReviews.length,
-                    radius: filters.radius,
-                    location: `${locationWithCoords.city}, ${locationWithCoords.state}`,
-                    hasCoordinates: !!locationWithCoords.coordinates,
-                    coordinates: locationWithCoords.coordinates,
-                  });
+                  console.log(
+                    "Server filters:",
+                    serverFilters,
+                    "Show all:",
+                    showAllActive,
+                    "Radius filtering:",
+                    radiusFilteringActive,
+                  );
                 }
               }
             }
@@ -360,7 +341,6 @@ const useReviewsStore = create<ReviewsStore>()(
 
             // Strategy 2: If no results with city+state, try state-only
             if (newReviews.length === 0 && refresh && serverFilters.city && serverFilters.state) {
-              console.log("🔄 No results with city+state filter, trying state-only filter...");
               const stateOnlyFilters = { ...serverFilters };
               delete stateOnlyFilters.city;
 
@@ -368,19 +348,18 @@ const useReviewsStore = create<ReviewsStore>()(
               newReviews = stateResult.data;
 
               if (__DEV__) {
-                console.log("📍 State-only filtered reviews:", newReviews.length);
+                console.log("Fallback to state-only filtering, found:", newReviews.length);
               }
             }
 
             // Strategy 3: If still no results, get reviews from anywhere (fallback)
             if (newReviews.length === 0 && refresh) {
-              console.log("🌍 No local results found, showing reviews from anywhere...");
               const globalFilters = { category: serverFilters.category };
               const globalResult = await reviewsService.getReviews({ ...globalFilters, limit: 20, offset });
               newReviews = globalResult.data;
 
               if (__DEV__) {
-                console.log("🌐 Global fallback reviews:", newReviews.length);
+                console.log("Fallback to global reviews, found:", newReviews.length);
               }
             }
           }
@@ -414,7 +393,6 @@ const useReviewsStore = create<ReviewsStore>()(
             });
           }
         } catch (error) {
-          console.warn("💥 Failed to load reviews:", error);
           const appError = error instanceof AppError ? error : parseSupabaseError(error);
 
           set({
@@ -428,12 +406,6 @@ const useReviewsStore = create<ReviewsStore>()(
       },
 
       createReview: async (data) => {
-        console.log("🎬 createReview called with data:", {
-          reviewedPersonName: data.reviewedPersonName,
-          mediaCount: data.media?.length || 0,
-          mediaTypes: data.media?.map((m) => m.type) || [],
-        });
-
         try {
           set({ isLoading: true, error: null });
 
@@ -456,18 +428,13 @@ const useReviewsStore = create<ReviewsStore>()(
           // Upload media files to Supabase Storage if they are local files
           const uploadedMedia: MediaItem[] = [];
           const mediaUploads: { failed?: { index: number; type: string; uri: string; error: string }[] } = {};
-          console.log(`🚀 Starting media upload process for ${data.media.length} items`);
-
-          for (const [index, mediaItem] of data.media.entries()) {
+          for (let index = 0; index < data.media.length; index++) {
+            const mediaItem = data.media[index];
+            if (!mediaItem) continue;
             const isLocal = mediaItem.uri.startsWith("file://") || mediaItem.uri.startsWith("content://");
-            console.log(`📁 Processing media item ${index + 1}:`, {
-              type: mediaItem.type,
-              uri: mediaItem.uri.substring(0, 100) + "...",
-              isLocal,
-            });
+            console.log(`Processing media item ${index}:`, mediaItem.type, "...", isLocal);
 
             if (!isLocal) {
-              console.log(`⏭️  Skipping non-local media item`);
               uploadedMedia.push(mediaItem);
               continue;
             }
@@ -496,7 +463,7 @@ const useReviewsStore = create<ReviewsStore>()(
                 const fileInfo = await FileSystem.getInfoAsync(processedUri);
                 if (fileInfo.exists && fileInfo.size) {
                   const sizeKB = Math.round(fileInfo.size / 1024);
-                  console.log(`📸 Image compressed to ~${sizeKB}KB`);
+                  console.log("Image compressed to:", sizeKB, "KB");
                 }
 
                 const uploadResult = await storageService.uploadFile(processedUri, {
@@ -529,9 +496,8 @@ const useReviewsStore = create<ReviewsStore>()(
                     contentType: "image/jpeg",
                   });
                   thumbnailUrl = thumbResult.url || "";
-                  console.log("✅ Video thumbnail uploaded successfully");
                 } catch (thumbErr) {
-                  console.warn("⚠️ Failed to generate/upload video thumbnail:", thumbErr);
+                  console.warn("Failed to generate video thumbnail:", thumbErr);
                 }
 
                 const uploadResult = await storageService.uploadFile(processedUri, {
@@ -551,17 +517,10 @@ const useReviewsStore = create<ReviewsStore>()(
                 uploadedMedia.push(mediaItem);
               }
             } catch (uploadError) {
-              console.warn("❌ Failed to upload media:", {
-                index,
-                originalUri: mediaItem.uri,
-                mediaType: mediaItem.type,
-                error: uploadError instanceof Error ? uploadError.message : String(uploadError),
-              });
+              console.error("Media upload failed:", uploadError);
 
               // Use safe media error handling
               const mediaError = handleMediaUploadError(uploadError, `media upload for ${mediaItem.type}`);
-              console.warn(`Media upload failed:`, mediaError);
-
               // Track failed uploads
               if (!mediaUploads.failed) {
                 mediaUploads.failed = [];
@@ -617,12 +576,10 @@ const useReviewsStore = create<ReviewsStore>()(
               try {
                 const userId = useAuthStore.getState().user?.id;
                 if (!userId) {
-                  console.warn("No user ID available, using fallback");
                   return "anonymous_user";
                 }
                 return userId;
-              } catch (error) {
-                console.warn("Error getting user from auth store:", error);
+              } catch {
                 return "anonymous_user";
               }
             })(),
@@ -637,7 +594,7 @@ const useReviewsStore = create<ReviewsStore>()(
 
           // Try to save to database in background (don't wait for it)
           reviewsService.createReview({ ...reviewData, authorId: newReview.authorId }).catch((error) => {
-            console.warn("Failed to save review to database (but it's still visible locally):", error);
+            console.error("Background review save failed:", error);
           });
 
           // Check for partial media upload success
@@ -684,7 +641,7 @@ const useReviewsStore = create<ReviewsStore>()(
                 });
               }
             } catch (notifyErr) {
-              console.warn("Failed to create like notification:", notifyErr);
+              console.warn("Failed to send notification:", notifyErr);
             }
           }
         } catch (error) {
@@ -698,7 +655,7 @@ const useReviewsStore = create<ReviewsStore>()(
         try {
           // For now, just log the dislike action
           // In a real app, this would send to the backend
-          console.log(`Disliked review ${id}`);
+          console.log("Dislike action for review:", id);
         } catch (error) {
           set({
             error: error instanceof Error ? error.message : "Failed to dislike review",
@@ -723,7 +680,7 @@ const useReviewsStore = create<ReviewsStore>()(
             reviews: Array.isArray(ps.reviews) ? ps.reviews : [],
             filters: ps.filters ?? { category: "all", radius: 50, sortBy: "recent" },
           };
-        } catch (error) {
+        } catch {
           return { reviews: [], filters: { category: "all", radius: 50, sortBy: "recent" } };
         }
       },
@@ -740,7 +697,7 @@ const useReviewsStore = create<ReviewsStore>()(
           });
 
           if (__DEV__) {
-            console.log("🧹 Reviews store: Cleaned up old persisted data");
+            console.log("Hydrated reviews from storage:", state.reviews.length);
           }
         }
       },

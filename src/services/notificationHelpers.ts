@@ -24,9 +24,7 @@ export async function notifyNewReview(reviewId: string, reviewedPersonName: stri
     // For now, send to all users (in a real app, you'd target specific users)
     // This could be enhanced to notify users in the same location or with matching preferences
     await sendNotificationToAllUsers(notification);
-  } catch (error) {
-    console.warn("Failed to send new review notification:", error);
-  }
+  } catch (error) {}
 }
 
 /**
@@ -45,9 +43,7 @@ export async function notifyReviewApproved(authorId: string, reviewId: string, r
     };
 
     await notificationService.createNotification(authorId, notification);
-  } catch (error) {
-    console.warn("Failed to send review approved notification:", error);
-  }
+  } catch (error) {}
 }
 
 /**
@@ -72,9 +68,7 @@ export async function notifyReviewRejected(
     };
 
     await notificationService.createNotification(authorId, notification);
-  } catch (error) {
-    console.warn("Failed to send review rejected notification:", error);
-  }
+  } catch (error) {}
 }
 
 /**
@@ -90,7 +84,6 @@ export async function notifyNewComment(reviewId: string, commentAuthorName: stri
       .single();
 
     if (error || !review) {
-      console.warn("Failed to get review for comment notification:", error);
       return;
     }
 
@@ -108,9 +101,7 @@ export async function notifyNewComment(reviewId: string, commentAuthorName: stri
     if (review.author_id) {
       await notificationService.createNotification(review.author_id, notification);
     }
-  } catch (error) {
-    console.warn("Failed to send new comment notification:", error);
-  }
+  } catch (error) {}
 }
 
 /**
@@ -142,9 +133,7 @@ export async function notifyNewMessage(
       // Send to all chat room members (you'd need to implement this based on your chat room membership logic)
       await sendNotificationToChatRoomMembers(chatRoomId, notification);
     }
-  } catch (error) {
-    console.warn("Failed to send new message notification:", error);
-  }
+  } catch (error) {}
 }
 
 /**
@@ -171,9 +160,7 @@ export async function notifySafetyAlert(title: string, message: string, targetUs
       // Send to all users
       await sendNotificationToAllUsers(notification);
     }
-  } catch (error) {
-    console.warn("Failed to send safety alert notification:", error);
-  }
+  } catch (error) {}
 }
 
 /**
@@ -186,7 +173,6 @@ async function sendNotificationToAllUsers(notification: NotificationData) {
     const { data: users, error } = await supabase.from("users").select("id").limit(1000); // Limit to prevent overwhelming the system
 
     if (error) {
-      console.warn("Failed to get users for notification:", error);
       return;
     }
 
@@ -194,9 +180,7 @@ async function sendNotificationToAllUsers(notification: NotificationData) {
     for (const user of users || []) {
       await notificationService.createNotification(user.id, notification);
     }
-  } catch (error) {
-    console.warn("Failed to send notification to all users:", error);
-  }
+  } catch (error) {}
 }
 
 /**
@@ -206,8 +190,6 @@ async function sendNotificationToChatRoomMembers(chatRoomId: string, notificatio
   try {
     // In a real app, you'd have a chat room members table
     // For now, we'll just log this as it would need to be implemented based on your chat architecture
-    console.log(`Would send notification to members of chat room ${chatRoomId}:`, notification);
-
     // Example implementation if you had a chat_room_members table:
     /*
     const { data: members, error } = await supabase
@@ -217,7 +199,6 @@ async function sendNotificationToChatRoomMembers(chatRoomId: string, notificatio
       .eq('is_active', true);
 
     if (error) {
-      console.warn('Failed to get chat room members:', error);
       return;
     }
 
@@ -225,9 +206,7 @@ async function sendNotificationToChatRoomMembers(chatRoomId: string, notificatio
       await notificationService.createNotification(member.user_id, notification);
     }
     */
-  } catch (error) {
-    console.warn("Failed to send notification to chat room members:", error);
-  }
+  } catch (error) {}
 }
 
 /**
@@ -248,11 +227,8 @@ export async function scheduleNotification(userId: string, notification: Notific
     });
 
     if (error) {
-      console.warn("Failed to schedule notification:", error);
     }
-  } catch (error) {
-    console.warn("Error scheduling notification:", error);
-  }
+  } catch (error) {}
 }
 
 /**
@@ -270,7 +246,6 @@ export async function getUserNotificationPreferences(userId: string) {
       reviewApproval: true,
     };
   } catch (error) {
-    console.warn("Failed to get notification preferences:", error);
     return null;
   }
 }
@@ -282,8 +257,5 @@ export async function updateUserNotificationPreferences(userId: string, preferen
   try {
     // This would update a user_notification_preferences table
     // For now, just log the preferences
-    console.log(`Would update notification preferences for user ${userId}:`, preferences);
-  } catch (error) {
-    console.warn("Failed to update notification preferences:", error);
-  }
+  } catch (error) {}
 }

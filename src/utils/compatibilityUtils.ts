@@ -409,9 +409,7 @@ class CompatibilityChecker {
         try {
           // Configure Hermes for optimal performance
           (global as any).HermesInternal.setHeapTracking?.(false);
-        } catch (error) {
-          console.warn("Failed to apply Hermes optimizations:", error);
-        }
+        } catch (error) {}
       }
     }
   }
@@ -458,7 +456,6 @@ class CompatibilityChecker {
     // Enable memory optimizations for RN 0.81.4
     if (__DEV__) {
       // Development optimizations
-      console.log("[Compatibility] Applying development memory optimizations");
     } else {
       // Production optimizations
       // Disable console logs in production
@@ -540,7 +537,6 @@ export class PerformanceMonitor {
     const duration = Date.now() - startTime;
     this.measurements.delete(label);
 
-    console.log(`[Performance] ${label}: ${duration}ms`);
     return duration;
   }
 

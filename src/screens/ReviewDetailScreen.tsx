@@ -57,9 +57,9 @@ export default function ReviewDetailScreen() {
   const routeParams = route.params as any;
 
   // Debug logging to validate route parameters
-  console.log("🐛 ReviewDetailScreen - Route params:", {
-    hasParams: !!route.params,
-    paramsKeys: route.params ? Object.keys(route.params) : [],
+  console.log("ReviewDetailScreen params:", {
+    from: route.name,
+    params: route.params || {},
     reviewId: route.params?.reviewId,
     review: route.params?.review ? { id: route.params.review?.id } : null,
     allParams: route.params,
@@ -67,8 +67,6 @@ export default function ReviewDetailScreen() {
 
   // Extract reviewId with proper fallback logic
   const reviewId = routeParams?.reviewId || routeParams?.review?.id;
-  console.log("🐛 ReviewDetailScreen - Extracted reviewId:", reviewId);
-
   // All hooks declared at the top level - no conditional hooks
   const [review, setReview] = useState<Review | null>(null);
   const [reviewLoading, setReviewLoading] = useState(true);
@@ -108,18 +106,10 @@ export default function ReviewDetailScreen() {
       return;
     }
 
-    console.log("🐛 ReviewDetailScreen - Starting data load", {
-      hasReviewId: !!reviewId,
-      reviewId,
-      hasLoadReview: typeof loadReview === "function",
-      hasLoadComments: typeof loadComments === "function",
-    });
-
     setReviewLoading(true);
 
     Promise.all([
       loadReview(reviewId).then((loadedReview) => {
-        console.log("🐛 ReviewDetailScreen - Review loaded:", loadedReview ? "Found" : "Not found");
         setReview(loadedReview);
         if (loadedReview) {
           setLikeCount(loadedReview.likeCount || 0);
@@ -130,9 +120,7 @@ export default function ReviewDetailScreen() {
       }),
       loadComments(reviewId),
     ])
-      .then(([loadedReview]) => {
-        console.log("🐛 ReviewDetailScreen - Data load completed successfully");
-      })
+      .then(([loadedReview]) => {})
       .catch((error) => {
         console.error("🐛 ReviewDetailScreen - Data load failed:", {
           error: error.message,
@@ -263,7 +251,6 @@ export default function ReviewDetailScreen() {
     try {
       await loadComments(review.id);
     } catch (error) {
-      console.warn("Error refreshing comments:", error);
     } finally {
       setRefreshing(false);
     }
@@ -276,9 +263,7 @@ export default function ReviewDetailScreen() {
       await createComment(review.id, content);
       // Clear reply state after successful comment
       setReplyToComment(null);
-    } catch (error) {
-      console.warn("Error posting comment:", error);
-    }
+    } catch (error) {}
   };
 
   const handleLikeComment = async (commentId: string) => {
@@ -286,9 +271,7 @@ export default function ReviewDetailScreen() {
 
     try {
       await likeComment(review.id, commentId);
-    } catch (error) {
-      console.warn("Error liking comment:", error);
-    }
+    } catch (error) {}
   };
 
   const handleDislikeComment = async (commentId: string) => {
@@ -296,9 +279,7 @@ export default function ReviewDetailScreen() {
 
     try {
       await dislikeComment(review.id, commentId);
-    } catch (error) {
-      console.warn("Error disliking comment:", error);
-    }
+    } catch (error) {}
   };
 
   const handleReplyToComment = (comment: ReviewComment) => {
@@ -311,7 +292,6 @@ export default function ReviewDetailScreen() {
 
   const handleReportComment = (commentId: string) => {
     // Handle comment reporting
-    console.log("Report comment:", commentId);
   };
 
   const handleReportReview = () => {

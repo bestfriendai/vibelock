@@ -55,9 +55,7 @@ class CacheService {
         const { tagIndex } = JSON.parse(metadata);
         this.tagIndex = new Map(Object.entries(tagIndex).map(([tag, keys]) => [tag, new Set(keys as string[])]));
       }
-    } catch (error) {
-      console.warn("Failed to initialize cache metadata:", error);
-    }
+    } catch (error) {}
   }
 
   /**
@@ -147,9 +145,7 @@ class CacheService {
         tagIndex: Object.fromEntries(Array.from(this.tagIndex.entries()).map(([tag, keys]) => [tag, Array.from(keys)])),
       };
       await AsyncStorage.setItem(this.METADATA_KEY, JSON.stringify(metadata));
-    } catch (error) {
-      console.warn("Failed to save cache metadata:", error);
-    }
+    } catch (error) {}
   }
 
   /**
@@ -179,9 +175,7 @@ class CacheService {
             await AsyncStorage.removeItem(this.STORAGE_PREFIX + key);
           }
         }
-      } catch (error) {
-        console.warn("Failed to get from persistent cache:", error);
-      }
+      } catch (error) {}
     }
 
     return null;
@@ -219,9 +213,7 @@ class CacheService {
     if (persistent) {
       try {
         await AsyncStorage.setItem(this.STORAGE_PREFIX + key, JSON.stringify(entry));
-      } catch (error) {
-        console.warn("Failed to save to persistent cache:", error);
-      }
+      } catch (error) {}
     }
 
     // Cleanup if needed
@@ -247,9 +239,7 @@ class CacheService {
     if (this.config.persistentStorage) {
       try {
         await AsyncStorage.removeItem(this.STORAGE_PREFIX + key);
-      } catch (error) {
-        console.warn("Failed to delete from persistent cache:", error);
-      }
+      } catch (error) {}
     }
   }
 
@@ -286,9 +276,7 @@ class CacheService {
         const keys = await AsyncStorage.getAllKeys();
         const cacheKeys = keys.filter((key) => key.startsWith(this.STORAGE_PREFIX));
         await AsyncStorage.multiRemove([...cacheKeys, this.METADATA_KEY]);
-      } catch (error) {
-        console.warn("Failed to clear persistent cache:", error);
-      }
+      } catch (error) {}
     }
   }
 

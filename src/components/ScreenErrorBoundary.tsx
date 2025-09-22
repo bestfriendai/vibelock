@@ -22,7 +22,6 @@ export function useScreenErrorBoundary(screenName: string) {
   const navigation = useNavigation<RootStackNavigationProp>();
 
   const handleError = (error: Error) => {
-    console.warn(`Error in ${screenName}:`, error);
     navigation.navigate("MainTabs");
   };
 
@@ -40,7 +39,6 @@ class ScreenErrorBoundaryComponent extends Component<Props & { navigation: any; 
   }
 
   override componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.warn(`ScreenErrorBoundary caught error in ${this.props.screenName}:`, error, errorInfo);
     this.props.onError?.(error, errorInfo);
   }
 

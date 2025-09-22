@@ -11,9 +11,7 @@ try {
     encryptionKey: process.env.MMKV_ENCRYPTION_KEY || "default-key-change-in-production",
   });
   isMMKVAvailable = true;
-  console.log("✅ MMKV storage initialized");
 } catch (error) {
-  console.log("⚠️ MMKV not available, falling back to AsyncStorage");
   storage = AsyncStorage;
   isMMKVAvailable = false;
 }
@@ -102,12 +100,10 @@ export const mmkvStorage = {
 // One-time migration from AsyncStorage to MMKV (only if MMKV is available)
 export async function migrateFromAsyncStorage() {
   if (!isMMKVAvailable) {
-    console.log("⚠️ MMKV not available, skipping migration");
     return;
   }
 
   try {
-    console.log("Starting migration to MMKV...");
     const keys = await AsyncStorage.getAllKeys();
     const entries = await AsyncStorage.multiGet(keys);
 
@@ -121,8 +117,6 @@ export async function migrateFromAsyncStorage() {
 
     // Clear AsyncStorage after successful migration
     await AsyncStorage.clear();
-    console.log(`Migration completed: ${migrated} items migrated to MMKV`);
-
     // Set migration flag
     storage.set("mmkv_migration_completed", "true");
   } catch (error) {

@@ -46,9 +46,7 @@ export const useSubscription = (): SubscriptionStatus => {
         if (user) {
           await syncWithSupabase(user.id);
         }
-      } catch (error) {
-        console.warn("Failed to sync subscription status:", error);
-      }
+      } catch (error) {}
     };
 
     syncSubscription();

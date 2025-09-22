@@ -50,32 +50,18 @@ export const getAuthenticatedUser = async (): Promise<{ user: User | null; supab
   try {
     // Get both store state and Supabase state
     const storeState = useAuthStore.getState();
-    console.log(`🔍 getAuthenticatedUser - Store state:`, {
-      isAuthenticated: storeState.isAuthenticated,
-      hasUser: !!storeState.user,
-      isGuestMode: storeState.isGuestMode,
-      userId: storeState.user?.id?.slice(-4) || "none",
-    });
 
     const supabaseUser = await retryAsync(() => authService.getUser());
-    console.log(`🔍 getAuthenticatedUser - Supabase user:`, {
-      hasSupabaseUser: !!supabaseUser,
-      supabaseUserId: supabaseUser?.id?.slice(-4) || "none",
-    });
 
     // If store says authenticated but Supabase doesn't, DON'T auto-clear
     // This could be a temporary network issue or session refresh timing
     if (storeState.isAuthenticated && storeState.user && !supabaseUser) {
-      console.warn(
-        "🔄 Auth state mismatch: Store authenticated but Supabase not. Allowing store state to take precedence.",
-      );
       // Return store state - let the auth listener handle any real logout
       return { user: storeState.user, supabaseUser: null };
     }
 
     // If Supabase says authenticated but store doesn't, prefer Supabase
     if (!storeState.isAuthenticated && supabaseUser) {
-      console.warn("🔄 Auth state mismatch: Supabase authenticated but store not. Allowing Supabase state.");
       // Return Supabase state - the auth listener should sync this soon
       return { user: null, supabaseUser };
     }
@@ -88,7 +74,6 @@ export const getAuthenticatedUser = async (): Promise<{ user: User | null; supab
       supabaseUser: isFullyAuthenticated ? supabaseUser : null,
     };
   } catch (error) {
-    console.warn("Error checking authentication:", error);
     const appError = error instanceof AppError ? error : parseSupabaseError(error);
     // Don't throw here as this is used for checking auth state
     return { user: null, supabaseUser: null };
@@ -103,13 +88,12 @@ export const useAuthState = () => {
   const { user, isAuthenticated, isGuestMode, isLoading } = useAuthStore();
 
   // Enhanced debug logging for chatroom debugging
-  if (__DEV__ && typeof __DEV__ !== "undefined") {
-    console.log("🔍 useAuthState:", {
-      hasUser: !!user,
+  if (__DEV__) {
+    console.log({
       isAuthenticated,
+      userId: user?.id?.slice(-8) || "none",
       isGuestMode,
       isLoading,
-      userId: user?.id?.slice(-4) || "undefined",
       canAccessChat: isAuthenticated && !!user && !isGuestMode,
       needsSignIn: !isAuthenticated || !user || isGuestMode,
     });
@@ -135,16 +119,7 @@ export const useAuthState = () => {
 export const requireAuthentication = async (
   action: string = "perform this action",
 ): Promise<{ user: User; supabaseUser: any }> => {
-  console.log(`🔐 requireAuthentication called for: ${action}`);
-
   const { user, supabaseUser } = await getAuthenticatedUser();
-
-  console.log(`🔍 Auth check result:`, {
-    hasUser: !!user,
-    hasSupabaseUser: !!supabaseUser,
-    userId: user?.id?.slice(-4) || "none",
-    supabaseUserId: supabaseUser?.id?.slice(-4) || "none",
-  });
 
   // Be more lenient - if we have either a user OR supabaseUser, allow the action
   // The auth listener will eventually sync the states
@@ -224,21 +199,17 @@ export const refreshSessionIfNeeded = async (): Promise<boolean> => {
 
     if (timeUntilExpiry < 300) {
       // Less than 5 minutes
-      console.log("🔄 Session expiring soon, refreshing...");
       const { data, error } = await retryAsync(() => supabase.auth.refreshSession());
 
       if (error) {
-        console.warn("Failed to refresh session:", error);
         return false;
       }
 
-      console.log("✅ Session refreshed successfully");
       return true;
     }
 
     return true;
   } catch (error) {
-    console.warn("Error refreshing session:", error);
     return false;
   }
 };
@@ -251,18 +222,11 @@ export const syncAuthState = async (): Promise<void> => {
     const storeState = useAuthStore.getState();
     const supabaseUser = await authService.getUser();
 
-    console.log("🔄 Syncing auth state:");
-    console.log("  Store authenticated:", storeState.isAuthenticated);
-    console.log("  Store user:", !!storeState.user);
-    console.log("  Supabase user:", !!supabaseUser);
-
     // If there's a mismatch, try to refresh session first
     if (storeState.isAuthenticated !== !!supabaseUser) {
-      console.warn("⚠️ Auth state mismatch detected. Attempting session refresh...");
       await refreshSessionIfNeeded();
     }
   } catch (error) {
-    console.warn("Error syncing auth state:", error);
     const appError = error instanceof AppError ? error : parseSupabaseError(error);
     // Don't throw as this is a utility function
   }

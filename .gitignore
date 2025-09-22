@@ -39,10 +39,17 @@ yarn-error.*
 # iOS & Android
 ios/
 android/
+
+# Environment files
 .env
 .env.local
 .env.*
 !.env.example
+
+# Security - Never commit these
+google-services.json
+GoogleService-Info.plist
+*.keystore
 .clinerules/byterover-rules.md
 .kilocode/rules/byterover-rules.md
 .roo/rules/byterover-rules.md

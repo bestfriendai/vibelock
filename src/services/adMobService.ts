@@ -46,7 +46,6 @@ class AdMobService {
     if (this.initialized) return;
 
     if (!canUseAdMob()) {
-      console.log("AdMob not available in Expo Go - using mock implementation");
       this.initializeMockAds();
       this.initialized = true;
       return;
@@ -55,10 +54,7 @@ class AdMobService {
     // Initialize GDPR consent service first
     try {
       await gdprConsentService.initialize();
-      console.log("GDPR consent service initialized");
-    } catch (error) {
-      console.warn("GDPR consent service initialization failed:", error);
-    }
+    } catch (error) {}
 
     // Enhanced initialization with retry logic and SDK 54 compatibility fixes
     while (this.initializationAttempts < this.MAX_INITIALIZATION_ATTEMPTS) {
@@ -68,9 +64,7 @@ class AdMobService {
         // Add delay for retry attempts (except first attempt)
         if (this.initializationAttempts > 1) {
           const delay = this.getRetryDelay(this.initializationAttempts - 2);
-          console.log(
-            `AdMob: Retrying initialization (attempt ${this.initializationAttempts}/${this.MAX_INITIALIZATION_ATTEMPTS}) after ${delay}ms delay`,
-          );
+          console.log(`AdMob: retrying initialization after ${delay}ms delay`);
           await new Promise((resolve) => setTimeout(resolve, delay));
         }
 
@@ -96,15 +90,12 @@ class AdMobService {
         await this.initializeInterstitialAd();
         await this.initializeAppOpenAd();
         this.initialized = true;
-        console.log(`AdMob: Initialized successfully on attempt ${this.initializationAttempts}`);
         return;
       } catch (error) {
         console.error(`AdMob: Initialization attempt ${this.initializationAttempts} failed:`, error);
 
         // Check if this is a known Expo SDK 54 compatibility issue
         if (this.isExpoSDK54CompatibilityError(error)) {
-          console.warn("AdMob: Detected Expo SDK 54 compatibility issue, applying workarounds...");
-
           // Apply SDK 54 specific workarounds
           try {
             // Workaround: Try alternative import strategy with extended delays
@@ -116,7 +107,6 @@ class AdMobService {
             await this.initializeInterstitialAd();
             await this.initializeAppOpenAd();
             this.initialized = true;
-            console.log("AdMob: SDK 54 workaround successful");
             return;
           } catch (workaroundError) {
             console.error("AdMob: SDK 54 workaround failed:", workaroundError);
@@ -125,7 +115,6 @@ class AdMobService {
 
         // If this is the last attempt, fall back to mock implementation
         if (this.initializationAttempts >= this.MAX_INITIALIZATION_ATTEMPTS) {
-          console.warn("AdMob: All initialization attempts failed, falling back to mock implementation");
           this.initializeMockAds();
           this.initialized = true;
           return;
@@ -139,25 +128,21 @@ class AdMobService {
     this.mockInterstitialAd = {
       loaded: false,
       load: () => {
-        console.log("Mock: Loading interstitial ad");
         // Simulate realistic loading time
         setTimeout(
           () => {
             this.mockInterstitialAd!.loaded = true;
-            console.log("Mock: Interstitial ad loaded successfully");
           },
           Math.random() * 2000 + 500,
         ); // 500-2500ms loading time
       },
       show: () => {
-        console.log("Mock: Showing interstitial ad");
         // Simulate ad display and reset loaded state
         this.mockInterstitialAd!.loaded = false;
         // Auto-reload after showing
         setTimeout(() => this.mockInterstitialAd!.load(), 1000);
       },
       addAdEventListener: (event: string, callback: (data?: any) => void) => {
-        console.log(`Mock: Added listener for ${event}`);
         // Simulate various ad events with realistic timing
         if (event === "loaded") {
           setTimeout(() => callback(), Math.random() * 2000 + 500);
@@ -189,7 +174,6 @@ class AdMobService {
         const adUnitId = this.getInterstitialAdUnitId();
 
         if (!adUnitId) {
-          console.warn("Interstitial ad unit ID not configured");
           return;
         }
 
@@ -200,12 +184,9 @@ class AdMobService {
 
         this.interstitialAd = InterstitialAd.createForAdRequest(adUnitId);
 
-        this.interstitialAd.addAdEventListener(AdEventType.LOADED, () => {
-          console.log("Interstitial ad loaded successfully");
-        });
+        this.interstitialAd.addAdEventListener(AdEventType.LOADED, () => {});
 
         this.interstitialAd.addAdEventListener(AdEventType.ERROR, (error: any) => {
-          console.warn("Interstitial ad error:", error);
           // Retry loading after error
           setTimeout(() => {
             if (this.interstitialAd) {
@@ -215,7 +196,6 @@ class AdMobService {
         });
 
         this.interstitialAd.addAdEventListener(AdEventType.CLOSED, () => {
-          console.log("Interstitial ad closed");
           // Preload next ad with delay
           setTimeout(() => {
             if (this.interstitialAd) {
@@ -228,7 +208,7 @@ class AdMobService {
         return; // Success, exit retry loop
       } catch (error) {
         retryCount++;
-        console.warn(`Failed to initialize interstitial ad (attempt ${retryCount}/${maxRetries + 1}):`, error);
+        console.error("AdMob: initializeInterstitialAd error:", error);
 
         if (retryCount > maxRetries) {
           console.error("All interstitial ad initialization attempts failed");
@@ -254,7 +234,6 @@ class AdMobService {
         const adUnitId = this.getAppOpenAdUnitId();
 
         if (!adUnitId) {
-          console.warn("App Open ad unit ID not configured");
           return;
         }
 
@@ -265,12 +244,9 @@ class AdMobService {
 
         this.appOpenAd = AppOpenAd.createForAdRequest(adUnitId);
 
-        this.appOpenAd.addAdEventListener(AdEventType.LOADED, () => {
-          console.log("App Open ad loaded successfully");
-        });
+        this.appOpenAd.addAdEventListener(AdEventType.LOADED, () => {});
 
         this.appOpenAd.addAdEventListener(AdEventType.ERROR, (error: any) => {
-          console.warn("App Open ad error:", error);
           // Retry loading after error
           setTimeout(() => {
             if (this.appOpenAd) {
@@ -280,7 +256,6 @@ class AdMobService {
         });
 
         this.appOpenAd.addAdEventListener(AdEventType.CLOSED, () => {
-          console.log("App Open ad closed");
           // Preload next ad with delay
           setTimeout(() => {
             if (this.appOpenAd) {
@@ -293,7 +268,7 @@ class AdMobService {
         return; // Success, exit retry loop
       } catch (error) {
         retryCount++;
-        console.warn(`Failed to initialize App Open ad (attempt ${retryCount}/${maxRetries + 1}):`, error);
+        console.error("AdMob: initializeAppOpenAd error:", error);
 
         if (retryCount > maxRetries) {
           console.error("All App Open ad initialization attempts failed");
@@ -315,17 +290,13 @@ class AdMobService {
       if (user) {
         const shouldShowAds = await subscriptionService.shouldShowAds(user.id);
         if (!shouldShowAds) {
-          console.log("AdMob: User has premium subscription, skipping interstitial ad");
           return false;
         }
       }
-    } catch (error) {
-      console.warn("AdMob: Failed to check subscription status, showing ad:", error);
-    }
+    } catch (error) {}
 
     if (!canUseAdMob()) {
       // Enhanced mock implementation for Expo Go
-      console.log("Mock: Showing interstitial ad");
       if (this.mockInterstitialAd) {
         this.mockInterstitialAd.show();
       }
@@ -334,7 +305,6 @@ class AdMobService {
 
     const ad = this.interstitialAd || this.mockInterstitialAd;
     if (!ad) {
-      console.warn("Interstitial ad not initialized");
       // Try to reinitialize
       await this.initializeInterstitialAd();
       return false;
@@ -353,7 +323,6 @@ class AdMobService {
         }
         return true;
       } else {
-        console.log("Interstitial ad not ready, attempting to load");
         // Try to load the ad if it's not ready
         if (this.interstitialAd) {
           this.interstitialAd.load();
@@ -361,7 +330,6 @@ class AdMobService {
         return false;
       }
     } catch (error) {
-      console.warn("Failed to show interstitial ad:", error);
       // Try to reinitialize on error
       setTimeout(() => {
         this.initializeInterstitialAd();
@@ -441,16 +409,12 @@ class AdMobService {
       if (user) {
         const shouldShowAds = await subscriptionService.shouldShowAds(user.id);
         if (!shouldShowAds) {
-          console.log("AdMob: User has premium subscription, skipping app open ad");
           return false;
         }
       }
-    } catch (error) {
-      console.warn("AdMob: Failed to check subscription status, showing ad:", error);
-    }
+    } catch (error) {}
 
     if (!canUseAdMob()) {
-      console.log("Mock: Showing App Open ad");
       return true;
     }
 
@@ -463,12 +427,10 @@ class AdMobService {
     const now = Date.now();
     const cooldownMs = appOpenConfig.cooldownMinutes * 60 * 1000;
     if (now - this.lastAppOpenAdTime < cooldownMs) {
-      console.log("App Open ad on cooldown");
       return false;
     }
 
     if (!this.appOpenAd?.loaded) {
-      console.log("App Open ad not ready");
       return false;
     }
 
@@ -477,7 +439,6 @@ class AdMobService {
       this.lastAppOpenAdTime = now;
       return true;
     } catch (error) {
-      console.warn("Failed to show App Open ad:", error);
       return false;
     }
   }

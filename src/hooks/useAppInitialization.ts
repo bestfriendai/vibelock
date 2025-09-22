@@ -86,12 +86,9 @@ async function loadFontsWithPlatformOptimizations(): Promise<number> {
     await Promise.race([fontLoadPromise, timeoutPromise]);
     return Date.now() - startTime;
   } catch (error) {
-    console.warn("Font loading failed, using fallback:", error);
-
     // Graceful fallback for font loading failures
     if (Platform.OS !== "web") {
       // Continue without custom fonts if loading fails
-      console.log("Continuing with system fonts");
     }
 
     return Date.now() - startTime;
@@ -114,7 +111,6 @@ async function manageSplashScreenRN0814(action: "prevent" | "hide"): Promise<voi
       await SplashScreen.hideAsync();
     }
   } catch (error) {
-    console.warn(`Splash screen ${action} failed:`, error);
     // Don't throw here as splash screen failures shouldn't break the app
   }
 }
@@ -123,7 +119,6 @@ async function manageSplashScreenRN0814(action: "prevent" | "hide"): Promise<voi
 function monitorMemoryUsage(): void {
   const memoryUsage = PerformanceMonitor.getMemoryUsage();
   if (memoryUsage?.usedJSHeapSize > RN_0814_CONFIG.MEMORY_WARNING_THRESHOLD) {
-    console.warn("High memory usage detected during initialization:", memoryUsage);
   }
 }
 
@@ -170,7 +165,6 @@ export function useAppInitialization() {
     (nextAppState: AppStateStatus) => {
       if (nextAppState === "active" && state.error && !state.isInitialized) {
         // Retry initialization when app becomes active after error
-        console.log("App became active after error, triggering retry");
         // Will be handled by the retry function defined later
       }
     },
@@ -183,8 +177,6 @@ export function useAppInitialization() {
       const startTime = Date.now();
 
       try {
-        console.log("🚀 Starting enhanced initialization for RN 0.81.4 + Expo 54");
-
         // Phase 1: Compatibility Check
         setState((prev) => ({ ...prev, phase: "compatibility_check", progress: 5 }));
 
@@ -235,7 +227,7 @@ export function useAppInitialization() {
             baseDelay: RN_0814_CONFIG.RETRY_BASE_DELAY,
             retryableErrors: ["timeout", "network"],
             onRetry: (attempt, error) => {
-              console.log(`Retrying font load (attempt ${attempt}):`, error);
+              console.warn("Font load retry", { attempt, error });
               setState((prev) => ({
                 ...prev,
                 warnings: [...prev.warnings, `Font loading retry ${attempt}`],
@@ -288,8 +280,6 @@ export function useAppInitialization() {
             },
           }));
 
-          console.log(`✅ Initialization completed in ${totalTime}ms`);
-
           // Final memory check
           monitorMemoryUsage();
 
@@ -311,8 +301,6 @@ export function useAppInitialization() {
                 phase: "degraded_mode",
                 warnings: [...prev.warnings, "Running in degraded mode", ...degradedState.warnings],
               }));
-
-              console.warn("⚠️ Running in degraded mode due to service failures");
             } else {
               throw serviceError;
             }
@@ -348,9 +336,7 @@ export function useAppInitialization() {
           if (errorReportingService.isInitialized()) {
             await errorReportingService.reportError(errorObj, { context: "initialization" });
           }
-        } catch (reportingError) {
-          console.warn("Failed to report initialization error:", reportingError);
-        }
+        } catch (reportingError) {}
       }
     },
     [handleInitializationStateChange],

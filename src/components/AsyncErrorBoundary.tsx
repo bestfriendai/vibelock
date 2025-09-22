@@ -28,7 +28,6 @@ export default class AsyncErrorBoundary extends Component<Props, State> {
   }
 
   override componentDidCatch(error: Error, errorInfo: any) {
-    console.warn("AsyncErrorBoundary caught an error:", error, errorInfo);
     this.props.onError?.(error, errorInfo);
   }
 
@@ -39,7 +38,6 @@ export default class AsyncErrorBoundary extends Component<Props, State> {
         await this.props.onRetry();
         this.setState({ hasError: false, error: null, isRetrying: false });
       } catch (error) {
-        console.warn("Retry failed:", error);
         this.setState({
           hasError: true,
           error: error instanceof Error ? error : new Error("Retry failed"),

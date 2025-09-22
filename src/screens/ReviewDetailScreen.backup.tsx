@@ -105,7 +105,6 @@ export default function ReviewDetailScreen() {
             navigation.goBack();
           }
         } catch (error) {
-          console.warn("Error loading review:", error);
           navigation.goBack();
         } finally {
           setReviewLoading(false);
@@ -226,7 +225,6 @@ export default function ReviewDetailScreen() {
     try {
       await loadComments(review.id);
     } catch (error) {
-      console.warn("Error refreshing comments:", error);
     } finally {
       setRefreshing(false);
     }
@@ -239,9 +237,7 @@ export default function ReviewDetailScreen() {
       await createComment(review.id, content);
       // Clear reply state after successful comment
       setReplyToComment(null);
-    } catch (error) {
-      console.warn("Error posting comment:", error);
-    }
+    } catch (error) {}
   };
 
   const handleLikeComment = async (commentId: string) => {
@@ -249,9 +245,7 @@ export default function ReviewDetailScreen() {
 
     try {
       await likeComment(review.id, commentId);
-    } catch (error) {
-      console.warn("Error liking comment:", error);
-    }
+    } catch (error) {}
   };
 
   const handleDislikeComment = async (commentId: string) => {
@@ -259,9 +253,7 @@ export default function ReviewDetailScreen() {
 
     try {
       await dislikeComment(review.id, commentId);
-    } catch (error) {
-      console.warn("Error disliking comment:", error);
-    }
+    } catch (error) {}
   };
 
   const handleReplyToComment = (comment: ReviewComment) => {
@@ -274,7 +266,6 @@ export default function ReviewDetailScreen() {
 
   const handleReportComment = (commentId: string) => {
     // Handle comment reporting
-    console.log("Report comment:", commentId);
   };
 
   const formatDate = (date: Date) => {

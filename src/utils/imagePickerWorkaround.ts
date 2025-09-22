@@ -38,8 +38,6 @@ export async function launchImageLibraryWithWorkaround(
 
   // First attempt with full options
   try {
-    console.log("🖼️ Attempting ImagePicker with full options...");
-
     // Add a small delay to ensure permissions are fully processed
     await new Promise((resolve) => setTimeout(resolve, 100));
 
@@ -62,15 +60,10 @@ export async function launchImageLibraryWithWorkaround(
     }
 
     const result = await ImagePicker.launchImageLibraryAsync(pickerOptions);
-    console.log("✅ ImagePicker succeeded on first attempt");
     return result;
   } catch (error: any) {
-    console.warn("❌ ImagePicker first attempt failed:", error);
-
     // Check if this is the specific PHPhotosErrorDomain 3164 error
     if (error?.message?.includes("PHPhotosErrorDomain") && error?.message?.includes("3164")) {
-      console.log("🔄 Detected PHPhotosErrorDomain 3164, attempting workaround...");
-
       // Try progressively simpler configurations
       const fallbackConfigs = [
         // Attempt 1: Remove editing and multiple selection
@@ -92,15 +85,11 @@ export async function launchImageLibraryWithWorkaround(
 
       for (let i = 0; i < Math.min(maxRetries, fallbackConfigs.length); i++) {
         try {
-          console.log(`🔄 Retry attempt ${i + 1} with simplified config...`);
           await new Promise((resolve) => setTimeout(resolve, retryDelay));
 
           const fallbackResult = await ImagePicker.launchImageLibraryAsync(fallbackConfigs[i]);
-          console.log(`✅ ImagePicker succeeded on retry attempt ${i + 1}`);
           return fallbackResult;
         } catch (retryError) {
-          console.warn(`❌ Retry attempt ${i + 1} failed:`, retryError);
-
           // If this is the last retry, continue to throw the original error
           if (i === Math.min(maxRetries, fallbackConfigs.length) - 1) {
             break;
@@ -135,7 +124,6 @@ export function showPHPhotosError3164Alert(onRetry?: () => void): void {
         text: "Open Settings",
         onPress: () => {
           // Note: Linking.openSettings() should be called from the component
-          console.log("User requested to open settings");
         },
       },
     ],

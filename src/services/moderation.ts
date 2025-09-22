@@ -74,7 +74,6 @@ Categories can include: "harassment", "hate_speech", "sexual_content", "personal
         reason: result.reason,
       };
     } catch (parseError) {
-      console.warn("Failed to parse moderation response:", parseError);
       // Default to flagged if we can't parse the response
       return {
         isAppropriate: false,
@@ -84,7 +83,6 @@ Categories can include: "harassment", "hate_speech", "sexual_content", "personal
       };
     }
   } catch (error) {
-    console.warn("Moderation API error:", error);
     // Default to approved if moderation service is down
     return {
       isAppropriate: true,
@@ -124,7 +122,6 @@ export async function moderateName(name: string): Promise<boolean> {
 
     return true;
   } catch (error) {
-    console.warn("Name moderation error:", error);
     // Default to approved if moderation fails
     return true;
   }

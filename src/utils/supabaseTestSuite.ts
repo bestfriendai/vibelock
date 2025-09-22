@@ -34,7 +34,6 @@ class SupabaseTestSuite {
 
   // Run all tests
   async runAllTests(): Promise<TestSuiteResult> {
-    console.log("🧪 Starting Supabase Integration Test Suite");
     this.startTime = Date.now();
     this.results = [];
 
@@ -71,7 +70,6 @@ class SupabaseTestSuite {
       duration,
     };
 
-    console.log("🧪 Test Suite Complete:", summary);
     return summary;
   }
 
@@ -260,7 +258,7 @@ class SupabaseTestSuite {
         duration,
       });
 
-      console.log(`✅ ${name}: ${message} (${duration}ms)`);
+      console.log(`✅ ${name} (${duration}ms): ${message}`);
     } catch (error: any) {
       const duration = Date.now() - startTime;
       const errorMessage = error instanceof Error ? error.message : String(error);
@@ -273,7 +271,7 @@ class SupabaseTestSuite {
         error,
       });
 
-      console.warn(`❌ ${name}: ${errorMessage} (${duration}ms)`);
+      console.error(`❌ ${name} (${duration}ms): ${errorMessage}`);
     }
   }
 
@@ -316,10 +314,8 @@ class SupabaseTestSuite {
       await testChannel.subscribe();
       await supabase.removeChannel(testChannel);
 
-      console.log("✅ Quick health check passed");
       return true;
     } catch (error) {
-      console.warn("❌ Quick health check failed:", error);
       return false;
     }
   }

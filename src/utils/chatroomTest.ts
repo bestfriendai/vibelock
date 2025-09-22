@@ -22,11 +22,9 @@ export class ChatroomTester {
 
   private addResult(step: string, success: boolean, error?: string, data?: any) {
     this.results.push({ step, success, error, data });
-    console.log(`${success ? "✅" : "❌"} ${step}${error ? `: ${error}` : ""}`);
   }
 
   async runCompleteTest(): Promise<TestResult[]> {
-    console.log("🧪 Starting comprehensive chatroom functionality test...");
     this.results = [];
 
     try {
@@ -57,18 +55,10 @@ export class ChatroomTester {
       this.addResult("Complete Test", false, `Test suite failed: ${error}`);
     }
 
-    console.log("\n📊 Test Results Summary:");
     const passed = this.results.filter((r) => r.success).length;
     const total = this.results.length;
-    console.log(`${passed}/${total} tests passed`);
-
     if (passed < total) {
-      console.log("\n❌ Failed tests:");
-      this.results
-        .filter((r) => !r.success)
-        .forEach((r) => {
-          console.log(`  - ${r.step}: ${r.error}`);
-        });
+      this.results.filter((r) => !r.success).forEach((r) => {});
     }
 
     return this.results;

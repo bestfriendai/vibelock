@@ -22,13 +22,6 @@ export default function OfflineBanner({ onRetry }: OfflineBannerProps) {
   };
 
   const updateConnectionState = (connected: boolean, source: string) => {
-    console.log(`📶 OfflineBanner: Connection state update from ${source}:`, {
-      connected,
-      currentlyConnected: isConnected,
-      currentlyShowingBanner: showBanner,
-      isInitialized,
-    });
-
     // Clear any pending debounce
     if (debounceTimeoutRef.current) {
       clearTimeout(debounceTimeoutRef.current);
@@ -47,12 +40,10 @@ export default function OfflineBanner({ onRetry }: OfflineBannerProps) {
 
       // Only show banner if we're initialized and actually disconnected
       if (!connected && !showBanner && isInitialized) {
-        console.log(`📶 OfflineBanner: Showing offline banner`);
         setShowBanner(true);
         translateY.value = withSpring(0);
         opacity.value = withTiming(1);
       } else if (connected && showBanner) {
-        console.log(`📶 OfflineBanner: Hiding offline banner`);
         translateY.value = withSpring(-100);
         opacity.value = withTiming(0, { duration: 300 }, (finished) => {
           if (finished) {
@@ -78,19 +69,10 @@ export default function OfflineBanner({ onRetry }: OfflineBannerProps) {
           state.isInternetReachable === true || (state.isInternetReachable === null && isConnected);
         const connected = isConnected && hasInternetAccess;
 
-        console.log(`📶 OfflineBanner: Initial network state:`, {
-          isConnected,
-          isInternetReachable: state.isInternetReachable,
-          connected,
-          type: state.type,
-          details: state.details,
-        });
-
         updateConnectionState(connected, "initial");
         setIsInitialized(true);
       })
       .catch((error) => {
-        console.warn(`📶 OfflineBanner: Failed to fetch initial network state:`, error);
         // Assume connected on error to avoid false positives
         if (isMounted) {
           updateConnectionState(true, "initial-error");
@@ -107,14 +89,6 @@ export default function OfflineBanner({ onRetry }: OfflineBannerProps) {
       const hasInternetAccess =
         state.isInternetReachable === true || (state.isInternetReachable === null && isConnected);
       const connected = isConnected && hasInternetAccess;
-
-      console.log(`📶 OfflineBanner: Network state changed:`, {
-        isConnected,
-        isInternetReachable: state.isInternetReachable,
-        connected,
-        type: state.type,
-        details: state.details,
-      });
 
       updateConnectionState(connected, "listener");
     });
@@ -143,8 +117,6 @@ export default function OfflineBanner({ onRetry }: OfflineBannerProps) {
   });
 
   const handleRetry = () => {
-    console.log(`📶 OfflineBanner: Retry button pressed`);
-
     if (onRetry) {
       onRetry();
     }
@@ -157,18 +129,9 @@ export default function OfflineBanner({ onRetry }: OfflineBannerProps) {
           state.isInternetReachable === true || (state.isInternetReachable === null && isConnected);
         const connected = isConnected && hasInternetAccess;
 
-        console.log(`📶 OfflineBanner: Retry network check result:`, {
-          isConnected,
-          isInternetReachable: state.isInternetReachable,
-          connected,
-          type: state.type,
-        });
-
         updateConnectionState(connected, "retry");
       })
-      .catch((error) => {
-        console.warn(`📶 OfflineBanner: Retry network check failed:`, error);
-      });
+      .catch((error) => {});
   };
 
   if (!showBanner) {

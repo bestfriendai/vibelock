@@ -82,8 +82,6 @@ export function usePerformanceOptimization(options: PerformanceOptions) {
     // Subscribe to performance alerts
 
     const unsubscribe = performanceMonitor.onAlert((alert) => {
-      console.warn(`Performance alert in ${componentName}:`, alert);
-
       if (enableAutoOptimization && alert.severity === "critical") {
         applyAutoOptimization(alert.type);
       }
@@ -162,7 +160,9 @@ export function usePerformanceOptimization(options: PerformanceOptions) {
     // Check memory threshold
     const threshold = options.thresholds?.memoryUsage || 0.8;
     if (percentage > threshold) {
-      console.warn(`High memory usage in ${options.componentName}: ${(percentage * 100).toFixed(1)}%`);
+      console.warn(
+        `[usePerformanceOptimization] High memory usage in ${options.componentName}: ${percentage.toFixed(1)}%`,
+      );
 
       // Trigger cleanup if critical
       if (percentage > 0.9) {
@@ -327,7 +327,7 @@ export function usePerformanceOptimization(options: PerformanceOptions) {
         break;
     }
 
-    console.log(`Auto-optimization applied for ${issueType} issue in ${options.componentName}`);
+    console.log(`[usePerformanceOptimization] Auto-optimization applied for ${options.componentName}: ${issueType}`);
   };
 
   // Save performance metrics for analysis

@@ -106,12 +106,10 @@ export class UsersService {
 
   async followUser(followerId: string, followingId: string): Promise<void> {
     // Follows table not available - no-op
-    console.warn("Follow functionality not available");
   }
 
   async unfollowUser(followerId: string, followingId: string): Promise<void> {
     // Follows table not available - no-op
-    console.warn("Unfollow functionality not available");
   }
 
   async blockUser(blockerId: string, blockedId: string): Promise<void> {

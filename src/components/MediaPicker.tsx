@@ -117,7 +117,6 @@ export const MediaPicker: React.FC<MediaPickerProps> = ({ onMediaSelect, onClose
         return false;
       }
     } catch (error) {
-      console.warn("Permission request failed", error);
       Alert.alert("Error", "Failed to request permissions. Please try again.");
       return false;
     }
@@ -163,7 +162,6 @@ export const MediaPicker: React.FC<MediaPickerProps> = ({ onMediaSelect, onClose
         }
       }
     } catch (error) {
-      console.warn("Camera error:", error);
       Alert.alert("Error", "Failed to take photo. Please try again.");
     } finally {
       setIsLoading(false);
@@ -216,8 +214,6 @@ export const MediaPicker: React.FC<MediaPickerProps> = ({ onMediaSelect, onClose
         }
       }
     } catch (error: any) {
-      console.warn("Gallery error:", error);
-
       // Use the enhanced error handling for PHPhotosErrorDomain issues
       if (isPHPhotosError3164(error)) {
         Alert.alert("Photo Library Access Issue", getPHPhotosErrorMessage(error), [
@@ -273,7 +269,6 @@ export const MediaPicker: React.FC<MediaPickerProps> = ({ onMediaSelect, onClose
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       }
     } catch (error) {
-      console.warn("Document picker error:", error);
       Alert.alert("Error", "Failed to pick document. Please try again.");
     } finally {
       setIsLoading(false);

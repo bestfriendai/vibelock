@@ -39,7 +39,6 @@ class PermissionValidationService {
         criticalMissing.push("Camera");
       }
     } catch (error) {
-      console.warn("Failed to check camera permissions:", error);
       results.camera = { granted: false, canAskAgain: false, status: "error" };
       missingPermissions.push("Camera");
       criticalMissing.push("Camera");
@@ -58,7 +57,6 @@ class PermissionValidationService {
         criticalMissing.push("Media Library");
       }
     } catch (error) {
-      console.warn("Failed to check media library permissions:", error);
       results.mediaLibrary = { granted: false, canAskAgain: false, status: "error" };
       missingPermissions.push("Media Library");
       criticalMissing.push("Media Library");
@@ -77,7 +75,6 @@ class PermissionValidationService {
         // Location is not critical for core app functionality
       }
     } catch (error) {
-      console.warn("Failed to check location permissions:", error);
       results.location = { granted: false, canAskAgain: false, status: "error" };
       missingPermissions.push("Location");
     }
@@ -95,7 +92,6 @@ class PermissionValidationService {
         // Notifications are not critical for core app functionality
       }
     } catch (error) {
-      console.warn("Failed to check notification permissions:", error);
       results.notifications = { granted: false, canAskAgain: false, status: "error" };
       missingPermissions.push("Notifications");
     }
@@ -128,9 +124,7 @@ class PermissionValidationService {
           canAskAgain: newStatus.canAskAgain,
           status: newStatus.status,
         };
-      } catch (error) {
-        console.warn("Failed to request camera permission:", error);
-      }
+      } catch (error) {}
     }
 
     // Request media library permission if missing
@@ -143,9 +137,7 @@ class PermissionValidationService {
           canAskAgain: newStatus.canAskAgain,
           status: newStatus.status,
         };
-      } catch (error) {
-        console.warn("Failed to request media library permission:", error);
-      }
+      } catch (error) {}
     }
 
     // Request location permission if missing
@@ -158,9 +150,7 @@ class PermissionValidationService {
           canAskAgain: newStatus.canAskAgain,
           status: newStatus.status,
         };
-      } catch (error) {
-        console.warn("Failed to request location permission:", error);
-      }
+      } catch (error) {}
     }
 
     // Request notification permission if missing
@@ -179,9 +169,7 @@ class PermissionValidationService {
           canAskAgain: newStatus.canAskAgain,
           status: newStatus.status,
         };
-      } catch (error) {
-        console.warn("Failed to request notification permission:", error);
-      }
+      } catch (error) {}
     }
 
     // Recalculate validation result
@@ -231,7 +219,6 @@ class PermissionValidationService {
           if (Linking.openSettings) {
             Linking.openSettings();
           } else {
-            console.warn("Cannot open settings on this platform");
           }
         },
       },
@@ -287,8 +274,6 @@ class PermissionValidationService {
       const summary = await this.getPermissionSummary();
 
       if (summary.status === "critical_missing") {
-        console.warn("❌ Critical permissions missing:", summary.details.criticalMissing);
-
         // Attempt to request critical permissions
         const updatedResult = await this.requestMissingPermissions(summary.details);
 
@@ -299,13 +284,9 @@ class PermissionValidationService {
           }, 2000); // Delay to avoid overwhelming user at startup
         }
       } else if (summary.status === "partial") {
-        console.log("⚠️ Some optional permissions missing:", summary.details.missingPermissions);
       } else {
-        console.log("✅ All permissions granted");
       }
-    } catch (error) {
-      console.warn("Failed to initialize permission monitoring:", error);
-    }
+    } catch (error) {}
   }
 }
 

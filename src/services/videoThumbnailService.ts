@@ -62,7 +62,6 @@ class VideoThumbnailService {
 
       return result;
     } catch (error) {
-      console.warn("Video thumbnail generation failed:", error);
       return await this.generateThumbnailFallback(videoUri, options);
     }
   }
@@ -102,7 +101,6 @@ class VideoThumbnailService {
         height,
       };
     } catch (error) {
-      console.warn("Native thumbnail generation failed, falling back:", error);
       return await this.generateThumbnailFallback(videoUri, options);
     }
   }
@@ -217,9 +215,7 @@ class VideoThumbnailService {
 
       // Clean up old cache entries
       await this.cleanupOldCache();
-    } catch (error) {
-      console.warn("Failed to cache thumbnail:", error);
-    }
+    } catch (error) {}
   }
 
   /**
@@ -255,7 +251,6 @@ class VideoThumbnailService {
 
       return result;
     } catch (error) {
-      console.warn("Failed to get cached thumbnail:", error);
       return null;
     }
   }
@@ -279,9 +274,7 @@ class VideoThumbnailService {
           await AsyncStorage.removeItem(key);
         }
       }
-    } catch (error) {
-      console.warn("Failed to cleanup cache:", error);
-    }
+    } catch (error) {}
   }
 
   /**
@@ -294,9 +287,7 @@ class VideoThumbnailService {
       const keys = await AsyncStorage.getAllKeys();
       const thumbnailKeys = keys.filter((k) => k.startsWith(this.cachePrefix));
       await AsyncStorage.multiRemove(thumbnailKeys);
-    } catch (error) {
-      console.warn("Failed to clear cache:", error);
-    }
+    } catch (error) {}
   }
 
   /**
@@ -310,9 +301,7 @@ class VideoThumbnailService {
       if (dirInfo.exists) {
         await FileSystem.deleteAsync(tempDir, { idempotent: true });
       }
-    } catch (error) {
-      console.warn("Failed to cleanup temp files:", error);
-    }
+    } catch (error) {}
   }
 
   /**
@@ -336,9 +325,7 @@ class VideoThumbnailService {
   async preloadThumbnail(videoUri: string): Promise<void> {
     try {
       await this.generateThumbnail(videoUri);
-    } catch (error) {
-      console.warn("Failed to preload video thumbnail:", error);
-    }
+    } catch (error) {}
   }
 }
 

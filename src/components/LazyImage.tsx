@@ -61,13 +61,9 @@ export default function LazyImage({
               if (isVisible && !isInView) {
                 setIsInView(true);
               }
-            } catch (error) {
-              console.warn("LazyImage: Error in measure callback:", error);
-            }
+            } catch (error) {}
           });
-        } catch (error) {
-          console.warn("LazyImage: Error calling measure:", error);
-        }
+        } catch (error) {}
       }
     };
 

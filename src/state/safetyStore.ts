@@ -191,7 +191,6 @@ const useSafetyStore = create<SafetyStore>()(
           }
 
           if (__DEV__) {
-            console.log("🧹 Safety store: Cleaned up old persisted data");
           }
         }
       },

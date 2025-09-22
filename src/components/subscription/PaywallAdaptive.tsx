@@ -83,6 +83,7 @@ export const PaywallAdaptive: React.FC<PaywallProps> = ({ visible, onClose }) =>
   const [selectedPackage, setSelectedPackage] = useState<any>(null);
   const [packages, setPackages] = useState<any[]>([]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (visible) {
       loadOfferings();
@@ -127,7 +128,7 @@ export const PaywallAdaptive: React.FC<PaywallProps> = ({ visible, onClose }) =>
       const message = canUseRevenueCat() ? "Your purchases have been restored." : "Demo restore successful!";
 
       Alert.alert("Restore Successful", message, [{ text: "OK", onPress: onClose }]);
-    } catch (error: any) {
+    } catch (error) {
       const message = canUseRevenueCat()
         ? "No previous purchases found or restore failed."
         : "This is a demo. Real restore requires a development build.";

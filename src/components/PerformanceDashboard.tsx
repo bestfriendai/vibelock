@@ -191,7 +191,6 @@ export default function PerformanceDashboard({ visible = __DEV__, onClose }: Per
               <Pressable
                 onPress={async () => {
                   const cleaned = await memoryManager.forceCleanup();
-                  console.log(`Cleaned ${cleaned} items`);
                 }}
                 className="bg-blue-600 rounded px-3 py-1"
               >
@@ -200,7 +199,6 @@ export default function PerformanceDashboard({ visible = __DEV__, onClose }: Per
               <Pressable
                 onPress={() => {
                   const report = performanceMonitor.exportMetrics();
-                  console.log("Performance Report:", report);
                 }}
                 className="bg-green-600 rounded px-3 py-1"
               >

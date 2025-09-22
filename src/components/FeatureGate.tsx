@@ -26,9 +26,7 @@ export const FeatureGate: React.FC<FeatureGateProps> = ({ feature, children, fal
         if (user) {
           await syncWithSupabase(user.id);
         }
-      } catch (error) {
-        console.warn("Failed to sync subscription status:", error);
-      }
+      } catch (error) {}
     };
 
     syncSubscription();

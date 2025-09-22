@@ -40,7 +40,6 @@ export class ScrollManager {
         try {
           component.scrollToEnd({ animated: options.animated });
         } catch (error) {
-          console.warn("ScrollToEnd failed, trying alternative:", error);
           // Fallback for FlashList - scroll to a very large offset
           if ("scrollToOffset" in component) {
             component.scrollToOffset({ offset: 999999, animated: options.animated });
@@ -73,7 +72,6 @@ export class ScrollManager {
             viewOffset: options.viewOffset,
           });
         } catch (error) {
-          console.warn("ScrollToIndex failed:", error);
           this.scrollToOffset(index * 100, options);
         }
       } else {
@@ -128,9 +126,7 @@ export class ScrollManager {
     if ("scrollToItem" in component && component.scrollToItem) {
       try {
         component.scrollToItem({ item, animated: true });
-      } catch (error) {
-        console.warn("ScrollToItem failed:", error);
-      }
+      } catch (error) {}
     }
   }
 

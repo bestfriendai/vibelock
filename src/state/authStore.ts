@@ -71,13 +71,11 @@ const useAuthStore = create<AuthStore>()(
       setUser: (user) => {
         // Add protection against accidental logout
         if (!user && useAuthStore.getState().isAuthenticated) {
-          console.warn("⚠️ Attempting to clear authenticated user. This might be unintentional.");
           console.trace("setUser(null) call stack:");
 
           // Don't clear user if we're just having a temporary issue
           const currentState = useAuthStore.getState();
           if (currentState.user && currentState.isAuthenticated) {
-            console.log("🛡️ Protecting against accidental logout - keeping current user");
             return;
           }
         }
@@ -90,19 +88,13 @@ const useAuthStore = create<AuthStore>()(
         }));
 
         if (__DEV__) {
-          console.log("🔄 Auth state updated:", {
-            hasUser: !!user,
-            isAuthenticated: !!user,
-            userId: user?.id?.slice(-8),
-            email: user?.email,
-          });
+          console.log("setUser called", { email: user?.email });
         }
       },
 
       // Development helper to create test user for chatroom debugging
       setTestUser: () => {
         if (__DEV__) {
-          console.log("🧪 Setting test user for development");
           const testUser: User = {
             id: "test-user-dev",
             email: "test@example.com",
@@ -195,9 +187,7 @@ const useAuthStore = create<AuthStore>()(
                   state: locationResult.location.state,
                 };
               }
-            } catch (error) {
-              console.log("Location detection failed, using defaults:", error);
-            }
+            } catch (error) {}
 
             const basicProfile: Partial<User> = {
               id: supabaseUser.id,
@@ -219,7 +209,6 @@ const useAuthStore = create<AuthStore>()(
             error: null,
           }));
         } catch (error) {
-          console.warn("Login error:", error);
           const appError = error instanceof AppError ? error : parseSupabaseError(error);
 
           // Show specific error dialog
@@ -404,9 +393,7 @@ const useAuthStore = create<AuthStore>()(
             institutionType: location.institutionType,
             locationUpdatedAt: new Date(),
           } as any);
-          console.log("✅ Location saved to database successfully");
         } catch (error) {
-          console.warn("❌ Failed to update user location in database:", error);
           // Could show a toast notification here if needed
         }
       },
@@ -420,13 +407,11 @@ const useAuthStore = create<AuthStore>()(
         // First, check if we have a current session on app start
         const initializeSession = async () => {
           if (isInitializing) {
-            console.log("🔄 Session initialization already in progress");
             return;
           }
           isInitializing = true;
 
           try {
-            console.log("🚀 Initializing auth session");
             set((state) => ({ ...state, isLoading: true, error: null }));
 
             // Session initialization re-enabled after fixing API key issue
@@ -440,7 +425,6 @@ const useAuthStore = create<AuthStore>()(
                 session = await authService.getSession();
                 break;
               } catch (error) {
-                console.warn(`Session fetch attempt ${4 - retries} failed:`, error);
                 retries--;
                 if (retries > 0) {
                   await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -458,7 +442,6 @@ const useAuthStore = create<AuthStore>()(
                   userProfile = await usersService.getProfile(session.user.id);
                   break;
                 } catch (error) {
-                  console.warn(`Profile fetch attempt ${4 - retries} failed:`, error);
                   retries--;
                   if (retries > 0) {
                     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -487,11 +470,8 @@ const useAuthStore = create<AuthStore>()(
                         state: locationResult.location.state,
                         coordinates: locationResult.location.coordinates,
                       };
-                      console.log("✅ Auto-updated user location:", userProfile.location);
                     }
-                  } catch (error) {
-                    console.log("Location auto-update failed:", error);
-                  }
+                  } catch (error) {}
                 }
 
                 set((state) => ({
@@ -502,7 +482,6 @@ const useAuthStore = create<AuthStore>()(
                   error: null,
                 }));
               } else {
-                console.warn("User profile not found, clearing session");
                 set((state) => ({
                   ...state,
                   user: null,
@@ -522,7 +501,6 @@ const useAuthStore = create<AuthStore>()(
               }));
             }
           } catch (error) {
-            console.warn("Error initializing session:", error);
             const appError = error instanceof AppError ? error : parseSupabaseError(error);
             set((state) => ({
               ...state,
@@ -533,7 +511,6 @@ const useAuthStore = create<AuthStore>()(
             }));
           } finally {
             isInitializing = false;
-            console.log("✅ Session initialization complete");
           }
         };
 
@@ -544,45 +521,27 @@ const useAuthStore = create<AuthStore>()(
         const subscription = authService.onAuthStateChange(async (event, session) => {
           const supabaseUser = session?.user;
 
-          console.log("🔄 Auth state change triggered:", {
-            hasSession: !!session,
-            hasUser: !!supabaseUser,
-            userId: supabaseUser?.id?.slice(-8) || "none",
-            email: supabaseUser?.email || "none",
-            isProcessing: isProcessingAuthChange,
-            isInitializing,
-          });
+          // Basic debug in dev
+          if (__DEV__) {
+            console.log("Auth state change:", { event, email: supabaseUser?.email });
+          }
 
           // Prevent concurrent auth state processing
-          if (isProcessingAuthChange || isInitializing) {
-            console.log("🔄 Auth change ignored - already processing");
-            return;
-          }
+          if (isProcessingAuthChange || isInitializing) return;
 
           // Debounce auth state changes to prevent rapid updates
-          if (authChangeTimeout) {
-            clearTimeout(authChangeTimeout);
-          }
+          if (authChangeTimeout) clearTimeout(authChangeTimeout as any);
 
           authChangeTimeout = setTimeout(async () => {
-            if (isProcessingAuthChange || isInitializing) {
-              return;
-            }
+            if (isProcessingAuthChange || isInitializing) return;
 
             isProcessingAuthChange = true;
             try {
               if (supabaseUser) {
-                console.log("👤 Processing authenticated user:", supabaseUser.id?.slice(-8));
-
                 // Get user profile from users service
-                let userProfile = null;
+                let userProfile: User | null = null;
                 try {
                   userProfile = await usersService.getProfile(supabaseUser.id);
-                  console.log("📋 Profile fetch result:", {
-                    hasProfile: !!userProfile,
-                    profileId: userProfile?.id?.slice(-8) || "none",
-                    email: userProfile?.email || "none",
-                  });
                 } catch (profileError) {
                   console.error("❌ Profile fetch error:", profileError);
                 }
@@ -592,17 +551,14 @@ const useAuthStore = create<AuthStore>()(
                     ...state,
                     user: userProfile,
                     isAuthenticated: true,
-                    isGuestMode: false, // Clear guest mode when authenticated
+                    isGuestMode: false,
                     isLoading: false,
                     error: null,
                   }));
-                  console.log("✅ Auth state synchronized: User authenticated");
                 } else {
-                  console.warn("⚠️ User profile not found in auth state change - keeping current state");
-                  // Don't clear auth state if profile fetch fails - this might be temporary
+                  // If no profile and user not previously authenticated, record an error
                   const currentState = get();
                   if (!currentState.isAuthenticated) {
-                    console.log("🔄 No current auth state, setting error");
                     const appError = new AppError(
                       "User profile not found",
                       ErrorType.AUTH,
@@ -617,13 +573,10 @@ const useAuthStore = create<AuthStore>()(
                       error: appError.userMessage,
                       isLoading: false,
                     }));
-                  } else {
-                    console.log("🔄 Keeping current authenticated state despite profile fetch failure");
                   }
                 }
               } else {
                 // User signed out
-                console.log("👋 User signed out");
                 set((state) => ({
                   ...state,
                   user: null,
@@ -632,21 +585,14 @@ const useAuthStore = create<AuthStore>()(
                   isLoading: false,
                   error: null,
                 }));
-                console.log("✅ Auth state synchronized: User signed out");
               }
             } catch (error) {
               console.error("❌ Error in auth state change:", error);
               const appError = error instanceof AppError ? error : parseSupabaseError(error);
 
-              // Don't clear auth state on temporary errors
               const currentState = get();
               if (currentState.isAuthenticated && supabaseUser) {
-                console.log("🔄 Keeping auth state despite error - might be temporary");
-                set((state) => ({
-                  ...state,
-                  error: appError.userMessage,
-                  isLoading: false,
-                }));
+                set((state) => ({ ...state, error: appError.userMessage, isLoading: false }));
               } else {
                 set((state) => ({
                   ...state,
@@ -666,7 +612,6 @@ const useAuthStore = create<AuthStore>()(
 
         // Return unsubscribe function with enhanced cleanup tracking
         const cleanup = () => {
-          console.log("🧹 Cleaning up auth listener");
           if (authChangeTimeout) {
             clearTimeout(authChangeTimeout);
             authChangeTimeout = null;
@@ -679,7 +624,6 @@ const useAuthStore = create<AuthStore>()(
           isInitializing = false;
 
           if (__DEV__) {
-            console.log("✅ Auth listener cleanup completed");
           }
         };
 

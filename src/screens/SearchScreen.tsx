@@ -114,13 +114,10 @@ export default function SearchScreen({ navigation, route }: Props) {
         }
       }
     } catch (error) {
-      console.warn("Failed to load search history:", error);
       // Clear corrupted data
       try {
         await AsyncStorage.removeItem("search_history");
-      } catch (clearError) {
-        console.warn("Failed to clear corrupted search history:", clearError);
-      }
+      } catch (clearError) {}
     }
   };
 
@@ -152,7 +149,6 @@ export default function SearchScreen({ navigation, route }: Props) {
       await AsyncStorage.setItem("search_history", JSON.stringify(historyWithMetadata));
     } catch (error) {
       const appError = error instanceof AppError ? error : parseSupabaseError(error);
-      console.warn("Failed to save search history:", appError.userMessage);
     }
   };
 
@@ -162,11 +158,9 @@ export default function SearchScreen({ navigation, route }: Props) {
       await AsyncStorage.removeItem("search_history");
 
       if (__DEV__) {
-        console.log("🧹 Search history cleared");
       }
     } catch (error) {
       const appError = error instanceof AppError ? error : parseSupabaseError(error);
-      console.warn("Failed to clear search history:", appError.userMessage);
     }
   };
 
@@ -250,7 +244,6 @@ export default function SearchScreen({ navigation, route }: Props) {
         );
       }
     } catch (error) {
-      console.warn("Search failed:", error);
       const appError = error instanceof AppError ? error : parseSupabaseError(error);
       setSearchError(appError.userMessage || "Search failed. Please check your connection and try again.");
       setContentResults({ reviews: [], comments: [], messages: [] });

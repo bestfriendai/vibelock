@@ -34,7 +34,6 @@ export default function MediaThumbnail({ media, size = 80, onPress, showPlayIcon
           }
         })
         .catch((error) => {
-          console.warn("Failed to generate video thumbnail:", error);
           setImageError(true);
         })
         .finally(() => {

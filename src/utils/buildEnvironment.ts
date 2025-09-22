@@ -36,12 +36,11 @@ export const shouldShowMonetization = () => !buildEnv.isExpoGo;
 
 // Debug logging
 if (__DEV__) {
-  console.log("Build Environment:", {
+  console.debug("Build environment:", {
     isExpoGo: buildEnv.isExpoGo,
     isDevelopmentBuild: buildEnv.isDevelopmentBuild,
     isProduction: buildEnv.isProduction,
     hasNativeModules: buildEnv.hasNativeModules,
-    canUseRevenueCat: canUseRevenueCat(),
     canUseAdMob: canUseAdMob(),
   });
 }

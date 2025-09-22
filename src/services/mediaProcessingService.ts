@@ -174,7 +174,6 @@ class MediaProcessingService {
 
       // Skip undefined items
       if (!item) {
-        console.warn(`Skipping undefined item at index ${i}`);
         continue;
       }
 
@@ -227,7 +226,6 @@ class MediaProcessingService {
 
       return fileInfo;
     } catch (error) {
-      console.warn("File validation failed:", error, "URI:", uri);
       throw new Error(`File validation failed: ${error instanceof Error ? error.message : "Unknown error"}`);
     }
   }
@@ -243,7 +241,6 @@ class MediaProcessingService {
         duration: undefined, // Will be populated from video player
       };
     } catch (error) {
-      console.warn("Failed to get video metadata:", error);
       return {};
     }
   }
@@ -299,9 +296,7 @@ class MediaProcessingService {
 
       // Also cleanup thumbnail temp files
       await videoThumbnailService.cleanupTempFiles();
-    } catch (error) {
-      console.warn("Failed to cleanup temp files:", error);
-    }
+    } catch (error) {}
   }
 
   /**

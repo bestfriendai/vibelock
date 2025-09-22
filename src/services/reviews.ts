@@ -90,7 +90,6 @@ export class ReviewsService {
 
           if (filter.roomId) {
             // reviews_firebase doesn't have room_id, skip this filter
-            console.warn("Room filtering not supported for reviews_firebase table");
           }
 
           if (filter.category) {
@@ -208,16 +207,12 @@ export class ReviewsService {
     //   user_id: userId,
     // });
     // if (error && !error.message.includes("duplicate")) throw error;
-
-    console.warn("likeReview: review_likes table not implemented yet");
   }
 
   async unlikeReview(reviewId: string, userId: string): Promise<void> {
     // TODO: review_likes table missing
     // const { error } = // TODO: review_likes table missing - await supabase.from("review_likes").delete().eq("review_id", reviewId).eq("user_id", userId);
     // if (error) throw error;
-
-    console.warn("unlikeReview: review_likes table not implemented yet");
   }
 
   async getReviewComments(reviewId: string, limit: number = 50): Promise<Comment[]> {

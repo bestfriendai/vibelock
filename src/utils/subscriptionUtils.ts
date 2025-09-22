@@ -16,7 +16,6 @@ export async function initializeUserSubscription(userId: string): Promise<void> 
       .single();
 
     if (fetchError) {
-      console.warn("Failed to fetch user subscription status:", fetchError);
       return;
     }
 
@@ -33,7 +32,6 @@ export async function initializeUserSubscription(userId: string): Promise<void> 
       if (updateError) {
         console.error("Failed to initialize user subscription:", updateError);
       } else {
-        console.log("✅ Initialized subscription status for new user");
       }
     }
 
@@ -59,7 +57,6 @@ export async function syncSubscriptionOnLaunch(): Promise<void> {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      console.log("No authenticated user, skipping subscription sync");
       return;
     }
 
@@ -74,8 +71,6 @@ export async function syncSubscriptionOnLaunch(): Promise<void> {
     if (store.syncWithSupabase) {
       await store.syncWithSupabase(user.id);
     }
-
-    console.log("✅ Subscription status synced on app launch");
   } catch (error) {
     console.error("Failed to sync subscription on launch:", error);
   }
@@ -113,8 +108,6 @@ export async function handleSubscriptionExpiration(userId: string): Promise<void
     if (store.syncWithSupabase) {
       await store.syncWithSupabase(userId);
     }
-
-    console.log("✅ Handled subscription expiration for user:", userId);
   } catch (error) {
     console.error("Error handling subscription expiration:", error);
     throw error;

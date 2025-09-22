@@ -34,7 +34,6 @@ export async function getVideoFileSize(uri: string): Promise<number | null> {
     const fileInfo = await FileSystem.getInfoAsync(uri);
     return fileInfo.exists ? fileInfo.size || null : null;
   } catch (error) {
-    console.warn("Failed to get video file size:", error);
     return null;
   }
 }

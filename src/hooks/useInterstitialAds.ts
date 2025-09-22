@@ -66,13 +66,13 @@ export const useInterstitialAds = () => {
 
         attempts++;
         if (attempts <= maxRetries) {
-          console.log(`Retrying ${placement} ad (attempt ${attempts + 1}/${maxRetries + 1})`);
+          console.log(`[useInterstitialAds] Retrying ad show, attempt ${attempts}`);
           await new Promise((resolve) => setTimeout(resolve, 1000 * attempts));
         }
       } catch (error) {
         attempts++;
         const errorMessage = error instanceof Error ? error.message : String(error);
-        console.warn(`Failed to show ${placement} interstitial ad (attempt ${attempts}/${maxRetries + 1}):`, error);
+        console.error(`[useInterstitialAds] Error showing ad for placement: ${placement}`, error);
 
         setAdMetrics((prev) => ({
           ...prev,
@@ -82,7 +82,6 @@ export const useInterstitialAds = () => {
 
         // Apply SDK 54 specific workarounds
         if (isSDK54CompatibilityError(error) && attempts <= maxRetries) {
-          console.log("Applying SDK 54 compatibility workaround for interstitial ad...");
           await new Promise((resolve) => setTimeout(resolve, 2000 * attempts));
         } else if (attempts <= maxRetries) {
           await new Promise((resolve) => setTimeout(resolve, 1000 * attempts));
@@ -95,31 +94,25 @@ export const useInterstitialAds = () => {
 
   const showAdAfterPostCreation = useCallback(async (): Promise<boolean> => {
     if (!canUseAdMob() || isPremium) {
-      console.log("Skipping post creation ad: Premium user or Expo Go environment");
       return false;
     }
 
-    console.log("Attempting to show interstitial ad after post creation");
     return await showAdWithRetry("postCreation");
   }, [isPremium, showAdWithRetry]);
 
   const showAdAfterChatExit = useCallback(async (): Promise<boolean> => {
     if (!canUseAdMob() || isPremium) {
-      console.log("Skipping chat exit ad: Premium user or Expo Go environment");
       return false;
     }
 
-    console.log("Attempting to show interstitial ad after chat exit");
     return await showAdWithRetry("chatExit");
   }, [isPremium, showAdWithRetry]);
 
   const showGeneralInterstitialAd = useCallback(async (): Promise<boolean> => {
     if (!canUseAdMob() || isPremium) {
-      console.log("Skipping general ad: Premium user or Expo Go environment");
       return false;
     }
 
-    console.log("Attempting to show general interstitial ad");
     return await showAdWithRetry("general");
   }, [isPremium, showAdWithRetry]);
 

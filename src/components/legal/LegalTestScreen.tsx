@@ -12,7 +12,6 @@ export const LegalTestScreen: React.FC = () => {
   const [showAcceptance, setShowAcceptance] = useState(false);
 
   const handleAcceptance = () => {
-    console.log("Legal documents accepted!");
     setShowAcceptance(false);
   };
 

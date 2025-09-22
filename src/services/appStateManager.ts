@@ -52,21 +52,15 @@ class AppStateManager {
    */
   initialize(): void {
     if (this.isInitialized) {
-      console.log("[AppStateManager] Already initialized");
       return;
     }
 
-    console.log("[AppStateManager] Initializing AppState monitoring");
-
     // Set initial state
     this.currentState = AppState.currentState;
-    console.log(`[AppStateManager] Initial state: ${this.currentState}`);
-
     // Subscribe to AppState changes
     this.appStateSubscription = AppState.addEventListener("change", this.handleAppStateChange.bind(this));
 
     this.isInitialized = true;
-    console.log("[AppStateManager] Initialized successfully");
   }
 
   /**
@@ -78,11 +72,9 @@ class AppStateManager {
     // Check if this is too rapid a change
     const now = Date.now();
     if (now - this.lastStateChange < this.minTimeBetweenChanges) {
-      console.log(`[AppStateManager] Ignoring rapid state change: ${prevState} -> ${nextAppState}`);
       return;
     }
 
-    console.log(`[AppStateManager] State change: ${prevState} -> ${nextAppState}`);
     this.lastStateChange = now;
 
     // Clear existing debounce
@@ -100,8 +92,6 @@ class AppStateManager {
    * Process the debounced state change
    */
   private async processStateChange(nextAppState: AppStateStatus, prevState: AppStateStatus): Promise<void> {
-    console.log(`[AppStateManager] Processing state change: ${prevState} -> ${nextAppState}`);
-
     this.currentState = nextAppState;
 
     // Handle specific state transitions
@@ -110,7 +100,7 @@ class AppStateManager {
     } else if (nextAppState === "active" && (prevState === "background" || prevState === "inactive")) {
       await this.handleReturningToForeground();
     } else if (nextAppState === "inactive") {
-      console.log("[AppStateManager] App is inactive (transition state)");
+      console.log("App became inactive");
     }
 
     // Notify all registered listeners in priority order
@@ -121,13 +111,10 @@ class AppStateManager {
    * Handle app going to background
    */
   private async handleGoingToBackground(): Promise<void> {
-    console.log("[AppStateManager] App going to background");
     this.backgroundTimestamp = Date.now();
 
     try {
       // Pause real-time subscriptions gracefully
-      console.log("[AppStateManager] Pausing real-time subscriptions...");
-
       // Clear typing indicators
       const activeRooms = consolidatedRealtimeService.getActiveRoomIds();
       for (const roomId of activeRooms) {
@@ -145,8 +132,6 @@ class AppStateManager {
           console.error("[AppStateManager] Background callback error:", error);
         }
       }
-
-      console.log("[AppStateManager] Background transition complete");
     } catch (error) {
       console.error("[AppStateManager] Error handling background transition:", error);
     }
@@ -156,25 +141,18 @@ class AppStateManager {
    * Handle app returning to foreground
    */
   private async handleReturningToForeground(): Promise<void> {
-    console.log("[AppStateManager] App returning to foreground");
-
     const timeInBackground = this.backgroundTimestamp ? Date.now() - this.backgroundTimestamp : 0;
 
-    console.log(`[AppStateManager] Time in background: ${timeInBackground}ms`);
     this.backgroundTimestamp = null;
 
     try {
       // Check network connectivity before reconnecting
-      console.log("[AppStateManager] Checking network connectivity...");
       const networkStatus = await this.checkNetworkWithRetry();
 
       if (!networkStatus.isConnected) {
-        console.warn("[AppStateManager] No network connectivity - deferring reconnection");
         this.scheduleNetworkRecheck();
         return;
       }
-
-      console.log("[AppStateManager] Network connectivity confirmed");
 
       // Execute foreground callbacks
       for (const callback of this.foregroundCallbacks) {
@@ -184,8 +162,6 @@ class AppStateManager {
           console.error("[AppStateManager] Foreground callback error:", error);
         }
       }
-
-      console.log("[AppStateManager] Foreground transition complete");
     } catch (error) {
       console.error("[AppStateManager] Error handling foreground transition:", error);
     }
@@ -199,7 +175,7 @@ class AppStateManager {
       const result = await reliableNetworkCheck();
       return { isConnected: result.isConnected && result.isStable };
     } catch (error) {
-      console.warn(`[AppStateManager] Network check failed (attempt ${attempts + 1}):`, error);
+      console.error(`[AppStateManager] Network check attempt ${attempts + 1} failed:`, error);
 
       if (attempts < this.maxNetworkCheckAttempts - 1) {
         await new Promise((resolve) => setTimeout(resolve, this.networkCheckDelayMs));
@@ -218,11 +194,9 @@ class AppStateManager {
       clearTimeout(this.networkCheckTimeout);
     }
 
-    console.log("[AppStateManager] Scheduling network recheck in 5 seconds");
     this.networkCheckTimeout = setTimeout(async () => {
       const networkStatus = await this.checkNetworkWithRetry();
       if (networkStatus.isConnected) {
-        console.log("[AppStateManager] Network recovered - triggering foreground callbacks");
         for (const callback of this.foregroundCallbacks) {
           try {
             callback();
@@ -241,7 +215,6 @@ class AppStateManager {
    * Register a listener for AppState changes
    */
   registerListener(id: string, handler: AppStateChangeHandler, priority: "high" | "normal" | "low" = "normal"): void {
-    console.log(`[AppStateManager] Registering listener: ${id} (priority: ${priority})`);
     this.listeners.set(id, { id, handler, priority });
   }
 
@@ -249,7 +222,6 @@ class AppStateManager {
    * Unregister a listener
    */
   unregisterListener(id: string): void {
-    console.log(`[AppStateManager] Unregistering listener: ${id}`);
     this.listeners.delete(id);
   }
 
@@ -326,8 +298,6 @@ class AppStateManager {
    * Clean up and destroy the manager
    */
   destroy(): void {
-    console.log("[AppStateManager] Destroying AppState manager");
-
     // Clear all timeouts
     if (this.stateChangeDebounce) {
       clearTimeout(this.stateChangeDebounce);
@@ -348,7 +318,6 @@ class AppStateManager {
     this.backgroundCallbacks = [];
 
     this.isInitialized = false;
-    console.log("[AppStateManager] Destroyed successfully");
   }
 
   /**

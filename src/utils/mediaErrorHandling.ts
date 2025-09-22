@@ -54,8 +54,6 @@ export const createMediaError = (
  * Safely handle media upload errors without class construction issues
  */
 export const handleMediaUploadError = (error: any, context: string = "media upload"): MediaError => {
-  console.warn(`Media upload error in ${context}:`, error);
-
   // Handle iOS PHPhotosErrorDomain errors specifically
   if (error?.message?.includes("PHPhotosErrorDomain")) {
     if (error?.message?.includes("3164") || error?.message?.includes("AccessUserDenied")) {
@@ -122,8 +120,6 @@ export const withMediaErrorHandling = async <T>(
     return await operation();
   } catch (error) {
     const mediaError = handleMediaUploadError(error, context);
-    console.warn(`${context} failed:`, mediaError);
-
     // Don't throw, return null to allow graceful degradation
     return null;
   }
@@ -179,13 +175,13 @@ export const retryMediaOperation = async <T>(
 
       // Exponential backoff with jitter
       const delay = baseDelay * Math.pow(2, attempt) + Math.random() * 1000;
-      console.warn(`Retrying ${context} in ${delay}ms (attempt ${attempt + 1}/${maxRetries})`);
+
       await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
 
   if (lastError) {
-    console.warn(`${context} failed after ${maxRetries} attempts:`, lastError);
+    console.error(`Media operation failed after retries: ${lastError.message}`);
   }
 
   return null;

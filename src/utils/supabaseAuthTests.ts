@@ -16,7 +16,6 @@ class SupabaseAuthTester {
   private testPassword = "TestPassword123!";
 
   async runAllTests(): Promise<TestResult[]> {
-    console.log("🧪 Starting Supabase Authentication Tests...");
     this.results = [];
 
     // Test connection first
@@ -44,7 +43,6 @@ class SupabaseAuthTester {
   private async runTest(testName: string, testFn: () => Promise<any>): Promise<void> {
     const startTime = Date.now();
     try {
-      console.log(`🔍 Testing: ${testName}`);
       const data = await testFn();
       const duration = Date.now() - startTime;
 
@@ -55,7 +53,7 @@ class SupabaseAuthTester {
         duration,
       });
 
-      console.log(`✅ ${testName} - PASSED (${duration}ms)`);
+      console.log(`✅ ${testName} (${duration}ms)`);
     } catch (error: any) {
       const duration = Date.now() - startTime;
 
@@ -66,7 +64,7 @@ class SupabaseAuthTester {
         duration,
       });
 
-      console.log(`❌ ${testName} - FAILED (${duration}ms):`, error.message);
+      console.error(`❌ ${testName}: ${error.message}`);
     }
   }
 
@@ -225,35 +223,28 @@ class SupabaseAuthTester {
   }
 
   private printResults(): void {
-    console.log("\n📊 Test Results Summary:");
-    console.log("========================");
-
     const passed = this.results.filter((r) => r.success).length;
     const failed = this.results.filter((r) => r.success === false).length;
     const totalTime = this.results.reduce((sum, r) => sum + r.duration, 0);
-
-    console.log(`✅ Passed: ${passed}`);
-    console.log(`❌ Failed: ${failed}`);
-    console.log(`⏱️  Total Time: ${totalTime}ms`);
-    console.log(`📧 Test Email: ${this.testEmail}`);
 
     if (failed > 0) {
       console.log("\n❌ Failed Tests:");
       this.results
         .filter((r) => !r.success)
         .forEach((r) => {
-          console.log(`  - ${r.testName}: ${r.error}`);
+          console.log(`  ${r.testName}: ${r.error}`);
         });
     }
 
-    console.log("\n🔍 Detailed Results:");
+    console.log("\n📋 All Test Results:");
     this.results.forEach((r) => {
-      console.log(`  ${r.success ? "✅" : "❌"} ${r.testName} (${r.duration}ms)`);
+      const status = r.success ? "✅" : "❌";
+      console.log(`${status} ${r.testName} (${r.duration}ms)`);
       if (r.data) {
-        console.log(`    Data:`, JSON.stringify(r.data, null, 2));
+        console.log(`  Data: ${JSON.stringify(r.data).slice(0, 100)}...`);
       }
       if (r.error) {
-        console.log(`    Error: ${r.error}`);
+        console.log(`  Error: ${r.error}`);
       }
     });
   }
@@ -266,7 +257,6 @@ class SupabaseAuthTester {
         console.error("Supabase connection failed:", error);
         return false;
       }
-      console.log("✅ Supabase connection successful");
       return true;
     } catch (error) {
       console.error("❌ Supabase connection failed:", error);
@@ -287,7 +277,7 @@ export const runAuthTests = async (): Promise<void> => {
       Alert.alert("Test Failed", "Check console for details");
     }
   } else {
-    console.warn("Auth tests only available in development mode");
+    console.warn("Auth tests only run in development mode");
   }
 };
 

@@ -134,9 +134,7 @@ export class MessagePaginationManager {
     const preloadSize = Math.floor(this.getOptimalBatchSize(state.loadedCount, deviceSpecs) * 0.7);
 
     // Fire and forget preload
-    this.loadNextBatch(roomId, preloadSize, loadFunction).catch((error) => {
-      console.warn("Preload failed:", error);
-    });
+    this.loadNextBatch(roomId, preloadSize, loadFunction).catch((error) => {});
   }
 
   /**

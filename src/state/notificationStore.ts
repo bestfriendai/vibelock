@@ -74,7 +74,6 @@ const useNotificationStore = create<NotificationStore>()(
 
           // Set up notification listeners
           notificationService.addNotificationReceivedListener((notification) => {
-            console.log("Notification received:", notification);
             // Handle foreground notifications
             const notificationData: NotificationData = {
               type:
@@ -95,7 +94,6 @@ const useNotificationStore = create<NotificationStore>()(
           });
 
           notificationService.addNotificationResponseListener((response) => {
-            console.log("Notification response:", response);
             // Handle notification tap
             const data = response.notification.request.content.data;
 
@@ -201,9 +199,7 @@ const useNotificationStore = create<NotificationStore>()(
         try {
           const unreadCount = await notificationService.getUnreadCount(userId);
           set({ unreadCount });
-        } catch (error) {
-          console.warn("Failed to update unread count:", error);
-        }
+        } catch (error) {}
       },
 
       setLoading: (isLoading) => {

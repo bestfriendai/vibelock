@@ -16,8 +16,6 @@ import { generateAnthropicResponse } from "./secure-ai-service";
  * This function is maintained for backward compatibility but now uses secure proxy
  */
 export const getAnthropicClient = () => {
-  console.warn("getAnthropicClient is deprecated. Use generateAnthropicResponse from secure-ai-service instead.");
-
   throw new Error(
     "Direct Anthropic client usage is disabled for security. Use generateAnthropicResponse from secure-ai-service instead.",
   );

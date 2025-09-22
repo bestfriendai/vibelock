@@ -36,9 +36,7 @@ export function detectHermesEngine(): HermesEngineInfo {
       version = hermesInternal?.getRuntimeProperties?.()?.["OSS Release Version"];
       buildType = hermesInternal?.getRuntimeProperties?.()?.["Build"];
     }
-  } catch (error) {
-    console.warn("[HermesCompatibility] Could not get Hermes version info:", error);
-  }
+  } catch (error) {}
 
   const hasNewArchitecture =
     !!(global as any).RN$Bridgeless ||
@@ -103,7 +101,6 @@ function checkReanimatedCompatibility(): HermesCompatibilityIssue[] {
           description: "Worklet runtime property _WORKLET is non-configurable",
           affectedModules: ["react-native-reanimated"],
           workaround: () => {
-            console.log("[HermesCompatibility] Applying worklet property workaround");
             // Store original value before any potential redefinition
             (global as any).__originalWorklet = (global as any)._WORKLET;
           },
@@ -127,9 +124,7 @@ function checkReanimatedCompatibility(): HermesCompatibilityIssue[] {
         });
       }
     }
-  } catch (error) {
-    console.warn("[HermesCompatibility] Error checking reanimated compatibility:", error);
-  }
+  } catch (error) {}
 
   return issues;
 }
@@ -197,9 +192,7 @@ function checkBridgelessCompatibility(): HermesCompatibilityIssue[] {
           severity: "medium",
           description: "TurboModule proxy property is non-configurable",
           affectedModules: ["react-native"],
-          workaround: () => {
-            console.log("[HermesCompatibility] TurboModule proxy detected as non-configurable");
-          },
+          workaround: () => {},
         });
       }
     }
@@ -213,15 +206,11 @@ function checkBridgelessCompatibility(): HermesCompatibilityIssue[] {
           severity: "low",
           description: "Bridgeless mode property is non-configurable",
           affectedModules: ["react-native"],
-          workaround: () => {
-            console.log("[HermesCompatibility] Bridgeless mode detected");
-          },
+          workaround: () => {},
         });
       }
     }
-  } catch (error) {
-    console.warn("[HermesCompatibility] Error checking bridgeless compatibility:", error);
-  }
+  } catch (error) {}
 
   return issues;
 }
@@ -233,18 +222,13 @@ export function applyHermesWorkarounds(): void {
   const engine = detectHermesEngine();
 
   if (!engine.isHermes) {
-    console.log("[HermesCompatibility] Not running on Hermes, skipping Hermes-specific workarounds");
     return;
   }
-
-  console.log("[HermesCompatibility] Applying Hermes-specific workarounds");
 
   // Fix for React Native Reanimated _toString property issue
   try {
     // Check if _toString is missing (even without worklets flag)
     if (typeof (global as any)._toString === "undefined") {
-      console.log("[HermesCompatibility] Adding missing _toString property for Reanimated compatibility");
-
       Object.defineProperty(global, "_toString", {
         value: function (obj: any) {
           if (obj === null) return "null";
@@ -261,8 +245,6 @@ export function applyHermesWorkarounds(): void {
 
     // Also ensure Function.prototype.toString exists for worklets
     if (typeof Function.prototype.toString === "undefined") {
-      console.log("[HermesCompatibility] Adding Function.prototype.toString for worklets");
-
       Object.defineProperty(Function.prototype, "toString", {
         value: function () {
           return this.toString();
@@ -272,16 +254,12 @@ export function applyHermesWorkarounds(): void {
         enumerable: false,
       });
     }
-  } catch (error) {
-    console.warn("[HermesCompatibility] Failed to add _toString property:", error);
-  }
+  } catch (error) {}
 
   const issues = detectHermesPropertyConflicts();
 
   for (const issue of issues) {
     try {
-      console.log(`[HermesCompatibility] Addressing ${issue.type}: ${issue.description}`);
-
       if (issue.fix) {
         issue.fix();
       } else if (issue.workaround) {
@@ -312,14 +290,10 @@ export function createHermesSafeDefineProperty() {
           existing.writable === descriptor.writable &&
           existing.enumerable === descriptor.enumerable
         ) {
-          console.log(`[HermesCompatibility] Skipping redefinition of ${propertyName} with same descriptor`);
           return obj;
         }
 
         // For non-configurable properties, only allow if not changing anything
-        console.warn(
-          `[HermesCompatibility] Attempting to redefine non-configurable property ${propertyName} - this may fail`,
-        );
         // Don't try to delete, just attempt the definition and let it fail if necessary
       }
 
@@ -361,9 +335,7 @@ export function checkModuleHermesCompatibility(moduleName: string): HermesCompat
       severity: "high",
       description: `Module ${moduleName} may cause property conflicts in Hermes`,
       affectedModules: [moduleName],
-      workaround: () => {
-        console.log(`[HermesCompatibility] Applying workaround for ${moduleName}`);
-      },
+      workaround: () => {},
     });
   }
 
@@ -376,11 +348,7 @@ export function checkModuleHermesCompatibility(moduleName: string): HermesCompat
 export function initializeHermesCompatibility(): HermesEngineInfo {
   const engine = detectHermesEngine();
 
-  console.log("[HermesCompatibility] Engine info:", engine);
-
   if (engine.isHermes) {
-    console.log("[HermesCompatibility] Hermes detected, initializing compatibility layer");
-
     // Apply workarounds for known issues
     applyHermesWorkarounds();
 
@@ -389,7 +357,6 @@ export function initializeHermesCompatibility(): HermesEngineInfo {
     const safeDefineProperty = createHermesSafeDefineProperty();
     (global as any).__hermesDefinePropertySafe = safeDefineProperty;
   } else {
-    console.log("[HermesCompatibility] Non-Hermes engine detected");
   }
 
   return engine;

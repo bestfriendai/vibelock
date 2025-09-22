@@ -27,7 +27,6 @@ export default class ComponentErrorBoundary extends Component<Props, State> {
   }
 
   override componentDidCatch(error: Error, errorInfo: any) {
-    console.warn(`ComponentErrorBoundary caught error in ${this.props.componentName}:`, error, errorInfo);
     this.props.onError?.(error, errorInfo);
   }
 

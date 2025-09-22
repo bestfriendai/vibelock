@@ -49,8 +49,6 @@ export class SubscriptionService {
 
         // Log subscription event
         await this.logSubscriptionEvent(userId, "subscription_renewed", subscriptionData);
-
-        console.log("✅ Subscription status synced with Supabase");
       } catch (error) {
         console.error("❌ Failed to sync subscription status:", error);
         throw error;
@@ -114,7 +112,6 @@ export class SubscriptionService {
       const hasPremium = await this.hasPremiumAccess(userId);
       return !hasPremium;
     } catch (error) {
-      console.warn("Failed to check premium status, defaulting to show ads:", error);
       return true; // Default to showing ads if check fails
     }
   }
@@ -144,11 +141,8 @@ export class SubscriptionService {
       });
 
       if (error) {
-        console.warn("Failed to log subscription event:", error);
       }
-    } catch (error) {
-      console.warn("Error logging subscription event:", error);
-    }
+    } catch (error) {}
   }
 
   /**
@@ -158,7 +152,6 @@ export class SubscriptionService {
     try {
       const userId = eventData.app_user_id;
       if (!userId) {
-        console.warn("Webhook event missing user ID");
         return;
       }
 
@@ -177,7 +170,6 @@ export class SubscriptionService {
           await this.handleBillingIssue(userId, eventData);
           break;
         default:
-          console.log(`Unhandled webhook event type: ${eventType}`);
       }
     } catch (error) {
       console.error("Error handling webhook event:", error);
@@ -341,8 +333,6 @@ export class SubscriptionService {
       if (error) {
         throw error;
       }
-
-      console.log(`✅ Synced subscription data for user ${userId}: ${subscription.tier}`);
     } catch (error) {
       console.error("❌ Failed to sync subscription with Supabase:", error);
       throw error;

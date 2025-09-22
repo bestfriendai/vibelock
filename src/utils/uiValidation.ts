@@ -642,7 +642,6 @@ export class UIValidator {
 
       return fileUri;
     } catch (error) {
-      console.warn("Failed to capture validation screenshot:", error);
       return undefined;
     }
   }

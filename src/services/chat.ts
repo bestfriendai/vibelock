@@ -256,7 +256,7 @@ export class ChatService {
     const { data, error } = await supabase.from("chat_members_firebase").select("*").eq("chat_room_id", roomId);
 
     if (error) {
-      console.warn("Failed to fetch room members (table may not exist):", error);
+      console.error("Error fetching members", error);
       return []; // Return empty array if table doesn't exist
     }
     return (data || []).map((member) => {
@@ -279,7 +279,7 @@ export class ChatService {
     });
 
     if (error && !error.message.includes("duplicate")) {
-      console.warn("Failed to add room member (table may not exist):", error);
+      console.error("Error adding room member:", error);
     }
   }
 
@@ -292,7 +292,7 @@ export class ChatService {
       .eq("user_id", userId);
 
     if (error) {
-      console.warn("Failed to remove room member (table may not exist):", error);
+      console.error("Error removing room member:", error);
     }
   }
 
@@ -305,7 +305,7 @@ export class ChatService {
       .eq("user_id", userId);
 
     if (error) {
-      console.warn("Failed to update member role (table may not exist):", error);
+      console.error("Error updating room member:", error);
     }
   }
 
@@ -318,7 +318,7 @@ export class ChatService {
     });
 
     if (error) {
-      console.warn("Failed to mark messages as read (table may not exist):", error);
+      console.error("Error marking messages as read:", error);
     }
   }
 

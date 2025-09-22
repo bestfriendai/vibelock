@@ -469,7 +469,6 @@ export const EnvironmentHelpers = {
       if (!value) return defaultValue;
       return parser ? parser(value) : (value as unknown as T);
     } catch (error) {
-      console.warn(`Failed to parse environment variable ${key}:`, error);
       return defaultValue;
     }
   },

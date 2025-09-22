@@ -42,7 +42,6 @@ export function checkPropertyConfigurable(obj: any, propertyName: string): boole
 
     return descriptor.configurable !== false;
   } catch (error) {
-    console.warn(`[PropertyGuards] Error checking property configurability for ${propertyName}:`, error);
     return false;
   }
 }
@@ -53,7 +52,6 @@ export function checkPropertyConfigurable(obj: any, propertyName: string): boole
 export function safeDefineProperty(obj: any, propertyName: string, descriptor: PropertyDescriptor): boolean {
   try {
     if (!obj || typeof obj !== "object") {
-      console.warn(`[PropertyGuards] Cannot define property ${propertyName} on non-object`);
       return false;
     }
 
@@ -71,14 +69,6 @@ export function safeDefineProperty(obj: any, propertyName: string, descriptor: P
       };
 
       propertyConflicts.push(conflict);
-
-      console.warn(
-        `[PropertyGuards] Cannot redefine non-configurable property '${propertyName}'`,
-        "Existing:",
-        existingDescriptor,
-        "Attempted:",
-        descriptor,
-      );
 
       return false;
     }
@@ -119,7 +109,6 @@ export function safeDeleteProperty(obj: any, propertyName: string): boolean {
     }
 
     if (descriptor.configurable === false) {
-      console.warn(`[PropertyGuards] Cannot delete non-configurable property '${propertyName}'`);
       return false;
     }
 
@@ -137,16 +126,6 @@ export function safeDeleteProperty(obj: any, propertyName: string): boolean {
 export function createPropertyLogger(originalDefineProperty: typeof Object.defineProperty) {
   return function loggedDefineProperty(obj: any, propertyName: string, descriptor: PropertyDescriptor): any {
     const existingDescriptor = Object.getOwnPropertyDescriptor(obj, propertyName);
-
-    console.log(
-      `[PropertyGuards] Attempting to define property '${propertyName}'`,
-      "Target:",
-      obj?.constructor?.name || typeof obj,
-      "Existing:",
-      existingDescriptor,
-      "New:",
-      descriptor,
-    );
 
     try {
       return originalDefineProperty.call(Object, obj, propertyName, descriptor);
@@ -188,12 +167,9 @@ export function detectPolyfillConflicts(): PropertyConflict[] {
         const descriptor = Object.getOwnPropertyDescriptor(target.obj, prop);
         if (descriptor && descriptor.configurable === false) {
           // This is a potential conflict point
-          console.log(`[PropertyGuards] Non-configurable property detected: ${target.name}.${prop}`);
         }
       }
-    } catch (error) {
-      console.warn(`[PropertyGuards] Could not inspect ${target.name}:`, error);
-    }
+    } catch (error) {}
   }
 
   return conflicts;
@@ -206,26 +182,21 @@ export function applyPropertyWorkarounds(): void {
   try {
     // Workaround for react-native-reanimated property conflicts
     if (global._WORKLET) {
-      console.log("[PropertyGuards] Applying react-native-reanimated workarounds");
       // Add specific workarounds for worklet runtime
     }
 
     // Workaround for URL polyfill conflicts
     if (global.URL && !checkPropertyConfigurable(global, "URL")) {
-      console.log("[PropertyGuards] URL property conflict detected, applying workaround");
       // Store reference before potential override
       (global as any).__originalURL = global.URL;
     }
 
     // Workaround for crypto polyfill conflicts
     if (global.crypto && !checkPropertyConfigurable(global, "crypto")) {
-      console.log("[PropertyGuards] Crypto property conflict detected, applying workaround");
       // Store reference before potential override
       (global as any).__originalCrypto = global.crypto;
     }
-  } catch (error) {
-    console.warn("[PropertyGuards] Error applying property workarounds:", error);
-  }
+  } catch (error) {}
 }
 
 /**
@@ -260,7 +231,6 @@ export function getPropertyDescriptorSafe(obj: any, propertyName: string): Prope
   try {
     return Object.getOwnPropertyDescriptor(obj, propertyName);
   } catch (error) {
-    console.warn(`[PropertyGuards] Could not get descriptor for ${propertyName}:`, error);
     return undefined;
   }
 }
@@ -276,7 +246,6 @@ export function createSafePropertyAccessor<T = any>(obj: any, propertyName: stri
       }
       return defaultValue as T;
     } catch (error) {
-      console.warn(`[PropertyGuards] Error accessing property ${propertyName}:`, error);
       return defaultValue as T;
     }
   };
@@ -286,8 +255,6 @@ export function createSafePropertyAccessor<T = any>(obj: any, propertyName: stri
  * Initialize property guards monitoring
  */
 export function initializePropertyGuards(): void {
-  console.log("[PropertyGuards] Initializing property guards monitoring");
-
   // Detect existing conflicts
   detectPolyfillConflicts();
 
@@ -297,6 +264,4 @@ export function initializePropertyGuards(): void {
   // Monitor for new conflicts
   const originalDefineProperty = Object.defineProperty;
   Object.defineProperty = createPropertyLogger(originalDefineProperty);
-
-  console.log("[PropertyGuards] Property guards monitoring active");
 }

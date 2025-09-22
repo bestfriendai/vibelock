@@ -298,7 +298,6 @@ export const getThemeColor = (colorPath: string, theme: "light" | "dark" | "high
   for (const key of keys) {
     color = color[key];
     if (color === undefined) {
-      console.warn(`Theme color path "${colorPath}" not found`);
       return theme === "light" ? "#000000" : "#FFFFFF";
     }
   }

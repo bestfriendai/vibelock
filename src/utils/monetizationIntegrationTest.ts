@@ -33,8 +33,6 @@ export class MonetizationIntegrationTest {
    * Run all integration tests
    */
   async runAllTests(): Promise<IntegrationTestReport> {
-    console.log("🧪 Starting monetization integration tests...");
-
     this.results = [];
 
     // Test environment detection
@@ -301,7 +299,6 @@ export class MonetizationIntegrationTest {
   private addResult(result: IntegrationTestResult): void {
     this.results.push(result);
     const status = result.passed ? "✅" : "❌";
-    console.log(`${status} ${result.testName}: ${result.message}`);
   }
 
   /**
@@ -368,28 +365,11 @@ export const runMonetizationIntegrationTests = async (): Promise<IntegrationTest
  * Print test report to console
  */
 export const printIntegrationTestReport = (report: IntegrationTestReport): void => {
-  console.log("\n📊 MONETIZATION INTEGRATION TEST REPORT");
-  console.log("==========================================");
-  console.log(`Total Tests: ${report.summary.totalTests}`);
-  console.log(`Passed: ${report.summary.passedTests}`);
-  console.log(`Failed: ${report.summary.failedTests}`);
-  console.log(`Success Rate: ${report.summary.successRate}%`);
-
   if (report.summary.failedTests > 0) {
-    console.log("\n❌ Failed Tests:");
-    report.results
-      .filter((r) => !r.passed)
-      .forEach((result) => {
-        console.log(`  - ${result.testName}: ${result.message}`);
-      });
+    report.results.filter((r) => !r.passed).forEach((result) => {});
   }
 
   if (report.recommendations.length > 0) {
-    console.log("\n💡 Recommendations:");
-    report.recommendations.forEach((rec) => {
-      console.log(`  - ${rec}`);
-    });
+    report.recommendations.forEach((rec) => {});
   }
-
-  console.log("\n==========================================\n");
 };

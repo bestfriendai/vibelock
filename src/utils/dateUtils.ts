@@ -20,15 +20,12 @@ export function toDateSafe(value: any): Date {
       // Handle ISO strings and other string formats
       const parsed = new Date(value);
       if (isNaN(parsed.getTime())) {
-        console.warn(`Invalid date string: ${value}`);
         return new Date();
       }
       return parsed;
     }
-    console.warn(`Unknown date format: ${typeof value}`, value);
     return new Date();
   } catch (error) {
-    console.warn(`Error parsing date: ${value}`, error);
     return new Date();
   }
 }

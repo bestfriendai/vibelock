@@ -53,8 +53,6 @@ export async function generateImage(
       }
 
       const safeError = errorData || { message: "Unknown error" };
-      console.warn("[AssetGenerationService] Error response:", safeError);
-
       throw new Error(`Image generation API error: ${response.status} ${JSON.stringify(safeError)}`);
     }
 
@@ -65,18 +63,14 @@ export async function generateImage(
       throw new Error("Failed to parse API response");
     }
 
-    console.log("[AssetGenerationService] Image generated successfully");
-
     // Return the image data from the response with proper null checks
     if (result?.success && result?.data?.imageUrl) {
       return result.data.imageUrl as string;
     } else {
-      console.warn("[AssetGenerationService] Invalid response format:", result);
       const errorMessage = result?.error?.message || result?.message || "Invalid response format from API";
       throw new Error(errorMessage);
     }
   } catch (error) {
-    console.warn("Image Generation Error:", error);
     throw error;
   }
 }

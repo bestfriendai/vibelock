@@ -49,8 +49,6 @@ export const MonetizationExample: React.FC = () => {
 
         // Initialize AdMob
         await adMobService.initialize();
-
-        console.log("✅ Monetization initialized successfully");
       } catch (error) {
         console.error("❌ Failed to initialize monetization:", error);
       }

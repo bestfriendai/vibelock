@@ -41,7 +41,6 @@ class AdMobTestingUtils {
    * Run a comprehensive AdMob compatibility test suite
    */
   async runCompatibilityTests(): Promise<AdMobCompatibilityReport> {
-    console.log("🧪 Starting AdMob compatibility tests...");
     this.testResults = [];
 
     // Environment detection tests
@@ -269,7 +268,6 @@ class AdMobTestingUtils {
    */
   private addTestResult(result: AdMobTestResult): void {
     this.testResults.push(result);
-    console.log(`${result.success ? "✅" : "❌"} ${result.testName}: ${result.message}`);
   }
 
   /**
@@ -345,26 +343,27 @@ class AdMobTestingUtils {
    */
   printReport(report: AdMobCompatibilityReport): void {
     console.log("\n📊 AdMob Compatibility Report");
-    console.log("================================");
-    console.log(
-      `Environment: ${report.environment.platform} (${report.environment.isExpoGo ? "Expo Go" : "Development Build"})`,
-    );
-    console.log(`Can use AdMob: ${report.environment.canUseAdMob}`);
-    console.log(
-      `\nTest Results: ${report.summary.passed}/${report.summary.totalTests} passed (${report.summary.successRate.toFixed(1)}%)`,
-    );
-
+    console.log(`Platform: ${report.environment.platform}`);
+    console.log(`AdMob Available: ${report.environment.canUseAdMob}`);
+    console.log("\nTest Results:");
+    report.tests.forEach((test) => {
+      const status = test.success ? "✅" : "❌";
+      console.log(`${status} ${test.testName}: ${test.message} (${test.duration}ms)`);
+    });
+    console.log("\nSummary:");
+    console.log(`Total Tests: ${report.summary.totalTests}`);
+    console.log(`Passed: ${report.summary.passed}`);
+    console.log(`Failed: ${report.summary.failed}`);
+    console.log(`Success Rate: ${report.summary.successRate.toFixed(1)}%`);
     console.log("\nRecommendations:");
-    report.recommendations.forEach((rec) => console.log(rec));
-
+    report.recommendations.forEach((rec) => console.log(`  • ${rec}`));
     if (report.summary.failed > 0) {
-      console.log("\nFailed Tests:");
+      console.log("\nFailed Tests Details:");
       report.tests
         .filter((t) => !t.success)
         .forEach((test) => {
-          console.log(`❌ ${test.testName}: ${test.message}`);
           if (test.error) {
-            console.log(`   Error: ${test.error.message || test.error}`);
+            console.log(`  ${test.testName}: ${test.error.message || test.error}`);
           }
         });
     }

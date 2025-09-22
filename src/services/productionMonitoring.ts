@@ -666,7 +666,6 @@ class ProductionMonitor {
     // Implementation would send to actual monitoring service
     // For now, just log
     if (__DEV__) {
-      console.log(`[ProductionMonitor] ${type}:`, data);
     }
   }
 

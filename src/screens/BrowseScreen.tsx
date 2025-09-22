@@ -175,7 +175,6 @@ export default function BrowseScreen({ navigation, route }: Props) {
               }
               onLocationChange={async (location) => {
                 if (__DEV__) {
-                  console.log("🌍 Location change requested:", location);
                 }
                 try {
                   setCurrentLocation(location);
@@ -197,16 +196,13 @@ export default function BrowseScreen({ navigation, route }: Props) {
                     institutionType: location?.institutionType || undefined,
                   }).catch((error) => {
                     if (__DEV__) {
-                      console.warn("❌ Failed to update user location in auth store:", error);
                     }
                   });
 
                   if (__DEV__) {
-                    console.log("✅ Location updated and reviews reloaded");
                   }
                 } catch (error) {
                   if (__DEV__) {
-                    console.warn("❌ Failed to update location:", error);
                   }
                 }
               }}

@@ -72,11 +72,8 @@ export default function ImageCarousel({
   }, []);
 
   if (!media || media.length === 0) {
-    console.log("ImageCarousel: No media provided");
     return null;
   }
-
-  console.log("ImageCarousel: Rendering with media:", media.length, "items");
 
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const contentOffset = event.nativeEvent.contentOffset;

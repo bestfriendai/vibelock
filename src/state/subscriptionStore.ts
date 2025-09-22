@@ -105,7 +105,6 @@ const useSubscriptionStore = create<SubscriptionState>()(
 
       initializeRevenueCat: async (userId?: string) => {
         if (!canUseRevenueCat()) {
-          console.log("RevenueCat not available in Expo Go - using mock implementation");
           // Mock successful initialization
           set({ isLoading: false });
           return;
@@ -154,17 +153,13 @@ const useSubscriptionStore = create<SubscriptionState>()(
           if (userId) {
             await get().syncWithSupabase(userId);
           }
-
-          console.log("RevenueCat initialized successfully");
         } catch (error) {
-          console.warn("RevenueCat initialization failed:", error);
           set({ isLoading: false });
         }
       },
 
       identifyRevenueCatUser: async (userId: string) => {
         if (!canUseRevenueCat()) {
-          console.log("RevenueCat not available - skipping user identification");
           return;
         }
 
@@ -172,28 +167,23 @@ const useSubscriptionStore = create<SubscriptionState>()(
           const Purchases = createRevenueCatStub();
 
           if (!Purchases) {
-            console.warn("RevenueCat module not available for user identification");
             return;
           }
 
           // Set user ID for RevenueCat
           if (typeof Purchases.logIn === "function") {
             await Purchases.logIn(userId);
-            console.log("RevenueCat user identified:", userId);
           } else if (typeof Purchases.setAttributes === "function") {
             // Fallback to setting attributes if logIn is not available
             Purchases.setAttributes({
               user_id: userId,
               identified_at: new Date().toISOString(),
             });
-            console.log("RevenueCat user attributes set:", userId);
           }
 
           // Refresh customer info after identification
           await get().checkSubscriptionStatus();
-        } catch (error) {
-          console.warn("Failed to identify RevenueCat user:", error);
-        }
+        } catch (error) {}
       },
 
       checkSubscriptionStatus: async () => {
@@ -224,7 +214,6 @@ const useSubscriptionStore = create<SubscriptionState>()(
             }
           }
         } catch (error) {
-          console.warn("Failed to check subscription status:", error);
           set({ isLoading: false });
         }
       },
@@ -305,9 +294,7 @@ const useSubscriptionStore = create<SubscriptionState>()(
             );
             set({ offerings: offeringsArray });
           }
-        } catch (error) {
-          console.warn("Failed to load offerings:", error);
-        }
+        } catch (error) {}
       },
 
       purchasePackage: async (packageToPurchase: PurchasesPackage) => {
@@ -352,7 +339,6 @@ const useSubscriptionStore = create<SubscriptionState>()(
         } catch (error: any) {
           set({ isLoading: false });
           if (error && typeof error === "object" && !error.userCancelled) {
-            console.warn("Purchase error:", error);
             throw error;
           }
           return null;
@@ -394,7 +380,6 @@ const useSubscriptionStore = create<SubscriptionState>()(
           throw new Error("Invalid restore result");
         } catch (error) {
           set({ isLoading: false });
-          console.warn("Restore purchases error:", error);
           throw error;
         }
       },
@@ -412,9 +397,7 @@ const useSubscriptionStore = create<SubscriptionState>()(
             isPremium: subscription.isActive && ["premium", "pro"].includes(subscription.tier),
             isPro: subscription.isActive && subscription.tier === "pro",
           });
-        } catch (error) {
-          console.warn("Failed to sync with Supabase:", error);
-        }
+        } catch (error) {}
       },
 
       checkAdStatus: async (userId: string) => {
@@ -422,7 +405,6 @@ const useSubscriptionStore = create<SubscriptionState>()(
           const shouldShowAds = await subscriptionService.shouldShowAds(userId);
           set({ shouldShowAds });
         } catch (error) {
-          console.warn("Failed to check ad status:", error);
           // Default to showing ads if check fails
           set({ shouldShowAds: true });
         }
@@ -446,18 +428,13 @@ const useSubscriptionStore = create<SubscriptionState>()(
 function createRevenueCatStub(): RevenueCatStub {
   return {
     configure: async (config: { apiKey: string; appUserID?: string }) => {
-      console.log("[STUB] RevenueCat configure called with:", {
-        apiKey: config.apiKey?.substring(0, 10) + "...",
-        appUserID: config.appUserID,
-      });
+      console.log("RevenueCat configured", { apiKey: config.apiKey, appUserID: config.appUserID });
+      // Simulate async operation
       // Simulate async operation
       await new Promise((resolve) => setTimeout(resolve, 100));
     },
-    setDebugLogsEnabled: (enabled: boolean) => {
-      console.log("[STUB] RevenueCat setDebugLogsEnabled:", enabled);
-    },
+    setDebugLogsEnabled: (enabled: boolean) => {},
     getCustomerInfo: async (): Promise<CustomerInfo> => {
-      console.log("[STUB] RevenueCat getCustomerInfo called");
       await new Promise((resolve) => setTimeout(resolve, 200));
       return {
         entitlements: {
@@ -466,7 +443,6 @@ function createRevenueCatStub(): RevenueCatStub {
       };
     },
     getOfferings: async () => {
-      console.log("[STUB] RevenueCat getOfferings called");
       await new Promise((resolve) => setTimeout(resolve, 200));
       return {
         all: {
@@ -499,7 +475,6 @@ function createRevenueCatStub(): RevenueCatStub {
       };
     },
     purchasePackage: async (pkg: any): Promise<{ customerInfo: CustomerInfo }> => {
-      console.log("[STUB] RevenueCat purchasePackage called with:", pkg?.identifier);
       await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate purchase flow
       const mockCustomerInfo: CustomerInfo = {
         entitlements: {
@@ -509,7 +484,6 @@ function createRevenueCatStub(): RevenueCatStub {
       return { customerInfo: mockCustomerInfo };
     },
     restorePurchases: async (): Promise<CustomerInfo> => {
-      console.log("[STUB] RevenueCat restorePurchases called");
       await new Promise((resolve) => setTimeout(resolve, 500));
       return {
         entitlements: {
@@ -517,11 +491,8 @@ function createRevenueCatStub(): RevenueCatStub {
         },
       };
     },
-    setAttributes: (attributes: Record<string, string>) => {
-      console.log("[STUB] RevenueCat setAttributes called with:", attributes);
-    },
+    setAttributes: (attributes: Record<string, string>) => {},
     logIn: async (userId: string) => {
-      console.log("[STUB] RevenueCat logIn called with:", userId);
       await new Promise((resolve) => setTimeout(resolve, 100));
     },
   };

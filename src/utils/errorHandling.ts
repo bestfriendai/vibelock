@@ -8,9 +8,7 @@ const getErrorReportingService = async () => {
     try {
       const module = await import("../services/errorReporting");
       errorReportingService = module.errorReportingService;
-    } catch (error) {
-      console.warn("[ErrorHandling] Error reporting service not available:", error);
-    }
+    } catch (error) {}
   }
   return errorReportingService;
 };
@@ -113,7 +111,6 @@ export class AppError extends Error {
       }
     } catch (error) {
       // Ignore prototype errors in React Native environments
-      console.warn("AppError: Could not set prototype, instanceof checks may not work correctly");
     }
 
     // Automatically report to Sentry in production
@@ -219,7 +216,6 @@ export class AppError extends Error {
         }
       } catch (reportingError) {
         // Silently fail - don't throw errors from error reporting
-        console.warn("[ErrorHandling] Failed to report error to Sentry:", reportingError);
       }
     }, 0);
   }
@@ -259,11 +255,8 @@ export class AppError extends Error {
 
 // Enhanced error parser for Supabase errors
 export const parseSupabaseError = (error: any): AppError => {
-  console.warn("Parsing Supabase error:", error);
-
   // Handle RetryError - extract the actual error
   if (error?.name === "RetryError" && error?.lastError) {
-    console.warn("RetryError detected, extracting last error:", error.lastError);
     return parseSupabaseError(error.lastError);
   }
 
@@ -401,8 +394,6 @@ export const retryWithBackoff = async <T>(
 
       // Exponential backoff with jitter
       const delay = baseDelay * Math.pow(2, attempt) + Math.random() * 1000;
-      console.warn(`Retry attempt ${attempt + 1}/${maxRetries} after ${delay}ms:`, appError.message);
-
       // Add breadcrumb for retry attempt
       const errorReporting = await getErrorReportingService();
       if (errorReporting) {
@@ -448,8 +439,6 @@ export const safeAsync = async <T>(
     if (onError) {
       onError(appError);
     } else {
-      console.warn("Safe async operation failed:", appError);
-
       // Report to Sentry if no custom error handler
       const errorReporting = await getErrorReportingService();
       if (errorReporting) {
@@ -464,7 +453,6 @@ export const safeAsync = async <T>(
 // Error boundary helper for React components
 export const handleComponentError = (error: any, componentName: string): string => {
   const appError = error instanceof AppError ? error : parseSupabaseError(error);
-  console.warn(`Error in ${componentName}:`, appError);
   return appError.userMessage;
 };
 
@@ -630,11 +618,8 @@ export const startErrorMonitoring = async (): Promise<void> => {
     const errorReporting = await getErrorReportingService();
     if (errorReporting) {
       await errorReporting.initialize();
-      console.log("[ErrorHandling] Error monitoring initialized");
     }
-  } catch (error) {
-    console.warn("[ErrorHandling] Failed to initialize error monitoring:", error);
-  }
+  } catch (error) {}
 };
 
 export const setUserContext = async (user: {
@@ -649,9 +634,7 @@ export const setUserContext = async (user: {
     if (errorReporting) {
       errorReporting.setUserContext(user);
     }
-  } catch (error) {
-    console.warn("[ErrorHandling] Failed to set user context:", error);
-  }
+  } catch (error) {}
 };
 
 export const clearUserContext = async (): Promise<void> => {
@@ -660,9 +643,7 @@ export const clearUserContext = async (): Promise<void> => {
     if (errorReporting) {
       errorReporting.clearUserContext();
     }
-  } catch (error) {
-    console.warn("[ErrorHandling] Failed to clear user context:", error);
-  }
+  } catch (error) {}
 };
 
 export const addErrorBreadcrumb = async (breadcrumb: {
@@ -676,9 +657,7 @@ export const addErrorBreadcrumb = async (breadcrumb: {
     if (errorReporting) {
       errorReporting.addBreadcrumb(breadcrumb);
     }
-  } catch (error) {
-    console.warn("[ErrorHandling] Failed to add breadcrumb:", error);
-  }
+  } catch (error) {}
 };
 
 export const captureMessage = async (
@@ -694,9 +673,7 @@ export const captureMessage = async (
       }
       errorReporting.captureMessage(message, level);
     }
-  } catch (error) {
-    console.warn("[ErrorHandling] Failed to capture message:", error);
-  }
+  } catch (error) {}
 };
 
 // Performance monitoring
@@ -706,9 +683,7 @@ export const startTransaction = async (name: string, operation: string): Promise
     if (errorReporting) {
       return errorReporting.startTransaction(name, operation);
     }
-  } catch (error) {
-    console.warn("[ErrorHandling] Failed to start transaction:", error);
-  }
+  } catch (error) {}
   return null;
 };
 
@@ -735,12 +710,8 @@ export const flushErrorQueue = async (): Promise<void> => {
       for (const error of errors) {
         errorReporting.reportError(error);
       }
-
-      console.log(`[ErrorHandling] Flushed ${errors.length} queued errors`);
     }
-  } catch (error) {
-    console.warn("[ErrorHandling] Failed to flush error queue:", error);
-  }
+  } catch (error) {}
 };
 
 // Auto-flush error queue every 30 seconds

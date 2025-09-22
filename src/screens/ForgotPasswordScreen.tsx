@@ -18,8 +18,6 @@ export default function ForgotPasswordScreen() {
   const [emailSent, setEmailSent] = useState(false);
   const [error, setError] = useState("");
 
-  console.log("ForgotPasswordScreen rendered", { emailSent, isLoading, error });
-
   // Animation values
   const logoScale = useSharedValue(0);
   const logoOpacity = useSharedValue(0);

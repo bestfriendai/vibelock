@@ -3,7 +3,7 @@
  */
 
 import NetInfo from "@react-native-community/netinfo";
-import { enhancedRealtimeChatService } from "../services/realtimeChat";
+
 import useChatStore from "../state/chatStore";
 
 export interface ScrollTestResult {
@@ -159,8 +159,6 @@ export async function runChatroomTests(): Promise<{
     successRate: number;
   };
 }> {
-  console.log("🧪 Running comprehensive chatroom tests...");
-
   const scrollTests = await testMessageScrolling();
   const networkTests = await testNetworkConnectivity();
 
@@ -176,23 +174,18 @@ export async function runChatroomTests(): Promise<{
     successRate,
   };
 
-  console.log("🧪 Test Results Summary:", summary);
-
   if (failedTests > 0) {
-    console.warn("❌ Failed tests:");
     allTests
       .filter((test) => !test.passed)
       .forEach((test) => {
-        console.warn(`  - ${test.testName}: ${test.details}`);
-        if (test.error) console.warn(`    Error: ${test.error}`);
+        console.error(`Failed test: ${test.testName} - ${test.details}`);
       });
   }
 
-  console.log("✅ Passed tests:");
   allTests
     .filter((test) => test.passed)
     .forEach((test) => {
-      console.log(`  - ${test.testName}: ${test.details}`);
+      console.log(`Passed test: ${test.testName}`);
     });
 
   return {
@@ -206,14 +199,12 @@ export async function runChatroomTests(): Promise<{
  * Monitor network state changes for debugging
  */
 export function startNetworkMonitoring(duration: number = 30000): () => void {
-  console.log(`📶 Starting network monitoring for ${duration}ms...`);
-
   const unsubscribe = NetInfo.addEventListener((state) => {
     const isConnected = Boolean(state.isConnected);
     const hasInternetAccess = state.isInternetReachable === true || (state.isInternetReachable === null && isConnected);
     const online = isConnected && hasInternetAccess;
 
-    console.log(`📶 Network change detected:`, {
+    console.log("Network state changed:", {
       timestamp: new Date().toISOString(),
       isConnected,
       isInternetReachable: state.isInternetReachable,
@@ -225,7 +216,6 @@ export function startNetworkMonitoring(duration: number = 30000): () => void {
 
   // Auto-stop monitoring after duration
   const timeout = setTimeout(() => {
-    console.log("📶 Network monitoring stopped");
     unsubscribe();
   }, duration);
 
@@ -233,6 +223,5 @@ export function startNetworkMonitoring(duration: number = 30000): () => void {
   return () => {
     clearTimeout(timeout);
     unsubscribe();
-    console.log("📶 Network monitoring manually stopped");
   };
 }

@@ -60,7 +60,6 @@ const validateFilePath = (path: string): void => {
 };
 
 const handleStorageError = (error: any, operation: string): never => {
-  console.warn(`Storage ${operation} failed:`, error);
   const message = handleSupabaseError(error);
   throw new Error(`${operation} failed: ${message}`);
 };
@@ -148,7 +147,6 @@ export class StorageService {
       // Check if file exists before attempting deletion
       const exists = await this.fileExists(bucket, path);
       if (!exists) {
-        console.warn(`File ${path} does not exist in bucket ${bucket}`);
         return; // Don't throw error for non-existent files
       }
 
@@ -418,7 +416,6 @@ export class StorageService {
       const files = await this.listFiles(bucket, folder, { search: fileName });
       return files.some((file) => file.name === fileName);
     } catch (error) {
-      console.warn(`Error checking file existence for ${bucket}/${path}:`, error);
       return false;
     }
   }
@@ -432,7 +429,6 @@ export class StorageService {
       const files = await this.listFiles(bucket, folder, { search: fileName });
       return files.find((file) => file.name === fileName) || null;
     } catch (error) {
-      console.warn(`Error getting file info for ${bucket}/${path}:`, error);
       return null;
     }
   }
@@ -451,11 +447,9 @@ export class StorageService {
         }
         // For other errors (like RLS), we assume the bucket exists but we don't have list permissions
         // This is acceptable for upload operations
-        console.warn(`Bucket validation warning for ${bucket}:`, error.message);
       }
 
       // If we reach here, the bucket is accessible (either no error or acceptable RLS error)
-      console.log(`✅ Bucket '${bucket}' validation passed`);
     } catch (error: any) {
       console.error(`Bucket validation failed for ${bucket}:`, error);
       throw error;

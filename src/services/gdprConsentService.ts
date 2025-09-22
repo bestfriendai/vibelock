@@ -24,7 +24,6 @@ class GDPRConsentService {
       // Check if user is in EU/EEA and needs consent
       await this.checkConsentRequirement();
     } catch (error) {
-      console.warn("Failed to initialize GDPR consent service:", error);
       this.consentStatus = "unknown";
     }
   }
@@ -79,7 +78,6 @@ class GDPRConsentService {
         this.consentStatus = "not_required";
       }
     } catch (error) {
-      console.warn("Failed to check GDPR requirement:", error);
       // Default to requiring consent for safety
       this.consentStatus = "required";
     }
@@ -129,7 +127,6 @@ class GDPRConsentService {
 
       return this.consentStatus === "obtained";
     } catch (error) {
-      console.warn("GDPR consent request failed:", error);
       // Fallback: don't show ads if consent fails
       return false;
     }
@@ -146,9 +143,7 @@ class GDPRConsentService {
         timestamp: Date.now(),
       };
       await AsyncStorage.setItem(GDPRConsentService.CONSENT_KEY, JSON.stringify(data));
-    } catch (error) {
-      console.warn("Failed to store consent status:", error);
-    }
+    } catch (error) {}
   }
 
   /**
@@ -173,9 +168,7 @@ class GDPRConsentService {
       await AsyncStorage.removeItem(GDPRConsentService.CONSENT_KEY);
       this.consentStatus = "unknown";
       await this.checkConsentRequirement();
-    } catch (error) {
-      console.warn("Failed to reset consent:", error);
-    }
+    } catch (error) {}
   }
 
   /**

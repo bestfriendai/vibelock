@@ -24,18 +24,14 @@ class BiometricService {
         const isEnrolled = await LocalAuthentication.isEnrolledAsync();
         if (!isEnrolled) {
           this.isAvailable = false;
-          console.log("Biometric hardware available but no biometrics enrolled");
           return;
         }
 
         // Get supported authentication types
         this.supportedTypes = await LocalAuthentication.supportedAuthenticationTypesAsync();
-        console.log("Biometric authentication available:", this.supportedTypes);
       } else {
-        console.log("Biometric authentication not available on this device");
       }
     } catch (error) {
-      console.warn("Failed to initialize biometric service:", error);
       this.isAvailable = false;
     }
   }
@@ -127,7 +123,6 @@ class BiometricService {
         };
       }
     } catch (error) {
-      console.warn("Biometric authentication error:", error);
       return {
         success: false,
         error: "Authentication system error",

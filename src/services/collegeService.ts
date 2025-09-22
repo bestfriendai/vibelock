@@ -182,7 +182,6 @@ export async function searchColleges(query: string, limit: number = 10): Promise
       .limit(limit * 2); // Get more results for abbreviation filtering
 
     if (error) {
-      console.warn("Error searching colleges:", error);
       return [];
     }
 
@@ -247,7 +246,6 @@ export async function searchColleges(query: string, limit: number = 10): Promise
       }),
     );
   } catch (error) {
-    console.warn("Error in searchColleges:", error);
     return [];
   }
 }
@@ -265,7 +263,6 @@ export async function getCollegesByState(state: string, limit: number = 50): Pro
       .limit(limit);
 
     if (error) {
-      console.warn("Error getting colleges by state:", error);
       return [];
     }
 
@@ -279,7 +276,6 @@ export async function getCollegesByState(state: string, limit: number = 50): Pro
       institution_type: college.institution_type,
     })) as College[];
   } catch (error) {
-    console.warn("Error in getCollegesByState:", error);
     return [];
   }
 }
@@ -292,7 +288,6 @@ export async function getCollegeById(id: string): Promise<College | null> {
     const { data, error } = await supabase.from("colleges").select("*").eq("id", id).single();
 
     if (error) {
-      console.warn("Error getting college by ID:", error);
       return null;
     }
 
@@ -308,7 +303,6 @@ export async function getCollegeById(id: string): Promise<College | null> {
       institution_type: data.institution_type,
     } as College;
   } catch (error) {
-    console.warn("Error in getCollegeById:", error);
     return null;
   }
 }
@@ -327,7 +321,6 @@ export async function getPopularColleges(institutionType?: string, limit: number
     const { data, error } = await query.limit(limit);
 
     if (error) {
-      console.warn("Error getting popular colleges:", error);
       return [];
     }
 
@@ -341,7 +334,6 @@ export async function getPopularColleges(institutionType?: string, limit: number
       institution_type: college.institution_type,
     })) as College[];
   } catch (error) {
-    console.warn("Error in getPopularColleges:", error);
     return [];
   }
 }

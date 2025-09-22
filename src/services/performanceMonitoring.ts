@@ -11,7 +11,6 @@ interface PerformanceMonitoringService {
 export const performanceMonitoringService: PerformanceMonitoringService = {
   recordMemoryPressure() {
     // Log memory pressure event
-    console.warn("Memory pressure recorded");
   },
 
   getMemoryUsage(): number {

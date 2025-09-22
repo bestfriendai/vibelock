@@ -51,20 +51,17 @@ class ErrorReportingService {
    */
   async initialize(): Promise<void> {
     if (this._isInitialized) {
-      console.warn("[ErrorReporting] Already initialized");
       return;
     }
 
     try {
       // Skip initialization in Expo Go unless explicitly enabled
       if (this.isExpoGo() && !this.config.enableInExpoDevelopment) {
-        console.log("[ErrorReporting] Skipping initialization in Expo Go");
         this._isInitialized = true; // Mark as initialized even when skipped
         return;
       }
 
       if (!this.config.dsn) {
-        console.warn("[ErrorReporting] No DSN provided, error reporting disabled");
         this._isInitialized = true; // Mark as initialized even when disabled
         return;
       }
@@ -95,8 +92,6 @@ class ErrorReportingService {
       // Set initial context
       this.setInitialContext();
       this._isInitialized = true;
-
-      console.log("[ErrorReporting] Initialized successfully");
     } catch (error) {
       console.error("[ErrorReporting] Failed to initialize:", error);
     }
@@ -114,7 +109,6 @@ class ErrorReportingService {
    */
   reportError(error: AppError | Error, context?: Record<string, any>): void {
     if (!this._isInitialized) {
-      console.warn("[ErrorReporting] Not initialized, error not reported");
       return;
     }
 
@@ -184,7 +178,6 @@ class ErrorReportingService {
         },
       );
     } catch (error) {
-      console.warn("[ErrorReporting] Failed to start transaction:", error);
       return null;
     }
   }
@@ -216,9 +209,7 @@ class ErrorReportingService {
           hasSubscription: !!user.subscription,
         },
       });
-    } catch (error) {
-      console.warn("[ErrorReporting] Failed to set user context:", error);
-    }
+    } catch (error) {}
   }
 
   /**
@@ -236,9 +227,7 @@ class ErrorReportingService {
         category: "user",
         level: "info",
       });
-    } catch (error) {
-      console.warn("[ErrorReporting] Failed to clear user context:", error);
-    }
+    } catch (error) {}
   }
 
   /**
@@ -260,9 +249,7 @@ class ErrorReportingService {
         data: breadcrumb.data,
         timestamp: Date.now() / 1000,
       });
-    } catch (error) {
-      console.warn("[ErrorReporting] Failed to add breadcrumb:", error);
-    }
+    } catch (error) {}
   }
 
   /**
@@ -273,9 +260,7 @@ class ErrorReportingService {
 
     try {
       Sentry.setContext(key, context as any);
-    } catch (error) {
-      console.warn("[ErrorReporting] Failed to set context:", error);
-    }
+    } catch (error) {}
   }
 
   /**
@@ -286,9 +271,7 @@ class ErrorReportingService {
 
     try {
       Sentry.captureMessage(message, level);
-    } catch (error) {
-      console.warn("[ErrorReporting] Failed to capture message:", error);
-    }
+    } catch (error) {}
   }
 
   /**

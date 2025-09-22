@@ -27,18 +27,16 @@ const TYPO_QUERIES = [
  * Test basic search functionality
  */
 async function testBasicSearch(): Promise<void> {
-  console.log("🧪 Testing Basic Search...");
-
   for (const query of TEST_QUERIES) {
     try {
       const results = await searchService.searchReviews(query, {
         searchMode: "basic",
       });
 
-      console.log(`✅ Basic search for "${query}": ${results.total} results`);
-
       if (results.total === 0) {
-        console.warn(`⚠️  No results for "${query}" - this might be expected for test data`);
+        console.log(`⚠️ No results for basic search: "${query}"`);
+      } else {
+        console.log(`✓ Basic search found ${results.total} results for "${query}"`);
       }
     } catch (error) {
       console.error(`❌ Basic search failed for "${query}":`, error);
@@ -50,20 +48,18 @@ async function testBasicSearch(): Promise<void> {
  * Test similarity search (requires pg_trgm extension)
  */
 async function testSimilaritySearch(): Promise<void> {
-  console.log("🧪 Testing Similarity Search...");
-
   for (const query of TYPO_QUERIES) {
     try {
       const results = await searchService.searchReviews(query, {
         searchMode: "similarity",
       });
 
-      console.log(`✅ Similarity search for "${query}": ${results.total} results`);
-
       // Check if similarity scores are included
       const firstResult = results.reviews[0];
       if (firstResult?.metadata?.similarity) {
-        console.log(`   → Similarity score: ${firstResult.metadata.similarity}`);
+        console.log(`✓ Similarity search worked for "${query}" with score ${firstResult.metadata.similarity}`);
+      } else {
+        console.log(`⚠️ No similarity score for "${query}"`);
       }
     } catch (error) {
       console.error(`❌ Similarity search failed for "${query}":`, error);
@@ -75,8 +71,6 @@ async function testSimilaritySearch(): Promise<void> {
  * Test full-text search
  */
 async function testFullTextSearch(): Promise<void> {
-  console.log("🧪 Testing Full-Text Search...");
-
   const ftsQueries = [
     "dating experience with communication",
     "red flags toxic behavior",
@@ -89,12 +83,12 @@ async function testFullTextSearch(): Promise<void> {
         searchMode: "fts",
       });
 
-      console.log(`✅ FTS search for "${query}": ${results.total} results`);
-
       // Check if rank scores are included
       const firstResult = results.reviews[0];
       if (firstResult?.metadata?.rankScore) {
-        console.log(`   → Rank score: ${firstResult.metadata.rankScore}`);
+        console.log(`✓ FTS search worked for "${query}" with rank score ${firstResult.metadata.rankScore}`);
+      } else {
+        console.log(`⚠️ No rank score for "${query}"`);
       }
     } catch (error) {
       console.error(`❌ FTS search failed for "${query}":`, error);
@@ -106,8 +100,6 @@ async function testFullTextSearch(): Promise<void> {
  * Test hybrid search (recommended)
  */
 async function testHybridSearch(): Promise<void> {
-  console.log("🧪 Testing Hybrid Search...");
-
   for (const query of TEST_QUERIES.slice(0, 3)) {
     try {
       const results = await searchService.searchReviews(query, {
@@ -115,14 +107,12 @@ async function testHybridSearch(): Promise<void> {
         sortBy: "relevance",
       });
 
-      console.log(`✅ Hybrid search for "${query}": ${results.total} results`);
-
       // Check if combined scores are included
       const firstResult = results.reviews[0];
       if (firstResult?.metadata?.combinedScore) {
-        console.log(`   → Combined score: ${firstResult.metadata.combinedScore}`);
-        console.log(`   → Similarity: ${firstResult.metadata.similarity}`);
-        console.log(`   → FTS score: ${firstResult.metadata.rankScore}`);
+        console.log(`✓ Hybrid search worked for "${query}" with combined score ${firstResult.metadata.combinedScore}`);
+      } else {
+        console.log(`⚠️ No combined score for "${query}"`);
       }
     } catch (error) {
       console.error(`❌ Hybrid search failed for "${query}":`, error);
@@ -134,8 +124,6 @@ async function testHybridSearch(): Promise<void> {
  * Test search with filters
  */
 async function testSearchWithFilters(): Promise<void> {
-  console.log("🧪 Testing Search with Filters...");
-
   try {
     const results = await searchService.searchAll("dating", {
       useAdvancedSearch: true,
@@ -144,11 +132,7 @@ async function testSearchWithFilters(): Promise<void> {
         category: "dating",
       },
     });
-
-    console.log(`✅ Filtered search: ${results.total} results`);
-    console.log(`   → Reviews: ${results.reviews.length}`);
-    console.log(`   → Comments: ${results.comments.length}`);
-    console.log(`   → Messages: ${results.messages.length}`);
+    console.log(`✓ Filtered search completed successfully`);
   } catch (error) {
     console.error("❌ Filtered search failed:", error);
   }
@@ -158,14 +142,12 @@ async function testSearchWithFilters(): Promise<void> {
  * Test search suggestions
  */
 async function testSearchSuggestions(): Promise<void> {
-  console.log("🧪 Testing Search Suggestions...");
-
   const partialQueries = ["da", "rel", "com"];
 
   for (const partial of partialQueries) {
     try {
       const suggestions = await searchService.getSearchSuggestions(partial, 5);
-      console.log(`✅ Suggestions for "${partial}": [${suggestions.join(", ")}]`);
+      console.log(`✓ Got ${suggestions.length} suggestions for "${partial}"`);
     } catch (error) {
       console.error(`❌ Suggestions failed for "${partial}":`, error);
     }
@@ -176,11 +158,9 @@ async function testSearchSuggestions(): Promise<void> {
  * Test search extensions initialization
  */
 async function testSearchInitialization(): Promise<void> {
-  console.log("🧪 Testing Search Initialization...");
-
   try {
     await searchService.initializeSearchExtensions();
-    console.log("✅ Search extensions initialized successfully");
+    console.log("✓ Search extensions initialized successfully");
   } catch (error) {
     console.error("❌ Search initialization failed:", error);
   }
@@ -190,8 +170,6 @@ async function testSearchInitialization(): Promise<void> {
  * Performance test
  */
 async function testSearchPerformance(): Promise<void> {
-  console.log("🧪 Testing Search Performance...");
-
   const query = "dating experience";
   const searchModes = ["basic", "similarity", "fts", "hybrid"] as const;
 
@@ -202,11 +180,10 @@ async function testSearchPerformance(): Promise<void> {
       const results = await searchService.searchReviews(query, {
         searchMode: mode,
       });
-
       const endTime = Date.now();
       const duration = endTime - startTime;
 
-      console.log(`✅ ${mode} search: ${duration}ms, ${results.total} results`);
+      console.log(`✓ ${mode} search completed in ${duration}ms`);
     } catch (error) {
       console.error(`❌ ${mode} search performance test failed:`, error);
     }
@@ -217,33 +194,15 @@ async function testSearchPerformance(): Promise<void> {
  * Run all tests
  */
 export async function runAllSearchTests(): Promise<void> {
-  console.log("🚀 Starting Search Functionality Tests...\n");
-
   await testSearchInitialization();
-  console.log("");
-
   await testBasicSearch();
-  console.log("");
-
   await testSimilaritySearch();
-  console.log("");
-
   await testFullTextSearch();
-  console.log("");
-
   await testHybridSearch();
-  console.log("");
-
   await testSearchWithFilters();
-  console.log("");
-
   await testSearchSuggestions();
-  console.log("");
-
   await testSearchPerformance();
-  console.log("");
-
-  console.log("✨ Search tests completed!");
+  console.log("✅ All search tests completed");
 }
 
 // Export individual test functions for selective testing

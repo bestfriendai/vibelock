@@ -56,7 +56,6 @@ export default function LocationSettingsScreen() {
         [{ text: "OK" }],
       );
     } catch (error) {
-      console.warn("Failed to update location:", error);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       Alert.alert("Update Failed", "Failed to update your location. Please try again.", [{ text: "OK" }]);
     } finally {
@@ -93,7 +92,6 @@ export default function LocationSettingsScreen() {
         ]);
       }
     } catch (error) {
-      console.warn("GPS location error:", error);
       Alert.alert("Location Error", "Failed to get your current location. Please try again or select manually.", [
         { text: "OK" },
       ]);

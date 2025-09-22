@@ -111,7 +111,6 @@ export default function CreateReviewScreen() {
 
           // Validate draft data
           if (!isValidDraft(draft)) {
-            console.log("🧹 Removing expired or invalid draft");
             await AsyncStorage.removeItem(DRAFT_KEY);
             return;
           }
@@ -140,17 +139,14 @@ export default function CreateReviewScreen() {
           setSocialMedia({});
 
           if (__DEV__) {
-            console.log("📝 Loaded draft data (media and social media excluded for security)");
+            console.log("Loaded draft from AsyncStorage");
           }
         }
       } catch (error) {
-        console.warn("Failed to load draft:", error);
         // Clear corrupted draft
         try {
           await AsyncStorage.removeItem(DRAFT_KEY);
-        } catch (clearError) {
-          console.warn("Failed to clear corrupted draft:", clearError);
-        }
+        } catch (clearError) {}
       }
     })();
   }, []);
@@ -172,7 +168,6 @@ export default function CreateReviewScreen() {
 
       AsyncStorage.setItem(DRAFT_KEY, JSON.stringify(sanitizedDraft)).catch((error) => {
         const appError = error instanceof AppError ? error : parseSupabaseError(error);
-        console.warn("Failed to save draft:", appError.userMessage);
       });
     }, 400);
     return () => clearTimeout(save);
@@ -229,21 +224,10 @@ export default function CreateReviewScreen() {
   );
 
   const handleSubmit = async () => {
-    console.log("🎬 handleSubmit called");
-    console.log("📋 Validation state:", {
-      isValid: validation.isValid,
-      errors: validation.errors,
-      firstError: validation.firstError,
-      imagesCount,
-      sentiment,
-      mediaLength: media.length,
-    });
-
     setError(null);
     setSuccess(null);
 
     if (!validation.isValid) {
-      console.log("❌ Validation failed:", validation.firstError);
       setError(validation.firstError);
       return;
     }
@@ -335,8 +319,6 @@ export default function CreateReviewScreen() {
       };
 
       await createReview(reviewData);
-      console.log("✅ createReview completed successfully");
-
       // Reset form and draft
       setFirstName("");
       setSelectedLocation({

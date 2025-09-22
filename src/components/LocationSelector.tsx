@@ -169,9 +169,7 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
             coordinates: college.coordinates,
           }));
           results.push(...formattedCollegeResults);
-        } catch (error) {
-          console.warn("College search failed:", error);
-        }
+        } catch (error) {}
 
         // If no local results, try geocoding search for broader city results
         if (localFiltered.length === 0) {
@@ -185,9 +183,7 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
               coordinates: result.coordinates,
             }));
             results.push(...formattedResults);
-          } catch (error) {
-            console.warn("Geocoding search failed:", error);
-          }
+          } catch (error) {}
         }
 
         setFilteredLocations(results);
@@ -199,16 +195,12 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
   }, [searchText]);
 
   const handleLocationSelect = async (location: Location) => {
-    console.log("📍 Location selected:", location);
-
     // Use provided coordinates when available, otherwise geocode with device for worldwide support
     try {
       let coordinates = location.coordinates;
       if (!coordinates) {
         coordinates = (await geocodeCityStateCached(location.city, location.state)) || undefined;
       }
-
-      console.log("✅ Found coordinates:", coordinates);
 
       // For college selections, ensure we have both college info and city/state data
       const locationData: Location = {
@@ -225,12 +217,9 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
         }),
       };
 
-      console.log("📍 Final location data:", locationData);
-
       // Pass location with coordinates to parent
       onLocationChange(locationData);
     } catch (error) {
-      console.warn("Failed to get coordinates for location:", error);
       // Fallback to location without coordinates
       onLocationChange(location);
     }
@@ -280,7 +269,6 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
   const renderLocationItem = ({ item }: { item: Location }) => (
     <Pressable
       onPress={() => {
-        console.log("🏙️ Location item pressed:", item.fullName);
         handleLocationSelect(item);
       }}
       className="px-4 py-3 border-b border-surface-700"
@@ -316,7 +304,6 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
         className="flex-row items-center px-3 py-2 rounded-full"
         style={{ backgroundColor: "#000000" }}
         onPress={() => {
-          console.log("🔘 Location selector pressed");
           setModalVisible(true);
         }}
         accessible={true}

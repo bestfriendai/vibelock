@@ -77,7 +77,6 @@ export default function MediaUploadGrid({ media, onMediaChange, maxItems = 6, re
         return false;
       }
     } catch (error) {
-      console.warn("Permission request failed", error);
       Alert.alert("Error", "Failed to request permissions. Please try again.");
       return false;
     }
@@ -149,9 +148,7 @@ export default function MediaUploadGrid({ media, onMediaChange, maxItems = 6, re
               return;
             }
             // Video is valid, UI will show video icon automatically
-          } catch (error) {
-            console.warn("Failed to validate video:", error);
-          }
+          } catch (error) {}
         }
 
         onMediaChange([...media, newMediaItem]);
@@ -207,14 +204,12 @@ export default function MediaUploadGrid({ media, onMediaChange, maxItems = 6, re
                   const compressedSizeKB = Math.round(compressionResult.compressedSize / 1024);
                   const savings = Math.round((1 - compressionResult.compressionRatio!) * 100);
 
-                  console.log(`📸 Image compressed: ${originalSizeKB}KB → ${compressedSizeKB}KB (${savings}% smaller)`);
+                  console.debug("Image compression", { originalSizeKB, compressedSizeKB, savings });
                 }
               } else {
-                console.warn("Image compression failed, using original:", compressionResult.error);
+                console.warn("Image compression failed, keeping original URI");
               }
-            } catch (error) {
-              console.warn("Image compression error, using original:", error);
-            }
+            } catch (error) {}
           }
 
           const mediaItem: MediaItem = {
@@ -232,14 +227,11 @@ export default function MediaUploadGrid({ media, onMediaChange, maxItems = 6, re
               // Validate video file first
               const validation = await validateVideoFile(asset.uri);
               if (!validation.isValid) {
-                console.warn("Invalid video file:", validation.error);
                 // Skip this video
                 continue;
               }
               // Video is valid, UI will show video icon automatically
-            } catch (error) {
-              console.warn("Failed to validate video:", error);
-            }
+            } catch (error) {}
           }
 
           newMediaItems.push(mediaItem);
@@ -248,8 +240,6 @@ export default function MediaUploadGrid({ media, onMediaChange, maxItems = 6, re
         onMediaChange([...media, ...newMediaItems]);
       }
     } catch (error: any) {
-      console.warn("Media library selection error:", error);
-
       // Use the enhanced error handling for PHPhotosErrorDomain issues
       if (isPHPhotosError3164(error)) {
         Alert.alert("Photo Library Access Issue", getPHPhotosErrorMessage(error), [

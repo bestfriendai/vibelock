@@ -43,9 +43,8 @@ export default function ChatroomsScreen() {
 
   // Debug logging for authentication state
   useEffect(() => {
-    console.log("🔍 ChatroomsScreen Auth Debug:", {
-      hasUser: !!user,
-      userId: user?.id?.slice(-8) || "none",
+    console.log("ChatroomsScreen auth state:", {
+      userId: user?.id || "none",
       email: user?.email || "none",
       canAccessChat,
       needsSignIn,
@@ -57,22 +56,16 @@ export default function ChatroomsScreen() {
 
     // Additional auth store debugging
     const authState = useAuthStore.getState();
-    console.log("🔍 Auth Store State:", {
+    console.log("Auth store state:", {
+      userId: authState.user?.id || "none",
       isAuthenticated: authState.isAuthenticated,
-      isGuestMode: authState.isGuestMode,
-      hasUser: !!authState.user,
-      isLoading: authState.isLoading,
-      error: authState.error || "none",
     });
   }, [user, canAccessChat, needsSignIn, chatRooms.length, isLoading, error, connectionStatus]);
 
   useEffect(() => {
-    console.log("🔄 ChatroomsScreen: Initial load effect triggered");
     const done = startTimer("chatrooms:initialLoad");
     retryWithBackoff(loadChatRooms)
-      .then(() => {
-        console.log("✅ ChatroomsScreen: loadChatRooms completed successfully");
-      })
+      .then(() => {})
       .catch((error) => {
         console.error("❌ ChatroomsScreen: loadChatRooms failed:", error);
       })
@@ -177,7 +170,6 @@ export default function ChatroomsScreen() {
                   className="rounded-lg py-2 items-center mt-4"
                   style={{ backgroundColor: colors.brand.red + "20", borderWidth: 1, borderColor: colors.brand.red }}
                   onPress={() => {
-                    console.log("🧪 Creating test user for development");
                     setTestUser();
                   }}
                 >
@@ -194,16 +186,6 @@ export default function ChatroomsScreen() {
   }
 
   // Debug logging for render state
-  console.log("🎨 ChatroomsScreen render state:", {
-    isLoading,
-    chatRoomsCount: chatRooms.length,
-    error: error || "none",
-    canAccessChat,
-    needsSignIn,
-    allowDevAccess,
-    filteredCount: filtered.length,
-  });
-
   return (
     <SafeAreaView className="flex-1" style={{ backgroundColor: colors.background }}>
       <OfflineBanner onRetry={loadChatRooms} />

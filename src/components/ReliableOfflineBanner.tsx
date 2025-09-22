@@ -22,24 +22,17 @@ export default function ReliableOfflineBanner({ onRetry, useReliableCheck = true
   };
 
   const handleNetworkStateChange = (isOnline: boolean, details: NetworkCheckResult) => {
-    console.log(`📶 ReliableOfflineBanner: Network state changed:`, {
-      isOnline,
-      method: details.method,
-      details: details.details,
-    });
-
     setLastCheckResult(details);
     setIsConnected(isOnline);
 
     if (!isOnline && !showBanner) {
-      console.log(`📶 ReliableOfflineBanner: Showing offline banner (method: ${details.method})`);
       setShowBanner(true);
       translateY.value = withSpring(0);
       opacity.value = withTiming(1);
     } else if (isOnline && showBanner) {
-      console.log(`📶 ReliableOfflineBanner: Hiding offline banner (method: ${details.method})`);
       translateY.value = withSpring(-100);
       opacity.value = withTiming(0, { duration: 300 }, (finished) => {
+        "worklet";
         if (finished) {
           runOnJS(hideBanner)();
         }
@@ -78,8 +71,6 @@ export default function ReliableOfflineBanner({ onRetry, useReliableCheck = true
   });
 
   const handleRetry = async () => {
-    console.log(`📶 ReliableOfflineBanner: Retry button pressed`);
-
     if (onRetry) {
       onRetry();
     }
@@ -87,10 +78,9 @@ export default function ReliableOfflineBanner({ onRetry, useReliableCheck = true
     // Force a reliable network check
     try {
       const result = await reliableNetworkCheck();
-      console.log(`📶 ReliableOfflineBanner: Retry check result:`, result);
       handleNetworkStateChange(result.isOnline, result);
     } catch (error) {
-      console.warn(`📶 ReliableOfflineBanner: Retry check failed:`, error);
+      // Error checking network status
     }
   };
 
