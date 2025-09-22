@@ -485,7 +485,7 @@ const useChatStore = create<ChatStore>()(
             set({ chatRooms: JSON.parse(cached) });
           }
           // Fetch fresh data
-          // Load chat rooms directly from Supabase - simplified approach
+          // Load all active chat rooms (simplified approach - no complex filtering)
           const { data: chatRooms, error } = await supabase
             .from("chat_rooms_firebase")
             .select(
@@ -503,11 +503,13 @@ const useChatStore = create<ChatStore>()(
         is_active,
         location,
         created_at,
-        updated_at
+        updated_at,
+        is_private,
+        created_by
       `,
             )
             .eq("is_active", true)
-            .or(`public=true, members.user_id.eq.${user.id}`) // RLS-like filter
+            .eq("is_private", false) // Only show public rooms for now
             .order("last_activity", { ascending: false });
 
           if (error) throw error;
@@ -576,11 +578,13 @@ const useChatStore = create<ChatStore>()(
         is_active,
         location,
         created_at,
-        updated_at
+        updated_at,
+        is_private,
+        created_by
       `,
             )
             .eq("is_active", true)
-            .or(`public=true, members.user_id.eq.${user.id}`)
+            .eq("is_private", false) // Only show public rooms for now
             .range((page - 1) * 20, page * 20 - 1)
             .order("last_activity", { ascending: false });
 

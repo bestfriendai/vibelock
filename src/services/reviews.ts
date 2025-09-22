@@ -2,6 +2,7 @@ import supabase from "../config/supabase";
 import { Review, Comment, MediaItem, SocialMediaHandles } from "../types";
 import { mapFieldsToCamelCase, mapFieldsToSnakeCase } from "../utils/fieldMapping";
 import { withRetry } from "../utils/retryLogic";
+import { mapDatabaseReviewToReview, mapReviewToDatabase } from "../utils/databaseMapping";
 
 interface ReviewsFilter {
   userId?: string;
@@ -163,7 +164,8 @@ export class ReviewsService {
       throw error;
     }
 
-    return transformDatabaseReview(data);
+    // Use the new mapping utility for consistent field mapping
+    return mapDatabaseReviewToReview(data);
   }
 
   async createReview(review: Omit<Review, "id" | "createdAt" | "updatedAt">): Promise<Review> {

@@ -102,6 +102,12 @@ export default function ReviewDetailScreen() {
 
   // Load review data
   useEffect(() => {
+    if (!reviewId) {
+      console.error("🐛 ReviewDetailScreen - No reviewId provided");
+      setReviewLoading(false);
+      return;
+    }
+
     console.log("🐛 ReviewDetailScreen - Starting data load", {
       hasReviewId: !!reviewId,
       reviewId,
@@ -109,8 +115,22 @@ export default function ReviewDetailScreen() {
       hasLoadComments: typeof loadComments === "function",
     });
 
-    Promise.all([loadReview(reviewId), loadComments(reviewId)])
-      .then(() => {
+    setReviewLoading(true);
+
+    Promise.all([
+      loadReview(reviewId).then((loadedReview) => {
+        console.log("🐛 ReviewDetailScreen - Review loaded:", loadedReview ? "Found" : "Not found");
+        setReview(loadedReview);
+        if (loadedReview) {
+          setLikeCount(loadedReview.likeCount || 0);
+          setDislikeCount(loadedReview.dislikeCount || 0);
+        }
+        setReviewLoading(false);
+        return loadedReview;
+      }),
+      loadComments(reviewId),
+    ])
+      .then(([loadedReview]) => {
         console.log("🐛 ReviewDetailScreen - Data load completed successfully");
       })
       .catch((error) => {
@@ -120,6 +140,7 @@ export default function ReviewDetailScreen() {
           reviewId,
           errorType: error.constructor.name,
         });
+        setReviewLoading(false);
       });
   }, [reviewId]);
 
@@ -381,7 +402,7 @@ export default function ReviewDetailScreen() {
             <View className="px-6 mb-8">
               {/* Person Name */}
               <Text className="text-4xl font-bold mb-3" style={{ color: colors.text.primary }}>
-                {review.reviewedPersonName}
+                {review.reviewedPersonName || "Anonymous"}
               </Text>
 
               {/* Location & Time */}
@@ -389,7 +410,13 @@ export default function ReviewDetailScreen() {
                 <View className="flex-row items-center">
                   <Ionicons name="location" size={16} color={colors.text.secondary} />
                   <Text className="ml-2 font-medium" style={{ color: colors.text.secondary }}>
-                    {review.reviewedPersonLocation.city}, {review.reviewedPersonLocation.state}
+                    {(() => {
+                      const loc = review.reviewedPersonLocation;
+                      if (loc && typeof loc === "object") {
+                        return `${loc.city || "Unknown"}, ${loc.state || ""}`;
+                      }
+                      return review.location || "Unknown Location";
+                    })()}
                   </Text>
                 </View>
                 <Text className="text-sm" style={{ color: colors.text.muted }}>
