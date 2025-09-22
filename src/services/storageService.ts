@@ -1,4 +1,4 @@
-import { supabase } from "../config/supabase";
+import supabase from "../config/supabase";
 import * as FileSystem from "expo-file-system/legacy";
 import * as ImagePicker from "expo-image-picker";
 import * as ImageManipulator from "expo-image-manipulator";

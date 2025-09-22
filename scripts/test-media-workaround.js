@@ -19,8 +19,6 @@ const requiredFiles = [
   "src/components/MediaPicker.tsx",
 ];
 
-let allFilesExist = true;
-
 requiredFiles.forEach((filePath, index) => {
   const fullPath = path.join(__dirname, "..", filePath);
   const exists = fs.existsSync(fullPath);
@@ -37,7 +35,6 @@ requiredFiles.forEach((filePath, index) => {
     console.log(`    Has PHPhotos Error Handling: ${hasPHPhotosError ? "✅ YES" : "❌ NO"}`);
   }
 
-  if (!exists) allFilesExist = false;
   console.log("");
 });
 

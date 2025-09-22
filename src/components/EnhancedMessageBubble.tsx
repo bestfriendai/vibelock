@@ -76,10 +76,11 @@ const EnhancedMessageBubble = React.forwardRef<View, Props>(
       onLongPress,
       onShowReactionPicker,
       onMediaPress,
-      // Optional pre-calculated grouping metadata
+      // Optional pre-calculated grouping metadata for performance optimization
       isFirstInGroup: preCalculatedIsFirst,
       isLastInGroup: preCalculatedIsLast,
       groupId,
+      // Performance optimization: visibility for lazy loading
       isVisible = true,
     },
     ref,

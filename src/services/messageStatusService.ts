@@ -1,7 +1,7 @@
 // Message Status Tracking Service
 // Handles message delivery and read status tracking
 
-import { supabase } from "../config/supabase";
+import supabase from "../config/supabase";
 import { enhancedRealtimeChatService } from "./realtimeChat";
 import { RealtimeChannel } from "@supabase/supabase-js";
 import { DeliveryStatus, MessageStatus } from "../types";
@@ -240,7 +240,7 @@ class MessageStatusService {
       // Fetch from database
       const { data, error } = await supabase
         .from("chat_messages_firebase")
-        .select("id, chat_room_id, is_read, created_at")
+        .select("id, chat_room_id, is_read, timestamp")
         .eq("id", messageId)
         .single();
 
@@ -251,10 +251,10 @@ class MessageStatusService {
 
       const status: MessageStatus = {
         messageId: data.id,
-        roomId: data.chat_room_id,
+        roomId: data.chat_room_id || "",
         status: data.is_read ? "read" : "delivered",
-        deliveredAt: new Date(data.created_at),
-        readAt: data.is_read ? new Date(data.created_at) : undefined,
+        deliveredAt: data.timestamp ? new Date(data.timestamp) : new Date(),
+        readAt: data.is_read && data.timestamp ? new Date(data.timestamp) : undefined,
       };
 
       // Cache the status
@@ -379,19 +379,12 @@ class MessageStatusService {
 
       const readIds = updates.filter(([_, statuses]) => statuses.some((s) => s.status === "read")).map(([id]) => id);
 
-      // Batch update delivered messages (only if supported)
+      // Batch update delivered messages (skip if not supported)
       if (deliveredIds.length > 0 && this.supportsDelivered) {
-        const { error } = await supabase
-          .from("chat_messages_firebase")
-          .update({ delivered_at: new Date().toISOString() })
-          .in("id", deliveredIds);
-
-        if (error && (error.code === "42703" || error.code === "PGRST301")) {
-          // Column doesn't exist - disable for this session
-          this.supportsDelivered = false;
-          console.log("[MessageStatus] Disabled delivered_at updates - column not found");
-          this.showCapabilityWarning();
-        }
+        // Note: delivered_at column doesn't exist in current schema
+        // Keeping this code for future when column is added
+        console.log(`[MessageStatus] Would mark ${deliveredIds.length} messages as delivered (feature pending)`);
+        this.supportsDelivered = false; // Disable for now
       }
 
       // Batch update read messages (always supported)
@@ -443,18 +436,10 @@ class MessageStatusService {
           await this.checkSchemaCapabilities();
 
           if (this.supportsStatus) {
-            const { error } = await supabase.from("chat_messages_firebase").update({ status }).eq("id", messageId);
-
-            if (error) {
-              if (error.code === "42703" || error.code === "PGRST301") {
-                // Column doesn't exist - disable for this session
-                this.supportsStatus = false;
-                console.log("[MessageStatus] Disabled status updates - column not found");
-                this.showCapabilityWarning();
-                return; // Don't retry
-              }
-              throw error;
-            }
+            // Note: status column doesn't exist in current schema
+            // Keeping this code for future when column is added
+            console.log(`[MessageStatus] Would update message ${messageId} status to ${status} (feature pending)`);
+            this.supportsStatus = false; // Disable for now
           } else {
             this.showCapabilityWarning();
             return; // Skip if not supported

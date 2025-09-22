@@ -10,14 +10,13 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  Alert,
   Switch,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { debounce } from "lodash";
 import { searchService } from "../services/search";
-import { MessageSearchResult, ChatRoom, SearchResult, SearchResults, MessageType } from "../types";
+import { MessageSearchResult, SearchResult, SearchResults, MessageType } from "../types";
 import useAuthStore from "../state/authStore";
 import { formatDistanceToNow } from "date-fns";
 import { useTheme } from "../providers/ThemeProvider";
@@ -60,7 +59,7 @@ export const MessageSearchModal: React.FC<MessageSearchModalProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [globalSearch, setGlobalSearch] = useState(!roomId);
   const [selectedDateFilter, setSelectedDateFilter] = useState<DateRangeFilter>(DATE_FILTERS[0]!);
-  const [selectedSender, setSelectedSender] = useState<string | null>(null);
+  const [selectedSender] = useState<string | null>(null);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -172,8 +171,8 @@ export const MessageSearchModal: React.FC<MessageSearchModalProps> = ({
         if (query.length > 2) {
           await saveRecentSearch(query);
         }
-      } catch (err) {
-        console.error("Search failed:", err);
+      } catch (error) {
+        console.error("Search failed:", error);
         setError("Failed to search messages. Please try again.");
         setSearchResults([]);
       } finally {

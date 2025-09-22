@@ -7,7 +7,7 @@ import {
   supabaseStorage,
   supabaseSearch,
 } from "../services/supabase";
-import { supabase } from "../config/supabase";
+import supabase from "../config/supabase";
 import { storageService } from "../services/storageService";
 import { enhancedRealtimeChatService } from "../services/realtimeChat";
 import { AppError, parseSupabaseError } from "./errorHandling";

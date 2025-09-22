@@ -5,7 +5,7 @@
  */
 
 import { RealtimeChannel, RealtimeChannelSendResponse } from "@supabase/supabase-js";
-import { supabase, trackConnection, getConnectionMetrics, checkRateLimit } from "../config/supabase";
+import supabase, { trackConnection, getConnectionMetrics, checkRateLimit } from "../config/supabase";
 import { AppError, ErrorType } from "../utils/errorHandling";
 import {
   validateSubscriptionState,
@@ -29,6 +29,11 @@ interface SubscriptionConfig {
   enablePerformanceTracking: boolean;
   memoryThreshold: number; // MB
   connectionPoolSize: number;
+  enableQuotaMonitoring?: boolean;
+  healthCheckInterval?: number;
+  enableConnectionSharing?: boolean;
+  quotaResetInterval?: number;
+  priorityQueueEnabled?: boolean;
 }
 
 interface SubscriptionInfo {
@@ -155,9 +160,9 @@ class RealtimeSubscriptionManager {
       onError?: (error: any) => void;
     },
   ): Promise<boolean> {
-    try {
-      const subscriptionKey = `${roomId}:${userId}`;
+    const subscriptionKey = `${roomId}:${userId}`;
 
+    try {
       // Validate subscription state before proceeding
       if (!validateSubscriptionState(subscriptionKey, this.subscriptions)) {
         const error = new AppError(
@@ -730,7 +735,7 @@ class RealtimeSubscriptionManager {
 
     for (const [key, subscription] of this.subscriptions.entries()) {
       // Skip if recently checked
-      if (now - subscription.lastHealthCheck < this.config.healthCheckInterval / 2) {
+      if (now - subscription.lastHealthCheck < (this.config.healthCheckInterval ?? 30000) / 2) {
         continue;
       }
 
@@ -782,7 +787,7 @@ class RealtimeSubscriptionManager {
   private updateQuotaUsage(): void {
     // Reset quota counter monthly
     const now = Date.now();
-    if (now - this.quotaMonitor.lastReset > this.config.quotaResetInterval) {
+    if (now - this.quotaMonitor.lastReset > (this.config.quotaResetInterval ?? 2592000000)) {
       this.quotaMonitor.messageCount = 0;
       this.quotaMonitor.lastReset = now;
       console.log(`[RealtimeManager] Quota counter reset`);

@@ -35,7 +35,7 @@ export default function CommentInput({
         if (onCancelReply) {
           onCancelReply();
         }
-      } catch {
+      } catch (error) {
         // Error handling is done in parent component
       }
     }

@@ -1,17 +1,38 @@
-import { supabase } from "../config/supabase";
+import supabase from "../config/supabase";
 import { Report } from "../types";
 import { mapFieldsToCamelCase, mapFieldsToSnakeCase } from "../utils/fieldMapping";
 import { withRetry } from "../utils/retryLogic";
 
+// Helper function to map database report to Report type
+function mapDbReportToReport(dbReport: any): Report {
+  const camelCase = mapFieldsToCamelCase(dbReport);
+  return {
+    ...camelCase,
+    createdAt: new Date(camelCase.createdAt),
+    reportedItemType: camelCase.reportedItemType as Report["reportedItemType"],
+    reason: camelCase.reason as Report["reason"],
+    status: camelCase.status as Report["status"],
+  } as Report;
+}
+
 export class ReportsService {
   async createReport(report: Partial<Report>): Promise<Report> {
     return withRetry(async () => {
-      const snakeCaseReport = mapFieldsToSnakeCase(report);
+      // Convert Date to string for database
+      const dbReport = {
+        ...report,
+        createdAt: report.createdAt ? report.createdAt.toISOString() : undefined,
+      };
+      const snakeCaseReport = mapFieldsToSnakeCase(dbReport);
 
-      const { data, error } = await supabase.from("reports").insert(snakeCaseReport).select().single();
+      const { data, error } = await supabase
+        .from("reports")
+        .insert(snakeCaseReport as any)
+        .select()
+        .single();
 
       if (error) throw error;
-      return mapFieldsToCamelCase(data);
+      return mapDbReportToReport(data);
     });
   }
 
@@ -24,7 +45,7 @@ export class ReportsService {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return (data || []).map(mapFieldsToCamelCase);
+      return (data || []).map(mapDbReportToReport);
     });
   }
 
@@ -45,7 +66,7 @@ export class ReportsService {
       throw error;
     }
 
-    return mapFieldsToCamelCase(data);
+    return mapDbReportToReport(data);
   }
 
   async getReportsByStatus(status: string, limit: number = 50): Promise<Report[]> {
@@ -57,7 +78,7 @@ export class ReportsService {
       .limit(limit);
 
     if (error) throw error;
-    return (data || []).map(mapFieldsToCamelCase);
+    return (data || []).map(mapDbReportToReport);
   }
 
   async deleteReport(reportId: string): Promise<void> {

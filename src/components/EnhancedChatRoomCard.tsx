@@ -116,6 +116,10 @@ export default function EnhancedChatRoomCard({
   return (
     <Animated.View style={animatedStyle}>
       <Pressable
+        accessible={true}
+        accessibilityRole="button"
+        accessibilityLabel={`Join ${room.name} chat room`}
+        accessibilityHint="Tap to enter the chat room and start messaging"
         onPress={handlePress}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}

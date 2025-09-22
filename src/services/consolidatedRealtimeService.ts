@@ -4,7 +4,7 @@
  * Replaces multiple overlapping services with one reliable implementation
  */
 
-import { supabase } from "../config/supabase";
+import supabase from "../config/supabase";
 import { ChatMessage, ChatMember, MessageEvent, TypingUser } from "../types";
 import { RealtimeChannel } from "@supabase/supabase-js";
 import { AppError, ErrorType } from "../utils/errorHandling";
@@ -115,8 +115,8 @@ class ConsolidatedRealtimeService {
       this.connectionCallbacks.forEach((callback) => {
         try {
           callback(status, error);
-        } catch (e) {
-          console.warn("Error in connection status callback:", e);
+        } catch (error) {
+          console.warn("Error in connection status callback:", error);
         }
       });
     }

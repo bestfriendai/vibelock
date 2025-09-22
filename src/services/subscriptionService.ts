@@ -1,4 +1,4 @@
-import { supabase } from "../config/supabase";
+import supabase from "../config/supabase";
 import { withRetry } from "../utils/retryLogic";
 import { mapFieldsToCamelCase, mapFieldsToSnakeCase } from "../utils/fieldMapping";
 

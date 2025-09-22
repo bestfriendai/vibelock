@@ -247,7 +247,7 @@ export function validateUrl(url: string): { isValid: boolean; sanitized: string;
     }
 
     return { isValid: true, sanitized: urlObj.toString() };
-  } catch {
+  } catch (error) {
     return { isValid: false, sanitized, error: "Invalid URL format" };
   }
 }

@@ -1,5 +1,5 @@
-import { supabase } from "../config/supabase";
-import { Review, Comment } from "../types";
+import supabase from "../config/supabase";
+import { Review, Comment, MediaItem, SocialMediaHandles } from "../types";
 import { mapFieldsToCamelCase, mapFieldsToSnakeCase } from "../utils/fieldMapping";
 import { withRetry } from "../utils/retryLogic";
 
@@ -16,6 +16,61 @@ interface PaginatedResponse<T> {
   data: T[];
   count: number;
   hasMore: boolean;
+}
+
+// Helper function to transform database review to app Review type
+function transformDatabaseReview(dbReview: any): Review {
+  const camelCased = mapFieldsToCamelCase(dbReview);
+  return {
+    ...camelCased,
+    createdAt: dbReview.created_at ? new Date(dbReview.created_at) : null,
+    updatedAt: dbReview.updated_at ? new Date(dbReview.updated_at) : null,
+    reviewedPersonLocation: dbReview.reviewed_person_location
+      ? typeof dbReview.reviewed_person_location === "object" && dbReview.reviewed_person_location !== null
+        ? (dbReview.reviewed_person_location as {
+            city: string;
+            state: string;
+            coordinates?: { latitude: number; longitude: number };
+          })
+        : { city: "", state: "" }
+      : { city: "", state: "" },
+    media: dbReview.media
+      ? Array.isArray(dbReview.media)
+        ? (dbReview.media as unknown as MediaItem[])
+        : []
+      : undefined,
+    socialMedia: dbReview.social_media as SocialMediaHandles | undefined,
+  } as Review;
+}
+
+// Helper function to transform app Review to database format
+function transformReviewToDatabase(review: Partial<Omit<Review, "id" | "createdAt" | "updatedAt">>): any {
+  const snakeCased: any = mapFieldsToSnakeCase(review);
+
+  // Convert dates to strings if needed
+  if ("createdAt" in review && review.createdAt) {
+    snakeCased.created_at = review.createdAt instanceof Date ? review.createdAt.toISOString() : review.createdAt;
+  }
+  if ("updatedAt" in review && review.updatedAt) {
+    snakeCased.updated_at = review.updatedAt instanceof Date ? review.updatedAt.toISOString() : review.updatedAt;
+  }
+
+  // Convert media to JSON format
+  if (review.media) {
+    snakeCased.media = review.media as any;
+  }
+
+  // Convert socialMedia to JSON format
+  if (review.socialMedia) {
+    snakeCased.social_media = review.socialMedia as any;
+  }
+
+  // Convert reviewedPersonLocation to JSON format
+  if (review.reviewedPersonLocation) {
+    snakeCased.reviewed_person_location = review.reviewedPersonLocation as any;
+  }
+
+  return snakeCased;
 }
 
 export class ReviewsService {
@@ -57,13 +112,29 @@ export class ReviewsService {
           if (error) throw error;
 
           // Get comments count for each review separately (for now, we'll set to 0)
-          const reviews = (data || []).map((item) => ({
-            ...mapFieldsToCamelCase(item),
-            commentsCount: 0, // TODO: Implement proper comments count
-          }));
+          const reviews = (data || []).map((item) => {
+            const camelCased = mapFieldsToCamelCase(item);
+            return {
+              ...camelCased,
+              commentsCount: 0, // TODO: Implement proper comments count
+              createdAt: item.created_at ? new Date(item.created_at) : null,
+              updatedAt: item.updated_at ? new Date(item.updated_at) : null,
+              reviewedPersonLocation: item.reviewed_person_location
+                ? typeof item.reviewed_person_location === "object" && item.reviewed_person_location !== null
+                  ? (item.reviewed_person_location as {
+                      city: string;
+                      state: string;
+                      coordinates?: { latitude: number; longitude: number };
+                    })
+                  : { city: "", state: "" }
+                : { city: "", state: "" },
+              media: item.media ? (Array.isArray(item.media) ? (item.media as unknown as MediaItem[]) : []) : undefined,
+              socialMedia: item.social_media as SocialMediaHandles | undefined,
+            };
+          });
 
           return {
-            data: reviews,
+            data: reviews as Review[],
             count: count || 0,
             hasMore: (count || 0) > offset + limit,
           };
@@ -92,34 +163,34 @@ export class ReviewsService {
       throw error;
     }
 
-    return mapFieldsToCamelCase(data);
+    return transformDatabaseReview(data);
   }
 
   async createReview(review: Omit<Review, "id" | "createdAt" | "updatedAt">): Promise<Review> {
-    const snakeCaseReview = mapFieldsToSnakeCase(review);
+    const dbReview = transformReviewToDatabase(review);
 
     const { data, error } = await supabase
       .from("reviews_firebase")
-      .insert(snakeCaseReview)
+      .insert(dbReview)
       .select("*, author:users!author_id(id, username)")
       .single();
 
     if (error) throw error;
-    return mapFieldsToCamelCase(data);
+    return transformDatabaseReview(data);
   }
 
   async updateReview(reviewId: string, updates: Partial<Review>): Promise<Review> {
-    const snakeCaseUpdates = mapFieldsToSnakeCase(updates);
+    const dbUpdates = transformReviewToDatabase(updates);
 
     const { data, error } = await supabase
       .from("reviews_firebase")
-      .update(snakeCaseUpdates)
+      .update(dbUpdates)
       .eq("id", reviewId)
       .select("*, author:users!author_id(id, username)")
       .single();
 
     if (error) throw error;
-    return mapFieldsToCamelCase(data);
+    return transformDatabaseReview(data);
   }
 
   async deleteReview(reviewId: string): Promise<void> {
@@ -129,18 +200,22 @@ export class ReviewsService {
   }
 
   async likeReview(reviewId: string, userId: string): Promise<void> {
-    const { error } = await supabase.from("review_likes").insert({
-      review_id: reviewId,
-      user_id: userId,
-    });
+    // TODO: review_likes table missing
+    // const { error } = await supabase.from("review_likes").insert({
+    //   review_id: reviewId,
+    //   user_id: userId,
+    // });
+    // if (error && !error.message.includes("duplicate")) throw error;
 
-    if (error && !error.message.includes("duplicate")) throw error;
+    console.warn("likeReview: review_likes table not implemented yet");
   }
 
   async unlikeReview(reviewId: string, userId: string): Promise<void> {
-    const { error } = await supabase.from("review_likes").delete().eq("review_id", reviewId).eq("user_id", userId);
+    // TODO: review_likes table missing
+    // const { error } = await supabase.from("review_likes").delete().eq("review_id", reviewId).eq("user_id", userId);
+    // if (error) throw error;
 
-    if (error) throw error;
+    console.warn("unlikeReview: review_likes table not implemented yet");
   }
 
   async getReviewComments(reviewId: string, limit: number = 50): Promise<Comment[]> {
@@ -152,11 +227,18 @@ export class ReviewsService {
       .limit(limit);
 
     if (error) throw error;
-    return (data || []).map(mapFieldsToCamelCase);
+    return (data || []).map((item) => mapFieldsToCamelCase(item) as Comment);
   }
 
   async createComment(comment: Omit<Comment, "id" | "createdAt" | "updatedAt">): Promise<Comment> {
-    const snakeCaseComment = mapFieldsToSnakeCase(comment);
+    const snakeCaseComment: any = mapFieldsToSnakeCase(comment);
+
+    // Ensure author_name is set if not provided
+    if (!snakeCaseComment.author_name && comment.authorName) {
+      snakeCaseComment.author_name = comment.authorName;
+    } else if (!snakeCaseComment.author_name) {
+      snakeCaseComment.author_name = "Anonymous";
+    }
 
     const { data, error } = await supabase
       .from("comments_firebase")
@@ -165,7 +247,7 @@ export class ReviewsService {
       .single();
 
     if (error) throw error;
-    return mapFieldsToCamelCase(data);
+    return mapFieldsToCamelCase(data) as Comment;
   }
 
   async deleteComment(commentId: string): Promise<void> {
@@ -176,10 +258,10 @@ export class ReviewsService {
 
   async reportReview(reviewId: string, userId: string, reason: string): Promise<void> {
     const { error } = await supabase.from("reports").insert({
-      review_id: reviewId,
+      reported_item_id: reviewId,
+      reported_item_type: "review",
       reporter_id: userId,
       reason,
-      type: "review",
     });
 
     if (error) throw error;

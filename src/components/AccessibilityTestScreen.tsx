@@ -6,7 +6,7 @@ import { useTheme } from "../providers/ThemeProvider";
 import useThemeStore from "../state/themeStore";
 
 export const AccessibilityTestScreen: React.FC = () => {
-  const { colors, isDarkMode, isHighContrast, toggleHighContrast } = useTheme();
+  const { colors, isHighContrast, toggleHighContrast } = useTheme();
   const { theme, setTheme } = useThemeStore();
   const [testResults, setTestResults] = useState<string[]>([]);
 

@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { mmkvStorage } from "../utils/mmkvStorage";
+import * as SecureStore from "expo-secure-store";
 import { Alert } from "react-native";
 import { v4 as uuidv4 } from "uuid";
 import { User } from "../types";
@@ -278,8 +279,14 @@ const useAuthStore = create<AuthStore>()(
         } catch (error) {
           console.error("Registration error details:", error);
           console.error("Error type:", typeof error);
-          console.error("Error message:", error && typeof error === 'object' && 'message' in error ? (error as any).message : 'Unknown error');
-          console.error("Error stack:", error && typeof error === 'object' && 'stack' in error ? (error as any).stack : 'No stack trace');
+          console.error(
+            "Error message:",
+            error && typeof error === "object" && "message" in error ? (error as any).message : "Unknown error",
+          );
+          console.error(
+            "Error stack:",
+            error && typeof error === "object" && "stack" in error ? (error as any).stack : "No stack trace",
+          );
 
           const appError = error instanceof AppError ? error : parseSupabaseError(error);
 
@@ -291,7 +298,7 @@ const useAuthStore = create<AuthStore>()(
 
           // Show specific error dialog with more details in development
           const errorMessage = __DEV__
-            ? `${appError.userMessage}\n\nDev Info: ${error && typeof error === 'object' && 'message' in error ? (error as any).message : "Unknown error"}`
+            ? `${appError.userMessage}\n\nDev Info: ${error && typeof error === "object" && "message" in error ? (error as any).message : "Unknown error"}`
             : appError.userMessage;
 
           Alert.alert("Registration Failed", errorMessage, [{ text: "OK", style: "default" }]);
@@ -491,7 +498,7 @@ const useAuthStore = create<AuthStore>()(
         initializeSession();
 
         // Set up the auth state change listener with proper synchronization
-        const subscription = authService.onAuthStateChange(async (session) => {
+        const subscription = authService.onAuthStateChange(async (event, session) => {
           const supabaseUser = session?.user;
 
           console.log("🔄 Auth state change triggered:", {
@@ -656,7 +663,7 @@ const useAuthStore = create<AuthStore>()(
             isAuthenticated: !!ps.isAuthenticated,
             isGuestMode: !!ps.isGuestMode,
           };
-        } catch {
+        } catch (error) {
           return { user: null, isAuthenticated: false, isGuestMode: false };
         }
       },

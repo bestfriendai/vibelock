@@ -3,7 +3,7 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import { mmkvStorage } from "../utils/mmkvStorage";
 import { ReviewComment, CommentState } from "../types";
 import { supabaseReviews } from "../services/supabase";
-import { supabase } from "../config/supabase";
+import supabase from "../config/supabase";
 import { RealtimeChannel } from "@supabase/supabase-js";
 import { notificationService } from "../services/notificationService";
 import useAuthStore from "./authStore";
@@ -433,7 +433,7 @@ const useCommentsStore = create<CommentsStore>()(
             commentThreads: ps.commentThreads ?? {},
             mediaComments: ps.mediaComments ?? {},
           };
-        } catch {
+        } catch (error) {
           return { comments: {}, commentThreads: {}, mediaComments: {} };
         }
       },

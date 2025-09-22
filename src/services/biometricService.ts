@@ -152,7 +152,7 @@ class BiometricService {
   async hasHardware(): Promise<boolean> {
     try {
       return await LocalAuthentication.hasHardwareAsync();
-    } catch {
+    } catch (error) {
       return false;
     }
   }
@@ -163,7 +163,7 @@ class BiometricService {
   async isEnrolled(): Promise<boolean> {
     try {
       return await LocalAuthentication.isEnrolledAsync();
-    } catch {
+    } catch (error) {
       return false;
     }
   }

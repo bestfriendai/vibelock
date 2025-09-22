@@ -269,7 +269,7 @@ export default function LocationSelector({ currentLocation, onLocationChange }: 
         setLocationError("Unable to determine your location");
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       }
-    } catch {
+    } catch (error) {
       setLocationError("Error getting your location");
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {

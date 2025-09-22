@@ -1,7 +1,7 @@
 import { canUseAdMob } from "../utils/buildEnvironment";
 import { ADMOB_CONFIG, getAdUnitId } from "../config/admobConfig";
 import { subscriptionService } from "./subscriptionService";
-import { supabase } from "../config/supabase";
+import supabase from "../config/supabase";
 import { gdprConsentService } from "./gdprConsentService";
 
 // Mock types for Expo Go
@@ -377,7 +377,7 @@ class AdMobService {
 
     try {
       return getAdUnitId("BANNER") || "ca-app-pub-3940256099942544/6300978111";
-    } catch {
+    } catch (error) {
       return "ca-app-pub-3940256099942544/6300978111";
     }
   }
@@ -389,7 +389,7 @@ class AdMobService {
 
     try {
       return getAdUnitId("INTERSTITIAL") || "ca-app-pub-3940256099942544/1033173712";
-    } catch {
+    } catch (error) {
       return "ca-app-pub-3940256099942544/1033173712";
     }
   }
@@ -401,7 +401,7 @@ class AdMobService {
 
     try {
       return getAdUnitId("APP_OPEN") || "ca-app-pub-3940256099942544/5662855259";
-    } catch {
+    } catch (error) {
       return "ca-app-pub-3940256099942544/5662855259";
     }
   }

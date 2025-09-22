@@ -137,10 +137,12 @@ export interface College {
   coordinates?: {
     latitude: number;
     longitude: number;
-  };
-  institution_type: "university" | "college" | "community_college" | "trade_school";
-  alias?: string;
-  scorecard_id?: number;
+  } | null;
+  institution_type?: string | null;
+  alias?: string | null;
+  scorecard_id?: number | null;
+  created_at?: string | null;
+  updated_at?: string | null;
 }
 
 export interface CollegeSearchResult {
@@ -193,12 +195,12 @@ export async function searchColleges(query: string, limit: number = 10): Promise
     // If the query looks like an abbreviation (2-6 uppercase letters), also search by abbreviation
     if (/^[A-Z]{2,6}$/.test(queryUpper)) {
       // Filter results to include abbreviation matches
-      const abbreviationMatches = data.filter((college) => matchesAbbreviation(queryUpper, college.name));
+      const abbreviationMatches = data.filter((college: any) => matchesAbbreviation(queryUpper, college.name));
 
       // If we found abbreviation matches, prioritize them
       if (abbreviationMatches.length > 0) {
         // Combine abbreviation matches with regular matches, prioritizing abbreviations
-        const regularMatches = data.filter((college) => !matchesAbbreviation(queryUpper, college.name));
+        const regularMatches = data.filter((college: any) => !matchesAbbreviation(queryUpper, college.name));
         results = [...abbreviationMatches, ...regularMatches];
       }
     }
@@ -208,7 +210,7 @@ export async function searchColleges(query: string, limit: number = 10): Promise
 
     // Transform to search result format
     return results.map(
-      (college): CollegeSearchResult => ({
+      (college: any): CollegeSearchResult => ({
         id: college.id,
         name: college.name,
         city: college.city,
@@ -218,16 +220,28 @@ export async function searchColleges(query: string, limit: number = 10): Promise
         institutionType: college.institution_type,
         coordinates: college.coordinates
           ? {
-              latitude: typeof college.coordinates === 'object' && college.coordinates !== null && 'latitude' in college.coordinates
-                ? (college.coordinates as any).latitude
-                : typeof college.coordinates === 'object' && college.coordinates !== null && Array.isArray(college.coordinates) && college.coordinates.length >= 2
-                ? college.coordinates[1]
-                : 0,
-              longitude: typeof college.coordinates === 'object' && college.coordinates !== null && 'longitude' in college.coordinates
-                ? (college.coordinates as any).longitude
-                : typeof college.coordinates === 'object' && college.coordinates !== null && Array.isArray(college.coordinates) && college.coordinates.length >= 2
-                ? college.coordinates[0]
-                : 0,
+              latitude:
+                typeof college.coordinates === "object" &&
+                college.coordinates !== null &&
+                "latitude" in college.coordinates
+                  ? (college.coordinates as any).latitude
+                  : typeof college.coordinates === "object" &&
+                      college.coordinates !== null &&
+                      Array.isArray(college.coordinates) &&
+                      college.coordinates.length >= 2
+                    ? college.coordinates[1]
+                    : 0,
+              longitude:
+                typeof college.coordinates === "object" &&
+                college.coordinates !== null &&
+                "longitude" in college.coordinates
+                  ? (college.coordinates as any).longitude
+                  : typeof college.coordinates === "object" &&
+                      college.coordinates !== null &&
+                      Array.isArray(college.coordinates) &&
+                      college.coordinates.length >= 2
+                    ? college.coordinates[0]
+                    : 0,
             }
           : undefined,
       }),
@@ -255,7 +269,15 @@ export async function getCollegesByState(state: string, limit: number = 50): Pro
       return [];
     }
 
-    return data || [];
+    return (data || []).map((college) => ({
+      ...college,
+      coordinates: college.coordinates
+        ? typeof college.coordinates === "object" && college.coordinates !== null
+          ? (college.coordinates as { latitude: number; longitude: number })
+          : null
+        : null,
+      institution_type: college.institution_type,
+    })) as College[];
   } catch (error) {
     console.warn("Error in getCollegesByState:", error);
     return [];
@@ -274,7 +296,17 @@ export async function getCollegeById(id: string): Promise<College | null> {
       return null;
     }
 
-    return data;
+    if (!data) return null;
+
+    return {
+      ...data,
+      coordinates: data.coordinates
+        ? typeof data.coordinates === "object" && data.coordinates !== null
+          ? (data.coordinates as { latitude: number; longitude: number })
+          : null
+        : null,
+      institution_type: data.institution_type,
+    } as College;
   } catch (error) {
     console.warn("Error in getCollegeById:", error);
     return null;
@@ -299,7 +331,15 @@ export async function getPopularColleges(institutionType?: string, limit: number
       return [];
     }
 
-    return data || [];
+    return (data || []).map((college) => ({
+      ...college,
+      coordinates: college.coordinates
+        ? typeof college.coordinates === "object" && college.coordinates !== null
+          ? (college.coordinates as { latitude: number; longitude: number })
+          : null
+        : null,
+      institution_type: college.institution_type,
+    })) as College[];
   } catch (error) {
     console.warn("Error in getPopularColleges:", error);
     return [];

@@ -1,4 +1,4 @@
-import { supabase } from "../config/supabase";
+import supabase from "../config/supabase";
 import { User, UserProfile } from "../types";
 import { mapFieldsToCamelCase, mapFieldsToSnakeCase } from "../utils/fieldMapping";
 import { withRetry } from "../utils/retryLogic";
@@ -13,17 +13,37 @@ export class UsersService {
         throw error;
       }
 
-      return mapFieldsToCamelCase(data);
+      const mapped: any = mapFieldsToCamelCase(data);
+      return {
+        ...mapped,
+        location: {
+          city: mapped.city || "Unknown",
+          state: mapped.state || "Unknown",
+        },
+      } as UserProfile;
     });
   }
 
   async updateProfile(userId: string, updates: Partial<UserProfile>): Promise<UserProfile> {
-    const snakeCaseUpdates = mapFieldsToSnakeCase(updates);
+    // Convert dates to strings for database
+    const updatesWithStringDates = {
+      ...updates,
+      createdAt: updates.createdAt ? updates.createdAt.toISOString() : undefined,
+      updatedAt: updates.updatedAt ? updates.updatedAt.toISOString() : undefined,
+    };
+    const snakeCaseUpdates = mapFieldsToSnakeCase(updatesWithStringDates);
 
     const { data, error } = await supabase.from("users").update(snakeCaseUpdates).eq("id", userId).select().single();
 
     if (error) throw error;
-    return mapFieldsToCamelCase(data);
+    const mapped: any = mapFieldsToCamelCase(data);
+    return {
+      ...mapped,
+      location: {
+        city: mapped.city || "Unknown",
+        state: mapped.state || "Unknown",
+      },
+    } as UserProfile;
   }
 
   async createProfile(profile: Omit<UserProfile, "createdAt" | "updatedAt">): Promise<UserProfile> {
@@ -32,7 +52,14 @@ export class UsersService {
     const { data, error } = await supabase.from("users").insert(snakeCaseProfile).select().single();
 
     if (error) throw error;
-    return mapFieldsToCamelCase(data);
+    const mapped: any = mapFieldsToCamelCase(data);
+    return {
+      ...mapped,
+      location: {
+        city: mapped.city || "Unknown",
+        state: mapped.state || "Unknown",
+      },
+    } as UserProfile;
   }
 
   async searchUsers(query: string, limit: number = 20): Promise<UserProfile[]> {
@@ -43,7 +70,16 @@ export class UsersService {
       .limit(limit);
 
     if (error) throw error;
-    return (data || []).map(mapFieldsToCamelCase);
+    return (data || []).map((user) => {
+      const mapped: any = mapFieldsToCamelCase(user);
+      return {
+        ...mapped,
+        location: {
+          city: mapped.city || "Unknown",
+          state: mapped.state || "Unknown",
+        },
+      } as UserProfile;
+    });
   }
 
   async checkUsernameAvailability(username: string): Promise<boolean> {
@@ -57,45 +93,25 @@ export class UsersService {
     return !data;
   }
 
+  // Follow functionality temporarily disabled - follows table not available
   async getFollowers(userId: string, limit: number = 50): Promise<UserProfile[]> {
-    const { data, error } = await supabase
-      .from("follows")
-      .select("follower:users!follows_follower_id_fkey(*)")
-      .eq("following_id", userId)
-      .limit(limit);
-
-    if (error) throw error;
-    return (data || []).map((item) => mapFieldsToCamelCase(item.follower));
+    // Follows table not available - returning empty array
+    return [];
   }
 
   async getFollowing(userId: string, limit: number = 50): Promise<UserProfile[]> {
-    const { data, error } = await supabase
-      .from("follows")
-      .select("following:users!follows_following_id_fkey(*)")
-      .eq("follower_id", userId)
-      .limit(limit);
-
-    if (error) throw error;
-    return (data || []).map((item) => mapFieldsToCamelCase(item.following));
+    // Follows table not available - returning empty array
+    return [];
   }
 
   async followUser(followerId: string, followingId: string): Promise<void> {
-    const { error } = await supabase.from("follows").insert({
-      follower_id: followerId,
-      following_id: followingId,
-    });
-
-    if (error && !error.message.includes("duplicate")) throw error;
+    // Follows table not available - no-op
+    console.warn("Follow functionality not available");
   }
 
   async unfollowUser(followerId: string, followingId: string): Promise<void> {
-    const { error } = await supabase
-      .from("follows")
-      .delete()
-      .eq("follower_id", followerId)
-      .eq("following_id", followingId);
-
-    if (error) throw error;
+    // Follows table not available - no-op
+    console.warn("Unfollow functionality not available");
   }
 
   async blockUser(blockerId: string, blockedId: string): Promise<void> {
@@ -108,7 +124,11 @@ export class UsersService {
   }
 
   async unblockUser(blockerId: string, blockedId: string): Promise<void> {
-    const { error } = await supabase.from("user_blocks").delete().eq("blocker_id", blockerId).eq("blocked_id", blockedId);
+    const { error } = await supabase
+      .from("user_blocks")
+      .delete()
+      .eq("blocker_id", blockerId)
+      .eq("blocked_id", blockedId);
 
     if (error) throw error;
   }

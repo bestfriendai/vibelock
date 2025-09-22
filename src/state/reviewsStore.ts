@@ -69,6 +69,7 @@ interface ReviewsActions {
     refresh?: boolean,
     overrideLocation?: { city: string; state: string; coordinates?: { latitude: number; longitude: number } },
   ) => Promise<void>;
+  loadReview: (id: string) => Promise<Review | null>;
   createReview: (data: {
     reviewedPersonName: string;
     reviewedPersonLocation: { city: string; state: string };
@@ -146,6 +147,31 @@ const useReviewsStore = create<ReviewsStore>()(
         set({ error: null });
       },
 
+      loadReview: async (id: string): Promise<Review | null> => {
+        try {
+          console.log("🐛 loadReview called with id:", id);
+
+          if (__DEV__) {
+            console.log("🧭 Loading review by ID:", id);
+          }
+
+          // Use reviewsService to get the specific review
+          const result = await reviewsService.getReview(id);
+
+          if (__DEV__) {
+            console.log("✅ Review loaded successfully:", result ? "Found" : "Not found");
+          }
+
+          return result;
+        } catch (error) {
+          console.warn("💥 Failed to load review:", error);
+          const appError = error instanceof AppError ? error : parseSupabaseError(error);
+
+          // Don't update store error state for individual review loading failures
+          throw appError;
+        }
+      },
+
       loadReviews: async (
         refresh = false,
         overrideLocation?: { city: string; state: string; coordinates?: { latitude: number; longitude: number } },
@@ -180,7 +206,7 @@ const useReviewsStore = create<ReviewsStore>()(
             if (!overrideLocation) {
               userLocation = authStore.user?.location;
             }
-          } catch {
+          } catch (error) {
             userPrefCategory = undefined;
             if (!overrideLocation) {
               userLocation = undefined;
@@ -306,7 +332,7 @@ const useReviewsStore = create<ReviewsStore>()(
 
                 // Sort by creation date (most recent first) after distance filtering
                 newReviews = distanceFiltered.sort(
-                  (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+                  (a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime(),
                 );
 
                 if (__DEV__) {
@@ -429,7 +455,7 @@ const useReviewsStore = create<ReviewsStore>()(
 
           // Upload media files to Supabase Storage if they are local files
           const uploadedMedia: MediaItem[] = [];
-          const mediaUploads: { failed?: Array<{ index: number; type: string; uri: string; error: string }> } = {};
+          const mediaUploads: { failed?: { index: number; type: string; uri: string; error: string }[] } = {};
           console.log(`🚀 Starting media upload process for ${data.media.length} items`);
 
           for (const [index, mediaItem] of data.media.entries()) {
@@ -488,7 +514,7 @@ const useReviewsStore = create<ReviewsStore>()(
                 });
 
                 // Clean up manipulated image uri if it's temp
-                if (processedUri.startsWith(FileSystem.cacheDirectory)) {
+                if (processedUri.startsWith(FileSystem.cacheDirectory || "")) {
                   await FileSystem.deleteAsync(processedUri, { idempotent: true }).catch(console.warn);
                 }
               } else if (mediaItem.type === "video") {
@@ -638,7 +664,7 @@ const useReviewsStore = create<ReviewsStore>()(
         try {
           const review = get().reviews.find((r) => r.id === id);
           if (review) {
-            const newLikeCount = review.likeCount + 1;
+            const newLikeCount = (review.likeCount || 0) + 1;
 
             // Update in database
             await reviewsService.updateReview(id, { likeCount: newLikeCount });
@@ -697,7 +723,7 @@ const useReviewsStore = create<ReviewsStore>()(
             reviews: Array.isArray(ps.reviews) ? ps.reviews : [],
             filters: ps.filters ?? { category: "all", radius: 50, sortBy: "recent" },
           };
-        } catch {
+        } catch (error) {
           return { reviews: [], filters: { category: "all", radius: 50, sortBy: "recent" } };
         }
       },
@@ -710,7 +736,7 @@ const useReviewsStore = create<ReviewsStore>()(
 
           // Remove reviews older than a month
           state.reviews = state.reviews.filter((review) => {
-            return new Date(review.createdAt).getTime() > oneMonthAgo;
+            return new Date(review.createdAt || 0).getTime() > oneMonthAgo;
           });
 
           if (__DEV__) {

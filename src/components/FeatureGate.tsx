@@ -3,7 +3,7 @@ import { View, Text, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import useSubscriptionStore from "../state/subscriptionStore";
 import { PaywallAdaptive } from "./subscription/PaywallAdaptive";
-import { supabase } from "../config/supabase";
+import supabase from "../config/supabase";
 
 interface FeatureGateProps {
   feature: "premium" | "pro";

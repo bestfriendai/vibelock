@@ -98,30 +98,30 @@ class GDPRConsentService {
       // For now, we'll use a simple implementation
 
       // Check if Google UMP is available
-      const { AdsConsent } = await import("react-native-google-mobile-ads");
+      const { AdsConsent, AdsConsentDebugGeography, AdsConsentStatus } = await import("react-native-google-mobile-ads");
 
       // Request consent information update
       const consentInfo = await AdsConsent.requestInfoUpdate({
-        debugGeography: __DEV__ ? AdsConsent.DebugGeography.EEA : undefined,
+        debugGeography: __DEV__ ? AdsConsentDebugGeography.EEA : undefined,
         testDeviceIdentifiers: __DEV__ ? ["TEST_DEVICE_ID"] : undefined,
       });
 
       // Check if consent is required
-      if (consentInfo.status === AdsConsent.ConsentStatus.REQUIRED) {
+      if (consentInfo.status === AdsConsentStatus.REQUIRED) {
         // Load and show consent form
-        const { isLoaded } = await AdsConsent.loadAndShowConsentFormIfRequired();
+        const formResult = await AdsConsent.loadAndShowConsentFormIfRequired();
 
-        if (isLoaded) {
+        if (formResult) {
           // Get updated consent status
           const updatedInfo = await AdsConsent.getConsentInfo();
-          const hasConsent = updatedInfo.status === AdsConsent.ConsentStatus.OBTAINED;
+          const hasConsent = updatedInfo.status === AdsConsentStatus.OBTAINED;
 
           this.consentStatus = hasConsent ? "obtained" : "denied";
           await this.storeConsentStatus();
 
           return hasConsent;
         }
-      } else if (consentInfo.status === AdsConsent.ConsentStatus.NOT_REQUIRED) {
+      } else if (consentInfo.status === AdsConsentStatus.NOT_REQUIRED) {
         this.consentStatus = "not_required";
         await this.storeConsentStatus();
         return true;

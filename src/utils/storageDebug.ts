@@ -1,5 +1,5 @@
 // Storage debugging utilities
-import { supabase } from "../config/supabase";
+import supabase from "../config/supabase";
 
 // Quick test function you can call from anywhere in your app
 export const quickStorageTest = async () => {

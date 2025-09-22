@@ -4,7 +4,7 @@
  * Replaces direct API key usage in client bundle
  */
 
-import { supabase } from "../config/supabase";
+import supabase from "../config/supabase";
 import { AppError, ErrorType } from "../utils/errorHandling";
 
 interface AIRequest {

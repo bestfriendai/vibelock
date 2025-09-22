@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import useSubscriptionStore from "../state/subscriptionStore";
 import { subscriptionService } from "../services/subscriptionService";
-import { supabase } from "../config/supabase";
+import supabase from "../config/supabase";
 
 export interface SubscriptionStatus {
   isPremium: boolean;
@@ -127,9 +127,9 @@ export const useSubscriptionAnalytics = (startDate?: Date, endDate?: Date) => {
         setError(null);
         const data = await subscriptionService.getSubscriptionAnalytics(startDate, endDate);
         setAnalytics(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to fetch analytics");
-        console.error("Failed to fetch subscription analytics:", err);
+      } catch (error) {
+        setError(error instanceof Error ? error.message : "Failed to fetch analytics");
+        console.error("Failed to fetch subscription analytics:", error);
       } finally {
         setLoading(false);
       }

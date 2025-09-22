@@ -585,9 +585,8 @@ export const checkNetworkStatus = async (): Promise<boolean> => {
 
     const response = await fetch(checkUrl, {
       method: "HEAD",
-      // @ts-ignore - timeout is supported in React Native
-      timeout: 5000,
-    });
+      ...(typeof AbortController !== "undefined" ? { signal: AbortSignal.timeout(5000) } : {}),
+    } as RequestInit);
 
     const isOnline = response.ok || response.status === 204;
 

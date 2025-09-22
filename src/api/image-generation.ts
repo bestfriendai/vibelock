@@ -48,7 +48,7 @@ export async function generateImage(
       let errorData;
       try {
         errorData = await response.json();
-      } catch {
+      } catch (error) {
         errorData = { message: "Unknown error" };
       }
       const safeError = errorData || { message: "Unknown error" };
@@ -59,7 +59,7 @@ export async function generateImage(
     let result;
     try {
       result = await response.json();
-    } catch {
+    } catch (error) {
       throw new Error("Failed to parse API response");
     }
 

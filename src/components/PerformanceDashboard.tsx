@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, Pressable, ScrollView, Platform } from "react-native";
+import { View, Text, Pressable, ScrollView } from "react-native";
 import { performanceMonitor } from "../utils/performance";
 import { memoryManager } from "../services/memoryManager";
 import { messageVirtualizer } from "../services/messageVirtualizer";
@@ -15,7 +15,6 @@ export default function PerformanceDashboard({ visible = __DEV__, onClose }: Per
   const [metrics, setMetrics] = useState<any>({});
   const [memoryReport, setMemoryReport] = useState<any>({});
   const [isExpanded, setIsExpanded] = useState(false);
-  const [refreshInterval, setRefreshInterval] = useState<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (!visible) return;
@@ -43,7 +42,6 @@ export default function PerformanceDashboard({ visible = __DEV__, onClose }: Per
 
     // Set up refresh interval
     const interval = setInterval(updateMetrics, 1000);
-    setRefreshInterval(interval);
 
     return () => {
       if (interval) clearInterval(interval);
@@ -51,12 +49,6 @@ export default function PerformanceDashboard({ visible = __DEV__, onClose }: Per
   }, [visible]);
 
   if (!visible || !__DEV__) return null;
-
-  const getStatusColor = (value: number, threshold: number): string => {
-    if (value > threshold * 1.5) return "#ff4444";
-    if (value > threshold) return "#ffaa00";
-    return "#44ff44";
-  };
 
   const formatMemory = (bytes: number): string => {
     const mb = bytes / (1024 * 1024);

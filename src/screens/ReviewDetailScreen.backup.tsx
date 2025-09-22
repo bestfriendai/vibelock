@@ -350,7 +350,9 @@ export default function ReviewDetailScreen() {
                     {review.reviewedPersonLocation.city}, {review.reviewedPersonLocation.state}
                   </Text>
                 </View>
-                <Text className="text-text-muted text-sm">{formatTimeAgo(review.createdAt)}</Text>
+                <Text className="text-text-muted text-sm">
+                  {review.createdAt ? formatTimeAgo(review.createdAt) : ""}
+                </Text>
               </View>
 
               {/* Posted by */}
@@ -391,13 +393,13 @@ export default function ReviewDetailScreen() {
               </View>
 
               {/* Flags Section */}
-              {(review.greenFlags.length > 0 || review.redFlags.length > 0) && (
+              {((review.greenFlags?.length ?? 0) > 0 || (review.redFlags?.length ?? 0) > 0) && (
                 <View className="mb-6">
                   <Text className="text-text-secondary text-sm font-medium mb-3 uppercase tracking-wide">
                     Highlights
                   </Text>
                   <View className="flex-row flex-wrap gap-2">
-                    {review.greenFlags.map((flag: string) => (
+                    {(review.greenFlags || []).map((flag: string) => (
                       <View
                         key={flag}
                         className="bg-green-500/20 border border-green-500/30 px-3 py-2 rounded-full flex-row items-center"
@@ -406,7 +408,7 @@ export default function ReviewDetailScreen() {
                         <Text className="text-green-400 text-sm font-medium ml-1">{flag.replace("_", " ")}</Text>
                       </View>
                     ))}
-                    {review.redFlags.map((flag: string) => (
+                    {(review.redFlags || []).map((flag: string) => (
                       <View
                         key={flag}
                         className="bg-brand-red/20 border border-brand-red/30 px-3 py-2 rounded-full flex-row items-center"
@@ -436,7 +438,9 @@ export default function ReviewDetailScreen() {
 
               {/* Review Date */}
               <View className="items-center">
-                <Text className="text-text-muted text-xs">Posted on {formatDate(review.createdAt)}</Text>
+                <Text className="text-text-muted text-xs">
+                  Posted on {review.createdAt ? formatDate(review.createdAt) : ""}
+                </Text>
               </View>
             </View>
 

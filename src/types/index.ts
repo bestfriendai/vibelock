@@ -104,8 +104,8 @@ export type ReviewCategory = "all" | "men" | "women" | "lgbtq+";
 
 export interface Review {
   id: string;
-  // The authenticated user who authored the review
-  authorId: string;
+  // The authenticated user who authored the review - nullable in DB
+  authorId: string | null;
   reviewerAnonymousId: string;
   reviewedPersonName: string;
   reviewedPersonLocation: {
@@ -116,20 +116,22 @@ export interface Review {
       longitude: number;
     };
   };
-  // Category tag for the reviewed person (used for filtering)
-  category?: ReviewCategory;
+  // Category tag for the reviewed person (used for filtering) - nullable in DB
+  category?: string | null;
   profilePhoto: string; // URL to profile photo
-  greenFlags: GreenFlag[];
-  redFlags: RedFlag[];
-  sentiment?: Sentiment;
+  greenFlags: string[] | null;
+  redFlags: string[] | null;
+  sentiment?: string | null;
   reviewText: string;
   media?: MediaItem[]; // Optional media attachments
   socialMedia?: SocialMediaHandles; // Optional social media handles
-  status: "pending" | "approved" | "rejected";
-  likeCount: number;
-  dislikeCount?: number;
-  createdAt: Date;
-  updatedAt: Date;
+  status?: string | null;
+  likeCount: number | null;
+  dislikeCount?: number | null;
+  createdAt: Date | null;
+  updatedAt: Date | null;
+  isAnonymous?: boolean | null;
+  location?: string | null;
 }
 
 export interface Profile {
@@ -217,7 +219,17 @@ export interface AppSettings {
 
 // Chat-related types
 export type ChatRoomType = "local" | "global" | "topic";
-export type MessageType = "text" | "image" | "voice" | "document" | "video" | "system" | "join" | "leave" | "typing" | "presence";
+export type MessageType =
+  | "text"
+  | "image"
+  | "voice"
+  | "document"
+  | "video"
+  | "system"
+  | "join"
+  | "leave"
+  | "typing"
+  | "presence";
 export type UserRole = "member" | "moderator" | "admin";
 export type ConnectionStatus = "connecting" | "connected" | "disconnected" | "error";
 
@@ -261,12 +273,20 @@ export interface UserProfile extends User {
 
 export interface Comment {
   id: string;
-  reviewId: string;
-  userId: string;
+  reviewId: string | null;
+  authorId?: string | null;
+  authorName?: string;
+  userId?: string;
   content: string;
-  createdAt: Date;
-  updatedAt?: Date;
+  createdAt: Date | string | null;
+  updatedAt?: Date | string | null;
   user?: User;
+  likeCount?: number | null;
+  dislikeCount?: number | null;
+  isDeleted?: boolean | null;
+  isReported?: boolean | null;
+  parentCommentId?: string | null;
+  mediaId?: string | null;
 }
 
 export interface RoomMember {

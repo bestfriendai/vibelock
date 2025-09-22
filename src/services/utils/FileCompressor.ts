@@ -522,7 +522,7 @@ export class FileCompressor {
       try {
         new CompressionStream("gzip" as any); // Use gzip as fallback for brotli check
         methods.push("brotli");
-      } catch {
+      } catch (error) {
         // Brotli not supported
       }
     }

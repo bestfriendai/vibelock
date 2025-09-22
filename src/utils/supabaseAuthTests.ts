@@ -1,5 +1,5 @@
 import { authService } from "../services/auth";
-import { supabase } from "../config/supabase";
+import supabase from "../config/supabase";
 import { Alert } from "react-native";
 
 interface TestResult {

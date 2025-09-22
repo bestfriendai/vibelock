@@ -48,115 +48,11 @@ export default function BrowseScreen({ navigation, route }: Props) {
 
   // Initialize location detection
   useEffect(() => {
-    const initializeLocation = async () => {
-      if (user?.location?.city && user?.location?.state) {
-        // Use existing user location, preserving college information if available
-        setCurrentLocation({
-          city: user.location.city,
-          state: user.location.state,
-          fullName: user.location.fullName || `${user.location.city}, ${user.location.state}`,
-          coordinates: user.location.coordinates || undefined,
-          type: user.location.type || undefined,
-          institutionType: user.location.institutionType || undefined,
-        });
-        return;
-      }
-
-      // Detect location if not available
-      setLocationLoading(true);
-      setLocationError(null);
-
-      try {
-        const result = await locationService.detectLocation();
-        if (result?.success && result?.location) {
-          setCurrentLocation(result.location);
-
-          // Update user location in auth store
-          await updateUserLocation({
-            city: result.location.city,
-            state: result.location.state,
-            coordinates: result.location.coordinates || undefined,
-            type: result.location.type || undefined,
-            fullName: result.location.fullName || `${result.location.city}, ${result.location.state}`,
-            institutionType: result.location.institutionType || undefined,
-          });
-
-          if (__DEV__) {
-            console.log(`📍 Location detected via ${result.source}:`, result.location.fullName);
-          }
-        } else {
-          setLocationError(result.error || "Location detection failed");
-        }
-      } catch (error) {
-        if (__DEV__) {
-          console.warn("Location initialization failed:", error);
-        }
-        setLocationError("Failed to detect location");
-      } finally {
-        setLocationLoading(false);
-      }
-    };
-
-    initializeLocation();
-  }, [user?.location, updateUserLocation]);
-
-  // Memoize the initial load function to prevent infinite re-renders
-  const loadInitialData = useCallback(async () => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-    abortControllerRef.current = new AbortController();
-
-    const done = startTimer("browse:initialLoad");
-    try {
-      // Use InteractionManager for better performance on React Native
-      await new Promise<void>((resolve) => {
-        InteractionManager.runAfterInteractions(resolve);
-      });
+    const loadAll = async () => {
       await loadReviews(true);
-    } catch (error: any) {
-      if (error.name !== "AbortError" && __DEV__) {
-        console.warn("Error loading reviews:", error);
-      }
-    } finally {
-      done();
-    }
-  }, [loadReviews]);
-
-  useEffect(() => {
-    // Only load if we don't have reviews already
-    if (reviews.length === 0) {
-      loadInitialData();
-    }
-  }, [reviews.length, loadInitialData]);
-
-  // Refresh data when screen comes into focus (e.g., after creating a review)
-  useFocusEffect(
-    useCallback(() => {
-      // Add a small delay to ensure server has processed any new reviews
-      const timeoutId = setTimeout(async () => {
-        try {
-          await loadReviews(true);
-        } catch (error) {
-          if (__DEV__) {
-            console.warn("Error loading reviews on focus:", error);
-          }
-        }
-      }, 500);
-
-      return () => clearTimeout(timeoutId);
-    }, [loadReviews]),
-  );
-
-  // Reload when filters change (category, radius) or user location changes
-  useEffect(() => {
-    loadInitialData();
-    return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
     };
-  }, [filters?.category, filters?.radius, user?.location?.city, user?.location?.state, loadInitialData]);
+    loadAll();
+  }, [user?.location]);
 
   const onRefresh = async () => {
     setRefreshing(true);

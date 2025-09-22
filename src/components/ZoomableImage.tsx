@@ -1,10 +1,6 @@
 import React, { useEffect, useCallback } from "react";
 import { StyleSheet, View, Dimensions, ActivityIndicator } from "react-native";
-import {
-  GestureDetector,
-  Gesture,
-  GestureHandlerRootView,
-} from "react-native-gesture-handler";
+import { GestureDetector, Gesture, GestureHandlerRootView } from "react-native-gesture-handler";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -250,10 +246,7 @@ export const ZoomableImage: React.FC<ZoomableImageProps> = ({
   }
 
   // Compose gestures
-  const composedGesture = Gesture.Simultaneous(
-    doubleTapGesture,
-    Gesture.Simultaneous(pinchGesture, panGesture)
-  );
+  const composedGesture = Gesture.Simultaneous(doubleTapGesture, Gesture.Simultaneous(pinchGesture, panGesture));
 
   return (
     <GestureHandlerRootView style={[styles.container, { width, height }]}>

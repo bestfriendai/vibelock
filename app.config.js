@@ -1,4 +1,8 @@
 // Dynamic Expo configuration with environment variable support
+// Note: Use EAS Secrets for sensitive environment variables:
+// eas secret:create --name EXPO_PUBLIC_SENTRY_DSN --value "your-dsn-here"
+// eas secret:create --name SENTRY_AUTH_TOKEN --value "your-token" (for source maps upload)
+
 // This replaces app.json to enable secure handling of google-services.json via EAS secrets
 
 // Enhanced build environment detection for AdMob compatibility
@@ -30,6 +34,10 @@ export default {
       backgroundColor: "#000000",
     },
     assetBundlePatterns: ["**/*"],
+
+    updates: {
+      fallbackToCacheTimeout: 0,
+    },
     ios: {
       supportsTablet: true,
       icon: "./assets/LockerRoomLogo.png",

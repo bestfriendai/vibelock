@@ -69,7 +69,7 @@ async function checkNetworkWithFetch(
             responseTime,
           };
         }
-      } catch (err) {
+      } catch (error) {
         // Try next endpoint
         continue;
       }
@@ -131,7 +131,7 @@ async function checkSupabaseConnectivity(
             responseTime,
           };
         }
-      } catch (err) {
+      } catch (error) {
         // Try next endpoint
         continue;
       }

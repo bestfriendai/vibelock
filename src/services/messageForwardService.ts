@@ -1,4 +1,4 @@
-import { supabase } from "../config/supabase";
+import supabase from "../config/supabase";
 import { Message, ChatRoom } from "../types";
 import { AppError, ErrorType } from "../utils/errorHandling";
 import { storageService } from "./storageService";

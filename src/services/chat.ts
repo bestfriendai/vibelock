@@ -3,28 +3,63 @@
  * This aligns with the schema used by chatStore and realtimeChat.
  * Tables: chat_rooms_firebase, chat_messages_firebase, chat_members_firebase
  */
-import { supabase } from "../config/supabase";
+import supabase from "../config/supabase";
 import { ChatRoom, Message, RoomMember } from "../types";
 import { mapFieldsToCamelCase, mapFieldsToSnakeCase } from "../utils/fieldMapping";
 import { withRetry } from "../utils/retryLogic";
 
 export class ChatService {
-  async getRooms(userId: string): Promise<ChatRoom[]> {
+  async getRooms(userId: string, from?: number, to?: number): Promise<ChatRoom[]> {
     return withRetry(async () => {
-      const { data, error } = await supabase
+      // Fetch public rooms
+      const { data: publicRoomsRaw, error: publicError } = await supabase
         .from("chat_rooms_firebase")
         .select("*")
         .eq("is_active", true)
+        .eq("is_public", true)
         .order("last_activity", { ascending: false });
 
-      if (error) throw error;
-      return (data || []).map((room) => {
+      if (publicError) throw publicError;
+
+      // Fetch member rooms
+      const { data: members, error: memberError } = await supabase
+        .from("chat_members_firebase")
+        .select("chat_room_id")
+        .eq("user_id", userId);
+
+      if (memberError) throw memberError;
+
+      const roomIds = members ? members.map((m: any) => m.chat_room_id) : [];
+
+      let memberRoomsRaw: any[] = [];
+      if (roomIds.length > 0) {
+        const { data, error } = await supabase
+          .from("chat_rooms_firebase")
+          .select("*")
+          .in("id", roomIds)
+          .eq("is_active", true)
+          .order("last_activity", { ascending: false });
+        if (error) throw error;
+        memberRoomsRaw = data || [];
+      }
+
+      // Combine and dedupe
+      const allRaw = [...(publicRoomsRaw || []), ...memberRoomsRaw];
+      const uniqueMap = new Map<string, any>();
+      allRaw.forEach((room) => uniqueMap.set(room.id, room));
+      const unique = Array.from(uniqueMap.values());
+      unique.sort((a, b) => new Date(b.last_activity).getTime() - new Date(a.last_activity).getTime());
+
+      // Paginate
+      const start = from || 0;
+      const end = to !== undefined ? to + 1 : unique.length;
+      const paginated = unique.slice(start, end);
+
+      return paginated.map((room) => {
         const mappedRoom = mapFieldsToCamelCase(room) as unknown as ChatRoom;
-        // Handle lastMessage conversion from Json to Message
         if (mappedRoom.lastMessage && typeof mappedRoom.lastMessage === "object") {
           mappedRoom.lastMessage = mappedRoom.lastMessage as unknown as Message;
         }
-        // Convert string dates to Date objects
         if (typeof mappedRoom.lastActivity === "string") {
           mappedRoom.lastActivity = new Date(mappedRoom.lastActivity);
         }
@@ -206,10 +241,19 @@ export class ChatService {
   async getRoomMembers(roomId: string): Promise<RoomMember[]> {
     // Note: chat_members_firebase table is not in the generated types
     // This is a type assertion to handle the missing table definition
-    const { data, error } = await supabase
-      .from("chat_members_firebase" as any)
-      .select("*")
-      .eq("chat_room_id", roomId);
+    interface ChatMember {
+      id: string;
+      chatRoomId: string;
+      userId: string;
+      userName: string;
+      userAvatar?: string;
+      joinedAt: Date;
+      role: "admin" | "moderator" | "member";
+      isOnline: boolean;
+      lastSeen: Date;
+    }
+
+    const { data, error } = await supabase.from("chat_members_firebase").select("*").eq("chat_room_id", roomId);
 
     if (error) {
       console.warn("Failed to fetch room members (table may not exist):", error);

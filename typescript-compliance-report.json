@@ -1,0 +1,14 @@
+{
+  "timestamp": "2025-09-22T01:53:00.512Z",
+  "stats": {
+    "filesScanned": 253,
+    "anyTypesFound": 562,
+    "implicitAnyFound": 6,
+    "missingReturnTypes": 3442,
+    "unusedVariables": 231,
+    "strictNullChecks": 710
+  },
+  "issues": 1,
+  "warnings": 135,
+  "complianceScore": 0
+}

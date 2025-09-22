@@ -39,7 +39,7 @@ export const transcribeAudio = async (localAudioUri: string) => {
       let errorText;
       try {
         errorText = await response.text();
-      } catch {
+      } catch (error) {
         errorText = "Unknown error";
       }
       throw new Error(`Transcription failed: ${errorText || "Unknown error"}`);
@@ -48,7 +48,7 @@ export const transcribeAudio = async (localAudioUri: string) => {
     let result;
     try {
       result = await response.json();
-    } catch {
+    } catch (error) {
       throw new Error("Failed to parse transcription response");
     }
 

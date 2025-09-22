@@ -1,4 +1,9 @@
 /* global jest */
+
+jest.mock("@react-native-async-storage/async-storage", () =>
+  require("@react-native-async-storage/async-storage/jest/async-storage-mock"),
+);
+
 // Minimal Jest setup to avoid property configuration errors
 
 // Gesture Handler setup - only import, don't modify properties

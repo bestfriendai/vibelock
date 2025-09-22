@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { View, Text, TextInput, FlatList, RefreshControl, Pressable } from "react-native";
+import Fuse from "fuse.js";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import useChatStore from "../state/chatStore";
@@ -36,6 +37,8 @@ export default function ChatroomsScreen() {
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMoreRooms, setHasMoreRooms] = useState(true);
   const { isOnline, retryWithBackoff } = useOffline();
 
   // Debug logging for authentication state
@@ -88,15 +91,19 @@ export default function ChatroomsScreen() {
     return () => clearTimeout(t);
   }, [query]);
 
+  const fuse = useMemo(
+    () =>
+      new Fuse(chatRooms, {
+        keys: ["name", "description"],
+        threshold: 0.3, // Fuzzy match tolerance
+      }),
+    [chatRooms],
+  );
+
   const filtered = useMemo(() => {
-    const q = debouncedQuery.toLowerCase();
-    const rooms = Array.isArray(chatRooms) ? chatRooms : [];
-    if (!q) return rooms;
-    return rooms.filter(
-      (r) =>
-        r && r.name && r.description && (r.name.toLowerCase().includes(q) || r.description.toLowerCase().includes(q)),
-    );
-  }, [debouncedQuery, chatRooms]);
+    if (!debouncedQuery) return chatRooms;
+    return fuse.search(debouncedQuery).map((result) => result.item);
+  }, [debouncedQuery, fuse, chatRooms]);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -116,7 +123,7 @@ export default function ChatroomsScreen() {
 
   // Development bypass for testing (remove in production)
   const isDevelopment = __DEV__;
-  const allowDevAccess = isDevelopment; // Always allow in development
+  const allowDevAccess = false; // Always false in production
 
   // Guest mode protection (with development bypass)
   if ((!canAccessChat || needsSignIn) && !allowDevAccess) {
@@ -267,6 +274,10 @@ export default function ChatroomsScreen() {
           <Text className="text-text-secondary text-xs mt-1">{error}</Text>
           <View className="flex-row justify-end mt-2">
             <Pressable
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityLabel="Retry loading chat rooms"
+              accessibilityHint="Tap to reload the list of chat rooms"
               onPress={loadChatRooms}
               className="px-3 py-1 rounded-lg"
               style={{ backgroundColor: colors.brand.red }}
@@ -278,9 +289,24 @@ export default function ChatroomsScreen() {
       )}
 
       <FlatList
+        accessible={true}
+        accessibilityRole="list"
+        accessibilityLabel="List of available chat rooms"
         data={filtered}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ padding: 24 }}
+        removeClippedSubviews={true}
+        initialNumToRender={10}
+        maxToRenderPerBatch={5}
+        windowSize={21}
+        getItemLayout={(data, index) => ({ length: 100, offset: 100 * index, index })} // If fixed height
+        onEndReached={() => {
+          if (hasMoreRooms && !refreshing) {
+            setPage((prev) => prev + 1);
+            loadChatRooms();
+          }
+        }}
+        onEndReachedThreshold={0.5}
         ItemSeparatorComponent={() => <View className="h-4" />}
         renderItem={({ item }) => (
           <EnhancedChatRoomCard
@@ -302,13 +328,12 @@ export default function ChatroomsScreen() {
                 </View>
               ))}
             </View>
-          ) : (
+          ) : filtered.length === 0 ? (
             <EmptyState
-              icon={STRINGS.EMPTY_STATES.CHATROOMS.icon}
-              title={STRINGS.EMPTY_STATES.CHATROOMS.title}
-              description={STRINGS.EMPTY_STATES.CHATROOMS.description}
+              title={debouncedQuery ? "No matching rooms" : "No chat rooms available"}
+              description={debouncedQuery ? "Try adjusting your search" : "Create or join a room to start chatting"}
             />
-          )
+          ) : null
         }
       />
     </SafeAreaView>

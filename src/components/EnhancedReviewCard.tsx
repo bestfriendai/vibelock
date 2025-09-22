@@ -45,7 +45,7 @@ const EnhancedReviewCard = memo(
               Anonymous Reviewer
             </Text>
             <Text className="text-sm" style={{ color: colors.text.muted }}>
-              {formatDate(review.createdAt)}
+              {review.createdAt ? formatDate(review.createdAt) : ""}
             </Text>
           </View>
           <View className="flex-row items-center">

@@ -97,10 +97,7 @@ async function testChatRooms() {
 
     // Test 3: Check database connection
     console.log("\n🔌 Test 3: Testing database connection...");
-    const { data: connectionTest, error: connectionError } = await supabase
-      .from("chat_rooms_firebase")
-      .select("count(*)")
-      .single();
+    const { error: connectionError } = await supabase.from("chat_rooms_firebase").select("count(*)").single();
 
     if (connectionError) {
       console.error("❌ Database connection error:", connectionError);

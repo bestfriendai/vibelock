@@ -76,8 +76,8 @@ export default function MediaUploadGrid({ media, onMediaChange, maxItems = 6, re
         ]);
         return false;
       }
-    } catch (e) {
-      console.warn("Permission request failed", e);
+    } catch (error) {
+      console.warn("Permission request failed", error);
       Alert.alert("Error", "Failed to request permissions. Please try again.");
       return false;
     }

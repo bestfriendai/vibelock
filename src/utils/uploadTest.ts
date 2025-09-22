@@ -100,7 +100,7 @@ export const testImagePicker = async (): Promise<UploadTestResult> => {
 
     return {
       success: true,
-      message: `Image selected successfully: ${asset.width || 'unknown'}x${asset.height || 'unknown'}, ${Math.round((asset.fileSize || 0) / 1024)}KB`,
+      message: `Image selected successfully: ${asset.width || "unknown"}x${asset.height || "unknown"}, ${Math.round((asset.fileSize || 0) / 1024)}KB`,
     };
   } catch (error) {
     console.warn("❌ Image picker test failed:", error);

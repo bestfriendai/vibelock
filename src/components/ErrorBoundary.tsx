@@ -2,6 +2,7 @@ import React, { Component, ReactNode } from "react";
 import { View, Text, Pressable, StyleSheet, ScrollView, Alert, AppState, AppStateStatus } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../providers/ThemeProvider";
+import * as Sentry from "@sentry/react-native";
 import { errorReportingService } from "../services/errorReporting";
 import { compatibilityChecker } from "../utils/compatibilityUtils";
 import { AppError, ErrorType } from "../utils/errorHandling";
@@ -237,6 +238,11 @@ class ErrorBoundaryClass extends Component<Props, State> {
   }
 
   override componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    Sentry.captureException(error, {
+      extra: {
+        componentStack: errorInfo.componentStack,
+      },
+    });
     this.setState({ errorInfo });
 
     // Enhanced logging for development
@@ -688,7 +694,7 @@ export default function ErrorBoundary(props: Omit<Props, "theme">) {
         themeObject = { colors: (theme as any).colors };
       }
     }
-  } catch {
+  } catch (error) {
     console.log("ErrorBoundary: Using default theme");
   }
 

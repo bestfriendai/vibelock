@@ -1517,6 +1517,7 @@ export type Database = {
           is_blocked: boolean | null;
           last_active: string | null;
           latitude: number | null;
+          locale: string | null;
           location_address: string | null;
           location_full_name: string | null;
           location_name: string | null;
@@ -1547,6 +1548,7 @@ export type Database = {
           is_blocked?: boolean | null;
           last_active?: string | null;
           latitude?: number | null;
+          locale?: string | null;
           location_address?: string | null;
           location_full_name?: string | null;
           location_name?: string | null;
@@ -1577,6 +1579,7 @@ export type Database = {
           is_blocked?: boolean | null;
           last_active?: string | null;
           latitude?: number | null;
+          locale?: string | null;
           location_address?: string | null;
           location_full_name?: string | null;
           location_name?: string | null;

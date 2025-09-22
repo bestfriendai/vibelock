@@ -160,7 +160,7 @@ export default function SignUpScreen() {
 
     try {
       await register(email.trim(), password, defaultLocation, { genderPreference, gender });
-    } catch (err) {
+    } catch (error) {
       // Error is handled by the store
     }
   };
@@ -182,7 +182,7 @@ export default function SignUpScreen() {
 
     try {
       await register(email.trim(), password, defaultLocation, { genderPreference: "all", gender: undefined });
-    } catch (err) {
+    } catch (error) {
       // Error is handled by the store
     }
   };

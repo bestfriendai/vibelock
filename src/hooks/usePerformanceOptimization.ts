@@ -40,6 +40,14 @@ interface OptimizationSettings {
 }
 
 export function usePerformanceOptimization(options: PerformanceOptions) {
+  const {
+    componentName,
+    enableMonitoring = true,
+    enableMemoryTracking = true,
+    enableAutoOptimization = true,
+    thresholds = {},
+  } = options;
+
   const componentId = useRef(`${options.componentName}_${Date.now()}`);
   const renderCount = useRef(0);
   const renderTimes = useRef<number[]>([]);
@@ -63,18 +71,20 @@ export function usePerformanceOptimization(options: PerformanceOptions) {
 
   // Track component mount/unmount
   useEffect(() => {
-    if (options.enableMemoryTracking !== false) {
-      memoryManager.trackComponent(options.componentName, componentId.current);
+    if (enableMemoryTracking !== false) {
+      memoryManager.trackComponent(componentName, componentId.current);
     }
 
     // Detect device capabilities on mount
+
     detectDeviceCapabilities();
 
     // Subscribe to performance alerts
-    const unsubscribe = performanceMonitor.onAlert((alert) => {
-      console.warn(`Performance alert in ${options.componentName}:`, alert);
 
-      if (options.enableAutoOptimization && alert.severity === "critical") {
+    const unsubscribe = performanceMonitor.onAlert((alert) => {
+      console.warn(`Performance alert in ${componentName}:`, alert);
+
+      if (enableAutoOptimization && alert.severity === "critical") {
         applyAutoOptimization(alert.type);
       }
     });
@@ -82,18 +92,21 @@ export function usePerformanceOptimization(options: PerformanceOptions) {
     cleanupFunctions.current.push(unsubscribe);
 
     return () => {
-      if (options.enableMemoryTracking !== false) {
+      if (enableMemoryTracking !== false) {
         memoryManager.untrackComponent(componentId.current);
       }
 
       // Cleanup all subscriptions
+
       cleanupFunctions.current.forEach((cleanup) => cleanup());
+
       cleanupFunctions.current = [];
 
       // Save performance metrics for future analysis
+
       savePerformanceMetrics();
     };
-  }, []);
+  }, [enableMemoryTracking, componentName, enableAutoOptimization]);
 
   // Track render performance
   const trackRender = useCallback(() => {

@@ -145,6 +145,10 @@ const AnimatedButton = React.forwardRef<View, AnimatedButtonProps>(
       <Animated.View style={[animatedStyle, style]}>
         <Pressable
           ref={ref}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel={title}
+          accessibilityHint={`Press to ${variant === "primary" ? "confirm" : "cancel"} action`}
           className={cn(
             "rounded-lg items-center justify-center",
             getVariantStyles(),

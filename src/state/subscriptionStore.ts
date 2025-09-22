@@ -3,7 +3,7 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import { mmkvStorage } from "../utils/mmkvStorage";
 import { canUseRevenueCat, buildEnv } from "../utils/buildEnvironment";
 import { subscriptionService } from "../services/subscriptionService";
-import { supabase } from "../config/supabase";
+import supabase from "../config/supabase";
 
 // Environment-configurable premium entitlements
 const PREMIUM_ENTITLEMENTS = (process.env.EXPO_PUBLIC_REVENUECAT_PREMIUM_ENTITLEMENTS || "premium,pro")

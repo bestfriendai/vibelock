@@ -1,7 +1,7 @@
 // Debug Utilities for Real-time Connection Issues
 // Comprehensive debugging tools for React Native/Expo and Supabase realtime
 
-import { supabase } from "../config/supabase";
+import supabase from "../config/supabase";
 import { enhancedRealtimeChatService } from "../services/realtimeChat";
 import { reliableNetworkCheck, waitForStableConnection } from "./reliableNetworkCheck";
 import { appStateManager } from "../services/appStateManager";

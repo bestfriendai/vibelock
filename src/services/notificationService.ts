@@ -2,7 +2,7 @@ import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
 import { Platform, Alert } from "react-native";
 import Constants from "expo-constants";
-import { supabase } from "../config/supabase";
+import supabase from "../config/supabase";
 import { AppError, ErrorType, parseSupabaseError } from "../utils/errorHandling";
 
 // Configure notification behavior with platform-specific settings
@@ -389,11 +389,11 @@ class NotificationService {
     try {
       // Prefer RPC to bypass RLS safely (SECURITY DEFINER on server)
       const { error } = await supabase.rpc("create_notification", {
-        target_user_id: userId,
-        n_type: notification.type,
-        n_title: notification.title,
-        n_body: notification.body,
-        n_data: notification.data || {},
+        p_user_id: userId,
+        p_type: notification.type,
+        p_title: notification.title,
+        p_body: notification.body,
+        p_data: notification.data || {},
       });
 
       if (error) {

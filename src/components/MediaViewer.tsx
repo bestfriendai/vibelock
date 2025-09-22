@@ -47,7 +47,7 @@ export default function MediaViewer({
       try {
         player.play();
         setIsVideoLoading(false);
-      } catch {
+      } catch (error) {
         setVideoError("Failed to load video");
         setIsVideoLoading(false);
       }
@@ -81,7 +81,7 @@ export default function MediaViewer({
         message: `Check out this ${currentMedia.type}`,
         url: currentMedia.uri,
       });
-    } catch {}
+    } catch (error) {}
   }, [currentMedia]);
 
   const handleClose = () => {

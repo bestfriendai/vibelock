@@ -135,7 +135,9 @@ export class MessageVirtualizer {
 
     // Find start index
     for (let i = 0; i < messages.length; i++) {
-      const height = this.getMessageHeight(messages[i]);
+      const message = messages[i];
+      if (!message) continue;
+      const height = this.getMessageHeight(message);
 
       if (currentOffset + height >= scrollOffset - bufferSize * 80) {
         startIndex = Math.max(0, i);
@@ -148,7 +150,9 @@ export class MessageVirtualizer {
     // Find end index
     currentOffset = 0;
     for (let i = 0; i < messages.length; i++) {
-      const height = this.getMessageHeight(messages[i]);
+      const message = messages[i];
+      if (!message) continue;
+      const height = this.getMessageHeight(message);
 
       if (currentOffset >= scrollOffset + viewportHeight + bufferSize * 80) {
         endIndex = Math.min(messages.length - 1, i);
@@ -227,17 +231,17 @@ export class MessageVirtualizer {
 
     let height = 80; // Base height with padding
 
-    switch (message.type) {
+    switch (message.messageType) {
       case "image":
       case "video":
-        if (message.media?.dimensions) {
-          const display = calculateDisplayDimensions(
-            message.media.dimensions.width,
-            message.media.dimensions.height,
-            300,
-            400,
-          );
-          height = display.height + 20;
+        if (message.media && message.media.length > 0) {
+          const firstMedia = message.media[0];
+          if (firstMedia && firstMedia.width && firstMedia.height) {
+            const display = calculateDisplayDimensions(firstMedia.width, firstMedia.height, 300, 400);
+            height = display.height + 20;
+          } else {
+            height = 220; // Default media height
+          }
         } else {
           height = 220; // Default media height
         }
@@ -284,18 +288,17 @@ export class MessageVirtualizer {
     const processed = { ...message };
 
     // Progressive image loading
-    if (this.options.enableProgressiveImages && (message.type === "image" || message.type === "video")) {
+    if (this.options.enableProgressiveImages && (message.messageType === "image" || message.messageType === "video")) {
       processed.media = this.getProgressiveMedia(message);
     }
 
     // Text truncation for very long messages
-    if (message.type === "text" && message.content && message.content.length > (this.options.maxTextLength || 500)) {
+    if (
+      message.messageType === "text" &&
+      message.content &&
+      message.content.length > (this.options.maxTextLength || 500)
+    ) {
       processed.content = this.truncateText(message.content);
-      processed.metadata = {
-        ...processed.metadata,
-        isTruncated: true,
-        fullLength: message.content.length,
-      };
     }
 
     // Update search index
@@ -348,7 +351,7 @@ export class MessageVirtualizer {
    * Get placeholder type
    */
   private getPlaceholderType(message: ChatMessage): "text" | "media" | "loading" {
-    if (message.type === "image" || message.type === "video") {
+    if (message.messageType === "image" || message.messageType === "video") {
       return "media";
     }
     return "text";
@@ -380,7 +383,7 @@ export class MessageVirtualizer {
    * Update search index
    */
   private updateSearchIndex(message: ChatMessage): void {
-    if (message.type === "text" && message.content) {
+    if (message.messageType === "text" && message.content) {
       this.searchIndex.set(message.id, {
         messageId: message.id,
         searchableText: message.content.toLowerCase(),
@@ -426,7 +429,7 @@ export class MessageVirtualizer {
     // Simulate loading low res image
     setTimeout(() => {
       this.imageCache.set(message.id, {
-        lowRes: message.media?.url + "?quality=low",
+        lowRes: message.media?.[0]?.uri ? message.media[0].uri + "?quality=low" : "",
       });
     }, 50);
   }
@@ -440,7 +443,7 @@ export class MessageVirtualizer {
       const cached = this.imageCache.get(message.id) || {};
       this.imageCache.set(message.id, {
         ...cached,
-        fullRes: message.media?.url,
+        fullRes: message.media?.[0]?.uri || "",
       });
     }, 500);
   }
@@ -467,6 +470,9 @@ export class MessageVirtualizer {
 
     // Find a stable reference message
     const referenceMessage = previousMessages[Math.floor(previousMessages.length / 2)];
+    if (!referenceMessage) {
+      return previousScrollOffset;
+    }
     const referenceIndex = newMessages.findIndex((m) => m.id === referenceMessage.id);
 
     if (referenceIndex === -1) {
@@ -478,12 +484,15 @@ export class MessageVirtualizer {
     let newOffset = 0;
 
     for (let i = 0; i < previousMessages.length; i++) {
-      if (previousMessages[i].id === referenceMessage.id) break;
-      previousOffset += this.getMessageHeight(previousMessages[i]);
+      const msg = previousMessages[i];
+      if (!msg || msg.id === referenceMessage.id) break;
+      previousOffset += this.getMessageHeight(msg);
     }
 
     for (let i = 0; i < referenceIndex; i++) {
-      newOffset += this.getMessageHeight(newMessages[i]);
+      const msg = newMessages[i];
+      if (!msg) continue;
+      newOffset += this.getMessageHeight(msg);
     }
 
     const offsetDifference = newOffset - previousOffset;

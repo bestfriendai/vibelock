@@ -18,6 +18,7 @@ export interface NetworkTestResult {
   passed: boolean;
   details: string;
   networkState?: any;
+  error?: string;
 }
 
 /**
@@ -37,11 +38,15 @@ export async function testMessageScrolling(): Promise<ScrollTestResult[]> {
       // Check if messages are in chronological order (oldest to newest)
       let isChronological = true;
       for (let i = 1; i < roomMessages.length; i++) {
-        const prevTime = new Date(roomMessages[i - 1].timestamp).getTime();
-        const currTime = new Date(roomMessages[i].timestamp).getTime();
-        if (prevTime > currTime) {
-          isChronological = false;
-          break;
+        const prevMsg = roomMessages[i - 1];
+        const currMsg = roomMessages[i];
+        if (prevMsg && currMsg) {
+          const prevTime = new Date(prevMsg.timestamp).getTime();
+          const currTime = new Date(currMsg.timestamp).getTime();
+          if (prevTime > currTime) {
+            isChronological = false;
+            break;
+          }
         }
       }
 

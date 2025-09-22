@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { createAudioPlayer } from "expo-audio";
 import type { AudioPlayer, AudioStatus } from "expo-audio";
-import type { Subscription } from "expo-modules-core";
+import type { EventSubscription as Subscription } from "expo-modules-core";
 import { subscribeWithSelector } from "zustand/middleware";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -91,19 +91,19 @@ const detachPlayer = async (player: AudioPlayer | null, subscription: Subscripti
 
   try {
     player.pause();
-  } catch {
+  } catch (error) {
     // ignore pause errors
   }
 
   try {
     await player.seekTo(0);
-  } catch {
+  } catch (error) {
     // ignore seek errors
   }
 
   try {
     player.remove();
-  } catch {
+  } catch (error) {
     // ignore removal errors
   }
 };
@@ -178,7 +178,7 @@ export const useAudioPlayerStore = create<AudioPlayerStore>()(
               player.playbackRate = currentRate;
               try {
                 await player.seekTo(0);
-              } catch {
+              } catch (error) {
                 // ignore seek errors when reusing the existing player
               }
             }

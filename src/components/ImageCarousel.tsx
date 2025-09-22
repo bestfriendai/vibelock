@@ -58,7 +58,7 @@ export default function ImageCarousel({
           Image.prefetch(u);
           prefetchedUrisRef.current.add(u);
         }
-      } catch {}
+      } catch (error) {}
     });
   }, [currentIndex, media]);
 

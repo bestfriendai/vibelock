@@ -1,5 +1,5 @@
 import { RealtimeChannel, RealtimePresenceState } from "@supabase/supabase-js";
-import { supabase } from "../config/supabase";
+import supabase from "../config/supabase";
 import { ChatMessage, ConnectionStatus, TypingUser } from "../types";
 import { Database } from "../types/database.types";
 import "react-native-url-polyfill/auto";
@@ -428,7 +428,7 @@ class SupabaseRealtimeService {
         config: {
           // Enable presence tracking for this channel
           presence: {
-            key: this.currentUserId,
+            key: this.currentUserId || undefined,
           },
         },
       });

@@ -14,6 +14,7 @@ import { useTheme } from "../providers/ThemeProvider";
 import { PaywallAdaptive } from "../components/subscription/PaywallAdaptive";
 import { LegalModal } from "../components/legal/LegalModal";
 import { buildEnv } from "../utils/buildEnvironment";
+import packageJson from "../../package.json";
 
 export default function ProfileScreen() {
   const navigation = useNavigation<any>();
@@ -331,7 +332,7 @@ export default function ProfileScreen() {
                   Version
                 </Text>
               </View>
-              <Text style={{ color: colors.text.secondary }}>1.0.0</Text>
+              <Text style={{ color: colors.text.secondary }}>{packageJson.version}</Text>
             </View>
           </View>
 

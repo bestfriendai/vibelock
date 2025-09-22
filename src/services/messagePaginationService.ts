@@ -1,4 +1,4 @@
-import { ChatMessage } from "../types";
+import { ChatMessage, MessageType } from "../types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { performanceMonitor } from "../utils/performance";
 
@@ -320,15 +320,14 @@ export class MessagePaginationManager {
       const index = startIndex + i;
       messages.push({
         id: `msg-${roomId}-${index}`,
-        roomId,
+        chatRoomId: roomId,
         senderId: `user-${index % 5}`,
         senderName: `User ${index % 5}`,
         content: `Message ${index} in room ${roomId}`,
         timestamp: new Date(Date.now() - index * 60000),
-        type: "text",
-        status: "sent",
+        messageType: "text" as MessageType,
+        isRead: false,
         reactions: [],
-        metadata: {},
       });
     }
 

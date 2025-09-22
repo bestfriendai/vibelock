@@ -1,6 +1,7 @@
-import { supabase } from "../config/supabase";
-import { subscriptionService } from "../services/subscriptionService";
+import supabase from "../config/supabase";
+import Purchases, { PurchasesPackage } from "react-native-purchases";
 import useSubscriptionStore from "../state/subscriptionStore";
+import { subscriptionService } from "../services/subscriptionService";
 
 /**
  * Initialize subscription status for a new user
@@ -245,6 +246,26 @@ export function getSubscriptionBenefits(tier: "free" | "premium" | "pro"): strin
     case "free":
     default:
       return ["Basic reviews", "Community access", "Standard support"];
+  }
+}
+
+/**
+ * Check if user can access a specific feature
+ */
+/**
+ * Purchase a subscription package
+ */
+export async function purchasePackage(packageToPurchase: PurchasesPackage): Promise<any> {
+  try {
+    const { customerInfo } = await Purchases.purchasePackage(packageToPurchase);
+    // Sync with local store
+    const store = useSubscriptionStore.getState();
+    // Note: syncWithSupabase should be called after purchase completion with userId
+    // This sync will happen in the calling component after successful purchase
+    return customerInfo;
+  } catch (error) {
+    console.error("Purchase failed:", error);
+    throw error;
   }
 }
 

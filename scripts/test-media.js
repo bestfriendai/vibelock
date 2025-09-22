@@ -2,8 +2,6 @@
 
 require("dotenv").config();
 const { createClient } = require("@supabase/supabase-js");
-const fs = require("fs");
-const path = require("path");
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
@@ -22,7 +20,7 @@ async function testMediaFunctionality() {
   try {
     // Test 1: Check storage buckets for media
     console.log("\n📋 Test 1: Checking media storage buckets...");
-    const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
+    const { error: bucketsError } = await supabase.storage.listBuckets();
 
     if (bucketsError) {
       console.log("⚠️ Cannot list buckets (expected due to RLS):", bucketsError.message);

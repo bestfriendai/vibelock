@@ -1,4 +1,7 @@
-import React, { useEffect, useState, useCallback, useRef } from "react";
+import React, { useEffect, useState, useCallback, useRef, Suspense } from "react";
+import { I18nextProvider } from "react-i18next";
+import i18n from "./src/i18n/i18n";
+import { I18nManager } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { NavigationContainer } from "@react-navigation/native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -18,6 +21,8 @@ import { AdProvider } from "./src/contexts/AdContext";
 import { ThemeProvider } from "./src/providers/ThemeProvider";
 import AppOpenAdHandler from "./src/components/AppOpenAdHandler";
 import { useAppInitialization } from "./src/hooks/useAppInitialization";
+import Purchases, { LOG_LEVEL } from "react-native-purchases";
+
 import { compatibilityChecker, PerformanceMonitor } from "./src/utils/compatibilityUtils";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -291,7 +296,40 @@ export default function App() {
   } = useAppInitialization();
 
   const [isNavigationReady, setIsNavigationReady] = useState(false);
+
+  useEffect(() => {
+    Purchases.setLogLevel(LOG_LEVEL.DEBUG);
+    const apiKey =
+      Platform.OS === "ios"
+        ? process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY || "sk_ios_placeholder"
+        : process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY || "sk_android_placeholder";
+    if (apiKey && apiKey !== "sk_ios_placeholder" && apiKey !== "sk_android_placeholder") {
+      Purchases.configure({ apiKey });
+    }
+  }, []);
+
+  useEffect(() => {
+    Purchases.setLogLevel(LOG_LEVEL.DEBUG);
+    const apiKey =
+      Platform.OS === "ios"
+        ? process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY || "sk_ios_placeholder"
+        : process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY || "sk_android_placeholder";
+    if (apiKey && apiKey !== "sk_ios_placeholder" && apiKey !== "sk_android_placeholder") {
+      Purchases.configure({ apiKey });
+    }
+  }, []);
   const appStateRef = useRef(AppState.currentState);
+
+  useEffect(() => {
+    Purchases.setLogLevel(LOG_LEVEL.DEBUG);
+    const apiKey =
+      Platform.OS === "ios"
+        ? process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY || "sk_ios_placeholder"
+        : process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY || "sk_android_placeholder";
+    if (apiKey && apiKey !== "sk_ios_placeholder" && apiKey !== "sk_android_placeholder") {
+      Purchases.configure({ apiKey });
+    }
+  }, []);
   const initializationCompleteRef = useRef(false);
 
   // Enhanced service initialization with better error handling
@@ -335,6 +373,22 @@ export default function App() {
       PerformanceMonitor?.endMeasurement?.("optional_services_init");
     }
   }, [initializeRevenueCat]);
+
+  // Set up RTL based on language
+  useEffect(() => {
+    const handleLanguageChange = (lng: string) => {
+      // For en/es, both LTR, but prepare for future RTL languages
+      I18nManager.forceRTL(false);
+      I18nManager.allowRTL(false);
+    };
+
+    i18n.on("languageChanged", handleLanguageChange);
+    handleLanguageChange(i18n.language);
+
+    return () => {
+      i18n.off("languageChanged", handleLanguageChange);
+    };
+  }, []);
 
   // Enhanced app state management with React Native 0.81.4 compatibility
   useEffect(() => {
@@ -495,38 +549,42 @@ export default function App() {
         console.log("Main ErrorBoundary recovered");
       }}
     >
-      <GestureHandlerRootView style={styles.rootView}>
-        <SafeAreaProvider>
-          <ThemeProvider>
-            <AdProvider>
-              <NavigationContainer
-                linking={linking}
-                onReady={() => {
-                  console.log("📱 Navigation ready");
-                  setIsNavigationReady(true);
-                  PerformanceMonitor?.endMeasurement?.("app_startup");
-                }}
-                onStateChange={(state) => {
-                  // Enhanced navigation state tracking
-                  if (__DEV__) {
-                    console.log("Navigation state changed:", state);
+      <I18nextProvider i18n={i18n}>
+        <GestureHandlerRootView style={styles.rootView}>
+          <SafeAreaProvider>
+            <ThemeProvider>
+              <AdProvider>
+                <NavigationContainer
+                  linking={linking}
+                  onReady={() => {
+                    console.log("📱 Navigation ready");
+                    setIsNavigationReady(true);
+                    PerformanceMonitor?.endMeasurement?.("app_startup");
+                  }}
+                  onStateChange={(state) => {
+                    // Enhanced navigation state tracking
+                    if (__DEV__) {
+                      console.log("Navigation state changed:", state);
+                    }
+                  }}
+                  fallback={
+                    <View style={styles.fallbackContainer}>
+                      <ActivityIndicator size="large" color="#007AFF" />
+                      <Text style={styles.fallbackText}>Loading Navigation...</Text>
+                    </View>
                   }
-                }}
-                fallback={
-                  <View style={styles.fallbackContainer}>
-                    <ActivityIndicator size="large" color="#007AFF" />
-                    <Text style={styles.fallbackText}>Loading Navigation...</Text>
-                  </View>
-                }
-              >
-                <AppNavigator />
-                <OfflineBanner />
-                {!degradedMode && <AppOpenAdHandler />}
-              </NavigationContainer>
-            </AdProvider>
-          </ThemeProvider>
-        </SafeAreaProvider>
-      </GestureHandlerRootView>
+                >
+                  <Suspense fallback={<ActivityIndicator size="large" color="#007AFF" />}>
+                    <AppNavigator />
+                  </Suspense>
+                  <OfflineBanner />
+                  {!degradedMode && <AppOpenAdHandler />}
+                </NavigationContainer>
+              </AdProvider>
+            </ThemeProvider>
+          </SafeAreaProvider>
+        </GestureHandlerRootView>
+      </I18nextProvider>
     </ErrorBoundary>
   );
 }

@@ -476,7 +476,7 @@ export class MemoryManager {
       default: 100 * 1024, // 100KB default
     };
 
-    return estimates[componentName] || estimates.default;
+    return estimates[componentName] ?? estimates["default"] ?? 102400;
   }
 
   /**
@@ -521,11 +521,15 @@ export class MemoryManager {
     // Check for memory growth trend
     if (this.memorySnapshots.length >= 10) {
       const recent = this.memorySnapshots.slice(-10);
-      const growth = recent[recent.length - 1] - recent[0];
+      const lastValue = recent[recent.length - 1];
+      const firstValue = recent[0];
+      if (lastValue !== undefined && firstValue !== undefined) {
+        const growth = lastValue - firstValue;
 
-      if (growth > 10 * 1024 * 1024) {
-        // 10MB growth
-        console.warn("Significant memory growth detected:", Math.round(growth / 1024 / 1024), "MB");
+        if (growth > 10 * 1024 * 1024) {
+          // 10MB growth
+          console.warn("Significant memory growth detected:", Math.round(growth / 1024 / 1024), "MB");
+        }
       }
     }
   }
@@ -569,10 +573,12 @@ export class MemoryManager {
 
     let trend: "stable" | "growing" | "shrinking" = "stable";
 
-    if (last > first * 1.1) {
-      trend = "growing";
-    } else if (last < first * 0.9) {
-      trend = "shrinking";
+    if (first !== undefined && last !== undefined) {
+      if (last > first * 1.1) {
+        trend = "growing";
+      } else if (last < first * 0.9) {
+        trend = "shrinking";
+      }
     }
 
     return { snapshots: this.memorySnapshots, trend };

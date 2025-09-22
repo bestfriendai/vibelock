@@ -420,7 +420,7 @@ export class UIValidator {
 
       // In production, would check actual UI elements
       return true;
-    } catch {
+    } catch (error) {
       return false;
     }
   }
@@ -448,7 +448,7 @@ export class UIValidator {
   private async checkScreenReaderEnabled(): Promise<boolean> {
     try {
       return await AccessibilityInfo.isScreenReaderEnabled();
-    } catch {
+    } catch (error) {
       return false;
     }
   }

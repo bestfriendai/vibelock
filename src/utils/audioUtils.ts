@@ -1,5 +1,5 @@
 import * as FileSystem from "expo-file-system";
-import { AudioModule } from "expo-audio";
+import { Audio } from "expo-av";
 import { AudioError } from "../types";
 
 /**
@@ -35,14 +35,14 @@ export async function validateAudioFile(uri: string): Promise<boolean> {
       return false;
     }
 
-    // Try to create the audio player to verify it's playable
-    const player = new AudioModule.AudioPlayer(uri, 500, false);
+    // Try to create a sound object to verify it's playable
+    const { sound } = await Audio.Sound.createAsync({ uri });
     // If creation succeeds, assume it's valid
-    player.remove();
+    await sound.unloadAsync();
 
     return true;
   } catch (error) {
-    console.error("Audio validation failed:", error);
+    console.error("Audio validation failed");
     return false;
   }
 }
@@ -57,24 +57,24 @@ export async function getAudioMetadata(uri: string): Promise<{
   sampleRate?: number;
 } | null> {
   try {
-    const player = new AudioModule.AudioPlayer(uri, 500, false);
+    const { sound } = await Audio.Sound.createAsync({ uri });
 
-    // Wait a bit for loading
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    // Get status to retrieve duration
+    const status = await sound.getStatusAsync();
 
-    if (!player.isLoaded) {
-      player.remove();
+    if (!status.isLoaded) {
+      await sound.unloadAsync();
       return null;
     }
 
     const metadata = {
-      duration: player.duration,
+      duration: status.durationMillis ? status.durationMillis / 1000 : 0,
     };
 
-    player.remove();
+    await sound.unloadAsync();
     return metadata;
   } catch (error) {
-    console.error("Failed to get audio metadata:", error);
+    console.error("Failed to get audio metadata");
     return null;
   }
 }
@@ -244,8 +244,8 @@ export async function compressAudioForUpload(
 
     return uri;
   } catch (error) {
-    console.error("Audio compression failed:", error);
-    throw error;
+    console.error("Audio compression failed");
+    throw new Error("Audio compression failed");
   }
 }
 
@@ -308,7 +308,7 @@ export async function hasEnoughStorageForRecording(estimatedSizeBytes: number): 
     // Require at least 2x the estimated size for safety
     return freeDiskStorage > estimatedSizeBytes * 2;
   } catch (error) {
-    console.error("Failed to check storage:", error);
+    console.error("Failed to check storage");
     return true; // Assume there's enough space if check fails
   }
 }
@@ -339,6 +339,6 @@ export async function cleanupTempAudioFiles(olderThanMs: number = 24 * 60 * 60 *
       }
     }
   } catch (error) {
-    console.error("Failed to cleanup temp audio files:", error);
+    console.error("Failed to cleanup temp audio files");
   }
 }

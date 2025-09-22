@@ -1,10 +1,24 @@
-import { supabase, handleSupabaseError } from "../config/supabase";
-import type { StorageError, FileObject, SignedUrlResponse, UploadResponse } from "@supabase/supabase-js";
+import supabase, { handleSupabaseError } from "../config/supabase";
+import type { PostgrestError } from "@supabase/supabase-js";
+
+// Define FileObject type locally since it's no longer exported in Supabase v2
+interface FileObject {
+  name: string;
+  bucket_id?: string;
+  owner?: string;
+  id?: string;
+  updated_at?: string;
+  created_at?: string;
+  last_accessed_at?: string;
+  metadata?: Record<string, any>;
+  buckets?: string[];
+  size?: number;
+}
 
 // Enhanced types for v2.57.4 compatibility
 interface StorageResult<T = any> {
   data: T | null;
-  error: StorageError | null;
+  error: any; // StorageError is different from PostgrestError
 }
 
 interface UploadResult {
@@ -265,7 +279,7 @@ export class StorageService {
       if (result.status === "fulfilled") {
         return result.value;
       } else {
-        return { path: paths[index], signedUrl: null, error: result.reason.message };
+        return { path: paths[index] || "", signedUrl: null, error: result.reason?.message || "Unknown error" };
       }
     });
   }
@@ -302,7 +316,7 @@ export class StorageService {
         handleStorageError(response.error, "List Files");
       }
 
-      return validateStorageResponse(response, "List Files") || [];
+      return (validateStorageResponse(response, "List Files") || []) as any;
     } catch (error: any) {
       console.error(`Failed to list files in bucket ${bucket}:`, error);
       throw error;

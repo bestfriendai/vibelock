@@ -3,7 +3,7 @@
  * Tests the complete authentication and chatroom flow
  */
 
-import { supabase } from "../config/supabase";
+import supabase from "../config/supabase";
 import { authService } from "../services/auth";
 import { enhancedRealtimeChatService } from "../services/realtimeChat";
 import { requireAuthentication } from "./authUtils";

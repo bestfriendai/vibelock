@@ -84,8 +84,8 @@ export const useAudioPlayer = ({
     try {
       await storePlay(messageId, audioUri, initialDuration);
       onPlaybackStart?.();
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to play audio";
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to play audio";
       setError(errorMessage);
       onError?.(errorMessage);
 

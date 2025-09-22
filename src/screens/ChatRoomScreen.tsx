@@ -43,7 +43,7 @@ function toDateSafe(value: any): Date {
     if (typeof value === "number") return new Date(value < 1e12 ? value * 1000 : value);
     if (typeof value === "string") return new Date(value);
     return new Date();
-  } catch {
+  } catch (error) {
     return new Date();
   }
 }
@@ -211,7 +211,7 @@ export default function ChatRoomScreen() {
           if (mountedRef.current) {
             setIsSubscribed(result);
           }
-        } catch {
+        } catch (error) {
           if (mountedRef.current) {
             setIsSubscribed(false);
           }
@@ -591,6 +591,10 @@ export default function ChatRoomScreen() {
         />
 
         <FlashListAny
+          accessible={true}
+          accessibilityRole="list"
+          accessibilityLabel="Chat conversation messages"
+          accessibilityLiveRegion="polite"
           ref={listRef}
           // Optimized list with pre-calculated grouping metadata
           data={optimizedMessages}
@@ -621,7 +625,9 @@ export default function ChatRoomScreen() {
           disableAutoLayout={optimizedMessages.length > 100 && !!overrideItemLayout}
           // Track viewable items for performance monitoring
           onViewableItemsChanged={({ viewableItems }: any) => {
-            const newViewableIds = new Set(viewableItems.map((item: any) => item.item.message.id).filter((id: any) => typeof id === 'string')) as Set<string>;
+            const newViewableIds = new Set(
+              viewableItems.map((item: any) => item.item.message.id).filter((id: any) => typeof id === "string"),
+            ) as Set<string>;
             viewableItemsRef.current = newViewableIds;
 
             if (optimizedMessages.length > 100) {
@@ -826,7 +832,7 @@ export default function ChatRoomScreen() {
       <MessageActionsModal
         visible={isActionsModalVisible}
         onClose={() => setIsActionsModalVisible(false)}
-        message={selectedMessage}
+        message={selectedMessage || undefined}
         canEdit={selectedMessage && user ? canEditMessage(selectedMessage, user.id) : false}
         canForward={true}
         onReply={() => {
@@ -854,8 +860,8 @@ export default function ChatRoomScreen() {
             if (selectedMessage?.content) {
               Clipboard.setStringAsync(selectedMessage.content);
             }
-          } catch (e) {
-            console.warn("Failed to copy message:", e);
+          } catch (error) {
+            console.warn("Failed to copy message:", error);
           } finally {
             setIsActionsModalVisible(false);
           }
@@ -865,8 +871,8 @@ export default function ChatRoomScreen() {
             if (selectedMessage?.id) {
               await useChatStore.getState().deleteMessage?.(roomId, selectedMessage.id);
             }
-          } catch (e) {
-            console.warn("Failed to delete message:", e);
+          } catch (error) {
+            console.warn("Failed to delete message:", error);
           } finally {
             setIsActionsModalVisible(false);
           }
@@ -879,7 +885,7 @@ export default function ChatRoomScreen() {
           setShowEditModal(false);
           setEditingMessage(null);
         }}
-        message={editingMessage || undefined}
+        message={editingMessage}
         onSave={async (newContent) => {
           if (editingMessage) {
             await useChatStore.getState().editMessage(roomId, editingMessage.id, newContent);

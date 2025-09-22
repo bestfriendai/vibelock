@@ -153,8 +153,8 @@ export const VoiceMessageTranscription: React.FC<VoiceMessageTranscriptionProps>
 
       // Notify parent component
       onTranscriptionComplete?.(mockTranscription);
-    } catch (err) {
-      console.error("Transcription error:", err);
+    } catch (error) {
+      console.error("Transcription error:", error);
       setError("Failed to transcribe audio. Please try again.");
     } finally {
       setIsLoading(false);

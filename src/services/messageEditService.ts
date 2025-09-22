@@ -1,4 +1,4 @@
-import { supabase } from "../config/supabase";
+import supabase from "../config/supabase";
 import { Message } from "../types";
 import { AppError, ErrorType } from "../utils/errorHandling";
 

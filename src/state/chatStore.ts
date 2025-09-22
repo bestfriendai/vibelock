@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { mmkvStorage } from "../utils/mmkvStorage";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { startTransition } from "react";
 import {
   ChatRoom,
@@ -17,7 +18,7 @@ import { consolidatedRealtimeService } from "../services/consolidatedRealtimeSer
 import useAuthStore from "./authStore";
 import { requireAuthentication, getUserDisplayName } from "../utils/authUtils";
 import { AppError, parseSupabaseError, retryWithBackoff, ErrorType } from "../utils/errorHandling";
-import { supabase } from "../config/supabase";
+import supabase from "../config/supabase";
 import { searchService } from "../services/search";
 import { messageEditService } from "../services/messageEditService";
 import { messageForwardService } from "../services/messageForwardService";
@@ -159,6 +160,9 @@ interface ChatActions {
   subscribeToChatRoom: (roomId: string) => void;
   unsubscribeFromChatRoom: (roomId: string) => Promise<void>;
   clearOldMessages: (daysToKeep?: number) => void;
+
+  // Offline support
+  processOfflineQueue: () => Promise<void>;
 }
 
 type ChatStore = ChatState & ChatActions;
@@ -249,6 +253,12 @@ const useChatStore = create<ChatStore>()(
 
       // Connection management
       connect: async (userId: string) => {
+        // ... existing connect code ...
+
+        // After successful connection, process offline queue
+
+        await get().processOfflineQueue();
+
         try {
           console.log("🚀 Connecting to enhanced real-time chat service...");
           set({ connectionStatus: "connecting", error: null });
@@ -275,23 +285,25 @@ const useChatStore = create<ChatStore>()(
           // Register for AppState changes
           appStateManager.registerListener("chatStore", async (nextState, prevState) => {
             console.log(`[ChatStore] AppState changed: ${prevState} -> ${nextState}`);
-            await get().handleAppStateChange(nextState, prevState);
+            if (prevState) {
+              await get().handleAppStateChange?.(nextState, prevState);
+            }
           });
 
           // Register foreground/background callbacks
-          const unsubscribeForeground = appStateManager.onForeground ? appStateManager.onForeground(async () => {
+          const unsubscribeForeground = appStateManager.onForeground!(async () => {
             console.log("[ChatStore] App returned to foreground - reconnecting...");
-            await get().reconnectAllRooms();
-          }) : undefined;
+            await get().reconnectAllRooms?.();
+          });
 
-          const unsubscribeBackground = appStateManager.onBackground ? appStateManager.onBackground(() => {
+          const unsubscribeBackground = appStateManager.onBackground!(() => {
             console.log("[ChatStore] App going to background - pausing subscriptions...");
             // Clear typing indicators for all rooms
             const currentRoomId = get().currentChatRoom?.id;
             if (currentRoomId) {
               get().setTyping(currentRoomId, false);
             }
-          }) : undefined;
+          });
 
           // Store unsubscribe functions
           set((state) => ({
@@ -339,9 +351,9 @@ const useChatStore = create<ChatStore>()(
                     await consolidatedRealtimeService.initialize();
                     set({ connectionStatus: "connected", error: null });
                     console.log("🔄 Reconnected to chat service after network recovery");
-                  } catch (e) {
-                    console.warn("🔄 Reconnect failed:", e);
-                    const isAuthError = e instanceof Error && e.message.includes("signed in");
+                  } catch (error) {
+                    console.warn("🔄 Reconnect failed:", error);
+                    const isAuthError = error instanceof Error && error.message.includes("signed in");
                     set({
                       connectionStatus: "error" as ConnectionStatus,
                       error: isAuthError ? "Authentication required. Please sign in." : "Reconnection failed",
@@ -461,32 +473,41 @@ const useChatStore = create<ChatStore>()(
       // Chat rooms
       loadChatRooms: async () => {
         try {
+          const { user } = await requireAuthentication("load chat rooms");
           set({ isLoading: true, error: null });
 
           console.log("🔄 Loading chat rooms...");
 
+          // Check offline cache first
+          const networkState = await NetInfo.fetch();
+          const cached = await AsyncStorage.getItem("cached_rooms");
+          if (cached && !networkState.isConnected) {
+            set({ chatRooms: JSON.parse(cached) });
+          }
+          // Fetch fresh data
           // Load chat rooms directly from Supabase - simplified approach
           const { data: chatRooms, error } = await supabase
             .from("chat_rooms_firebase")
             .select(
               `
-              id,
-              name,
-              description,
-              type,
-              category,
-              member_count,
-              online_count,
-              unread_count,
-              last_activity,
-              last_message,
-              is_active,
-              location,
-              created_at,
-              updated_at
-            `,
+        id,
+        name,
+        description,
+        type,
+        category,
+        member_count,
+        online_count,
+        unread_count,
+        last_activity,
+        last_message,
+        is_active,
+        location,
+        created_at,
+        updated_at
+      `,
             )
             .eq("is_active", true)
+            .or(`public=true, members.user_id.eq.${user.id}`) // RLS-like filter
             .order("last_activity", { ascending: false });
 
           if (error) throw error;
@@ -520,6 +541,7 @@ const useChatStore = create<ChatStore>()(
             chatRooms: filteredRooms,
             isLoading: false,
           });
+          await AsyncStorage.setItem("cached_rooms", JSON.stringify(formattedRooms));
         } catch (error) {
           console.warn("💥 Failed to load chat rooms:", error);
           const appError = error instanceof AppError ? error : parseSupabaseError(error);
@@ -531,6 +553,62 @@ const useChatStore = create<ChatStore>()(
           });
 
           throw appError;
+        }
+      },
+
+      loadMoreRooms: async (page: number) => {
+        try {
+          const { user } = await requireAuthentication("load more chat rooms");
+          const { data: newRooms, error } = await supabase
+            .from("chat_rooms_firebase")
+            .select(
+              `
+        id,
+        name,
+        description,
+        type,
+        category,
+        member_count,
+        online_count,
+        unread_count,
+        last_activity,
+        last_message,
+        is_active,
+        location,
+        created_at,
+        updated_at
+      `,
+            )
+            .eq("is_active", true)
+            .or(`public=true, members.user_id.eq.${user.id}`)
+            .range((page - 1) * 20, page * 20 - 1)
+            .order("last_activity", { ascending: false });
+
+          if (error) throw error;
+
+          const formattedNewRooms: ChatRoom[] = (newRooms || []).map((room: any) => ({
+            id: room.id,
+            name: room.name,
+            description: room.description,
+            type: room.type,
+            category: room.category,
+            memberCount: room.member_count || 0,
+            onlineCount: room.online_count || 0,
+            unreadCount: room.unread_count || 0,
+            lastActivity: new Date(room.last_activity),
+            isActive: room.is_active,
+            location: room.location,
+            createdAt: new Date(room.created_at),
+            updatedAt: new Date(room.updated_at),
+          }));
+
+          set((state) => ({
+            chatRooms: [...state.chatRooms, ...formattedNewRooms],
+            hasMoreRooms: newRooms.length === 20,
+          }));
+        } catch (error) {
+          console.warn("💥 Failed to load more chat rooms:", error);
+          throw error;
         }
       },
 
@@ -632,7 +710,9 @@ const useChatStore = create<ChatStore>()(
                       if (event.tempId && event.items.length > 0) {
                         // Replace the optimistic message with the real message
                         const realMessage = event.items[0];
-                        allMessages = currentMsgs.map((msg) => (msg.id === event.tempId ? realMessage : msg)).filter((msg): msg is Message => msg !== undefined);
+                        allMessages = currentMsgs
+                          .map((msg) => (msg.id === event.tempId ? realMessage : msg))
+                          .filter((msg): msg is Message => msg !== undefined);
                         // Remove duplicate if the real message already exists
                         const uniqueIds = new Set<string>();
                         allMessages = allMessages.filter((msg) => {
@@ -713,13 +793,7 @@ const useChatStore = create<ChatStore>()(
             },
             onTyping: (typingUsers: TypingUser[]) => {
               startTransition(() => {
-                set(() => ({
-                  typingUsers: typingUsers.filter((user) => {
-                    const timestamp =
-                      user.timestamp instanceof Date ? user.timestamp.getTime() : new Date(user.timestamp).getTime();
-                    return Date.now() - timestamp < 5000;
-                  }),
-                }));
+                set({ typingUsers });
               });
             },
             onError: (error: any) => {
@@ -727,6 +801,9 @@ const useChatStore = create<ChatStore>()(
               set({ error: error.message || "Real-time connection error" });
             },
           });
+
+          // Process offline queue after joining
+          await get().processOfflineQueue();
 
           // Load initial messages with loading state
           console.log(`📥 Loading initial messages for room: ${roomId}`);
@@ -847,8 +924,34 @@ const useChatStore = create<ChatStore>()(
       },
 
       sendMessage: async (roomId: string, content: string, replyTo?: string) => {
-        let optimisticMessageId: string | null = null;
+        const netInfoState = await NetInfo.fetch();
+        if (!netInfoState.isConnected) {
+          const offlineActions = JSON.parse((await AsyncStorage.getItem("offline_actions")) || "[]");
+          offlineActions.push({ type: "sendMessage", roomId, content, replyTo, timestamp: Date.now() });
+          await AsyncStorage.setItem("offline_actions", JSON.stringify(offlineActions));
+          // Add optimistic message
+          const { user } = useAuthStore.getState();
+          const senderName = getUserDisplayName(user);
+          const timestamp = Date.now();
+          const optimisticMessageId = `offline_${timestamp}`;
+          const optimisticMessage: ChatMessage = {
+            id: optimisticMessageId,
+            chatRoomId: roomId,
+            senderId: user?.id || "",
+            senderName,
+            content,
+            messageType: "text",
+            timestamp: new Date(timestamp),
+            isRead: false,
+            status: "pending",
+            isOwn: true,
+            replyTo,
+          };
+          get().addMessage(optimisticMessage);
+          return;
+        }
 
+        let optimisticMessageId: string | null = null;
         try {
           console.log(`📤 Sending message to room ${roomId}:`, content);
 
@@ -864,7 +967,6 @@ const useChatStore = create<ChatStore>()(
           // Create optimistic message with predictable ID
           const timestamp = Date.now();
           optimisticMessageId = `optimistic_${timestamp}_${user.id}`;
-
           const optimisticMessage: ChatMessage = {
             id: optimisticMessageId,
             chatRoomId: roomId,
@@ -893,6 +995,9 @@ const useChatStore = create<ChatStore>()(
             800,
             (err) => err.type === ErrorType.NETWORK || err.retryable,
           );
+
+          // Process offline queue after successful send
+          await get().processOfflineQueue();
 
           console.log("✅ Message sent successfully");
         } catch (error) {
@@ -1306,8 +1411,16 @@ const useChatStore = create<ChatStore>()(
             senderId: user.id,
             senderName,
             content: comment
-              ? `${comment}\n\n--- Forwarded message ---\n${sourceMessage.content}`
-              : `--- Forwarded message ---\n${sourceMessage.content}`,
+              ? `${comment}
+
+
+
+--- Forwarded message ---
+
+${sourceMessage.content}`
+              : `--- Forwarded message ---
+
+${sourceMessage.content}`,
             messageType: sourceMessage.messageType,
             timestamp: new Date(timestamp),
             isRead: false,
@@ -1684,7 +1797,7 @@ const useChatStore = create<ChatStore>()(
                 table: "chat_messages_firebase",
                 filter: `chat_room_id=eq.${roomId}`,
               },
-              (payload) => {
+              (payload: any) => {
                 console.log("Real-time message received:", payload);
 
                 if (payload.eventType === "INSERT") {
@@ -1704,7 +1817,7 @@ const useChatStore = create<ChatStore>()(
                 }
               },
             )
-            .subscribe((status) => {
+            .subscribe((status: any) => {
               if (status === "SUBSCRIBED") {
                 console.log(`Successfully subscribed to room ${roomId}`);
               } else if (status === "CHANNEL_ERROR") {
@@ -1860,6 +1973,47 @@ const useChatStore = create<ChatStore>()(
           console.warn("Failed to cleanup chat store:", error);
         }
       },
+
+      // Process offline queue
+      processOfflineQueue: async () => {
+        try {
+          const offlineActions = JSON.parse((await AsyncStorage.getItem("offline_actions")) || "[]");
+          if (offlineActions.length === 0) return;
+
+          const { user } = useAuthStore.getState();
+          if (!user) return;
+
+          const senderName = getUserDisplayName(user);
+
+          for (const action of offlineActions) {
+            if (action.type === "sendMessage") {
+              await consolidatedRealtimeService.sendMessage(
+                action.roomId,
+                action.content,
+                user.id,
+                senderName,
+                "text",
+                action.replyTo,
+              );
+
+              // Remove optimistic offline message if exists
+              set((state) => ({
+                messages: {
+                  ...state.messages,
+                  [action.roomId]: (state.messages[action.roomId] || []).filter(
+                    (msg) => !msg.id.startsWith("offline_"),
+                  ),
+                },
+              }));
+            }
+          }
+
+          await AsyncStorage.setItem("offline_actions", JSON.stringify([]));
+          console.log(`Processed ${offlineActions.length} offline actions`);
+        } catch (error) {
+          console.error("Failed to process offline queue:", error);
+        }
+      },
     }),
     {
       name: "chat-storage",
@@ -1882,7 +2036,7 @@ const useChatStore = create<ChatStore>()(
             members: ps.members ?? {},
             roomCategoryFilter: ps.roomCategoryFilter ?? "all",
           };
-        } catch {
+        } catch (error) {
           return { chatRooms: [], messages: {}, members: {}, roomCategoryFilter: "all" };
         }
       },

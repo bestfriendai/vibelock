@@ -307,7 +307,7 @@ class CompatibilityChecker {
   private isHermesEnabled(): boolean {
     try {
       return (global as any).HermesInternal != null;
-    } catch {
+    } catch (error) {
       return false;
     }
   }
@@ -318,7 +318,7 @@ class CompatibilityChecker {
   private isNewArchitectureEnabled(): boolean {
     try {
       return (global as any)._IS_NEW_ARCHITECTURE_ENABLED === true;
-    } catch {
+    } catch (error) {
       return false;
     }
   }
@@ -329,7 +329,7 @@ class CompatibilityChecker {
   private isTurboModulesEnabled(): boolean {
     try {
       return (global as any).__turboModuleProxy != null;
-    } catch {
+    } catch (error) {
       return false;
     }
   }
@@ -340,7 +340,7 @@ class CompatibilityChecker {
   private isFabricEnabled(): boolean {
     try {
       return (global as any).nativeFabricUIManager != null;
-    } catch {
+    } catch (error) {
       return false;
     }
   }
@@ -351,7 +351,7 @@ class CompatibilityChecker {
   private isJSIAvailable(): boolean {
     try {
       return (global as any)._IS_JSI_AVAILABLE === true;
-    } catch {
+    } catch (error) {
       return false;
     }
   }
@@ -362,7 +362,7 @@ class CompatibilityChecker {
   private isCodegenAvailable(): boolean {
     try {
       return NativeModules.RNCodegenNativeModule != null;
-    } catch {
+    } catch (error) {
       return false;
     }
   }
@@ -373,7 +373,7 @@ class CompatibilityChecker {
   private isFlipperAvailable(): boolean {
     try {
       return __DEV__ && (global as any)._IS_FLIPPER_AVAILABLE === true;
-    } catch {
+    } catch (error) {
       return false;
     }
   }
@@ -384,7 +384,7 @@ class CompatibilityChecker {
   private isReanimated3Available(): boolean {
     try {
       return (global as any)._REANIMATED !== undefined;
-    } catch {
+    } catch (error) {
       return false;
     }
   }

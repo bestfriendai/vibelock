@@ -233,12 +233,9 @@ export default function SearchScreen({ navigation, route }: Props) {
     try {
       // Use enhanced search with filters
       const results = await searchService.searchAll(queryValidation.sanitized, {
-        useAdvancedSearch: true,
-        filters: {
-          dateRange: filters.dateRange,
-          location: filters.location,
-          category: "dating", // Default to dating category for this app
-        },
+        ...filters,
+        limit: 20,
+        offset: 0,
       });
       setContentResults(results);
 
@@ -252,9 +249,9 @@ export default function SearchScreen({ navigation, route }: Props) {
           `No results found for "${queryValidation.sanitized}". Try different keywords or check your spelling.`,
         );
       }
-    } catch (e) {
-      console.warn("Search failed:", e);
-      const appError = e instanceof AppError ? e : parseSupabaseError(e);
+    } catch (error) {
+      console.warn("Search failed:", error);
+      const appError = error instanceof AppError ? error : parseSupabaseError(error);
       setSearchError(appError.userMessage || "Search failed. Please check your connection and try again.");
       setContentResults({ reviews: [], comments: [], messages: [] });
     } finally {

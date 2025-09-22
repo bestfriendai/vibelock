@@ -23,7 +23,8 @@ export { searchService as supabaseSearch } from "./search";
 export { storageService as supabaseStorage } from "./storage";
 
 // Re-export supabase client and error handler for backward compatibility
-export { supabase, handleSupabaseError } from "../config/supabase";
+import supabase, { handleSupabaseError } from "../config/supabase";
+export { supabase, handleSupabaseError };
 
 // Export placeholder for comments service (if needed in the future)
 export const supabaseComments = {

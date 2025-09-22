@@ -1,5 +1,5 @@
-import { supabase } from "../config/supabase";
-import { SearchResults, Profile } from "../types";
+import supabase from "../config/supabase";
+import { SearchResults, SearchResult, Profile } from "../types";
 import { mapFieldsToCamelCase } from "../utils/fieldMapping";
 import { withRetry } from "../utils/retryLogic";
 
@@ -140,7 +140,22 @@ export class SearchService {
       const { data, error } = await searchQuery;
 
       if (error) throw error;
-      return (data || []).map(mapFieldsToCamelCase) as Profile[];
+      return (data || []).map((user) => {
+        const camelCased: any = mapFieldsToCamelCase(user);
+        return {
+          id: camelCased.id,
+          firstName: camelCased.username || "Unknown",
+          location: {
+            city: camelCased.city || "Unknown",
+            state: camelCased.state || "Unknown",
+          },
+          totalReviews: 0,
+          greenFlagCount: 0,
+          redFlagCount: 0,
+          createdAt: camelCased.createdAt ? new Date(camelCased.createdAt) : new Date(),
+          updatedAt: camelCased.updatedAt ? new Date(camelCased.updatedAt) : new Date(),
+        } as Profile;
+      });
     });
   }
 
@@ -216,7 +231,7 @@ export class SearchService {
         reviewData = data || [];
       }
 
-      const reviews = reviewData.map((item) => ({
+      const reviews = reviewData.map((item: any) => ({
         id: item.id,
         type: "review" as const,
         title: item.reviewed_person_name,
@@ -252,6 +267,8 @@ export class SearchService {
   async searchAll(
     query: string,
     options: {
+      limit?: number;
+      offset?: number;
       useAdvancedSearch?: boolean;
       filters?: {
         dateRange?: string;
@@ -261,13 +278,15 @@ export class SearchService {
     } = {},
   ): Promise<SearchResults> {
     return withRetry(async () => {
-      const { useAdvancedSearch = false, filters = {} } = options;
+      const { limit = 20, offset = 0, useAdvancedSearch = false, filters = {} } = options;
 
       // Search reviews with enhanced capabilities
       let reviewQuery = supabase
         .from("reviews_firebase")
         .select("*, author:users!author_id(id, username, display_name)")
-        .or(`reviewed_person_name.ilike.%${query}%,review_text.ilike.%${query}%`);
+        .or(`reviewed_person_name.ilike.%${query}%,review_text.ilike.%${query}%`)
+        .limit(limit)
+        .range(offset, offset + limit - 1);
 
       // Apply filters if provided
       if (filters.category) {
@@ -301,9 +320,7 @@ export class SearchService {
         }
       }
 
-      const { data: reviewData, error: reviewError } = await reviewQuery
-        .order("created_at", { ascending: false })
-        .limit(SEARCH_CONFIG.defaultResultsPerType);
+      const { data: reviewData, error: reviewError } = await reviewQuery.order("created_at", { ascending: false });
 
       if (reviewError) throw reviewError;
 
@@ -313,7 +330,8 @@ export class SearchService {
         .select("*, user:users(*), review:reviews(*)")
         .ilike("content", `%${query}%`)
         .order("created_at", { ascending: false })
-        .limit(25);
+        .limit(limit)
+        .range(offset, offset + limit - 1);
 
       if (commentError) throw commentError;
 
@@ -323,50 +341,54 @@ export class SearchService {
         .select("*, chat_rooms_firebase(name)")
         .ilike("content", `%${query}%`)
         .order("created_at", { ascending: false })
-        .limit(25);
+        .limit(limit)
+        .range(offset, offset + limit - 1);
 
       if (messageError) throw messageError;
 
-      const reviews = (reviewData || []).map((item) => ({
+      const reviews = (reviewData || []).map((item: any) => ({
         id: item.id,
         type: "review" as const,
         title: item.reviewed_person_name,
         content: item.review_text,
         snippet: item.review_text.substring(0, 150),
-        createdAt: new Date(item.created_at),
+        createdAt: item.created_at ? new Date(item.created_at) : new Date(),
         metadata: {
           reviewId: item.id,
-          authorName: item.author?.display_name || item.author?.username || "Anonymous",
-          location: `${item.reviewed_person_location?.city}, ${item.reviewed_person_location?.state}`,
+          authorName: (item.author as any)?.display_name || (item.author as any)?.username || "Anonymous",
+          location:
+            typeof item.reviewed_person_location === "object" && item.reviewed_person_location
+              ? `${(item.reviewed_person_location as any)?.city || ""}, ${(item.reviewed_person_location as any)?.state || ""}`.trim()
+              : "Unknown location",
         },
       }));
 
-      const comments = (commentData || []).map((item) => ({
+      const comments = (commentData || []).map((item: any) => ({
         id: item.id,
         type: "comment" as const,
         title: `Comment on ${item.review?.reviewed_person_name || "Review"}`,
         content: item.content,
         snippet: item.content.substring(0, 150),
-        createdAt: new Date(item.created_at),
+        createdAt: item.created_at ? new Date(item.created_at) : new Date(),
         metadata: {
           commentId: item.id,
-          reviewId: item.review_id,
+          reviewId: item.review_id || undefined,
           authorName: item.user?.display_name || "Anonymous",
         },
       }));
 
-      const messages = (messageData || []).map((item) => ({
+      const messages = (messageData || []).map((item: any) => ({
         id: item.id,
         type: "message" as const,
         title: `Message in ${item.chat_rooms_firebase?.name || "Chat"}`,
         content: item.content,
         snippet: item.content.substring(0, 150),
-        createdAt: new Date(item.created_at),
+        createdAt: new Date(item.timestamp || new Date()),
         metadata: {
           messageId: item.id,
-          roomId: item.chat_room_id,
+          roomId: item.chat_room_id ?? undefined,
           roomName: item.chat_rooms_firebase?.name,
-          senderId: item.sender_id,
+          senderId: item.sender_id || undefined,
           senderName: item.sender_name || "Anonymous",
         },
       }));
@@ -385,7 +407,7 @@ export class SearchService {
    */
   async searchMessages(roomId: string, query: string, limit: number = 50, offset: number = 0): Promise<SearchResults> {
     try {
-      const { data, error } = await supabase.rpc("search_messages_in_room", {
+      const { data, error } = await (supabase.rpc as any)("search_messages_in_room", {
         p_room_id: roomId,
         p_query: query,
         p_limit: limit,
@@ -405,13 +427,13 @@ export class SearchService {
 
         if (fallbackError) throw fallbackError;
 
-        const messages = (fallbackData || []).map((item) => ({
+        const messages = (fallbackData || []).map((item: any) => ({
           id: item.id,
           type: "message" as const,
           title: `Message in ${item.chat_rooms_firebase?.name || "Chat"}`,
           content: item.content,
           snippet: item.content.substring(0, 150),
-          createdAt: new Date(item.created_at),
+          createdAt: item.timestamp ? new Date(item.timestamp) : new Date(),
           metadata: {
             messageId: item.id,
             roomId: item.chat_room_id,
@@ -424,13 +446,13 @@ export class SearchService {
         return {
           reviews: [],
           comments: [],
-          messages,
+          messages: messages as SearchResult[],
           total: messages.length,
         };
       }
 
       // Map RPC results to SearchResults format
-      const messages = (data || []).map((item) => ({
+      const messages = (data || []).map((item: any) => ({
         id: item.message_id,
         type: "message" as const,
         title: `Message from ${item.sender_name}`,
@@ -469,7 +491,7 @@ export class SearchService {
     offset: number = 0,
   ): Promise<SearchResults> {
     try {
-      const { data, error } = await supabase.rpc("search_messages_global", {
+      const { data, error } = await (supabase.rpc as any)("search_messages_global", {
         p_user_id: userId,
         p_query: query,
         p_limit: limit,
@@ -488,13 +510,13 @@ export class SearchService {
 
         if (fallbackError) throw fallbackError;
 
-        const messages = (fallbackData || []).map((item) => ({
+        const messages = (fallbackData || []).map((item: any) => ({
           id: item.id,
           type: "message" as const,
           title: `Message in ${item.chat_rooms_firebase?.name || "Chat"}`,
           content: item.content,
           snippet: item.content.substring(0, 150),
-          createdAt: new Date(item.created_at),
+          createdAt: item.timestamp ? new Date(item.timestamp) : new Date(),
           metadata: {
             messageId: item.id,
             roomId: item.chat_room_id,
@@ -507,13 +529,13 @@ export class SearchService {
         return {
           reviews: [],
           comments: [],
-          messages,
+          messages: messages as SearchResult[],
           total: messages.length,
         };
       }
 
       // Map RPC results to SearchResults format
-      const messages = (data || []).map((item) => ({
+      const messages = (data || []).map((item: any) => ({
         id: item.message_id,
         type: "message" as const,
         title: `Message in ${item.room_name}`,
@@ -549,7 +571,7 @@ export class SearchService {
     try {
       if (partialQuery.length < 2) return [];
 
-      const { data, error } = await supabase.rpc("get_search_suggestions", {
+      const { data, error } = await (supabase.rpc as any)("get_search_suggestions", {
         p_prefix: partialQuery,
         p_limit: limit,
       });
@@ -579,12 +601,13 @@ export class SearchService {
       // Only log in production or when analytics is enabled
       if (process.env.NODE_ENV !== "production") return;
 
-      await supabase.from("search_analytics").insert({
-        search_query: query.substring(0, 100), // Truncate long queries
-        search_type: searchType,
-        results_count: resultCount,
-        execution_time_ms: executionTime,
-      });
+      // TODO: search_analytics table doesn't exist yet
+      // await supabase.from("search_analytics").insert({
+      //   search_query: query.substring(0, 100), // Truncate long queries
+      //   search_type: searchType,
+      //   results_count: resultCount,
+      //   execution_time_ms: executionTime,
+      // });
     } catch (error) {
       // Silently fail analytics logging to not impact user experience
       console.warn("Failed to log search analytics:", error);

@@ -1,4 +1,4 @@
-import { supabase, handleSupabaseError } from "../config/supabase";
+import supabase, { handleSupabaseError } from "../config/supabase";
 import { withRetry } from "../utils/retryLogic";
 import { AuthProvider } from "../types";
 import { initializeUserSubscription } from "../utils/subscriptionUtils";
@@ -254,6 +254,7 @@ export class AuthService {
       options: {
         redirectTo: "lockerroom://auth/callback",
         ...additionalOptions,
+        // PKCE is enabled by default in Supabase for native apps, but explicitly set
       },
     });
 
@@ -311,6 +312,11 @@ export class AuthService {
   }
 
   // Enhanced OTP verification with v2.57.4 validation
+  async signInWithOtp(email: string, token: string) {
+    const { data, error } = await supabase.auth.verifyOtp({ email, token, type: "email" });
+    // Handle MFA
+  }
+
   async verifyOtp(email: string, token: string, type: "email" | "signup" | "recovery" = "email"): Promise<AuthResult> {
     if (!email || !token) {
       throw new Error("Email and token are required for OTP verification");

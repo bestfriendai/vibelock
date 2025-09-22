@@ -485,7 +485,7 @@ export const EnvironmentHelpers = {
       try {
         const url = new URL(value);
         return `${url.protocol}//${url.hostname}`;
-      } catch {
+      } catch (error) {
         return "Invalid URL";
       }
     }

@@ -5,7 +5,7 @@ import { Paths } from "expo-file-system";
 import * as MediaLibrary from "expo-media-library";
 import { captureScreen } from "react-native-view-shot";
 import { performanceMonitor } from "./performance";
-import { supabase } from "../config/supabase";
+import supabase from "../config/supabase";
 import { productionMonitor } from "../services/productionMonitoring";
 
 interface TestStep {
@@ -207,7 +207,10 @@ export class E2ETestRunner {
 
           if (!rooms || rooms.length === 0 || !rooms[0]?.id) return null;
 
-          const { data: members } = await supabase.from("chat_members_firebase").select("*").eq("chat_room_id", rooms[0].id);
+          const { data: members } = await supabase
+            .from("chat_members_firebase")
+            .select("*")
+            .eq("chat_room_id", rooms[0].id);
 
           return members;
         },

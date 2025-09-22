@@ -11,7 +11,7 @@ import { PaywallAdaptive } from "../components/subscription/PaywallAdaptive";
 import useSubscriptionStore from "../state/subscriptionStore";
 
 // Services and utilities
-import { supabase } from "../config/supabase";
+import supabase from "../config/supabase";
 import { subscriptionService } from "../services/subscriptionService";
 import { adMobService } from "../services/adMobService";
 import { runMonetizationIntegrationTests, printIntegrationTestReport } from "../utils/monetizationIntegrationTest";

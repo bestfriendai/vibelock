@@ -1,5 +1,5 @@
 import { notificationService, NotificationData } from "./notificationService";
-import { supabase } from "../config/supabase";
+import supabase from "../config/supabase";
 
 /**
  * Helper functions for common notification scenarios
@@ -105,7 +105,9 @@ export async function notifyNewComment(reviewId: string, commentAuthorName: stri
       },
     };
 
-    await notificationService.createNotification(review.author_id, notification);
+    if (review.author_id) {
+      await notificationService.createNotification(review.author_id, notification);
+    }
   } catch (error) {
     console.warn("Failed to send new comment notification:", error);
   }

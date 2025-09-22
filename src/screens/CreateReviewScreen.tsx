@@ -262,8 +262,7 @@ export default function CreateReviewScreen() {
 
       // Upload media files before creating review
       const tempReviewId = `temp-${Date.now()}`;
-      const uploadedMedia = [];
-      for (const mediaItem of media) {
+      const uploadPromises = media.map(async (mediaItem) => {
         if (mediaItem.type === "video") {
           // Upload video
           const videoResult = await storageService.uploadFile(mediaItem.uri, {
@@ -291,11 +290,11 @@ export default function CreateReviewScreen() {
             }
           }
 
-          uploadedMedia.push({
+          return {
             ...mediaItem,
             uri: videoResult.url,
             thumbnailUri: thumbnailUrl,
-          });
+          };
         } else {
           // Upload image
           const imageResult = await storageService.uploadFile(mediaItem.uri, {
@@ -309,12 +308,16 @@ export default function CreateReviewScreen() {
             throw new Error(`Failed to upload image: ${imageResult.error}`);
           }
 
-          uploadedMedia.push({
+          return {
             ...mediaItem,
             uri: imageResult.url,
-          });
+          };
         }
-      }
+      });
+
+      const results = await Promise.all(uploadPromises);
+
+      const uploadedMedia = results;
 
       // Use sanitized data from validation
       const reviewData = {
@@ -358,7 +361,7 @@ export default function CreateReviewScreen() {
       setTimeout(() => {
         navigation.canGoBack() ? navigation.goBack() : navigation.navigate("MainTabs");
       }, 1500);
-    } catch (e) {
+    } catch (error) {
       setError("Failed to submit review. Please try again.");
     }
   };
@@ -506,6 +509,11 @@ export default function CreateReviewScreen() {
                   </Text>
                 </Pressable>
                 <Pressable
+                  accessible={true}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: category === "women" }}
+                  accessibilityLabel="Women category"
+                  accessibilityHint="Select to review someone in the women category"
                   className="flex-1 items-center justify-center rounded-xl border px-3 py-4"
                   style={{
                     backgroundColor: category === "women" ? "#EC489815" : colors.surface[800],
@@ -521,6 +529,11 @@ export default function CreateReviewScreen() {
                   </Text>
                 </Pressable>
                 <Pressable
+                  accessible={true}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: category === "lgbtq+" }}
+                  accessibilityLabel="LGBTQ+ category"
+                  accessibilityHint="Select to review someone in the LGBTQ+ category"
                   className="flex-1 items-center justify-center rounded-xl border px-3 py-4"
                   style={{
                     backgroundColor: category === "lgbtq+" ? "#8B5CF615" : colors.surface[800],
@@ -551,6 +564,11 @@ export default function CreateReviewScreen() {
             <FormSection title="Sentiment (Optional)" subtitle="Choose one, or skip">
               <View className="flex-row space-x-3">
                 <Pressable
+                  accessible={true}
+                  accessibilityRole="checkbox"
+                  accessibilityState={{ checked: sentiment === "green" }}
+                  accessibilityLabel="Green flag sentiment"
+                  accessibilityHint="Select to mark this review as a positive experience"
                   className="flex-1 flex-row items-center justify-center rounded-xl border px-3 py-4"
                   style={{
                     backgroundColor: sentiment === "green" ? "#22C55E20" : colors.surface[800],
@@ -563,6 +581,11 @@ export default function CreateReviewScreen() {
                   </Text>
                 </Pressable>
                 <Pressable
+                  accessible={true}
+                  accessibilityRole="checkbox"
+                  accessibilityState={{ checked: sentiment === "red" }}
+                  accessibilityLabel="Red flag sentiment"
+                  accessibilityHint="Select to mark this review as a negative experience"
                   className="flex-1 flex-row items-center justify-center rounded-xl border px-3 py-4"
                   style={{
                     backgroundColor: sentiment === "red" ? `${colors.brand.red}20` : colors.surface[800],

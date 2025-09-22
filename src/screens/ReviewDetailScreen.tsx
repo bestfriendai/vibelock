@@ -56,6 +56,19 @@ export default function ReviewDetailScreen() {
   // Get route params
   const routeParams = route.params as any;
 
+  // Debug logging to validate route parameters
+  console.log("🐛 ReviewDetailScreen - Route params:", {
+    hasParams: !!route.params,
+    paramsKeys: route.params ? Object.keys(route.params) : [],
+    reviewId: route.params?.reviewId,
+    review: route.params?.review ? { id: route.params.review?.id } : null,
+    allParams: route.params,
+  });
+
+  // Extract reviewId with proper fallback logic
+  const reviewId = routeParams?.reviewId || routeParams?.review?.id;
+  console.log("🐛 ReviewDetailScreen - Extracted reviewId:", reviewId);
+
   // All hooks declared at the top level - no conditional hooks
   const [review, setReview] = useState<Review | null>(null);
   const [reviewLoading, setReviewLoading] = useState(true);
@@ -81,7 +94,7 @@ export default function ReviewDetailScreen() {
     dislikeComment,
   } = useCommentsStore();
 
-  const { likeReview, dislikeReview } = useReviewsStore();
+  const { likeReview, dislikeReview, loadReview } = useReviewsStore();
 
   // Animation values
   const scrollY = useSharedValue(0);
@@ -89,49 +102,26 @@ export default function ReviewDetailScreen() {
 
   // Load review data
   useEffect(() => {
-    const loadReview = async () => {
-      try {
-        setReviewLoading(true);
-        const params = route.params as any;
-        let finalReview = null;
+    console.log("🐛 ReviewDetailScreen - Starting data load", {
+      hasReviewId: !!reviewId,
+      reviewId,
+      hasLoadReview: typeof loadReview === "function",
+      hasLoadComments: typeof loadComments === "function",
+    });
 
-        if (params?.review) {
-          const raw = params.review;
-          finalReview = {
-            ...raw,
-            createdAt: new Date(raw.createdAt),
-            updatedAt: new Date(raw.updatedAt),
-          };
-        } else if (params?.reviewId) {
-          finalReview = await reviewsService.getReview(params.reviewId);
-        }
-
-        if (finalReview) {
-          setReview(finalReview);
-          setLikeCount(finalReview.likeCount || 0);
-        } else {
-          Alert.alert("Review not found", "This review may have been deleted.", [
-            {
-              text: "OK",
-              onPress: () => (navigation.canGoBack() ? navigation.goBack() : navigation.navigate("MainTabs")),
-            },
-          ]);
-        }
-      } catch (error) {
-        console.warn("Error loading review:", error);
-        Alert.alert("Error", "Failed to load review.", [
-          {
-            text: "OK",
-            onPress: () => (navigation.canGoBack() ? navigation.goBack() : navigation.navigate("MainTabs")),
-          },
-        ]);
-      } finally {
-        setReviewLoading(false);
-      }
-    };
-
-    loadReview();
-  }, [route.params, navigation]);
+    Promise.all([loadReview(reviewId), loadComments(reviewId)])
+      .then(() => {
+        console.log("🐛 ReviewDetailScreen - Data load completed successfully");
+      })
+      .catch((error) => {
+        console.error("🐛 ReviewDetailScreen - Data load failed:", {
+          error: error.message,
+          stack: error.stack,
+          reviewId,
+          errorType: error.constructor.name,
+        });
+      });
+  }, [reviewId]);
 
   // Get comments for this review (only access when review is available)
   const comments = review ? commentsFromStore[review.id] || [] : [];
@@ -148,9 +138,9 @@ export default function ReviewDetailScreen() {
             ...m,
             type:
               m.type ||
-              ((m.uri.includes(".mp4") || m.uri.includes(".mov") || m.uri.includes(".avi") || m.uri.includes(".mkv")
-                ? "video"
-                : "image") as const),
+              (m.uri.includes(".mp4") || m.uri.includes(".mov") || m.uri.includes(".avi") || m.uri.includes(".mkv")
+                ? ("video" as const)
+                : ("image" as const)),
           }))
       : [];
 
@@ -403,7 +393,7 @@ export default function ReviewDetailScreen() {
                   </Text>
                 </View>
                 <Text className="text-sm" style={{ color: colors.text.muted }}>
-                  {formatTimeAgo(review.createdAt)}
+                  {review.createdAt ? formatTimeAgo(review.createdAt) : ""}
                 </Text>
               </View>
 
@@ -453,7 +443,7 @@ export default function ReviewDetailScreen() {
               </View>
 
               {/* Flags Section */}
-              {(review.greenFlags.length > 0 || review.redFlags.length > 0) && (
+              {((review.greenFlags?.length ?? 0) > 0 || (review.redFlags?.length ?? 0) > 0) && (
                 <View className="mb-6">
                   <Text
                     className="text-sm font-medium mb-3 uppercase tracking-wide"
@@ -462,7 +452,7 @@ export default function ReviewDetailScreen() {
                     Highlights
                   </Text>
                   <View className="flex-row flex-wrap gap-2">
-                    {review.greenFlags.map((flag: string) => (
+                    {(review.greenFlags || []).map((flag: string) => (
                       <View
                         key={flag}
                         className="px-3 py-2 rounded-full flex-row items-center"
@@ -478,7 +468,7 @@ export default function ReviewDetailScreen() {
                         </Text>
                       </View>
                     ))}
-                    {review.redFlags.map((flag: string) => (
+                    {(review.redFlags || []).map((flag: string) => (
                       <View
                         key={flag}
                         className="px-3 py-2 rounded-full flex-row items-center"
@@ -516,7 +506,7 @@ export default function ReviewDetailScreen() {
               {/* Review Date */}
               <View className="items-center">
                 <Text className="text-xs" style={{ color: colors.text.muted }}>
-                  Posted on {formatDate(review?.createdAt)}
+                  Posted on {review?.createdAt ? formatDate(review.createdAt) : ""}
                 </Text>
               </View>
             </View>

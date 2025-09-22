@@ -2,11 +2,13 @@ import React, { useEffect } from "react";
 import { View, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
+import { useTranslation } from "react-i18next";
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming, withDelay } from "react-native-reanimated";
 import AnimatedButton from "../components/AnimatedButton";
 import ThemeAwareLogo from "../components/ThemeAwareLogo";
 
 export default function AuthScreen() {
+  const { t } = useTranslation();
   const navigation = useNavigation<any>();
 
   // Animation values
@@ -69,28 +71,40 @@ export default function AuthScreen() {
 
         {/* Title Section */}
         <Animated.View style={titleAnimatedStyle} className="items-center mb-16">
-          <Text className="text-4xl font-bold text-text-primary mb-4 text-center">Locker Room Talk</Text>
-          <Text className="text-text-secondary text-center text-lg leading-7 px-4">
-            Anonymous dating insights from real people in your community
-          </Text>
+          <Text className="text-4xl font-bold text-text-primary mb-4 text-center">{t("appTitle")}</Text>
+          <Text className="text-text-secondary text-center text-lg leading-7 px-4">{t("subtitle")}</Text>
         </Animated.View>
 
         {/* Action Buttons */}
         <Animated.View style={buttonsAnimatedStyle} className="w-full space-y-4">
-          <AnimatedButton title="Sign In" variant="primary" size="large" onPress={handleSignIn} className="w-full" />
+          <AnimatedButton
+            title={t("signIn")}
+            variant="primary"
+            size="large"
+            onPress={handleSignIn}
+            className="w-full"
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel="Sign in to your account"
+            accessibilityHint="Opens the sign in screen"
+          />
 
           <AnimatedButton
-            title="Create Account"
+            title={t("createAccount")}
             variant="secondary"
             size="large"
             onPress={handleSignUp}
             className="w-full"
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel="Create a new account"
+            accessibilityHint="Opens the sign up screen"
           />
 
           <View className="items-center mt-8">
             <Text className="text-text-muted text-sm text-center leading-6">
-              By continuing, you agree to our <Text className="text-brand-red">Terms of Service</Text> and{" "}
-              <Text className="text-brand-red">Privacy Policy</Text>
+              By continuing, you agree to our <Text className="text-brand-red">{t("termsOfService")}</Text> and{" "}
+              <Text className="text-brand-red">{t("privacyPolicy")}</Text>
             </Text>
           </View>
         </Animated.View>

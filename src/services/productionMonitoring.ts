@@ -181,7 +181,9 @@ class ProductionMonitor {
     // Update step duration when next step starts
     if (flow.steps.length > 1) {
       const previousStep = flow.steps[flow.steps.length - 2];
-      previousStep.duration = stepStart - previousStep.timestamp.getTime();
+      if (previousStep) {
+        previousStep.duration = stepStart - previousStep.timestamp.getTime();
+      }
     }
 
     this.analyzeUserFlow(flow);
@@ -197,7 +199,7 @@ class ProductionMonitor {
   ) {
     const errorReport: ErrorReport = {
       error: error instanceof Error ? error.message : error,
-      context: this.sanitizeMetadata(context),
+      context: this.sanitizeMetadata(context) || {},
       severity,
       timestamp: new Date(),
       deviceInfo: this.deviceInfo,
@@ -693,7 +695,7 @@ class ProductionMonitor {
     try {
       const stored = await AsyncStorage.getItem("@production_health_reports");
       return stored ? JSON.parse(stored) : [];
-    } catch {
+    } catch (error) {
       return [];
     }
   }
@@ -705,7 +707,7 @@ class ProductionMonitor {
     try {
       const consent = await AsyncStorage.getItem("@data_collection_consent");
       this.dataCollectionConsent = consent === "true";
-    } catch {
+    } catch (error) {
       this.dataCollectionConsent = false;
     }
   }

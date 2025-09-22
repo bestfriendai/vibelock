@@ -78,7 +78,7 @@ export default function ReviewCard({ review }: ReviewCardProps) {
             </Text>
           </View>
           <Text className="text-sm" style={{ color: colors.text.muted }}>
-            {formatDate(review.createdAt)}
+            {review.createdAt ? formatDate(review.createdAt) : ""}
           </Text>
         </View>
       </Pressable>

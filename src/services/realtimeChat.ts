@@ -1,5 +1,5 @@
 // Enhanced Supabase Real-time Chat Service (2025) - Complete Rewrite with v2.57.4 Compatibility
-import { supabase } from "../config/supabase";
+import supabase from "../config/supabase";
 import { ChatMessage, ChatMember, MessageEvent } from "../types";
 import { RealtimeChannel, RealtimePresenceState } from "@supabase/supabase-js";
 import { AppError, ErrorType } from "../utils/errorHandling";
@@ -1503,7 +1503,7 @@ class EnhancedRealtimeChatService {
     return (
       message.messageType === "system" ||
       message.messageType === "voice" ||
-      (message.content && message.content.includes("@everyone"))
+      !!(message.content && message.content.includes("@everyone"))
     );
   }
 

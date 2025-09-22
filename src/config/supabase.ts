@@ -1,5 +1,9 @@
 // Enhanced Supabase configuration for optimal real-time performance and production scalability
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
+
+import * as SecureStore from "expo-secure-store";
+
+import { createSupabaseFetch } from "../utils/networkUtils";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Database } from "../types/database.types";
 
@@ -101,7 +105,7 @@ const validateSupabaseConfig = (): ValidationCache => {
     SETUP_GUIDANCE.EXPO_PUBLIC_SUPABASE_URL.steps.forEach((step) => {
       console.log(`   ${step}`);
     });
-    console.log(`💡 Tip: ${SETUP_GUIDANCE.EXPO_PUBLIC_SUPABASE_URL.troubleshooting}\n`);
+    console.log(`💡 Tip: ${SETUP_GUIDANCE.EXPO_PUBLIC_SUPABASE_URL.troubleshooting}\n\n`);
   } else {
     configuredCount++;
 
@@ -124,7 +128,7 @@ const validateSupabaseConfig = (): ValidationCache => {
     SETUP_GUIDANCE.EXPO_PUBLIC_SUPABASE_ANON_KEY.steps.forEach((step) => {
       console.log(`   ${step}`);
     });
-    console.log(`💡 Tip: ${SETUP_GUIDANCE.EXPO_PUBLIC_SUPABASE_ANON_KEY.troubleshooting}\n`);
+    console.log(`💡 Tip: ${SETUP_GUIDANCE.EXPO_PUBLIC_SUPABASE_ANON_KEY.troubleshooting}\n\n`);
   } else {
     configuredCount++;
 
@@ -179,9 +183,9 @@ const validateSupabaseConfig = (): ValidationCache => {
     console.error(`🚨 ${validation.errors.length} critical errors found`);
 
     if (__DEV__) {
-      console.log("\n🔧 Quick Fix Commands:");
+      console.log("\n\n🔧 Quick Fix Commands:");
       console.log("   npm run verify:env  # Check all environment variables");
-      console.log("   cp .env.example .env  # Create .env from template\n");
+      console.log("   cp .env.example .env  # Create .env from template\n\n");
     }
   }
 
@@ -247,7 +251,15 @@ const connectionMetrics = {
   lastHealthCheck: 0,
 };
 
-export const supabase: SupabaseClient<Database> = createClient(supabaseUrl, supabaseAnonKey, {
+export const supabaseStorage = {
+  getItem: (key: string) => SecureStore.getItemAsync(key),
+
+  setItem: (key: string, value: string) => SecureStore.setItemAsync(key, value),
+
+  removeItem: (key: string) => SecureStore.deleteItemAsync(key),
+};
+
+const supabase: SupabaseClient<Database> = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     storage: AsyncStorage,
     autoRefreshToken: true,
@@ -688,29 +700,29 @@ export const environmentValidation = {
     const validation = validateSupabaseConfig();
     const services = ["supabase", "expo", "revenuecat", "admob", "sentry"] as const;
 
-    let report = `Environment Configuration Report\n`;
-    report += `=====================================\n`;
-    report += `Completeness: ${validation.completenessScore}%\n`;
-    report += `Environment: ${__DEV__ ? "Development" : "Production"}\n`;
-    report += `Last Validated: ${new Date(validation.lastValidated).toLocaleString()}\n\n`;
+    let report = `Environment Configuration Report\n\n`;
+    report += `=====================================\n\n`;
+    report += `Completeness: ${validation.completenessScore}%\n\n`;
+    report += `Environment: ${__DEV__ ? "Development" : "Production"}\n\n`;
+    report += `Last Validated: ${new Date(validation.lastValidated).toLocaleString()}\n\n\n\n`;
 
-    report += `Services Status:\n`;
+    report += `Services Status:\n\n`;
     services.forEach((service) => {
       const configured = environmentValidation.isServiceConfigured(service);
-      report += `  ${service}: ${configured ? "✅ Configured" : "❌ Not configured"}\n`;
+      report += `  ${service}: ${configured ? "✅ Configured" : "❌ Not configured"}\n\n`;
     });
 
     if (validation.warnings.length > 0) {
-      report += `\nWarnings:\n`;
+      report += `\n\nWarnings:\n\n`;
       validation.warnings.forEach((warning) => {
-        report += `  ⚠️ ${warning}\n`;
+        report += `  ⚠️ ${warning}\n\n`;
       });
     }
 
     if (validation.errors.length > 0) {
-      report += `\nErrors:\n`;
+      report += `\n\nErrors:\n\n`;
       validation.errors.forEach((error) => {
-        report += `  🚨 ${error}\n`;
+        report += `  🚨 ${error}\n\n`;
       });
     }
 
@@ -749,7 +761,7 @@ if (__DEV__) {
   validateConnection().then((isValid) => {
     if (!isValid) {
       console.warn("🚨 Supabase connection issues detected. Some features may not work correctly.");
-      console.log("\n" + environmentValidation.generateStatusReport());
+      console.log("\n\n" + environmentValidation.generateStatusReport());
     }
   });
 }

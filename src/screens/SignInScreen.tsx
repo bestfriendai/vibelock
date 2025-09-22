@@ -84,7 +84,7 @@ export default function SignInScreen() {
 
     try {
       await login(email.trim(), password);
-    } catch (err) {
+    } catch (error) {
       // Error is handled by the store
     }
   };

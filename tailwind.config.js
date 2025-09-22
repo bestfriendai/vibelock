@@ -35,6 +35,17 @@ module.exports = {
           peach: "#FFCC80",
           pink: "#F8BBD9",
         },
+        // WCAG AA contrast colors
+        contrast: {
+          high: {
+            text: "#FFFFFF", // High contrast white for dark backgrounds
+            bg: "#000000", // High contrast black for light backgrounds
+          },
+          aa: {
+            primary: "#1F2937", // Dark gray for AA contrast on white
+            secondary: "#6B7280", // Medium gray
+          },
+        },
         // Light theme colors
         light: {
           brand: {

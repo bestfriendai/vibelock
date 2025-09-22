@@ -194,7 +194,7 @@ export class FileDownloader {
     try {
       new URL(url);
       return true;
-    } catch {
+    } catch (error) {
       return false;
     }
   }
@@ -217,7 +217,7 @@ export class FileDownloader {
       // Handle URL encoded filenames
       try {
         filename = decodeURIComponent(filename);
-      } catch {
+      } catch (error) {
         // If decoding fails, use the original filename
       }
 

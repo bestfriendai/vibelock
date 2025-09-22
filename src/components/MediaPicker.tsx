@@ -116,8 +116,8 @@ export const MediaPicker: React.FC<MediaPickerProps> = ({ onMediaSelect, onClose
         ]);
         return false;
       }
-    } catch (e) {
-      console.warn("Permission request failed", e);
+    } catch (error) {
+      console.warn("Permission request failed", error);
       Alert.alert("Error", "Failed to request permissions. Please try again.");
       return false;
     }

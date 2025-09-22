@@ -143,7 +143,7 @@ export default function ChatInput({ onSend, onTyping, onSendMedia, replyingTo, o
           type: "document",
         });
       }
-    } catch {
+    } catch (error) {
       Alert.alert("Error", "Failed to pick document");
     }
     toggleAttachments();

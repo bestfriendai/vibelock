@@ -159,7 +159,7 @@ export default function EnhancedMessageInput({
       }
       onSendVoice?.(audioUri, duration);
       setInputMode("text");
-    } catch {
+    } catch (error) {
       Alert.alert("Error", "Failed to send voice message. Please try again.");
     } finally {
       setIsVoiceBusy(false);
@@ -219,7 +219,7 @@ export default function EnhancedMessageInput({
 
       onSendMedia?.(media);
       setShowMediaPicker(false);
-    } catch {
+    } catch (error) {
       Alert.alert("Error", "Failed to attach media. Please try again.");
     } finally {
       setIsMediaBusy(false);

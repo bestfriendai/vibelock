@@ -172,7 +172,7 @@ const useSafetyStore = create<SafetyStore>()(
             blockedProfiles: Array.isArray(ps.blockedProfiles) ? ps.blockedProfiles : [],
             reports: Array.isArray(ps.reports) ? ps.reports : [],
           };
-        } catch {
+        } catch (error) {
           return { blockedUsers: [], blockedProfiles: [], reports: [] };
         }
       },

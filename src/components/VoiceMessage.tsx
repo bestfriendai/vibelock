@@ -70,8 +70,15 @@ export const VoiceMessage: React.FC<VoiceMessageProps> = ({
 
   // Use high-quality preset for maximum SDK 54 compatibility
   const recorder = useAudioRecorder(
-    // @ts-ignore - RecordingPresets is provided by expo-audio at runtime
-    RecordingPresets?.HIGH_QUALITY ?? ({} as any),
+    RecordingPresets?.HIGH_QUALITY ||
+      ({
+        extension: ".m4a",
+        sampleRate: 44100,
+        numberOfChannels: 2,
+        bitRate: 128000,
+        audioEncoder: "aac",
+        outputFormat: "mpeg4",
+      } as any),
   );
   const recorderState = useAudioRecorderState(recorder);
 
@@ -132,7 +139,7 @@ export const VoiceMessage: React.FC<VoiceMessageProps> = ({
 
         // Use centralized audio mode service
         await audioModeService.configureForRecording();
-      } catch (e) {
+      } catch (error) {
         // Audio setup failed - silently handle
       }
     };
@@ -143,7 +150,7 @@ export const VoiceMessage: React.FC<VoiceMessageProps> = ({
         if (recorderState?.isRecording) {
           recorder.stop?.();
         }
-      } catch {}
+      } catch (error) {}
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -175,7 +182,7 @@ export const VoiceMessage: React.FC<VoiceMessageProps> = ({
       waveformOpacity.value = withTiming(1);
 
       onStartRecording?.();
-    } catch (err) {
+    } catch (error) {
       Alert.alert("Error", "Failed to start recording. Please try again.");
     }
   };

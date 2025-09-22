@@ -1,5 +1,5 @@
 // Unified authentication utilities to ensure consistent auth state across the app
-import { supabase } from "../config/supabase";
+import supabase from "../config/supabase";
 import { authService } from "../services/auth";
 import useAuthStore from "../state/authStore";
 import { User } from "../types";

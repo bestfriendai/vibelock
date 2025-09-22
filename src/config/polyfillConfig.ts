@@ -89,7 +89,7 @@ export const POLYFILL_CONFIGS: PolyfillConfig[] = [
       try {
         new URL("https://example.com");
         return false; // URL works, no polyfill needed
-      } catch {
+      } catch (error) {
         return true; // URL polyfill needed
       }
     },
@@ -97,7 +97,7 @@ export const POLYFILL_CONFIGS: PolyfillConfig[] = [
       try {
         new URL("https://example.com");
         return true;
-      } catch {
+      } catch (error) {
         return false;
       }
     },

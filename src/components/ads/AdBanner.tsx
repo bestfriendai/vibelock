@@ -1,14 +1,29 @@
 import React, { useEffect, useState } from "react";
 import { View, Text } from "react-native";
+import { BannerAd, BannerAdSize } from "react-native-google-mobile-ads";
 import useSubscriptionStore from "../../state/subscriptionStore";
-import { supabase } from "../../config/supabase";
+import supabase from "../../config/supabase";
 import { canUseAdMob } from "../../utils/buildEnvironment";
+import { getAdUnitId } from "../../config/admobConfig";
 
 interface AdBannerProps {
   placement?: "bottom" | "top" | "inline";
   size?: "banner" | "largeBanner" | "mediumRectangle";
   className?: string;
 }
+
+const getBannerSize = (size: AdBannerProps["size"]): BannerAdSize => {
+  switch (size) {
+    case "banner":
+      return BannerAdSize.BANNER;
+    case "largeBanner":
+      return BannerAdSize.LARGE_BANNER;
+    case "mediumRectangle":
+      return BannerAdSize.MEDIUM_RECTANGLE;
+    default:
+      return BannerAdSize.BANNER;
+  }
+};
 
 export const AdBanner: React.FC<AdBannerProps> = ({ placement = "bottom", size = "banner", className = "" }) => {
   const { shouldShowAds, syncWithSupabase } = useSubscriptionStore();
@@ -52,26 +67,28 @@ export const AdBanner: React.FC<AdBannerProps> = ({ placement = "bottom", size =
 
   // Mock banner ad for Expo Go or when AdMob is not available
   if (!canUseAdMob()) {
+    const heightClass = size === "banner" ? "h-12" : size === "largeBanner" ? "h-24" : "h-60";
     return (
-      <View
-        className={`bg-gray-200 border border-gray-300 items-center justify-center ${
-          size === "banner" ? "h-12" : size === "largeBanner" ? "h-16" : "h-64"
-        } ${className}`}
-      >
+      <View className={`bg-gray-200 border border-gray-300 items-center justify-center ${heightClass} ${className}`}>
         <Text className="text-gray-600 text-sm">{__DEV__ ? "Mock Ad Banner" : ""}</Text>
       </View>
     );
   }
 
-  // In a real implementation, this would render the actual AdMob banner
-  // For now, we'll use a placeholder that matches the expected behavior
+  const unitId = getAdUnitId("BANNER");
+  const bannerSize = getBannerSize(size);
+
   return (
-    <View
-      className={`bg-gray-100 border border-gray-200 items-center justify-center ${
-        size === "banner" ? "h-12" : size === "largeBanner" ? "h-16" : "h-64"
-      } ${className}`}
-    >
-      <Text className="text-gray-500 text-xs">Advertisement</Text>
+    <View className={className}>
+      <BannerAd
+        unitId={unitId}
+        size={bannerSize}
+        requestOptions={{
+          requestNonPersonalizedAdsOnly: true,
+        }}
+        onAdLoaded={() => console.log("Banner ad loaded")}
+        onAdFailedToLoad={(error) => console.warn("Banner ad failed to load: ", error)}
+      />
     </View>
   );
 };
