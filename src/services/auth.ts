@@ -42,11 +42,58 @@ const handleAuthError = (error: any): never => {
 };
 
 export class AuthService {
-  // Enhanced signIn with v2.57.4 validation
+  private failedAttempts = new Map<string, { count: number; lastAttempt: number }>();
+  private readonly MAX_ATTEMPTS = 5;
+  private readonly LOCKOUT_DURATION = 15 * 60 * 1000; // 15 minutes
+
+  private checkRateLimit(email: string): void {
+    const normalizedEmail = email.trim().toLowerCase();
+    const now = Date.now();
+    const attemptData = this.failedAttempts.get(normalizedEmail);
+
+    if (attemptData) {
+      // Reset if lockout period has passed
+      if (now - attemptData.lastAttempt > this.LOCKOUT_DURATION) {
+        this.failedAttempts.delete(normalizedEmail);
+        return;
+      }
+
+      // Check if user is locked out
+      if (attemptData.count >= this.MAX_ATTEMPTS) {
+        throw new Error("Too many failed attempts. Please try again in 15 minutes.");
+      }
+    }
+  }
+
+  private recordFailedAttempt(email: string): void {
+    const normalizedEmail = email.trim().toLowerCase();
+    const now = Date.now();
+    const attemptData = this.failedAttempts.get(normalizedEmail) || { count: 0, lastAttempt: 0 };
+
+    attemptData.count++;
+    attemptData.lastAttempt = now;
+    this.failedAttempts.set(normalizedEmail, attemptData);
+  }
+
+  private clearFailedAttempts(email: string): void {
+    const normalizedEmail = email.trim().toLowerCase();
+    this.failedAttempts.delete(normalizedEmail);
+  }
+
+  /**
+   * Authenticates a user with email and password
+   * @param email - User's email address
+   * @param password - User's password
+   * @returns Authentication result with user and session
+   * @throws {AuthError} If authentication fails
+   */
   async signIn(email: string, password: string): Promise<AuthResult> {
     if (!email || !password) {
       throw new Error("Email and password are required");
     }
+
+    // Check rate limiting
+    this.checkRateLimit(email);
 
     return withRetry(
       async () => {
@@ -56,8 +103,13 @@ export class AuthService {
         });
 
         if (response.error) {
+          // Record failed attempt for rate limiting
+          this.recordFailedAttempt(email);
           handleAuthError(response.error);
         }
+
+        // Clear failed attempts on successful login
+        this.clearFailedAttempts(email);
 
         const result = validateAuthResponse(response);
 

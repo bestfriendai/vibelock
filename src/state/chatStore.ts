@@ -585,7 +585,6 @@ const useChatStore = create<ChatStore>()(
 
       joinChatRoom: async (roomId: string) => {
         try {
-          console.log(`🚀 Joining chat room: ${roomId}`);
           set({ isLoading: true, error: null });
 
           const room = get().chatRooms.find((r) => r.id === roomId);
@@ -634,9 +633,7 @@ const useChatStore = create<ChatStore>()(
 
           if (memberError) {
             // Don't throw error here - user can still join the room
-            console.warn("⚠️ Could not update member status:", memberError);
           } else {
-            console.log("✅ User added to chat room members");
           }
 
           // Join room using consolidated service

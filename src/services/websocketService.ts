@@ -123,7 +123,7 @@ class SupabaseRealtimeService {
       this.updateConnectionStatus("connected");
       this.clearConnectionErrors();
     } catch (error: any) {
-      console.error("❌ Failed to connect to Supabase Realtime:", error);
+      console.error("Failed to connect to Supabase Realtime:", error);
       this.trackConnectionError(error.message || "Failed to connect to realtime");
       this.updateConnectionStatus("error", error.message || "Failed to connect to realtime");
 
@@ -235,7 +235,7 @@ class SupabaseRealtimeService {
       // Notify callbacks
       this.callbacks.onUserJoin(this.currentUserId, this.currentUserName!, chatRoomId);
     } catch (error: any) {
-      console.error("❌ Failed to join room:", error);
+      console.error(" Failed to join room:", error);
       this.callbacks.onError(`Failed to join room: ${error.message}`);
     }
   }
@@ -262,7 +262,7 @@ class SupabaseRealtimeService {
         this.currentChatRoomId = null;
       }
     } catch (error: any) {
-      console.error("❌ Failed to leave room:", error);
+      console.error(" Failed to leave room:", error);
       this.callbacks.onError(`Failed to leave room: ${error.message}`);
     }
   }
@@ -333,7 +333,7 @@ class SupabaseRealtimeService {
         this.callbacks?.onMessage(realMessage);
       }
     } catch (error: any) {
-      console.error("❌ Failed to send message:", error);
+      console.error(" Failed to send message:", error);
 
       // Update optimistic message with error status
       const failedMessage: ChatMessage = {
@@ -382,7 +382,7 @@ class SupabaseRealtimeService {
         }, 3000);
       }
     } catch (error: any) {
-      console.error("❌ Failed to send typing indicator:", error);
+      console.error(" Failed to send typing indicator:", error);
     }
   }
 
@@ -440,12 +440,12 @@ class SupabaseRealtimeService {
               if (!hasResolved) {
                 hasResolved = true;
                 clearTimeout(timeout);
-                console.error("❌ Messages channel subscription error");
+                console.error(" Messages channel subscription error");
                 this.updateConnectionStatus("error", "Failed to subscribe to messages channel");
                 reject(new Error("Messages channel subscription failed"));
               } else {
                 // Handle runtime errors
-                console.error("❌ Messages channel runtime error");
+                console.error(" Messages channel runtime error");
                 this.handleChannelError("messages");
               }
               break;
@@ -474,7 +474,7 @@ class SupabaseRealtimeService {
 
       await subscriptionPromise;
     } catch (error: any) {
-      console.error("❌ Failed to setup realtime channels:", error);
+      console.error(" Failed to setup realtime channels:", error);
 
       // Cleanup on failure
       if (this.messagesChannel) {
@@ -609,7 +609,7 @@ class SupabaseRealtimeService {
       // Wait for both channels to be ready
       await Promise.all([presencePromise, typingPromise]);
     } catch (error: any) {
-      console.error("❌ Failed to setup room channels:", error);
+      console.error(" Failed to setup room channels:", error);
 
       // Cleanup on failure
       if (this.presenceChannel) {
@@ -755,7 +755,7 @@ class SupabaseRealtimeService {
    */
   private attemptReconnection() {
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      console.error("❌ Max reconnection attempts reached");
+      console.error(" Max reconnection attempts reached");
       this.updateConnectionStatus("error", "Connection lost. Please check your internet connection and try again.");
 
       // Log final connection attempt summary
@@ -768,7 +768,6 @@ class SupabaseRealtimeService {
     const jitter = Math.random() * 1000; // Add jitter to prevent thundering herd
     const delay = Math.min(baseDelay + jitter, 30000);
 
-    console.log(`🔄 Reconnection attempt ${this.reconnectAttempts} in ${Math.round(delay)}ms...`);
     // Clear any existing timeout
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout);
@@ -790,7 +789,7 @@ class SupabaseRealtimeService {
             await this.joinRoom(this.currentChatRoomId);
           }
         } catch (error) {
-          console.error("❌ Reconnection failed:", error);
+          console.error(" Reconnection failed:", error);
           // The connect method will call attemptReconnection again
         }
       }
@@ -992,7 +991,9 @@ class SupabaseRealtimeService {
   /**
    * Track connection attempt for metrics
    */
-  private trackConnectionAttempt(): void {}
+  private trackConnectionAttempt(): void {
+    // Track connection attempt metrics
+  }
 
   /**
    * Track connection error with timestamp
@@ -1033,14 +1034,14 @@ class SupabaseRealtimeService {
    * Log connection attempt summary for debugging
    */
   private logConnectionSummary(): void {
-    console.log(`Connection summary: ${this.connectionErrors.length} errors`);
+    // Log connection summary for debugging
   }
 
   /**
    * Handle individual channel errors
    */
   private handleChannelError(channelType: "messages" | "presence" | "typing"): void {
-    console.error(`🚨 ${channelType} channel error detected`);
+    console.error(`${channelType} channel error detected`);
 
     // Track the error
     this.trackConnectionError(`${channelType} channel error`);
@@ -1091,7 +1092,7 @@ class SupabaseRealtimeService {
           break;
       }
     } catch (error) {
-      console.error(`❌ Failed to recover ${channelType} channel:`, error);
+      console.error(`Failed to recover ${channelType} channel:`, error);
       // If recovery fails, trigger full reconnection
       this.updateConnectionStatus("error", `${channelType} channel recovery failed`);
       this.attemptReconnection();

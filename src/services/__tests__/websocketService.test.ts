@@ -6,43 +6,67 @@ import { webSocketService } from "../websocketService";
 import type { WebSocketServiceCallbacks } from "../websocketService";
 
 // Mock Supabase to avoid actual network calls in tests
-jest.mock("../../config/supabase", () => ({
-  supabase: {
-    channel: jest.fn(() => ({
-      on: jest.fn().mockReturnThis(),
-      subscribe: jest.fn().mockReturnValue(Promise.resolve()),
-      send: jest.fn().mockReturnValue(Promise.resolve()),
-      track: jest.fn().mockReturnValue(Promise.resolve()),
-      untrack: jest.fn().mockReturnValue(Promise.resolve()),
-      presenceState: jest.fn().mockReturnValue({}),
-    })),
-    removeChannel: jest.fn().mockReturnValue(Promise.resolve()),
-    from: jest.fn(() => ({
-      insert: jest.fn(() => ({
-        select: jest.fn(() => ({
-          single: jest.fn().mockReturnValue(
-            Promise.resolve({
-              data: {
-                id: "test-id",
-                content: "Test message",
-                timestamp: new Date().toISOString(),
-              },
-              error: null,
-            }),
-          ),
-        })),
-      })),
-    })),
-    auth: {
-      getUser: jest.fn().mockReturnValue(
-        Promise.resolve({
-          data: { user: { id: "test-user-id" } },
+jest.mock("../../config/supabase", () => {
+  const mockChannel = {
+    on: jest.fn().mockReturnThis(),
+    subscribe: jest.fn((callback) => {
+      // Call the callback immediately with SUBSCRIBED status
+      if (callback && typeof callback === "function") {
+        callback("SUBSCRIBED");
+      }
+      return Promise.resolve("SUBSCRIBED");
+    }),
+    send: jest.fn().mockResolvedValue({}),
+    track: jest.fn().mockResolvedValue({}),
+    untrack: jest.fn().mockResolvedValue({}),
+    presenceState: jest.fn().mockReturnValue({}),
+  };
+
+  const mockFrom = {
+    insert: jest.fn(() => ({
+      select: jest.fn(() => ({
+        single: jest.fn().mockResolvedValue({
+          data: {
+            id: "test-id",
+            content: "Test message",
+            timestamp: new Date().toISOString(),
+          },
           error: null,
         }),
-      ),
-    },
-  },
-}));
+      })),
+    })),
+  };
+
+  const mockAuth = {
+    getUser: jest.fn().mockResolvedValue({
+      data: { user: { id: "test-user-id" } },
+      error: null,
+    }),
+    refreshSession: jest.fn().mockResolvedValue({
+      data: { session: { user: { id: "test-user-id" } } },
+      error: null,
+    }),
+  };
+
+  const mockRealtime = {
+    isConnected: jest.fn().mockReturnValue(true),
+    connect: jest.fn(),
+  };
+
+  const mockSupabase = {
+    channel: jest.fn(() => mockChannel),
+    removeChannel: jest.fn().mockResolvedValue({}),
+    from: jest.fn(() => mockFrom),
+    auth: mockAuth,
+    realtime: mockRealtime,
+  };
+
+  return {
+    __esModule: true,
+    default: mockSupabase,
+    supabase: mockSupabase,
+  };
+});
 
 describe("SupabaseRealtimeService - Expo SDK 54 Compatibility", () => {
   let mockCallbacks: WebSocketServiceCallbacks;
@@ -88,17 +112,17 @@ describe("SupabaseRealtimeService - Expo SDK 54 Compatibility", () => {
     });
 
     it("should prevent duplicate connections", async () => {
-      const spy = jest.spyOn(console, "log").mockImplementation();
-
       // First connection
       await webSocketService.connect("test-user-id", mockCallbacks);
+
+      // Clear the mock to count only the second connection attempt
+      (mockCallbacks.onConnectionStatusChange as jest.Mock).mockClear();
 
       // Attempt second connection (should be prevented)
       await webSocketService.connect("test-user-id", mockCallbacks);
 
-      expect(spy).toHaveBeenCalledWith(expect.stringContaining("Already connecting or connected to Supabase Realtime"));
-
-      spy.mockRestore();
+      // Should not call onConnectionStatusChange for the second attempt
+      expect(mockCallbacks.onConnectionStatusChange).not.toHaveBeenCalled();
     });
 
     it("should handle disconnection properly", async () => {
@@ -185,14 +209,12 @@ describe("SupabaseRealtimeService - Expo SDK 54 Compatibility", () => {
 
   describe("Error Handling", () => {
     it("should handle connection errors gracefully", async () => {
-      // Mock auth error
+      // Mock persistent auth error
       const mockSupabase = require("../../config/supabase").supabase;
-      mockSupabase.auth.getUser.mockReturnValueOnce(
-        Promise.resolve({
-          data: { user: null },
-          error: { message: "Auth error" },
-        }),
-      );
+      mockSupabase.auth.getUser.mockResolvedValue({
+        data: { user: null },
+        error: { message: "Auth error" },
+      });
 
       await webSocketService.connect("test-user-id", mockCallbacks);
 

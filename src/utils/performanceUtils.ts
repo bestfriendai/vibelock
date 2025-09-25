@@ -10,7 +10,6 @@ export function measurePerformance<T>(operation: string, callback: () => T): T {
     const duration = stop();
 
     if (duration > 100) {
-      console.warn(`${operation} took ${duration}ms`);
     }
 
     return result;

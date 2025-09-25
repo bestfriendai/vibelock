@@ -83,7 +83,6 @@ export const PaywallAdaptive: React.FC<PaywallProps> = ({ visible, onClose }) =>
   const [selectedPackage, setSelectedPackage] = useState<any>(null);
   const [packages, setPackages] = useState<any[]>([]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (visible) {
       loadOfferings();

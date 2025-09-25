@@ -5,8 +5,15 @@
 
 CONFIG_FILE="$HOME/Library/Application Support/Claude/claude_desktop_config.json"
 
-# Your RevenueCat API Key (IMPORTANT: Keep this secret!)
-REVENUECAT_API_KEY="sk_NwaebOrtgTNIWxHRYqbMFkxYNmXlf"
+# Prompt user for RevenueCat API Key (IMPORTANT: Keep this secret!)
+echo "🔐 Please enter your RevenueCat API Key (starts with 'sk_'):"
+read -s REVENUECAT_API_KEY
+
+# Validate API key format
+if [[ ! "$REVENUECAT_API_KEY" =~ ^sk_ ]]; then
+    echo "❌ Invalid API key format. Must start with 'sk_'"
+    exit 1
+fi
 
 echo "🚀 Adding RevenueCat MCP to Claude Desktop..."
 
@@ -85,3 +92,6 @@ echo ""
 echo "⚠️  Security Note: Your API key is stored in the config file."
 echo "   Location: $CONFIG_FILE"
 echo "   Keep this file secure!"
+
+# Clear the API key from memory for security
+unset REVENUECAT_API_KEY

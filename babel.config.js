@@ -1,4 +1,4 @@
-module.exports = function (api) {
+export default function (api) {
   api.cache(true);
 
   // Detect if running on Hermes for conditional transformations
@@ -54,4 +54,4 @@ module.exports = function (api) {
   }
 
   return config;
-};
+}

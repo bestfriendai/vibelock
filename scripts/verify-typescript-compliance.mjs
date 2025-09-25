@@ -5,9 +5,13 @@
  * Ensures the codebase maintains strict TypeScript compliance for production reliability
  */
 
-const fs = require("fs");
-const path = require("path");
-const { execSync } = require("child_process");
+import fs from "fs";
+import path from "path";
+import { execSync } from "child_process";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // ANSI color codes for console output
 const colors = {
@@ -569,12 +573,8 @@ class TypeScriptComplianceVerifier {
 }
 
 // Run verification if called directly
-if (require.main === module) {
-  const verifier = new TypeScriptComplianceVerifier();
-  verifier.verify().catch((error) => {
-    console.error("Verification failed:", error);
-    process.exit(1);
-  });
-}
-
-module.exports = TypeScriptComplianceVerifier;
+const verifier = new TypeScriptComplianceVerifier();
+verifier.verify().catch((error) => {
+  console.error("Verification failed:", error);
+  process.exit(1);
+});

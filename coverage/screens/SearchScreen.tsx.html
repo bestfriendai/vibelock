@@ -22,7 +22,7 @@
           <div class="fl pad1y space-right2">
             <span class="strong">0% </span>
             <span class="quiet">Statements</span>
-            <span class="fraction">0/130</span>
+            <span class="fraction">0/124</span>
           </div>
 
           <div class="fl pad1y space-right2">
@@ -40,7 +40,7 @@
           <div class="fl pad1y space-right2">
             <span class="strong">0% </span>
             <span class="quiet">Lines</span>
-            <span class="fraction">0/122</span>
+            <span class="fraction">0/116</span>
           </div>
         </div>
         <p class="quiet">
@@ -602,14 +602,7 @@
 <a name='L544'></a><a href='#L544'>544</a>
 <a name='L545'></a><a href='#L545'>545</a>
 <a name='L546'></a><a href='#L546'>546</a>
-<a name='L547'></a><a href='#L547'>547</a>
-<a name='L548'></a><a href='#L548'>548</a>
-<a name='L549'></a><a href='#L549'>549</a>
-<a name='L550'></a><a href='#L550'>550</a>
-<a name='L551'></a><a href='#L551'>551</a>
-<a name='L552'></a><a href='#L552'>552</a>
-<a name='L553'></a><a href='#L553'>553</a>
-<a name='L554'></a><a href='#L554'>554</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L547'></a><a href='#L547'>547</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -725,11 +718,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -763,7 +753,6 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -772,12 +761,10 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -861,7 +848,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -1278,13 +1264,10 @@ export default function <span class="fstat-no" title="function not covered" >Sea
         }
       }
     } catch (error) {
-<span class="cstat-no" title="statement not covered" >      console.warn("Failed to load search history:", error);</span>
       // Clear corrupted data
 <span class="cstat-no" title="statement not covered" >      try {</span>
 <span class="cstat-no" title="statement not covered" >        await AsyncStorage.removeItem("search_history");</span>
-      } catch (clearError) {
-<span class="cstat-no" title="statement not covered" >        console.warn("Failed to clear corrupted search history:", clearError);</span>
-      }
+      } catch (clearError) {}
     }
   };
 &nbsp;
@@ -1316,7 +1299,6 @@ export default function <span class="fstat-no" title="function not covered" >Sea
 <span class="cstat-no" title="statement not covered" >      await AsyncStorage.setItem("search_history", JSON.stringify(historyWithMetadata));</span>
     } catch (error) {
       const appError = <span class="cstat-no" title="statement not covered" >error instanceof AppError ? error : parseSupabaseError(error);</span>
-<span class="cstat-no" title="statement not covered" >      console.warn("Failed to save search history:", appError.userMessage);</span>
     }
   };
 &nbsp;
@@ -1326,11 +1308,9 @@ export default function <span class="fstat-no" title="function not covered" >Sea
 <span class="cstat-no" title="statement not covered" >      await AsyncStorage.removeItem("search_history");</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >      if (__DEV__) {</span>
-<span class="cstat-no" title="statement not covered" >        console.log("🧹 Search history cleared");</span>
       }
     } catch (error) {
       const appError = <span class="cstat-no" title="statement not covered" >error instanceof AppError ? error : parseSupabaseError(error);</span>
-<span class="cstat-no" title="statement not covered" >      console.warn("Failed to clear search history:", appError.userMessage);</span>
     }
   };
 &nbsp;
@@ -1414,7 +1394,6 @@ export default function <span class="fstat-no" title="function not covered" >Sea
         );
       }
     } catch (error) {
-<span class="cstat-no" title="statement not covered" >      console.warn("Search failed:", error);</span>
       const appError = <span class="cstat-no" title="statement not covered" >error instanceof AppError ? error : parseSupabaseError(error);</span>
 <span class="cstat-no" title="statement not covered" >      setSearchError(appError.userMessage || "Search failed. Please check your connection and try again.");</span>
 <span class="cstat-no" title="statement not covered" >      setContentResults({ reviews: [], comments: [], messages: [] });</span>
@@ -1724,7 +1703,7 @@ export default function <span class="fstat-no" title="function not covered" >Sea
     <div class="footer quiet pad2 space-top1 center small">
       Code coverage generated by
       <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-      at 2025-09-22T05:54:41.144Z
+      at 2025-09-23T19:47:23.968Z
     </div>
     <script src="../prettify.js"></script>
     <script>

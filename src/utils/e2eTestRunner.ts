@@ -560,7 +560,6 @@ export class E2ETestRunner {
       }
 
       this.results.push(result);
-      console.log(`Test completed: ${result.step} - ${result.success ? "PASS" : "FAIL"} (${result.duration}ms)`);
     }
   }
 
@@ -666,23 +665,18 @@ export class E2ETestRunner {
    * Log test report
    */
   private logReport(report: TestReport): void {
-    console.log("\n" + "=".repeat(60));
-    console.log("📊 E2E TEST REPORT");
-    console.log("=".repeat(60));
     console.log(
-      `✅ Passed: ${report.passed}/${report.totalTests} (${((report.passed / report.totalTests) * 100).toFixed(1)}%)`,
+      `Test Report: ${report.passed}/${report.totalTests} passed (${((report.passed / report.totalTests) * 100).toFixed(1)}%)`,
     );
-    console.log(
-      `❌ Failed: ${report.failed}/${report.totalTests} (${((report.failed / report.totalTests) * 100).toFixed(1)}%)`,
-    );
-    console.log(`⏱️  Duration: ${(report.duration / 1000).toFixed(2)}s`);
-    console.log("\n📈 Performance Metrics:");
+    console.log(`Total duration: ${report.duration.toFixed(2)}s`);
+
     Object.entries(report.performance).forEach(([key, value]) => {
-      console.log(`  ${key}: ${value}`);
+      console.log(`${key}: ${value}`);
     });
-    console.log("\n💡 Recommendations:");
-    report.recommendations.forEach((rec) => console.log(`  • ${rec}`));
-    console.log("=".repeat(60) + "\n");
+
+    report.recommendations.forEach((rec) => {
+      console.log("Recommendation:", rec);
+    });
   }
 
   /**

@@ -11,7 +11,9 @@ const PREMIUM_ENTITLEMENTS = (process.env.EXPO_PUBLIC_REVENUECAT_PREMIUM_ENTITLE
   .map((s: string) => s.trim())
   .filter(Boolean);
 
-// Types (always available)
+/**
+ * Customer information from RevenueCat
+ */
 interface CustomerInfo {
   entitlements: {
     active: Record<string, any>;
@@ -19,6 +21,9 @@ interface CustomerInfo {
   [key: string]: any; // Additional properties from RevenueCat
 }
 
+/**
+ * Purchase package information
+ */
 interface PurchasesPackage {
   identifier: string;
   packageType: string;
@@ -32,6 +37,9 @@ interface PurchasesPackage {
   [key: string]: any; // Additional properties
 }
 
+/**
+ * Purchase offering containing available packages
+ */
 interface PurchasesOffering {
   identifier: string;
   availablePackages: PurchasesPackage[];
@@ -428,7 +436,6 @@ const useSubscriptionStore = create<SubscriptionState>()(
 function createRevenueCatStub(): RevenueCatStub {
   return {
     configure: async (config: { apiKey: string; appUserID?: string }) => {
-      console.log("RevenueCat configured", { apiKey: config.apiKey, appUserID: config.appUserID });
       // Simulate async operation
       // Simulate async operation
       await new Promise((resolve) => setTimeout(resolve, 100));

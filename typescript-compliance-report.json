@@ -1,14 +1,14 @@
 {
-  "timestamp": "2025-09-22T01:53:00.512Z",
+  "timestamp": "2025-09-23T19:42:52.295Z",
   "stats": {
-    "filesScanned": 253,
-    "anyTypesFound": 562,
-    "implicitAnyFound": 6,
-    "missingReturnTypes": 3442,
-    "unusedVariables": 231,
-    "strictNullChecks": 710
+    "filesScanned": 263,
+    "anyTypesFound": 628,
+    "implicitAnyFound": 0,
+    "missingReturnTypes": 3602,
+    "unusedVariables": 309,
+    "strictNullChecks": 754
   },
-  "issues": 1,
-  "warnings": 135,
+  "issues": 0,
+  "warnings": 137,
   "complianceScore": 0
 }

@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   preset: "jest-expo",
   // Let jest-expo handle transforms; add common RN packages to ignore-exception list
   transformIgnorePatterns: [

@@ -303,7 +303,6 @@ export async function waitForStableConnection(maxAttempts: number = 10, delayMs:
     }
 
     if (i < maxAttempts - 1) {
-      console.log(`Waiting for stable connection... Attempt ${i + 1}/${maxAttempts}`);
       await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
   }

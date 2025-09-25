@@ -89,7 +89,6 @@ export class RevenueCatService {
 
       // Log initial customer info
       const customerInfo = await this.getCustomerInfo();
-      console.log("✅ RevenueCat initialized:", customerInfo);
     } catch (error) {
       console.error("❌ Failed to initialize RevenueCat:", error);
       throw error;
@@ -158,17 +157,7 @@ export class RevenueCatService {
       }
 
       // Log available packages for debugging
-      console.log(
-        "📦 Available packages:",
-        offerings.current.availablePackages.map((p) => {
-          const product = p.product as PurchasesStoreProduct;
-          return {
-            identifier: p.identifier,
-            product: product.identifier,
-            price: product.priceString,
-          };
-        }),
-      );
+      console.log("Available offerings:", offerings.current);
 
       return offerings.current;
     } catch (error) {

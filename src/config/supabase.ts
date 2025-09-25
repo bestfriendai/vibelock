@@ -101,9 +101,7 @@ const validateSupabaseConfig = (): ValidationCache => {
     validation.isValid = false;
 
     console.error("🚨 CRITICAL: Supabase URL missing!");
-    SETUP_GUIDANCE.EXPO_PUBLIC_SUPABASE_URL.steps.forEach((step) => {
-      console.info("Supabase setup step:", step);
-    });
+    SETUP_GUIDANCE.EXPO_PUBLIC_SUPABASE_URL.steps.forEach((step) => {});
   } else {
     configuredCount++;
 
@@ -119,9 +117,7 @@ const validateSupabaseConfig = (): ValidationCache => {
     validation.isValid = false;
 
     console.error("🚨 CRITICAL: Supabase anon key missing!");
-    SETUP_GUIDANCE.EXPO_PUBLIC_SUPABASE_ANON_KEY.steps.forEach((step) => {
-      console.info("Supabase anon key step:", step);
-    });
+    SETUP_GUIDANCE.EXPO_PUBLIC_SUPABASE_ANON_KEY.steps.forEach((step) => {});
   } else {
     configuredCount++;
 
@@ -140,9 +136,7 @@ const validateSupabaseConfig = (): ValidationCache => {
   // Important validation: Project ID
   if (!projectId) {
     validation.warnings.push("EXPO_PUBLIC_PROJECT_ID missing - push notifications won't work");
-    SETUP_GUIDANCE.EXPO_PUBLIC_PROJECT_ID.steps.forEach((step) => {
-      console.info("Supabase project id step:", step);
-    });
+    SETUP_GUIDANCE.EXPO_PUBLIC_PROJECT_ID.steps.forEach((step) => {});
   } else {
     configuredCount++;
 
@@ -157,14 +151,12 @@ const validateSupabaseConfig = (): ValidationCache => {
 
   // Log validation summary
   if (validation.warnings.length > 0) {
-    console.warn("Supabase config warnings:", validation.warnings);
   }
 
   if (validation.errors.length > 0) {
     console.error(`🚨 ${validation.errors.length} critical errors found`);
 
     if (__DEV__) {
-      console.debug("Supabase validation errors:", validation.errors);
     }
   }
 
@@ -207,10 +199,8 @@ const getProductionConfig = (): ProductionConfig => {
 const productionConfig = getProductionConfig();
 
 if (__DEV__) {
-  console.debug("Supabase initial validation:", initialValidation);
   // Check for Web Workers availability (should not be available in React Native)
   if (typeof Worker !== "undefined") {
-    console.warn("Detected Worker in React Native environment - unexpected.");
   }
 }
 
@@ -715,7 +705,6 @@ export const performEnhancedHealthCheck = async (): Promise<{ healthy: boolean; 
 if (__DEV__) {
   validateConnection().then((isValid) => {
     if (!isValid) {
-      console.warn("Supabase connection validation failed in development environment");
     }
   });
 }

@@ -22,7 +22,7 @@
           <div class="fl pad1y space-right2">
             <span class="strong">0% </span>
             <span class="quiet">Statements</span>
-            <span class="fraction">0/172</span>
+            <span class="fraction">0/166</span>
           </div>
 
           <div class="fl pad1y space-right2">
@@ -40,7 +40,7 @@
           <div class="fl pad1y space-right2">
             <span class="strong">0% </span>
             <span class="quiet">Lines</span>
-            <span class="fraction">0/155</span>
+            <span class="fraction">0/149</span>
           </div>
         </div>
         <p class="quiet">
@@ -550,14 +550,7 @@
 <a name='L492'></a><a href='#L492'>492</a>
 <a name='L493'></a><a href='#L493'>493</a>
 <a name='L494'></a><a href='#L494'>494</a>
-<a name='L495'></a><a href='#L495'>495</a>
-<a name='L496'></a><a href='#L496'>496</a>
-<a name='L497'></a><a href='#L497'>497</a>
-<a name='L498'></a><a href='#L498'>498</a>
-<a name='L499'></a><a href='#L499'>499</a>
-<a name='L500'></a><a href='#L500'>500</a>
-<a name='L501'></a><a href='#L501'>501</a>
-<a name='L502'></a><a href='#L502'>502</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L495'></a><a href='#L495'>495</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -750,7 +743,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -839,7 +831,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -859,7 +850,6 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -871,7 +861,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -900,10 +889,8 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -956,7 +943,6 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1250,7 +1236,6 @@ async function <span class="fstat-no" title="function not covered" >checkNetwork
       computed: isConnected &amp;&amp; hasInternetAccess,
     };
   } catch (error) {
-<span class="cstat-no" title="statement not covered" >    console.warn("NetInfo check failed:", error);</span>
 <span class="cstat-no" title="statement not covered" >    return {</span>
       isConnected: null,
       isInternetReachable: null,
@@ -1339,7 +1324,6 @@ export async function <span class="fstat-no" title="function not covered" >relia
       timestamp,
     };
   } catch (error) {
-<span class="cstat-no" title="statement not covered" >    console.warn("Reliable network check failed:", error);</span>
 <span class="cstat-no" title="statement not covered" >    return {</span>
       isOnline: false,
       isConnected: false,
@@ -1361,17 +1345,15 @@ export async function <span class="fstat-no" title="function not covered" >waitF
     const result = <span class="cstat-no" title="statement not covered" >await reliableNetworkCheck();</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    if (result.isConnected &amp;&amp; result.isStable) {</span>
-<span class="cstat-no" title="statement not covered" >      console.log(`[Network] Stable connection established after ${i + 1} attempts`);</span>
 <span class="cstat-no" title="statement not covered" >      return true;</span>
     }
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    if (i &lt; maxAttempts - 1) {</span>
-<span class="cstat-no" title="statement not covered" >      console.log(`[Network] Waiting for stable connection (attempt ${i + 1}/${maxAttempts})`);</span>
+<span class="cstat-no" title="statement not covered" >      console.log(`Waiting for stable connection... Attempt ${i + 1}/${maxAttempts}`);</span>
 <span class="cstat-no" title="statement not covered" >      await new Promise(<span class="fstat-no" title="function not covered" >(r</span>esolve) =&gt; <span class="cstat-no" title="statement not covered" >setTimeout(resolve, delayMs))</span>;</span>
     }
   }
 &nbsp;
-<span class="cstat-no" title="statement not covered" >  console.warn("[Network] Could not establish stable connection");</span>
 <span class="cstat-no" title="statement not covered" >  return false;</span>
 }
 &nbsp;
@@ -1402,8 +1384,6 @@ export function <span class="fstat-no" title="function not covered" >createRealt
 &nbsp;
     // Detect network type change (WiFi to cellular, etc.)
 <span class="cstat-no" title="statement not covered" >    if (previousNetworkType &amp;&amp; previousNetworkType !== currentType) {</span>
-<span class="cstat-no" title="statement not covered" >      console.log(`[Network] Type changed: ${previousNetworkType} -&gt; ${currentType}`);</span>
-&nbsp;
       // Check if we need to reconnect
       const result = <span class="cstat-no" title="statement not covered" >await reliableNetworkCheck();</span>
 &nbsp;
@@ -1457,7 +1437,6 @@ export async function <span class="fstat-no" title="function not covered" >quick
     const hasInternetAccess = <span class="cstat-no" title="statement not covered" >state.isInternetReachable === true || (state.isInternetReachable === null &amp;&amp; isConnected);</span>
 <span class="cstat-no" title="statement not covered" >    return isConnected &amp;&amp; hasInternetAccess;</span>
   } catch (error) {
-<span class="cstat-no" title="statement not covered" >    console.warn("Quick network check failed:", error);</span>
 <span class="cstat-no" title="statement not covered" >    return false;</span>
   }
 }
@@ -1568,7 +1547,7 @@ export function <span class="fstat-no" title="function not covered" >createRelia
     <div class="footer quiet pad2 space-top1 center small">
       Code coverage generated by
       <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-      at 2025-09-22T05:54:41.144Z
+      at 2025-09-23T19:47:23.968Z
     </div>
     <script src="../prettify.js"></script>
     <script>

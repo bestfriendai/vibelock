@@ -150,14 +150,12 @@ const useReviewsStore = create<ReviewsStore>()(
       loadReview: async (id: string): Promise<Review | null> => {
         try {
           if (__DEV__) {
-            console.log("Loading review with ID:", id);
           }
 
           // Use reviewsService to get the specific review
           const result = await reviewsService.getReview(id);
 
           if (__DEV__) {
-            console.log("Review loaded successfully:", result?.id);
           }
 
           return result;
@@ -257,7 +255,6 @@ const useReviewsStore = create<ReviewsStore>()(
             newReviews = result.data;
 
             if (__DEV__) {
-              console.log("Show all mode: loaded reviews", newReviews.length);
             }
           } else if (radiusFilteringActive && userLocation) {
             // Strategy 1: Location-first approach - get ALL reviews with coordinates, then filter by distance
@@ -318,14 +315,6 @@ const useReviewsStore = create<ReviewsStore>()(
                 );
 
                 if (__DEV__) {
-                  console.log(
-                    "Server filters:",
-                    serverFilters,
-                    "Show all:",
-                    showAllActive,
-                    "Radius filtering:",
-                    radiusFilteringActive,
-                  );
                 }
               }
             }
@@ -348,7 +337,6 @@ const useReviewsStore = create<ReviewsStore>()(
               newReviews = stateResult.data;
 
               if (__DEV__) {
-                console.log("Fallback to state-only filtering, found:", newReviews.length);
               }
             }
 
@@ -359,7 +347,6 @@ const useReviewsStore = create<ReviewsStore>()(
               newReviews = globalResult.data;
 
               if (__DEV__) {
-                console.log("Fallback to global reviews, found:", newReviews.length);
               }
             }
           }
@@ -432,8 +419,6 @@ const useReviewsStore = create<ReviewsStore>()(
             const mediaItem = data.media[index];
             if (!mediaItem) continue;
             const isLocal = mediaItem.uri.startsWith("file://") || mediaItem.uri.startsWith("content://");
-            console.log(`Processing media item ${index}:`, mediaItem.type, "...", isLocal);
-
             if (!isLocal) {
               uploadedMedia.push(mediaItem);
               continue;
@@ -463,7 +448,6 @@ const useReviewsStore = create<ReviewsStore>()(
                 const fileInfo = await FileSystem.getInfoAsync(processedUri);
                 if (fileInfo.exists && fileInfo.size) {
                   const sizeKB = Math.round(fileInfo.size / 1024);
-                  console.log("Image compressed to:", sizeKB, "KB");
                 }
 
                 const uploadResult = await storageService.uploadFile(processedUri, {
@@ -496,9 +480,7 @@ const useReviewsStore = create<ReviewsStore>()(
                     contentType: "image/jpeg",
                   });
                   thumbnailUrl = thumbResult.url || "";
-                } catch (thumbErr) {
-                  console.warn("Failed to generate video thumbnail:", thumbErr);
-                }
+                } catch (thumbErr) {}
 
                 const uploadResult = await storageService.uploadFile(processedUri, {
                   bucket: "review-images",
@@ -640,9 +622,7 @@ const useReviewsStore = create<ReviewsStore>()(
                   data: { reviewId: review.id },
                 });
               }
-            } catch (notifyErr) {
-              console.warn("Failed to send notification:", notifyErr);
-            }
+            } catch (notifyErr) {}
           }
         } catch (error) {
           set({
@@ -655,7 +635,6 @@ const useReviewsStore = create<ReviewsStore>()(
         try {
           // For now, just log the dislike action
           // In a real app, this would send to the backend
-          console.log("Dislike action for review:", id);
         } catch (error) {
           set({
             error: error instanceof Error ? error.message : "Failed to dislike review",
@@ -697,7 +676,6 @@ const useReviewsStore = create<ReviewsStore>()(
           });
 
           if (__DEV__) {
-            console.log("Hydrated reviews from storage:", state.reviews.length);
           }
         }
       },

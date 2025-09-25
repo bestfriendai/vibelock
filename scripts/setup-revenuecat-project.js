@@ -6,12 +6,33 @@
  */
 
 const https = require("https");
+const readline = require("readline");
 
-const API_KEY = "sk_NwaebOrtgTNIWxHRYqbMFkxYNmXlf";
 const MCP_URL = "mcp.revenuecat.ai";
 
+// Create readline interface for secure input
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout,
+});
+
+// Function to securely prompt for API key
+function promptForAPIKey() {
+  return new Promise((resolve) => {
+    rl.question("🔐 Please enter your RevenueCat API Key (starts with 'sk_'): ", (apiKey) => {
+      // Validate API key format
+      if (!apiKey.startsWith("sk_")) {
+        console.error("❌ Invalid API key format. Must start with 'sk_'");
+        process.exit(1);
+      }
+      resolve(apiKey);
+      rl.close();
+    });
+  });
+}
+
 // Helper function to make MCP requests
-function mcpRequest(method, params = {}) {
+function mcpRequest(method, params = {}, apiKey) {
   return new Promise((resolve, reject) => {
     const data = JSON.stringify({
       jsonrpc: "2.0",
@@ -28,7 +49,7 @@ function mcpRequest(method, params = {}) {
       path: "/mcp",
       method: "POST",
       headers: {
-        Authorization: `Bearer ${API_KEY}`,
+        Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
         Accept: "application/json, text/event-stream",
         "Content-Length": data.length,
@@ -70,10 +91,13 @@ function mcpRequest(method, params = {}) {
 async function setupLockerroomProject() {
   console.log("🚀 Setting up Lockerroom Project in RevenueCat...\n");
 
+  // Prompt for API key
+  const API_KEY = await promptForAPIKey();
+
   try {
     // 1. Get project details
     console.log("📊 Getting project details...");
-    const projectResponse = await mcpRequest("mcp_RC_get_project");
+    const projectResponse = await mcpRequest("mcp_RC_get_project", {}, API_KEY);
 
     if (projectResponse.result) {
       const project = projectResponse.result.content?.[0]?.text;
@@ -89,36 +113,52 @@ async function setupLockerroomProject() {
       console.log("\n📱 Setting up apps...");
 
       // Check existing apps
-      const appsResponse = await mcpRequest("mcp_RC_list_apps", {
-        project_id: projectId,
-      });
+      const appsResponse = await mcpRequest(
+        "mcp_RC_list_apps",
+        {
+          project_id: projectId,
+        },
+        API_KEY,
+      );
 
       // Create iOS app if not exists
       console.log("   Creating iOS app...");
-      const iosAppResponse = await mcpRequest("mcp_RC_create_app", {
-        project_id: projectId,
-        name: "Lockerroom iOS",
-        type: "app_store",
-        bundle_id: "com.lockerroom.app",
-      });
+      const iosAppResponse = await mcpRequest(
+        "mcp_RC_create_app",
+        {
+          project_id: projectId,
+          name: "Lockerroom iOS",
+          type: "app_store",
+          bundle_id: "com.lockerroom.app",
+        },
+        API_KEY,
+      );
 
       // Create Android app if not exists
       console.log("   Creating Android app...");
-      const androidAppResponse = await mcpRequest("mcp_RC_create_app", {
-        project_id: projectId,
-        name: "Lockerroom Android",
-        type: "play_store",
-        package_name: "com.lockerroom.app",
-      });
+      const androidAppResponse = await mcpRequest(
+        "mcp_RC_create_app",
+        {
+          project_id: projectId,
+          name: "Lockerroom Android",
+          type: "play_store",
+          package_name: "com.lockerroom.app",
+        },
+        API_KEY,
+      );
 
       // 3. Create entitlements
       console.log("\n🎁 Creating entitlements...");
 
-      const entitlementResponse = await mcpRequest("mcp_RC_create_entitlement", {
-        project_id: projectId,
-        lookup_key: "premium",
-        display_name: "Premium Access",
-      });
+      const entitlementResponse = await mcpRequest(
+        "mcp_RC_create_entitlement",
+        {
+          project_id: projectId,
+          lookup_key: "premium",
+          display_name: "Premium Access",
+        },
+        API_KEY,
+      );
 
       console.log("✅ Premium entitlement created");
 
@@ -146,9 +186,13 @@ async function setupLockerroomProject() {
       console.log("\n🎯 Creating offerings...");
 
       // Get offerings list
-      const offeringsResponse = await mcpRequest("mcp_RC_list_offerings", {
-        project_id: projectId,
-      });
+      const offeringsResponse = await mcpRequest(
+        "mcp_RC_list_offerings",
+        {
+          project_id: projectId,
+        },
+        API_KEY,
+      );
 
       // Check if default offering exists
       let offeringId = null;
@@ -163,31 +207,43 @@ async function setupLockerroomProject() {
         console.log(`   Adding packages to offering ${offeringId}...`);
 
         // Monthly package
-        await mcpRequest("mcp_RC_create_package", {
-          project_id: projectId,
-          offering_id: offeringId,
-          lookup_key: "$rc_monthly",
-          display_name: "Monthly",
-          position: 0,
-        });
+        await mcpRequest(
+          "mcp_RC_create_package",
+          {
+            project_id: projectId,
+            offering_id: offeringId,
+            lookup_key: "$rc_monthly",
+            display_name: "Monthly",
+            position: 0,
+          },
+          API_KEY,
+        );
 
         // Annual package
-        await mcpRequest("mcp_RC_create_package", {
-          project_id: projectId,
-          offering_id: offeringId,
-          lookup_key: "$rc_annual",
-          display_name: "Annual (Save 20%)",
-          position: 1,
-        });
+        await mcpRequest(
+          "mcp_RC_create_package",
+          {
+            project_id: projectId,
+            offering_id: offeringId,
+            lookup_key: "$rc_annual",
+            display_name: "Annual (Save 20%)",
+            position: 1,
+          },
+          API_KEY,
+        );
 
         // Lifetime package
-        await mcpRequest("mcp_RC_create_package", {
-          project_id: projectId,
-          offering_id: offeringId,
-          lookup_key: "$rc_lifetime",
-          display_name: "Lifetime",
-          position: 2,
-        });
+        await mcpRequest(
+          "mcp_RC_create_package",
+          {
+            project_id: projectId,
+            offering_id: offeringId,
+            lookup_key: "$rc_lifetime",
+            display_name: "Lifetime",
+            position: 2,
+          },
+          API_KEY,
+        );
 
         console.log("✅ Packages created");
       }

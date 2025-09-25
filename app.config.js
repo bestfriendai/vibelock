@@ -6,9 +6,14 @@
 // This replaces app.json to enable secure handling of google-services.json via EAS secrets
 
 // Enhanced build environment detection for AdMob compatibility
-const isExpoGo = process.env.EXPO_PUBLIC_PLATFORM === "expo-go" || !process.env.EAS_BUILD;
+const isExpoGo = process.env.EXPO_PUBLIC_PLATFORM === "expo-go";
 const isDevelopmentBuild = process.env.EAS_BUILD && process.env.EAS_BUILD_PROFILE !== "production";
 const isProduction = process.env.EAS_BUILD_PROFILE === "production";
+const isDevelopment = !process.env.EAS_BUILD && !isExpoGo;
+
+// Safe defaults for build environment variables
+const safeIsDevelopmentBuild = isDevelopmentBuild || false;
+const safeIsProduction = isProduction || false;
 
 console.log("Build Environment:", {
   isExpoGo,
@@ -41,7 +46,7 @@ export default {
     ios: {
       supportsTablet: true,
       icon: "./assets/LockerRoomLogo.png",
-      bundleIdentifier: "com.lockerroom.app",
+      bundleIdentifier: "com.lockerroomtalk.app",
       buildNumber: "1",
       googleMobileAdsAppId: "ca-app-pub-9512493666273460~7181904608",
       infoPlist: {
@@ -59,7 +64,7 @@ export default {
         NSVideoRecordingUsageDescription: "This app uses the camera to record videos for reviews and chat messages.",
         CFBundleURLTypes: [
           {
-            CFBundleURLName: "com.lockerroom.app",
+            CFBundleURLName: "com.lockerroomtalk.app",
             CFBundleURLSchemes: ["locker-room-talk"],
           },
         ],
@@ -114,7 +119,7 @@ export default {
         foregroundImage: "./assets/LockerRoomLogo.png",
         backgroundColor: "#000000",
       },
-      package: "com.lockerroom.app",
+      package: "com.lockerroomtalk.app",
       versionCode: 1,
       googleMobileAdsAppId: "ca-app-pub-9512493666273460~4548589138",
       permissions: [
@@ -175,6 +180,15 @@ export default {
           },
           ios: {
             deploymentTarget: "15.1",
+            useFrameworks: "static",
+            modularHeaders: [
+              "FirebaseCore",
+              "FirebaseCoreInternal",
+              "GoogleUtilities",
+              "Purchases",
+              "PurchasesCoreSwift",
+              "PurchasesHybridCommon",
+            ],
           },
         },
       ],
@@ -194,26 +208,6 @@ export default {
       "expo-sqlite",
       "expo-video",
       "expo-web-browser",
-      // Conditional RevenueCat plugin loading based on build environment
-      ...(isExpoGo
-        ? []
-        : [
-            [
-              "react-native-purchases",
-              {
-                // RevenueCat configuration for subscription management
-                apiKey: process.env.EXPO_PUBLIC_REVENUECAT_API_KEY,
-                // Enable debug logging in development
-                enableDebugLogging: isDevelopmentBuild,
-                // Enhanced configuration for better integration
-                enableAmazonLogging: false,
-                enableProxyMode: false,
-                // Subscription management settings
-                enablePendingPurchases: true,
-                enableObserverMode: false,
-              },
-            ],
-          ]),
       // Conditional AdMob plugin loading based on build environment
       ...(isExpoGo
         ? []

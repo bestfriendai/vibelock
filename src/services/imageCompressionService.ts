@@ -5,7 +5,7 @@ export interface CompressionOptions {
   maxWidth?: number;
   maxHeight?: number;
   quality?: number; // 0-1
-  format?: "jpeg" | "png";
+  format?: "jpeg" | "png" | "webp";
   maxSizeKB?: number; // Maximum file size in KB
 }
 

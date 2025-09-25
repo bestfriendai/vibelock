@@ -707,7 +707,6 @@ class RealtimeSubscriptionManager {
       .sort((a, b) => b.priority - a.priority)
       .slice(0, Math.ceil(cleanupCandidates.length * 0.3)) // Clean up max 30% at once
       .forEach(async ({ key, subscription }) => {
-        console.log(`Cleaning up inactive subscription for ${key}`);
         await this.unsubscribe(subscription.roomId, subscription.userId);
       });
   }
@@ -786,9 +785,7 @@ class RealtimeSubscriptionManager {
         `[RealtimeManager] CRITICAL: Quota usage at ${this.performanceMetrics.quotaUsagePercentage.toFixed(1)}%`,
       );
     } else if (this.quotaMonitor.messageCount > this.quotaMonitor.warningThreshold) {
-      console.warn(
-        `[RealtimeManager] Warning: Quota usage at ${this.performanceMetrics.quotaUsagePercentage.toFixed(1)}%`,
-      );
+      console.warn(`Quota warning: ${this.quotaMonitor.messageCount} messages`);
     }
   }
 
@@ -907,8 +904,6 @@ class RealtimeSubscriptionManager {
 
     if (totalMemoryKB > this.config.memoryThreshold * 1024) {
       // Convert MB to KB
-      console.warn(`[RealtimeManager] Memory usage warning: ${totalMemoryKB}KB`);
-
       // Trigger aggressive cleanup
       this.cleanupInactiveSubscriptions();
     }

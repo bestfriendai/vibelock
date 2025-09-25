@@ -22,7 +22,7 @@
           <div class="fl pad1y space-right2">
             <span class="strong">0% </span>
             <span class="quiet">Statements</span>
-            <span class="fraction">0/85</span>
+            <span class="fraction">0/78</span>
           </div>
 
           <div class="fl pad1y space-right2">
@@ -40,7 +40,7 @@
           <div class="fl pad1y space-right2">
             <span class="strong">0% </span>
             <span class="quiet">Lines</span>
-            <span class="fraction">0/85</span>
+            <span class="fraction">0/78</span>
           </div>
         </div>
         <p class="quiet">
@@ -399,17 +399,7 @@
 <a name='L341'></a><a href='#L341'>341</a>
 <a name='L342'></a><a href='#L342'>342</a>
 <a name='L343'></a><a href='#L343'>343</a>
-<a name='L344'></a><a href='#L344'>344</a>
-<a name='L345'></a><a href='#L345'>345</a>
-<a name='L346'></a><a href='#L346'>346</a>
-<a name='L347'></a><a href='#L347'>347</a>
-<a name='L348'></a><a href='#L348'>348</a>
-<a name='L349'></a><a href='#L349'>349</a>
-<a name='L350'></a><a href='#L350'>350</a>
-<a name='L351'></a><a href='#L351'>351</a>
-<a name='L352'></a><a href='#L352'>352</a>
-<a name='L353'></a><a href='#L353'>353</a>
-<a name='L354'></a><a href='#L354'>354</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L344'></a><a href='#L344'>344</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -462,8 +452,6 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -526,7 +514,6 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -555,10 +542,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -566,7 +550,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -588,7 +571,6 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -752,8 +734,6 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -813,8 +793,6 @@ export class SubscriptionService {
 &nbsp;
         // Log subscription event
 <span class="cstat-no" title="statement not covered" >        await this.logSubscriptionEvent(userId, "subscription_renewed", subscriptionData);</span>
-&nbsp;
-<span class="cstat-no" title="statement not covered" >        console.log("✅ Subscription status synced with Supabase");</span>
       } catch (error) {
 <span class="cstat-no" title="statement not covered" >        console.error("❌ Failed to sync subscription status:", error);</span>
 <span class="cstat-no" title="statement not covered" >        throw error;</span>
@@ -878,7 +856,6 @@ export class SubscriptionService {
       const hasPremium = <span class="cstat-no" title="statement not covered" >await this.hasPremiumAccess(userId);</span>
 <span class="cstat-no" title="statement not covered" >      return !hasPremium;</span>
     } catch (error) {
-<span class="cstat-no" title="statement not covered" >      console.warn("Failed to check premium status, defaulting to show ads:", error);</span>
 <span class="cstat-no" title="statement not covered" >      return true; </span>// Default to showing ads if check fails
     }
   }
@@ -908,11 +885,8 @@ export class SubscriptionService {
       });
 &nbsp;
 <span class="cstat-no" title="statement not covered" >      if (error) {</span>
-<span class="cstat-no" title="statement not covered" >        console.warn("Failed to log subscription event:", error);</span>
       }
-    } catch (error) {
-<span class="cstat-no" title="statement not covered" >      console.warn("Error logging subscription event:", error);</span>
-    }
+    } catch (error) {}
   }
 &nbsp;
   /**
@@ -922,7 +896,6 @@ export class SubscriptionService {
 <span class="cstat-no" title="statement not covered" >    try {</span>
       const userId = <span class="cstat-no" title="statement not covered" >eventData.app_user_id;</span>
 <span class="cstat-no" title="statement not covered" >      if (!userId) {</span>
-<span class="cstat-no" title="statement not covered" >        console.warn("Webhook event missing user ID");</span>
 <span class="cstat-no" title="statement not covered" >        return;</span>
       }
 &nbsp;
@@ -941,7 +914,6 @@ export class SubscriptionService {
 <span class="cstat-no" title="statement not covered" >          await this.handleBillingIssue(userId, eventData);</span>
 <span class="cstat-no" title="statement not covered" >          break;</span>
         default:
-<span class="cstat-no" title="statement not covered" >          console.log(`Unhandled webhook event type: ${eventType}`);</span>
       }
     } catch (error) {
 <span class="cstat-no" title="statement not covered" >      console.error("Error handling webhook event:", error);</span>
@@ -1105,8 +1077,6 @@ export class SubscriptionService {
 <span class="cstat-no" title="statement not covered" >      if (error) {</span>
 <span class="cstat-no" title="statement not covered" >        throw error;</span>
       }
-&nbsp;
-<span class="cstat-no" title="statement not covered" >      console.log(`✅ Synced subscription data for user ${userId}: ${subscription.tier}`);</span>
     } catch (error) {
 <span class="cstat-no" title="statement not covered" >      console.error("❌ Failed to sync subscription with Supabase:", error);</span>
 <span class="cstat-no" title="statement not covered" >      throw error;</span>
@@ -1124,7 +1094,7 @@ export const subscriptionService = <span class="cstat-no" title="statement not c
     <div class="footer quiet pad2 space-top1 center small">
       Code coverage generated by
       <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-      at 2025-09-22T05:54:40.932Z
+      at 2025-09-23T19:47:23.762Z
     </div>
     <script src="../prettify.js"></script>
     <script>

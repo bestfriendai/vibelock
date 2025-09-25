@@ -88,7 +88,6 @@ const useAuthStore = create<AuthStore>()(
         }));
 
         if (__DEV__) {
-          console.log("setUser called", { email: user?.email });
         }
       },
 
@@ -523,7 +522,6 @@ const useAuthStore = create<AuthStore>()(
 
           // Basic debug in dev
           if (__DEV__) {
-            console.log("Auth state change:", { event, email: supabaseUser?.email });
           }
 
           // Prevent concurrent auth state processing

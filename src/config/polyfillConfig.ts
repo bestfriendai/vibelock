@@ -231,7 +231,7 @@ export function loadPolyfills(): PolyfillLoadResult[] {
 
   if (failed > 0) {
     const failedNames = results.filter((r) => !r.success && !r.skipped).map((r) => r.name);
-    console.warn(`[PolyfillConfig] Failed to load polyfills: ${failedNames.join(", ")}`);
+    console.error(`[PolyfillConfig] ${failed} polyfills failed to load: ${failedNames.join(", ")}`);
   }
 
   return results;

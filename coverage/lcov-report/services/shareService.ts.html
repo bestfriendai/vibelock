@@ -22,7 +22,7 @@
           <div class="fl pad1y space-right2">
             <span class="strong">0% </span>
             <span class="quiet">Statements</span>
-            <span class="fraction">0/41</span>
+            <span class="fraction">0/35</span>
           </div>
 
           <div class="fl pad1y space-right2">
@@ -40,7 +40,7 @@
           <div class="fl pad1y space-right2">
             <span class="strong">0% </span>
             <span class="quiet">Lines</span>
-            <span class="fraction">0/41</span>
+            <span class="fraction">0/35</span>
           </div>
         </div>
         <p class="quiet">
@@ -175,13 +175,7 @@
 <a name='L117'></a><a href='#L117'>117</a>
 <a name='L118'></a><a href='#L118'>118</a>
 <a name='L119'></a><a href='#L119'>119</a>
-<a name='L120'></a><a href='#L120'>120</a>
-<a name='L121'></a><a href='#L121'>121</a>
-<a name='L122'></a><a href='#L122'>122</a>
-<a name='L123'></a><a href='#L123'>123</a>
-<a name='L124'></a><a href='#L124'>124</a>
-<a name='L125'></a><a href='#L125'>125</a>
-<a name='L126'></a><a href='#L126'>126</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L120'></a><a href='#L120'>120</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -215,10 +209,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -236,22 +228,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -264,6 +242,16 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -340,10 +328,8 @@ export const shareService = <span class="cstat-no" title="statement not covered"
       });
 &nbsp;
 <span class="cstat-no" title="statement not covered" >      if (result.action === Share.sharedAction) {</span>
-<span class="cstat-no" title="statement not covered" >        console.log("Review shared successfully");</span>
       }
     } catch (error) {
-<span class="cstat-no" title="statement not covered" >      console.warn("Error sharing review:", error);</span>
 <span class="cstat-no" title="statement not covered" >      Alert.alert("Error", "Failed to share review. Please try again.");</span>
     }
   },
@@ -361,10 +347,8 @@ export const shareService = <span class="cstat-no" title="statement not covered"
       });
 &nbsp;
 <span class="cstat-no" title="statement not covered" >      if (result.action === Share.sharedAction) {</span>
-<span class="cstat-no" title="statement not covered" >        console.log("Profile shared successfully");</span>
       }
     } catch (error) {
-<span class="cstat-no" title="statement not covered" >      console.warn("Error sharing profile:", error);</span>
 <span class="cstat-no" title="statement not covered" >      Alert.alert("Error", "Failed to share profile. Please try again.");</span>
     }
   },
@@ -376,7 +360,6 @@ export const shareService = <span class="cstat-no" title="statement not covered"
 <span class="cstat-no" title="statement not covered" >      await Clipboard.setStringAsync(link);</span>
 <span class="cstat-no" title="statement not covered" >      Alert.alert("Link Copied", "Review link has been copied to your clipboard.");</span>
     } catch (error) {
-<span class="cstat-no" title="statement not covered" >      console.warn("Error copying link:", error);</span>
 <span class="cstat-no" title="statement not covered" >      Alert.alert("Error", "Failed to copy link. Please try again.");</span>
     }
   },
@@ -388,7 +371,6 @@ export const shareService = <span class="cstat-no" title="statement not covered"
 <span class="cstat-no" title="statement not covered" >      await Clipboard.setStringAsync(link);</span>
 <span class="cstat-no" title="statement not covered" >      Alert.alert("Link Copied", "Profile link has been copied to your clipboard.");</span>
     } catch (error) {
-<span class="cstat-no" title="statement not covered" >      console.warn("Error copying link:", error);</span>
 <span class="cstat-no" title="statement not covered" >      Alert.alert("Error", "Failed to copy link. Please try again.");</span>
     }
   },
@@ -440,7 +422,7 @@ export default shareService;
     <div class="footer quiet pad2 space-top1 center small">
       Code coverage generated by
       <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-      at 2025-09-22T05:54:40.932Z
+      at 2025-09-23T19:47:23.762Z
     </div>
     <script src="../prettify.js"></script>
     <script>

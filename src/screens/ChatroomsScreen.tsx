@@ -43,23 +43,8 @@ export default function ChatroomsScreen() {
 
   // Debug logging for authentication state
   useEffect(() => {
-    console.log("ChatroomsScreen auth state:", {
-      userId: user?.id || "none",
-      email: user?.email || "none",
-      canAccessChat,
-      needsSignIn,
-      chatRoomsCount: chatRooms.length,
-      isLoading,
-      error: error || "none",
-      connectionStatus,
-    });
-
     // Additional auth store debugging
     const authState = useAuthStore.getState();
-    console.log("Auth store state:", {
-      userId: authState.user?.id || "none",
-      isAuthenticated: authState.isAuthenticated,
-    });
   }, [user, canAccessChat, needsSignIn, chatRooms.length, isLoading, error, connectionStatus]);
 
   useEffect(() => {

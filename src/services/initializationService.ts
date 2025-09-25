@@ -675,9 +675,7 @@ class InitializationService {
 
     // Log successful initialization with any warnings
     if (healthResult.details && !healthResult.details.realtime) {
-      console.log("Supabase initialized with warnings: realtime not available");
     } else {
-      console.log("Supabase fully initialized");
     }
   }
 
@@ -715,12 +713,8 @@ class InitializationService {
    */
   private async initializeBackgroundTasks(): Promise<void> {
     try {
-      // Check if expo-task-manager is available before importing
-      try {
-        await import("expo-task-manager");
-      } catch (importError) {
-        // This is expected if expo-task-manager is not installed
-      }
+      // Background tasks are not available since expo-task-manager was removed
+      // This is intentional to reduce bundle size
     } catch (error) {
       // Don't throw error for background task failures
     }
@@ -730,17 +724,8 @@ class InitializationService {
    * Check background tasks health
    */
   private async checkBackgroundTasksHealth(): Promise<boolean> {
-    try {
-      // Check if expo-task-manager is available
-      try {
-        await import("expo-task-manager");
-        return true;
-      } catch (importError) {
-        return false;
-      }
-    } catch (error) {
-      return false;
-    }
+    // Background tasks are disabled since expo-task-manager was removed
+    return false;
   }
 
   // Health check methods

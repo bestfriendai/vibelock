@@ -135,7 +135,6 @@ class PerformanceMonitor {
       } else if (label.includes("scroll") && duration > this.thresholds.scrollLag) {
         this.triggerAlert("scroll", duration, this.thresholds.scrollLag);
       } else if (duration > 100) {
-        console.warn(`${label} took ${duration}ms`);
       }
 
       return duration;
@@ -394,8 +393,6 @@ class PerformanceMonitor {
       severity: value > threshold * 1.5 ? "critical" : "warning",
       timestamp: Date.now(),
     };
-
-    console.warn(`Performance alert: ${type} = ${value}ms (threshold: ${threshold}ms)`);
 
     this.alertCallbacks.forEach((callback) => callback(alert));
   }

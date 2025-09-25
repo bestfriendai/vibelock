@@ -64,7 +64,6 @@ class AdMobService {
         // Add delay for retry attempts (except first attempt)
         if (this.initializationAttempts > 1) {
           const delay = this.getRetryDelay(this.initializationAttempts - 2);
-          console.log(`AdMob: retrying initialization after ${delay}ms delay`);
           await new Promise((resolve) => setTimeout(resolve, delay));
         }
 

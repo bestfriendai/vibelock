@@ -258,7 +258,7 @@ class SupabaseTestSuite {
         duration,
       });
 
-      console.log(`✅ ${name} (${duration}ms): ${message}`);
+      console.log(`✅ ${name}: ${message}`);
     } catch (error: any) {
       const duration = Date.now() - startTime;
       const errorMessage = error instanceof Error ? error.message : String(error);
@@ -271,7 +271,7 @@ class SupabaseTestSuite {
         error,
       });
 
-      console.error(`❌ ${name} (${duration}ms): ${errorMessage}`);
+      console.error(`[ERROR] ${name} (${duration}ms): ${errorMessage}`);
     }
   }
 
@@ -281,10 +281,10 @@ class SupabaseTestSuite {
     const failed = this.results.filter((r) => !r.success).length;
     const total = this.results.length;
 
-    let summary = `\n🧪 Test Results Summary:\n`;
+    let summary = `\nTest Results Summary:\n`;
     summary += `Total Tests: ${total}\n`;
-    summary += `Passed: ${passed} ✅\n`;
-    summary += `Failed: ${failed} ❌\n`;
+    summary += `Passed: ${passed} [PASS]\n`;
+    summary += `Failed: ${failed} [FAIL]\n`;
     summary += `Success Rate: ${((passed / total) * 100).toFixed(1)}%\n\n`;
 
     if (failed > 0) {

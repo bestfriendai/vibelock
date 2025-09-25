@@ -22,7 +22,7 @@
           <div class="fl pad1y space-right2">
             <span class="strong">0% </span>
             <span class="quiet">Statements</span>
-            <span class="fraction">0/89</span>
+            <span class="fraction">0/84</span>
           </div>
 
           <div class="fl pad1y space-right2">
@@ -40,7 +40,7 @@
           <div class="fl pad1y space-right2">
             <span class="strong">0% </span>
             <span class="quiet">Lines</span>
-            <span class="fraction">0/88</span>
+            <span class="fraction">0/83</span>
           </div>
         </div>
         <p class="quiet">
@@ -337,14 +337,7 @@
 <a name='L279'></a><a href='#L279'>279</a>
 <a name='L280'></a><a href='#L280'>280</a>
 <a name='L281'></a><a href='#L281'>281</a>
-<a name='L282'></a><a href='#L282'>282</a>
-<a name='L283'></a><a href='#L283'>283</a>
-<a name='L284'></a><a href='#L284'>284</a>
-<a name='L285'></a><a href='#L285'>285</a>
-<a name='L286'></a><a href='#L286'>286</a>
-<a name='L287'></a><a href='#L287'>287</a>
-<a name='L288'></a><a href='#L288'>288</a>
-<a name='L289'></a><a href='#L289'>289</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L282'></a><a href='#L282'>282</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -363,7 +356,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -379,7 +371,6 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -406,7 +397,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -420,8 +410,6 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -459,8 +447,6 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -650,7 +636,6 @@ export async function <span class="fstat-no" title="function not covered" >initi
       .single();
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    if (fetchError) {</span>
-<span class="cstat-no" title="statement not covered" >      console.warn("Failed to fetch user subscription status:", fetchError);</span>
 <span class="cstat-no" title="statement not covered" >      return;</span>
     }
 &nbsp;
@@ -667,7 +652,6 @@ export async function <span class="fstat-no" title="function not covered" >initi
 <span class="cstat-no" title="statement not covered" >      if (updateError) {</span>
 <span class="cstat-no" title="statement not covered" >        console.error("Failed to initialize user subscription:", updateError);</span>
       } else {
-<span class="cstat-no" title="statement not covered" >        console.log("✅ Initialized subscription status for new user");</span>
       }
     }
 &nbsp;
@@ -693,7 +677,6 @@ export async function <span class="fstat-no" title="function not covered" >syncS
     } = <span class="cstat-no" title="statement not covered" >await supabase.auth.getUser();</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    if (!user) {</span>
-<span class="cstat-no" title="statement not covered" >      console.log("No authenticated user, skipping subscription sync");</span>
 <span class="cstat-no" title="statement not covered" >      return;</span>
     }
 &nbsp;
@@ -708,8 +691,6 @@ export async function <span class="fstat-no" title="function not covered" >syncS
 <span class="cstat-no" title="statement not covered" >    if (store.syncWithSupabase) {</span>
 <span class="cstat-no" title="statement not covered" >      await store.syncWithSupabase(user.id);</span>
     }
-&nbsp;
-<span class="cstat-no" title="statement not covered" >    console.log("✅ Subscription status synced on app launch");</span>
   } catch (error) {
 <span class="cstat-no" title="statement not covered" >    console.error("Failed to sync subscription on launch:", error);</span>
   }
@@ -747,8 +728,6 @@ export async function <span class="fstat-no" title="function not covered" >handl
 <span class="cstat-no" title="statement not covered" >    if (store.syncWithSupabase) {</span>
 <span class="cstat-no" title="statement not covered" >      await store.syncWithSupabase(userId);</span>
     }
-&nbsp;
-<span class="cstat-no" title="statement not covered" >    console.log("✅ Handled subscription expiration for user:", userId);</span>
   } catch (error) {
 <span class="cstat-no" title="statement not covered" >    console.error("Error handling subscription expiration:", error);</span>
 <span class="cstat-no" title="statement not covered" >    throw error;</span>
@@ -929,7 +908,7 @@ export async function <span class="fstat-no" title="function not covered" >canAc
     <div class="footer quiet pad2 space-top1 center small">
       Code coverage generated by
       <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-      at 2025-09-22T05:54:41.144Z
+      at 2025-09-23T19:47:23.968Z
     </div>
     <script src="../prettify.js"></script>
     <script>

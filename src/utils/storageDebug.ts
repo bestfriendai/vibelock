@@ -9,8 +9,6 @@ export const quickStorageTest = async () => {
       data: { user },
       error: authError,
     } = await supabase.auth.getUser();
-    console.log(`Auth check: User ID ${user?.id?.slice(-8) || "none"}..., error: ${authError?.message || "none"}`);
-
     if (!user) {
       return { success: false, issue: "Not authenticated" };
     }
@@ -46,9 +44,10 @@ export const debugStorageSetup = async () => {
 
     // Check storage buckets
     const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
-    console.log(
-      `Buckets: ${buckets?.map((b) => ({ id: b.id, name: b.name, public: b.public })) || "none"}, error: ${bucketsError?.message || "none"}`,
-    );
+    console.log("Storage buckets:", buckets?.map((b) => ({ id: b.id, name: b.name, public: b.public })) || "none");
+    if (bucketsError) {
+      console.error("Bucket error:", bucketsError.message);
+    }
 
     // Test upload to review-images bucket
     const testFile = new Blob(["test content"], { type: "text/plain" });
@@ -62,7 +61,9 @@ export const debugStorageSetup = async () => {
     if (uploadData) {
       await supabase.storage.from("review-images").remove([uploadData.path]);
     }
-  } catch (error: any) {}
+  } catch (error: any) {
+    console.error("Storage debug error:", error);
+  }
 };
 
 export const testStoragePermissions = async (bucket: string) => {

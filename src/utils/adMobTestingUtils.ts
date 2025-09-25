@@ -342,28 +342,23 @@ class AdMobTestingUtils {
    * Print a formatted test report to console
    */
   printReport(report: AdMobCompatibilityReport): void {
-    console.log("\n📊 AdMob Compatibility Report");
-    console.log(`Platform: ${report.environment.platform}`);
-    console.log(`AdMob Available: ${report.environment.canUseAdMob}`);
-    console.log("\nTest Results:");
     report.tests.forEach((test) => {
       const status = test.success ? "✅" : "❌";
-      console.log(`${status} ${test.testName}: ${test.message} (${test.duration}ms)`);
     });
-    console.log("\nSummary:");
-    console.log(`Total Tests: ${report.summary.totalTests}`);
-    console.log(`Passed: ${report.summary.passed}`);
-    console.log(`Failed: ${report.summary.failed}`);
-    console.log(`Success Rate: ${report.summary.successRate.toFixed(1)}%`);
-    console.log("\nRecommendations:");
-    report.recommendations.forEach((rec) => console.log(`  • ${rec}`));
+
+    console.log("Test report generated");
+
+    if (report.recommendations.length > 0) {
+      report.recommendations.forEach((rec) => {
+        console.log("Recommendation:", rec);
+      });
+    }
+
     if (report.summary.failed > 0) {
-      console.log("\nFailed Tests Details:");
       report.tests
         .filter((t) => !t.success)
         .forEach((test) => {
           if (test.error) {
-            console.log(`  ${test.testName}: ${test.error.message || test.error}`);
           }
         });
     }

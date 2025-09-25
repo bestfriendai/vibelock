@@ -3,14 +3,25 @@ import useSubscriptionStore from "../state/subscriptionStore";
 import { subscriptionService } from "../services/subscriptionService";
 import supabase from "../config/supabase";
 
+/**
+ * Represents the current subscription status of a user
+ */
 export interface SubscriptionStatus {
+  /** Whether the user has a premium subscription */
   isPremium: boolean;
+  /** Whether the user has a pro subscription */
   isPro: boolean;
+  /** Current subscription tier */
   tier: "free" | "premium" | "pro";
+  /** Whether the subscription is currently active */
   isActive: boolean;
+  /** When the subscription expires (null for free tier) */
   expiresAt: Date | null;
+  /** Whether ads should be shown to the user */
   shouldShowAds: boolean;
+  /** Number of days remaining until subscription expires */
   daysRemaining: number | null;
+  /** Whether subscription data is currently loading */
   isLoading: boolean;
 }
 

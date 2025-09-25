@@ -22,7 +22,7 @@
           <div class="fl pad1y space-right2">
             <span class="strong">0% </span>
             <span class="quiet">Statements</span>
-            <span class="fraction">0/128</span>
+            <span class="fraction">0/120</span>
           </div>
 
           <div class="fl pad1y space-right2">
@@ -40,7 +40,7 @@
           <div class="fl pad1y space-right2">
             <span class="strong">0% </span>
             <span class="quiet">Lines</span>
-            <span class="fraction">0/124</span>
+            <span class="fraction">0/116</span>
           </div>
         </div>
         <p class="quiet">
@@ -343,17 +343,7 @@
 <a name='L285'></a><a href='#L285'>285</a>
 <a name='L286'></a><a href='#L286'>286</a>
 <a name='L287'></a><a href='#L287'>287</a>
-<a name='L288'></a><a href='#L288'>288</a>
-<a name='L289'></a><a href='#L289'>289</a>
-<a name='L290'></a><a href='#L290'>290</a>
-<a name='L291'></a><a href='#L291'>291</a>
-<a name='L292'></a><a href='#L292'>292</a>
-<a name='L293'></a><a href='#L293'>293</a>
-<a name='L294'></a><a href='#L294'>294</a>
-<a name='L295'></a><a href='#L295'>295</a>
-<a name='L296'></a><a href='#L296'>296</a>
-<a name='L297'></a><a href='#L297'>297</a>
-<a name='L298'></a><a href='#L298'>298</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L288'></a><a href='#L288'>288</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -372,7 +362,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -401,7 +390,6 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -575,22 +563,14 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -606,6 +586,7 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -621,7 +602,6 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -668,7 +648,6 @@ class SupabaseAuthTester {
   private testPassword = <span class="cstat-no" title="statement not covered" >"TestPassword123!";</span>
 &nbsp;
 <span class="fstat-no" title="function not covered" >  as</span>ync runAllTests(): Promise&lt;TestResult[]&gt; {
-<span class="cstat-no" title="statement not covered" >    console.log("🧪 Starting Supabase Authentication Tests...");</span>
 <span class="cstat-no" title="statement not covered" >    this.results = [];</span>
 &nbsp;
     // Test connection first
@@ -696,7 +675,6 @@ class SupabaseAuthTester {
 <span class="fstat-no" title="function not covered" >  pr</span>ivate async runTest(testName: string, testFn: () =&gt; Promise&lt;any&gt;): Promise&lt;void&gt; {
     const startTime = <span class="cstat-no" title="statement not covered" >Date.now();</span>
 <span class="cstat-no" title="statement not covered" >    try {</span>
-<span class="cstat-no" title="statement not covered" >      console.log(`🔍 Testing: ${testName}`);</span>
       const data = <span class="cstat-no" title="statement not covered" >await testFn();</span>
       const duration = <span class="cstat-no" title="statement not covered" >Date.now() - startTime;</span>
 &nbsp;
@@ -707,7 +685,7 @@ class SupabaseAuthTester {
         duration,
       });
 &nbsp;
-<span class="cstat-no" title="statement not covered" >      console.log(`✅ ${testName} - PASSED (${duration}ms)`);</span>
+<span class="cstat-no" title="statement not covered" >      console.log(`✅ ${testName} (${duration}ms)`);</span>
     } catch (error: any) {
       const duration = <span class="cstat-no" title="statement not covered" >Date.now() - startTime;</span>
 &nbsp;
@@ -718,7 +696,7 @@ class SupabaseAuthTester {
         duration,
       });
 &nbsp;
-<span class="cstat-no" title="statement not covered" >      console.log(`❌ ${testName} - FAILED (${duration}ms):`, error.message);</span>
+<span class="cstat-no" title="statement not covered" >      console.error(`❌ ${testName}: ${error.message}`);</span>
     }
   }
 &nbsp;
@@ -877,35 +855,28 @@ class SupabaseAuthTester {
   }
 &nbsp;
 <span class="fstat-no" title="function not covered" >  pr</span>ivate printResults(): void {
-<span class="cstat-no" title="statement not covered" >    console.log("\n📊 Test Results Summary:");</span>
-<span class="cstat-no" title="statement not covered" >    console.log("========================");</span>
-&nbsp;
     const passed = <span class="cstat-no" title="statement not covered" >this.results.filter(<span class="fstat-no" title="function not covered" >(r</span>) =&gt; <span class="cstat-no" title="statement not covered" >r.success)</span>.length;</span>
     const failed = <span class="cstat-no" title="statement not covered" >this.results.filter(<span class="fstat-no" title="function not covered" >(r</span>) =&gt; <span class="cstat-no" title="statement not covered" >r.success === false)</span>.length;</span>
     const totalTime = <span class="cstat-no" title="statement not covered" >this.results.reduce(<span class="fstat-no" title="function not covered" >(s</span>um, r) =&gt; <span class="cstat-no" title="statement not covered" >sum + r.duration,</span> 0);</span>
-&nbsp;
-<span class="cstat-no" title="statement not covered" >    console.log(`✅ Passed: ${passed}`);</span>
-<span class="cstat-no" title="statement not covered" >    console.log(`❌ Failed: ${failed}`);</span>
-<span class="cstat-no" title="statement not covered" >    console.log(`⏱️  Total Time: ${totalTime}ms`);</span>
-<span class="cstat-no" title="statement not covered" >    console.log(`📧 Test Email: ${this.testEmail}`);</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    if (failed &gt; 0) {</span>
 <span class="cstat-no" title="statement not covered" >      console.log("\n❌ Failed Tests:");</span>
 <span class="cstat-no" title="statement not covered" >      this.results</span>
         .filter(<span class="fstat-no" title="function not covered" >(r</span>) =&gt; <span class="cstat-no" title="statement not covered" >!r.success)</span>
         .forEach(<span class="fstat-no" title="function not covered" >(r</span>) =&gt; {
-<span class="cstat-no" title="statement not covered" >          console.log(`  - ${r.testName}: ${r.error}`);</span>
+<span class="cstat-no" title="statement not covered" >          console.log(`  ${r.testName}: ${r.error}`);</span>
         });
     }
 &nbsp;
-<span class="cstat-no" title="statement not covered" >    console.log("\n🔍 Detailed Results:");</span>
+<span class="cstat-no" title="statement not covered" >    console.log("\n📋 All Test Results:");</span>
 <span class="cstat-no" title="statement not covered" >    this.results.forEach(<span class="fstat-no" title="function not covered" >(r</span>) =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >      console.log(`  ${r.success ? "✅" : "❌"} ${r.testName} (${r.duration}ms)`);</span>
+      const status = <span class="cstat-no" title="statement not covered" >r.success ? "✅" : "❌";</span>
+<span class="cstat-no" title="statement not covered" >      console.log(`${status} ${r.testName} (${r.duration}ms)`);</span>
 <span class="cstat-no" title="statement not covered" >      if (r.data) {</span>
-<span class="cstat-no" title="statement not covered" >        console.log(`    Data:`, JSON.stringify(r.data, null, 2));</span>
+<span class="cstat-no" title="statement not covered" >        console.log(`  Data: ${JSON.stringify(r.data).slice(0, 100)}...`);</span>
       }
 <span class="cstat-no" title="statement not covered" >      if (r.error) {</span>
-<span class="cstat-no" title="statement not covered" >        console.log(`    Error: ${r.error}`);</span>
+<span class="cstat-no" title="statement not covered" >        console.log(`  Error: ${r.error}`);</span>
       }
     });
   }
@@ -918,7 +889,6 @@ class SupabaseAuthTester {
 <span class="cstat-no" title="statement not covered" >        console.error("Supabase connection failed:", error);</span>
 <span class="cstat-no" title="statement not covered" >        return false;</span>
       }
-<span class="cstat-no" title="statement not covered" >      console.log("✅ Supabase connection successful");</span>
 <span class="cstat-no" title="statement not covered" >      return true;</span>
     } catch (error) {
 <span class="cstat-no" title="statement not covered" >      console.error("❌ Supabase connection failed:", error);</span>
@@ -939,7 +909,7 @@ export const runAuthTests = <span class="cstat-no" title="statement not covered"
 <span class="cstat-no" title="statement not covered" >      Alert.alert("Test Failed", "Check console for details");</span>
     }
   } else {
-<span class="cstat-no" title="statement not covered" >    console.warn("Auth tests only available in development mode");</span>
+<span class="cstat-no" title="statement not covered" >    console.warn("Auth tests only run in development mode");</span>
   }
 };
 &nbsp;
@@ -956,7 +926,7 @@ export const testSupabaseConnection = <span class="cstat-no" title="statement no
     <div class="footer quiet pad2 space-top1 center small">
       Code coverage generated by
       <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-      at 2025-09-22T05:54:40.932Z
+      at 2025-09-23T19:47:23.762Z
     </div>
     <script src="../prettify.js"></script>
     <script>

@@ -182,11 +182,9 @@ export async function runChatroomTests(): Promise<{
       });
   }
 
-  allTests
-    .filter((test) => test.passed)
-    .forEach((test) => {
-      console.log(`Passed test: ${test.testName}`);
-    });
+  // Log passed tests (commented out for performance)
+  // allTests.filter((test) => test.passed).forEach((test) => {
+  //   // });
 
   return {
     scrollTests,

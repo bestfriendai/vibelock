@@ -25,6 +25,9 @@ config.transformer.getTransformOptions = async () => ({
 // Production optimizations
 config.transformer.inlineRequires = true;
 
+// Performance optimizations
+config.maxWorkers = require("os").cpus().length;
+
 // Resolver configuration for React Native 0.81
 config.resolver.platforms = ["ios", "android", "native", "web"];
 config.resolver.resolverMainFields = ["react-native", "browser", "main"];

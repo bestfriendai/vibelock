@@ -22,7 +22,7 @@
           <div class="fl pad1y space-right2">
             <span class="strong">0% </span>
             <span class="quiet">Statements</span>
-            <span class="fraction">0/61</span>
+            <span class="fraction">0/55</span>
           </div>
 
           <div class="fl pad1y space-right2">
@@ -40,7 +40,7 @@
           <div class="fl pad1y space-right2">
             <span class="strong">0% </span>
             <span class="quiet">Lines</span>
-            <span class="fraction">0/59</span>
+            <span class="fraction">0/53</span>
           </div>
         </div>
         <p class="quiet">
@@ -196,17 +196,7 @@
 <a name='L138'></a><a href='#L138'>138</a>
 <a name='L139'></a><a href='#L139'>139</a>
 <a name='L140'></a><a href='#L140'>140</a>
-<a name='L141'></a><a href='#L141'>141</a>
-<a name='L142'></a><a href='#L142'>142</a>
-<a name='L143'></a><a href='#L143'>143</a>
-<a name='L144'></a><a href='#L144'>144</a>
-<a name='L145'></a><a href='#L145'>145</a>
-<a name='L146'></a><a href='#L146'>146</a>
-<a name='L147'></a><a href='#L147'>147</a>
-<a name='L148'></a><a href='#L148'>148</a>
-<a name='L149'></a><a href='#L149'>149</a>
-<a name='L150'></a><a href='#L150'>150</a>
-<a name='L151'></a><a href='#L151'>151</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L141'></a><a href='#L141'>141</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -231,12 +221,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -246,8 +230,7 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -287,8 +270,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -296,9 +277,8 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -380,24 +360,17 @@ export default function <span class="fstat-no" title="function not covered" >Rel
   };
 &nbsp;
   const handleNetworkStateChange = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(i</span>sOnline: boolean, details: NetworkCheckResult) =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >    console.log(`📶 ReliableOfflineBanner: Network state changed:`, {</span>
-      isOnline,
-      method: details.method,
-      details: details.details,
-    });
-&nbsp;
 <span class="cstat-no" title="statement not covered" >    setLastCheckResult(details);</span>
 <span class="cstat-no" title="statement not covered" >    setIsConnected(isOnline);</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    if (!isOnline &amp;&amp; !showBanner) {</span>
-<span class="cstat-no" title="statement not covered" >      console.log(`📶 ReliableOfflineBanner: Showing offline banner (method: ${details.method})`);</span>
 <span class="cstat-no" title="statement not covered" >      setShowBanner(true);</span>
 <span class="cstat-no" title="statement not covered" >      translateY.value = withSpring(0);</span>
 <span class="cstat-no" title="statement not covered" >      opacity.value = withTiming(1);</span>
     } else <span class="cstat-no" title="statement not covered" >if (isOnline &amp;&amp; showBanner) {</span>
-<span class="cstat-no" title="statement not covered" >      console.log(`📶 ReliableOfflineBanner: Hiding offline banner (method: ${details.method})`);</span>
 <span class="cstat-no" title="statement not covered" >      translateY.value = withSpring(-100);</span>
 <span class="cstat-no" title="statement not covered" >      opacity.value = withTiming(0, { duration: 300 }, <span class="fstat-no" title="function not covered" >(f</span>inished) =&gt; {</span>
+        "worklet";
 <span class="cstat-no" title="statement not covered" >        if (finished) {</span>
 <span class="cstat-no" title="statement not covered" >          runOnJS(hideBanner)();</span>
         }
@@ -436,8 +409,6 @@ export default function <span class="fstat-no" title="function not covered" >Rel
   });
 &nbsp;
   const handleRetry = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >as</span>ync () =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >    console.log(`📶 ReliableOfflineBanner: Retry button pressed`);</span>
-&nbsp;
 <span class="cstat-no" title="statement not covered" >    if (onRetry) {</span>
 <span class="cstat-no" title="statement not covered" >      onRetry();</span>
     }
@@ -445,10 +416,9 @@ export default function <span class="fstat-no" title="function not covered" >Rel
     // Force a reliable network check
 <span class="cstat-no" title="statement not covered" >    try {</span>
       const result = <span class="cstat-no" title="statement not covered" >await reliableNetworkCheck();</span>
-<span class="cstat-no" title="statement not covered" >      console.log(`📶 ReliableOfflineBanner: Retry check result:`, result);</span>
 <span class="cstat-no" title="statement not covered" >      handleNetworkStateChange(result.isOnline, result);</span>
     } catch (error) {
-<span class="cstat-no" title="statement not covered" >      console.warn(`📶 ReliableOfflineBanner: Retry check failed:`, error);</span>
+      // Error checking network status
     }
   };
 &nbsp;
@@ -515,7 +485,7 @@ export default function <span class="fstat-no" title="function not covered" >Rel
     <div class="footer quiet pad2 space-top1 center small">
       Code coverage generated by
       <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-      at 2025-09-22T05:54:41.144Z
+      at 2025-09-23T19:47:23.968Z
     </div>
     <script src="../prettify.js"></script>
     <script>

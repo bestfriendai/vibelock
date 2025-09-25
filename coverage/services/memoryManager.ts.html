@@ -22,7 +22,7 @@
           <div class="fl pad1y space-right2">
             <span class="strong">0% </span>
             <span class="quiet">Statements</span>
-            <span class="fraction">0/183</span>
+            <span class="fraction">0/181</span>
           </div>
 
           <div class="fl pad1y space-right2">
@@ -40,7 +40,7 @@
           <div class="fl pad1y space-right2">
             <span class="strong">0% </span>
             <span class="quiet">Lines</span>
-            <span class="fraction">0/178</span>
+            <span class="fraction">0/176</span>
           </div>
         </div>
         <p class="quiet">
@@ -656,8 +656,7 @@
 <a name='L598'></a><a href='#L598'>598</a>
 <a name='L599'></a><a href='#L599'>599</a>
 <a name='L600'></a><a href='#L600'>600</a>
-<a name='L601'></a><a href='#L601'>601</a>
-<a name='L602'></a><a href='#L602'>602</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L601'></a><a href='#L601'>601</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -752,6 +751,8 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -774,12 +775,10 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -1088,7 +1087,6 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1351,7 +1349,9 @@ export class MemoryManager {
 <span class="fstat-no" title="function not covered" >  tr</span>ackComponent(componentName: string, instanceId: string): void {
     const existing = <span class="cstat-no" title="statement not covered" >this.componentInstances.get(instanceId);</span>
 <span class="cstat-no" title="statement not covered" >    if (existing &amp;&amp; !existing.unmountTime) {</span>
-<span class="cstat-no" title="statement not covered" >      console.warn(`Component ${componentName} (${instanceId}) already tracked and not unmounted`);</span>
+<span class="cstat-no" title="statement not covered" >      console.warn(`Component ${componentName} (${instanceId}) is already tracked and not unmounted`);</span>
+      // Clean up the existing instance before tracking new one
+<span class="cstat-no" title="statement not covered" >      this.componentInstances.delete(instanceId);</span>
     }
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    this.componentInstances.set(instanceId, {</span>
@@ -1374,12 +1374,10 @@ export class MemoryManager {
 <span class="fstat-no" title="function not covered" >  un</span>trackComponent(instanceId: string): void {
     const component = <span class="cstat-no" title="statement not covered" >this.componentInstances.get(instanceId);</span>
 <span class="cstat-no" title="statement not covered" >    if (!component) {</span>
-<span class="cstat-no" title="statement not covered" >      console.warn(`Attempting to untrack unknown component: ${instanceId}`);</span>
 <span class="cstat-no" title="statement not covered" >      return;</span>
     }
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    if (component.unmountTime) {</span>
-<span class="cstat-no" title="statement not covered" >      console.warn(`Component already unmounted: ${instanceId}`);</span>
 <span class="cstat-no" title="statement not covered" >      return;</span>
     }
 &nbsp;
@@ -1690,7 +1688,6 @@ export class MemoryManager {
         const highSeverityLeaks = <span class="cstat-no" title="statement not covered" >leaks.filter(<span class="fstat-no" title="function not covered" >(l</span>) =&gt; <span class="cstat-no" title="statement not covered" >l.severity === "high")</span>;</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >        if (highSeverityLeaks.length &gt; 0) {</span>
-<span class="cstat-no" title="statement not covered" >          console.warn("High severity memory leaks detected:", highSeverityLeaks);</span>
 <span class="cstat-no" title="statement not covered" >          await this.forceCleanup();</span>
         }
 &nbsp;
@@ -1788,7 +1785,7 @@ export class MemoryManager {
 &nbsp;
 <span class="cstat-no" title="statement not covered" >        if (growth &gt; 10 * 1024 * 1024) {</span>
           // 10MB growth
-<span class="cstat-no" title="statement not covered" >          console.warn("Significant memory growth detected:", Math.round(growth / 1024 / 1024), "MB");</span>
+<span class="cstat-no" title="statement not covered" >          console.warn(`Memory leak detected: ${(growth / 1024 / 1024).toFixed(2)} MB growth`);</span>
         }
       }
     }
@@ -1803,7 +1800,7 @@ export class MemoryManager {
 <span class="cstat-no" title="statement not covered" >    if (!this.memoryAlerts.has(alertKey)) {</span>
 <span class="cstat-no" title="statement not covered" >      this.memoryAlerts.add(alertKey);</span>
 &nbsp;
-<span class="cstat-no" title="statement not covered" >      console.warn(`Memory ${level}: ${Math.round(percentage * 100)}% usage`);</span>
+<span class="cstat-no" title="statement not covered" >      console.warn(`⚠️ Memory ${level}: ${(percentage * 100).toFixed(1)}% usage`);</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >      performanceMonitor.recordMetric("memoryPressure", {</span>
         level,
@@ -1868,7 +1865,7 @@ export const memoryManager = <span class="cstat-no" title="statement not covered
     <div class="footer quiet pad2 space-top1 center small">
       Code coverage generated by
       <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-      at 2025-09-22T05:54:41.144Z
+      at 2025-09-23T19:47:23.968Z
     </div>
     <script src="../prettify.js"></script>
     <script>

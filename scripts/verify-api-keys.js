@@ -55,8 +55,30 @@ Object.entries(REQUIRED_KEYS).forEach(([category, keys]) => {
   console.log(`\n${category} Keys:`);
   let categoryComplete = true;
 
+  // Use explicit environment variable access instead of dynamic access
+  const envValues = {
+    SUPABASE_URL: process.env.SUPABASE_URL,
+    SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY,
+    SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+    REVENUECAT_API_KEY: process.env.REVENUECAT_API_KEY,
+    REVENUECAT_WEBHOOK_SECRET: process.env.REVENUECAT_WEBHOOK_SECRET,
+    ADMOB_APP_ID: process.env.ADMOB_APP_ID,
+    ADMOB_BANNER_ID: process.env.ADMOB_BANNER_ID,
+    ADMOB_INTERSTITIAL_ID: process.env.ADMOB_INTERSTITIAL_ID,
+    FIREBASE_API_KEY: process.env.FIREBASE_API_KEY,
+    FIREBASE_AUTH_DOMAIN: process.env.FIREBASE_AUTH_DOMAIN,
+    FIREBASE_PROJECT_ID: process.env.FIREBASE_PROJECT_ID,
+    FIREBASE_STORAGE_BUCKET: process.env.FIREBASE_STORAGE_BUCKET,
+    FIREBASE_MESSAGING_SENDER_ID: process.env.FIREBASE_MESSAGING_SENDER_ID,
+    FIREBASE_APP_ID: process.env.FIREBASE_APP_ID,
+    FIREBASE_MEASUREMENT_ID: process.env.FIREBASE_MEASUREMENT_ID,
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+    ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
+    GROK_API_KEY: process.env.GROK_API_KEY,
+  };
+
   keys.forEach((key) => {
-    const value = process.env[key];
+    const value = envValues[key];
     if (!value) {
       if (category === "CRITICAL") {
         console.log(`  ❌ ${key} - MISSING (CRITICAL)`);

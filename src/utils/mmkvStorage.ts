@@ -1,5 +1,10 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+/**
+ * Storage utility that provides MMKV with AsyncStorage fallback
+ * MMKV is used when available for better performance, falls back to AsyncStorage in Expo Go
+ */
+
 // Try to import MMKV, but fall back to AsyncStorage if not available (Expo Go)
 let storage: any = null;
 let isMMKVAvailable = false;
@@ -8,7 +13,7 @@ try {
   const { MMKV } = require("react-native-mmkv");
   storage = new MMKV({
     id: "lockerroom-storage",
-    encryptionKey: process.env.MMKV_ENCRYPTION_KEY || "default-key-change-in-production",
+    encryptionKey: process.env.EXPO_PUBLIC_MMKV_ENCRYPTION_KEY || "default-key-change-in-production",
   });
   isMMKVAvailable = true;
 } catch (error) {
@@ -16,8 +21,16 @@ try {
   isMMKVAvailable = false;
 }
 
-// AsyncStorage-compatible adapter with MMKV fallback
+/**
+ * AsyncStorage-compatible storage adapter with MMKV fallback
+ * Provides consistent API regardless of underlying storage implementation
+ */
 export const mmkvStorage = {
+  /**
+   * Retrieves an item from storage
+   * @param key - Storage key to retrieve
+   * @returns Promise resolving to the stored value or null if not found
+   */
   getItem: async (key: string): Promise<string | null> => {
     try {
       if (isMMKVAvailable) {
@@ -31,6 +44,12 @@ export const mmkvStorage = {
     }
   },
 
+  /**
+   * Stores an item in storage
+   * @param key - Storage key
+   * @param value - Value to store
+   * @returns Promise that resolves when storage is complete
+   */
   setItem: async (key: string, value: string): Promise<void> => {
     try {
       if (isMMKVAvailable) {
@@ -44,6 +63,11 @@ export const mmkvStorage = {
     }
   },
 
+  /**
+   * Removes an item from storage
+   * @param key - Storage key to remove
+   * @returns Promise that resolves when removal is complete
+   */
   removeItem: async (key: string): Promise<void> => {
     try {
       if (isMMKVAvailable) {
@@ -56,6 +80,10 @@ export const mmkvStorage = {
     }
   },
 
+  /**
+   * Retrieves all storage keys
+   * @returns Promise resolving to array of all storage keys
+   */
   getAllKeys: async (): Promise<string[]> => {
     try {
       if (isMMKVAvailable) {
@@ -69,6 +97,10 @@ export const mmkvStorage = {
     }
   },
 
+  /**
+   * Clears all storage data
+   * @returns Promise that resolves when storage is cleared
+   */
   clear: async (): Promise<void> => {
     try {
       if (isMMKVAvailable) {
@@ -81,7 +113,10 @@ export const mmkvStorage = {
     }
   },
 
-  // Performance monitoring
+  /**
+   * Gets the approximate size of stored data
+   * @returns Promise resolving to the number of stored items
+   */
   getSize: async (): Promise<number> => {
     try {
       if (isMMKVAvailable) {
@@ -97,7 +132,10 @@ export const mmkvStorage = {
   },
 };
 
-// One-time migration from AsyncStorage to MMKV (only if MMKV is available)
+/**
+ * One-time migration from AsyncStorage to MMKV
+ * Only runs if MMKV is available and migration hasn't been performed
+ */
 export async function migrateFromAsyncStorage() {
   if (!isMMKVAvailable) {
     return;

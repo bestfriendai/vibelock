@@ -100,7 +100,6 @@ class AppStateManager {
     } else if (nextAppState === "active" && (prevState === "background" || prevState === "inactive")) {
       await this.handleReturningToForeground();
     } else if (nextAppState === "inactive") {
-      console.log("App became inactive");
     }
 
     // Notify all registered listeners in priority order

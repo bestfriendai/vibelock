@@ -13,5 +13,12 @@ module.exports = {
         node: true,
       },
     },
+    {
+      files: ["supabase/functions/**/*.ts"],
+      rules: {
+        "import/no-unresolved": "off",
+        "import/extensions": "off",
+      },
+    },
   ],
 };

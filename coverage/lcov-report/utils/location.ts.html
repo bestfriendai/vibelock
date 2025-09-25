@@ -22,7 +22,7 @@
           <div class="fl pad1y space-right2">
             <span class="strong">0% </span>
             <span class="quiet">Statements</span>
-            <span class="fraction">0/110</span>
+            <span class="fraction">0/103</span>
           </div>
 
           <div class="fl pad1y space-right2">
@@ -40,7 +40,7 @@
           <div class="fl pad1y space-right2">
             <span class="strong">0% </span>
             <span class="quiet">Lines</span>
-            <span class="fraction">0/109</span>
+            <span class="fraction">0/102</span>
           </div>
         </div>
         <p class="quiet">
@@ -482,16 +482,7 @@
 <a name='L424'></a><a href='#L424'>424</a>
 <a name='L425'></a><a href='#L425'>425</a>
 <a name='L426'></a><a href='#L426'>426</a>
-<a name='L427'></a><a href='#L427'>427</a>
-<a name='L428'></a><a href='#L428'>428</a>
-<a name='L429'></a><a href='#L429'>429</a>
-<a name='L430'></a><a href='#L430'>430</a>
-<a name='L431'></a><a href='#L431'>431</a>
-<a name='L432'></a><a href='#L432'>432</a>
-<a name='L433'></a><a href='#L433'>433</a>
-<a name='L434'></a><a href='#L434'>434</a>
-<a name='L435'></a><a href='#L435'>435</a>
-<a name='L436'></a><a href='#L436'>436</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L427'></a><a href='#L427'>427</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -716,7 +707,6 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -753,14 +743,11 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -814,10 +801,8 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -834,7 +819,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -857,7 +841,6 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -898,7 +881,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1150,7 +1132,6 @@ export async function <span class="fstat-no" title="function not covered" >geoco
     }
 <span class="cstat-no" title="statement not covered" >    return null;</span>
   } catch (error) {
-<span class="cstat-no" title="statement not covered" >    console.warn("geocodeCityStateCached failed:", error);</span>
 <span class="cstat-no" title="statement not covered" >    return null;</span>
   }
 }
@@ -1194,9 +1175,6 @@ export async function <span class="fstat-no" title="function not covered" >filte
   }
 <span class="cstat-no" title="statement not covered" >  if (!userCoords) {</span>
     // If we cannot geocode user location, return all reviews since server-side filtering should have pre-filtered by city/state
-<span class="cstat-no" title="statement not covered" >    console.warn(</span>
-      "filterReviewsByDistanceAsync: missing user coordinates; returning server-filtered results without distance filtering",
-    );
 <span class="cstat-no" title="statement not covered" >    return reviews;</span>
   }
 &nbsp;
@@ -1248,13 +1226,11 @@ export async function <span class="fstat-no" title="function not covered" >getCu
     // Check if location services are enabled
     const servicesEnabled = <span class="cstat-no" title="statement not covered" >await ExpoLocation.hasServicesEnabledAsync();</span>
 <span class="cstat-no" title="statement not covered" >    if (!servicesEnabled) {</span>
-<span class="cstat-no" title="statement not covered" >      console.warn("Location services are disabled");</span>
 <span class="cstat-no" title="statement not covered" >      return null;</span>
     }
 &nbsp;
     const { status } = <span class="cstat-no" title="statement not covered" >await ExpoLocation.requestForegroundPermissionsAsync();</span>
 <span class="cstat-no" title="statement not covered" >    if (status !== "granted") {</span>
-<span class="cstat-no" title="statement not covered" >      console.warn("Location permission not granted");</span>
 <span class="cstat-no" title="statement not covered" >      return null;</span>
     }
 &nbsp;
@@ -1268,7 +1244,6 @@ export async function <span class="fstat-no" title="function not covered" >getCu
       longitude: location.coords.longitude,
     };
   } catch (error) {
-<span class="cstat-no" title="statement not covered" >    console.warn("Error getting location:", error);</span>
 <span class="cstat-no" title="statement not covered" >    return null;</span>
   }
 }
@@ -1291,7 +1266,6 @@ export async function <span class="fstat-no" title="function not covered" >rever
     }
 <span class="cstat-no" title="statement not covered" >    return null;</span>
   } catch (error) {
-<span class="cstat-no" title="statement not covered" >    console.warn("Error reverse geocoding:", error);</span>
 <span class="cstat-no" title="statement not covered" >    return null;</span>
   }
 }
@@ -1333,7 +1307,6 @@ export async function <span class="fstat-no" title="function not covered" >searc
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    return results;</span>
   } catch (error) {
-<span class="cstat-no" title="statement not covered" >    console.warn("Error searching locations:", error);</span>
 <span class="cstat-no" title="statement not covered" >    return [];</span>
   }
 }
@@ -1370,7 +1343,7 @@ export function <span class="fstat-no" title="function not covered" >formatDista
     <div class="footer quiet pad2 space-top1 center small">
       Code coverage generated by
       <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-      at 2025-09-22T05:54:40.932Z
+      at 2025-09-23T19:47:23.762Z
     </div>
     <script src="../prettify.js"></script>
     <script>

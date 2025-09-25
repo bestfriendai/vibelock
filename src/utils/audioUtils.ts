@@ -241,9 +241,7 @@ export async function compressAudioForUpload(
     // In production, you would implement actual audio compression here
     // using native modules or a compression service.
     // Placeholder: skip compression in this environment and return the original URI.
-    console.debug(
-      `compressAudioForUpload: skipping compression (size=${fileSizeInMB.toFixed(2)}MB, quality=${quality})`,
-    );
+    console.log(`Skipping compression for ${fileSizeInMB.toFixed(1)}MB file at quality: ${quality}`);
 
     return uri;
   } catch (error) {

@@ -22,7 +22,7 @@
           <div class="fl pad1y space-right2">
             <span class="strong">0% </span>
             <span class="quiet">Statements</span>
-            <span class="fraction">0/138</span>
+            <span class="fraction">0/132</span>
           </div>
 
           <div class="fl pad1y space-right2">
@@ -40,7 +40,7 @@
           <div class="fl pad1y space-right2">
             <span class="strong">0% </span>
             <span class="quiet">Lines</span>
-            <span class="fraction">0/122</span>
+            <span class="fraction">0/116</span>
           </div>
         </div>
         <p class="quiet">
@@ -553,16 +553,7 @@
 <a name='L495'></a><a href='#L495'>495</a>
 <a name='L496'></a><a href='#L496'>496</a>
 <a name='L497'></a><a href='#L497'>497</a>
-<a name='L498'></a><a href='#L498'>498</a>
-<a name='L499'></a><a href='#L499'>499</a>
-<a name='L500'></a><a href='#L500'>500</a>
-<a name='L501'></a><a href='#L501'>501</a>
-<a name='L502'></a><a href='#L502'>502</a>
-<a name='L503'></a><a href='#L503'>503</a>
-<a name='L504'></a><a href='#L504'>504</a>
-<a name='L505'></a><a href='#L505'>505</a>
-<a name='L506'></a><a href='#L506'>506</a>
-<a name='L507'></a><a href='#L507'>507</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L498'></a><a href='#L498'>498</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -670,7 +661,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -790,7 +780,6 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -800,8 +789,6 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -814,8 +801,6 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -824,10 +809,8 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -838,7 +821,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -1175,7 +1157,6 @@ export default function <span class="fstat-no" title="function not covered" >Rev
 <span class="cstat-no" title="statement not covered" >            navigation.goBack();</span>
           }
         } catch (error) {
-<span class="cstat-no" title="statement not covered" >          console.warn("Error loading review:", error);</span>
 <span class="cstat-no" title="statement not covered" >          navigation.goBack();</span>
         } finally {
 <span class="cstat-no" title="statement not covered" >          setReviewLoading(false);</span>
@@ -1296,7 +1277,6 @@ export default function <span class="fstat-no" title="function not covered" >Rev
 <span class="cstat-no" title="statement not covered" >    try {</span>
 <span class="cstat-no" title="statement not covered" >      await loadComments(review.id);</span>
     } catch (error) {
-<span class="cstat-no" title="statement not covered" >      console.warn("Error refreshing comments:", error);</span>
     } finally {
 <span class="cstat-no" title="statement not covered" >      setRefreshing(false);</span>
     }
@@ -1309,9 +1289,7 @@ export default function <span class="fstat-no" title="function not covered" >Rev
 <span class="cstat-no" title="statement not covered" >      await createComment(review.id, content);</span>
       // Clear reply state after successful comment
 <span class="cstat-no" title="statement not covered" >      setReplyToComment(null);</span>
-    } catch (error) {
-<span class="cstat-no" title="statement not covered" >      console.warn("Error posting comment:", error);</span>
-    }
+    } catch (error) {}
   };
 &nbsp;
   const handleLikeComment = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >as</span>ync (commentId: string) =&gt; {</span>
@@ -1319,9 +1297,7 @@ export default function <span class="fstat-no" title="function not covered" >Rev
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    try {</span>
 <span class="cstat-no" title="statement not covered" >      await likeComment(review.id, commentId);</span>
-    } catch (error) {
-<span class="cstat-no" title="statement not covered" >      console.warn("Error liking comment:", error);</span>
-    }
+    } catch (error) {}
   };
 &nbsp;
   const handleDislikeComment = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >as</span>ync (commentId: string) =&gt; {</span>
@@ -1329,9 +1305,7 @@ export default function <span class="fstat-no" title="function not covered" >Rev
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    try {</span>
 <span class="cstat-no" title="statement not covered" >      await dislikeComment(review.id, commentId);</span>
-    } catch (error) {
-<span class="cstat-no" title="statement not covered" >      console.warn("Error disliking comment:", error);</span>
-    }
+    } catch (error) {}
   };
 &nbsp;
   const handleReplyToComment = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(c</span>omment: ReviewComment) =&gt; {</span>
@@ -1344,7 +1318,6 @@ export default function <span class="fstat-no" title="function not covered" >Rev
 &nbsp;
   const handleReportComment = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(c</span>ommentId: string) =&gt; {</span>
     // Handle comment reporting
-<span class="cstat-no" title="statement not covered" >    console.log("Report comment:", commentId);</span>
   };
 &nbsp;
   const formatDate = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(d</span>ate: Date) =&gt; {</span>
@@ -1583,7 +1556,7 @@ export default function <span class="fstat-no" title="function not covered" >Rev
     <div class="footer quiet pad2 space-top1 center small">
       Code coverage generated by
       <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-      at 2025-09-22T05:54:40.932Z
+      at 2025-09-23T19:47:23.762Z
     </div>
     <script src="../prettify.js"></script>
     <script>

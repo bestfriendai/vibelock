@@ -235,14 +235,11 @@ class NotificationService {
       }
 
       this.pushToken = token.data;
-      console.log("Push token retrieved", { token: token.data?.slice?.(0, 8) + "..." });
       return token.data;
     } catch (error) {
       // Retry mechanism for transient failures
       if (this.retryAttempts < this.maxRetries && !(error instanceof AppError && error.type === ErrorType.SERVER)) {
         this.retryAttempts++;
-        console.warn("Failed to get push token, retrying", { attempt: this.retryAttempts, err: error });
-
         await new Promise((resolve) => setTimeout(resolve, this.retryDelay * this.retryAttempts));
         return this.getPushToken();
       }

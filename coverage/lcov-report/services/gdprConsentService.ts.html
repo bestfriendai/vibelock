@@ -22,7 +22,7 @@
           <div class="fl pad1y space-right2">
             <span class="strong">0% </span>
             <span class="quiet">Statements</span>
-            <span class="fraction">0/55</span>
+            <span class="fraction">0/50</span>
           </div>
 
           <div class="fl pad1y space-right2">
@@ -40,7 +40,7 @@
           <div class="fl pad1y space-right2">
             <span class="strong">0% </span>
             <span class="quiet">Lines</span>
-            <span class="fraction">0/55</span>
+            <span class="fraction">0/50</span>
           </div>
         </div>
         <p class="quiet">
@@ -239,14 +239,7 @@
 <a name='L181'></a><a href='#L181'>181</a>
 <a name='L182'></a><a href='#L182'>182</a>
 <a name='L183'></a><a href='#L183'>183</a>
-<a name='L184'></a><a href='#L184'>184</a>
-<a name='L185'></a><a href='#L185'>185</a>
-<a name='L186'></a><a href='#L186'>186</a>
-<a name='L187'></a><a href='#L187'>187</a>
-<a name='L188'></a><a href='#L188'>188</a>
-<a name='L189'></a><a href='#L189'>189</a>
-<a name='L190'></a><a href='#L190'>190</a>
-<a name='L191'></a><a href='#L191'>191</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L184'></a><a href='#L184'>184</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -272,7 +265,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -327,7 +319,6 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -377,7 +368,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -392,8 +382,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -420,8 +408,6 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -462,7 +448,6 @@ class GDPRConsentService {
       // Check if user is in EU/EEA and needs consent
 <span class="cstat-no" title="statement not covered" >      await this.checkConsentRequirement();</span>
     } catch (error) {
-<span class="cstat-no" title="statement not covered" >      console.warn("Failed to initialize GDPR consent service:", error);</span>
 <span class="cstat-no" title="statement not covered" >      this.consentStatus = "unknown";</span>
     }
   }
@@ -517,7 +502,6 @@ class GDPRConsentService {
 <span class="cstat-no" title="statement not covered" >        this.consentStatus = "not_required";</span>
       }
     } catch (error) {
-<span class="cstat-no" title="statement not covered" >      console.warn("Failed to check GDPR requirement:", error);</span>
       // Default to requiring consent for safety
 <span class="cstat-no" title="statement not covered" >      this.consentStatus = "required";</span>
     }
@@ -567,7 +551,6 @@ class GDPRConsentService {
 &nbsp;
 <span class="cstat-no" title="statement not covered" >      return this.consentStatus === "obtained";</span>
     } catch (error) {
-<span class="cstat-no" title="statement not covered" >      console.warn("GDPR consent request failed:", error);</span>
       // Fallback: don't show ads if consent fails
 <span class="cstat-no" title="statement not covered" >      return false;</span>
     }
@@ -584,9 +567,7 @@ class GDPRConsentService {
         timestamp: Date.now(),
       };
 <span class="cstat-no" title="statement not covered" >      await AsyncStorage.setItem(GDPRConsentService.CONSENT_KEY, JSON.stringify(data));</span>
-    } catch (error) {
-<span class="cstat-no" title="statement not covered" >      console.warn("Failed to store consent status:", error);</span>
-    }
+    } catch (error) {}
   }
 &nbsp;
   /**
@@ -611,9 +592,7 @@ class GDPRConsentService {
 <span class="cstat-no" title="statement not covered" >      await AsyncStorage.removeItem(GDPRConsentService.CONSENT_KEY);</span>
 <span class="cstat-no" title="statement not covered" >      this.consentStatus = "unknown";</span>
 <span class="cstat-no" title="statement not covered" >      await this.checkConsentRequirement();</span>
-    } catch (error) {
-<span class="cstat-no" title="statement not covered" >      console.warn("Failed to reset consent:", error);</span>
-    }
+    } catch (error) {}
   }
 &nbsp;
   /**
@@ -635,7 +614,7 @@ export default gdprConsentService;
     <div class="footer quiet pad2 space-top1 center small">
       Code coverage generated by
       <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-      at 2025-09-22T05:54:40.932Z
+      at 2025-09-23T19:47:23.762Z
     </div>
     <script src="../prettify.js"></script>
     <script>

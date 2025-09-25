@@ -203,11 +203,8 @@ export default function MediaUploadGrid({ media, onMediaChange, maxItems = 6, re
                   const originalSizeKB = Math.round(compressionResult.originalSize / 1024);
                   const compressedSizeKB = Math.round(compressionResult.compressedSize / 1024);
                   const savings = Math.round((1 - compressionResult.compressionRatio!) * 100);
-
-                  console.debug("Image compression", { originalSizeKB, compressedSizeKB, savings });
                 }
               } else {
-                console.warn("Image compression failed, keeping original URI");
               }
             } catch (error) {}
           }

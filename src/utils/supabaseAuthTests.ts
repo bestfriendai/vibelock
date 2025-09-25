@@ -53,7 +53,7 @@ class SupabaseAuthTester {
         duration,
       });
 
-      console.log(`✅ ${testName} (${duration}ms)`);
+      console.log(`✅ ${testName}: ${JSON.stringify(data).slice(0, 100)}...`);
     } catch (error: any) {
       const duration = Date.now() - startTime;
 
@@ -228,23 +228,20 @@ class SupabaseAuthTester {
     const totalTime = this.results.reduce((sum, r) => sum + r.duration, 0);
 
     if (failed > 0) {
-      console.log("\n❌ Failed Tests:");
       this.results
         .filter((r) => !r.success)
         .forEach((r) => {
-          console.log(`  ${r.testName}: ${r.error}`);
+          console.error(`❌ ${r.testName}: ${r.error}`);
         });
     }
 
-    console.log("\n📋 All Test Results:");
     this.results.forEach((r) => {
       const status = r.success ? "✅" : "❌";
-      console.log(`${status} ${r.testName} (${r.duration}ms)`);
       if (r.data) {
-        console.log(`  Data: ${JSON.stringify(r.data).slice(0, 100)}...`);
+        console.log(`${status} ${r.testName}: ${JSON.stringify(r.data).slice(0, 100)}...`);
       }
       if (r.error) {
-        console.log(`  Error: ${r.error}`);
+        console.log(`${status} ${r.testName}: ${r.error}`);
       }
     });
   }
@@ -277,7 +274,7 @@ export const runAuthTests = async (): Promise<void> => {
       Alert.alert("Test Failed", "Check console for details");
     }
   } else {
-    console.warn("Auth tests only run in development mode");
+    console.log("Tests only run in development mode");
   }
 };
 

@@ -99,14 +99,17 @@ export default function ChatRoomScreen() {
       // Ensure all timeouts are cleared
       if (scrollTimeoutRef.current) {
         clearTimeout(scrollTimeoutRef.current);
+        scrollTimeoutRef.current = null;
       }
       if (autoScrollTimeoutRef.current) {
         clearTimeout(autoScrollTimeoutRef.current);
+        autoScrollTimeoutRef.current = null;
       }
 
       // Clear notification cleanup
       if (notificationCleanupRef.current) {
         notificationCleanupRef.current();
+        notificationCleanupRef.current = null;
       }
 
       // Reset refs
@@ -115,6 +118,9 @@ export default function ChatRoomScreen() {
       isNearBottomRef.current = true;
       lastMessageCountRef.current = 0;
       lastLoadTimeRef.current = 0;
+
+      // Clear viewable items tracking
+      viewableItemsRef.current.clear();
     };
   }, []); // Empty dependency array - runs only on unmount
 
@@ -161,27 +167,6 @@ export default function ChatRoomScreen() {
       joinChatRoom(roomId);
     }
     return () => {
-      mountedRef.current = false;
-
-      // Clear all timeouts
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
-        scrollTimeoutRef.current = null;
-      }
-
-      if (autoScrollTimeoutRef.current) {
-        clearTimeout(autoScrollTimeoutRef.current);
-        autoScrollTimeoutRef.current = null;
-      }
-
-      // Clean up notification subscription
-      if (notificationCleanupRef.current) {
-        notificationCleanupRef.current();
-        notificationCleanupRef.current = null;
-      }
-
-      // ScrollManager handles its own cleanup automatically
-
       // Leave chat room
       if (roomId && canAccessChat && !needsSignIn && user) {
         leaveChatRoom(roomId);

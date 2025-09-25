@@ -65,8 +65,6 @@ class ConsolidatedRealtimeService {
         throw new AppError("No authenticated user found - please sign in", ErrorType.AUTH);
       }
 
-      console.log(`✅ Initializing consolidated realtime service for user ${user.id}`);
-
       // Check if Supabase realtime is available
       if (!supabase.realtime) {
         console.error("❌ Supabase realtime not available");
@@ -74,11 +72,6 @@ class ConsolidatedRealtimeService {
       }
 
       // Log realtime configuration for debugging
-      console.log("📡 Realtime configuration:", {
-        channels: supabase.realtime.channels?.length || 0,
-        accessToken: !!supabase.realtime.accessToken,
-      });
-
       // Check realtime connection status (but don't fail if not connected yet)
       const isRealtimeConnected = supabase.realtime.isConnected();
       if (!isRealtimeConnected) {
@@ -102,8 +95,6 @@ class ConsolidatedRealtimeService {
     this.connectionError = error || null;
 
     if (previousStatus !== status) {
-      console.log(`🔄 Connection status changed: ${previousStatus} → ${status}${error ? ` : ${error}` : ""}`);
-
       // Notify all registered callbacks
       this.connectionCallbacks.forEach((callback) => {
         try {

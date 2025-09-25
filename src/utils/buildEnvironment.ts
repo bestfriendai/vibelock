@@ -29,18 +29,12 @@ export const getBuildEnvironment = (): BuildEnvironment => {
 
 export const buildEnv = getBuildEnvironment();
 
-// Helper functions - RevenueCat disabled since module was removed
-export const canUseRevenueCat = () => false;
+// Helper functions
+export const canUseRevenueCat = () => buildEnv.hasNativeModules && !buildEnv.isExpoGo;
 export const canUseAdMob = () => buildEnv.hasNativeModules && !buildEnv.isExpoGo;
 export const shouldShowMonetization = () => !buildEnv.isExpoGo;
 
 // Debug logging
 if (__DEV__) {
-  console.debug("Build environment:", {
-    isExpoGo: buildEnv.isExpoGo,
-    isDevelopmentBuild: buildEnv.isDevelopmentBuild,
-    isProduction: buildEnv.isProduction,
-    hasNativeModules: buildEnv.hasNativeModules,
-    canUseAdMob: canUseAdMob(),
-  });
+  console.log("Build environment:", buildEnv);
 }

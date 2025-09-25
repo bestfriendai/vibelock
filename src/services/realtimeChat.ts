@@ -31,18 +31,13 @@ interface MessageCacheEntry {
   timestamp: number;
   isOptimistic: boolean;
   fingerprint: string;
-  state: "optimistic" | "pending" | "sent" | "confirmed";
-  priority: "high" | "normal" | "low";
-  quotaImpact: number;
-  lastHealthCheck: number;
+  state: "optimistic" | "sent" | "confirmed";
 }
 
 interface SubscriptionState {
   status: "SUBSCRIBED" | "CHANNEL_ERROR" | "TIMED_OUT" | "CLOSED" | "CONNECTING";
   lastStateChange: number;
   retryCount: number;
-  healthCheckCount: number;
-  quotaUsage: number;
 }
 
 class EnhancedRealtimeChatService {
@@ -74,26 +69,18 @@ class EnhancedRealtimeChatService {
   private typingTimeouts: Map<string, NodeJS.Timeout> = new Map();
   private typingDebounceTimeouts: Map<string, NodeJS.Timeout> = new Map();
 
-  // Enhanced performance optimization with adaptive batching
+  // Performance optimization with simple batching
   private batchedUpdates: Map<string, ChatMessage[]> = new Map();
   private updateTimeouts: Map<string, NodeJS.Timeout> = new Map();
   private maxCacheSize = 500; // Maximum messages to cache per room
-  private batchWindowMs = 300; // Increased from 100ms for better performance
-  private adaptiveBatching = {
-    enabled: true,
-    maxBatchSize: 50,
-    dynamicWindowMs: 300,
-    performanceThreshold: 100, // ms
-  };
+  private batchWindowMs = 300; // Batch window for message updates
   private subscriptionFilters: Map<string, Set<string>> = new Map();
-  private priorityQueues: Map<string, { high: ChatMessage[]; normal: ChatMessage[]; low: ChatMessage[] }> = new Map();
 
   async initialize() {
     // Detect actual transport method used by Supabase
     const transportMethod = this.detectTransportMethod();
     // Log warning if Web Workers are detected in React Native
     if (typeof Worker !== "undefined") {
-      console.warn("[RealtimeChat] Web Workers detected in React Native environment");
     }
 
     this.connectionStatus = "connecting";
@@ -115,7 +102,6 @@ class EnhancedRealtimeChatService {
       // Connection status will be managed per channel
       this.connectionStatus = "connected";
       this.isInitialized = true;
-      console.log("✅ Real-time service initialized successfully");
     } catch (error) {
       console.error("🚨 Failed to initialize real-time service:", error);
       console.error("🚨 Error details:", {
@@ -131,14 +117,8 @@ class EnhancedRealtimeChatService {
 
   async joinRoom(roomId: string, userId: string, userName: string): Promise<RealtimeChannel> {
     try {
-      console.log("🔄 Joining room", {
-        userId: userId?.slice(-8),
-        userName,
-        connectionStatus: this.connectionStatus,
-        isInitialized: this.isInitialized,
-        existingChannels: this.channels.size,
-        realtimeConnected: supabase.realtime?.isConnected?.() ?? "unknown",
-      });
+      // Log transport method
+      console.log("Transport method detected");
 
       // Clean up existing channel if any
       await this.leaveRoom(roomId);
@@ -165,9 +145,7 @@ class EnhancedRealtimeChatService {
       if (!this.messageFingerprints.has(roomId)) {
         this.messageFingerprints.set(roomId, new Set());
       }
-      if (!this.priorityQueues.has(roomId)) {
-        this.priorityQueues.set(roomId, { high: [], normal: [], low: [] });
-      }
+      // Priority queues removed - using simple batching instead
       if (!this.subscriptionFilters.has(roomId)) {
         this.subscriptionFilters.set(roomId, new Set(["INSERT", "UPDATE"]));
       }
@@ -177,8 +155,6 @@ class EnhancedRealtimeChatService {
         status: "CONNECTING",
         lastStateChange: Date.now(),
         retryCount: 0,
-        healthCheckCount: 0,
-        quotaUsage: 0,
       });
 
       // Create enhanced channel with React Native specific configuration
@@ -195,7 +171,6 @@ class EnhancedRealtimeChatService {
 
       // Force WebSocket transport if available in channel options
       if ((supabase as any).realtime?.transport === "websocket") {
-        console.log("[RealtimeChat] WebSocket transport confirmed");
       }
 
       const channel = supabase
@@ -226,12 +201,8 @@ class EnhancedRealtimeChatService {
         .on("presence", { event: "sync" }, () => {
           this.handlePresenceSync(roomId, channel);
         })
-        .on("presence", { event: "join" }, ({ key, newPresences }) => {
-          console.log(`[RealtimeChat] User joined: ${key}`);
-        })
-        .on("presence", { event: "leave" }, ({ key, leftPresences }) => {
-          console.log(`[RealtimeChat] User left: ${key}`);
-        })
+        .on("presence", { event: "join" }, ({ key, newPresences }) => {})
+        .on("presence", { event: "leave" }, ({ key, leftPresences }) => {})
         // Listen to typing indicators
         .on("broadcast", { event: "typing" }, (payload) => {
           this.handleTypingBroadcast(roomId, payload);
@@ -251,22 +222,17 @@ class EnhancedRealtimeChatService {
             subscriptionState.status = status as any;
             subscriptionState.lastStateChange = Date.now();
           } else {
-            console.warn(`[RealtimeChat] No subscription state found for room ${roomId}`);
           }
 
           // Validate state transition (but don't fail on invalid transitions)
           if (!this.isValidStateTransition(roomId, status)) {
             // Don't treat state transition issues as fatal errors
             // Just log and continue - the subscription might still work
-            console.warn(`[RealtimeChat] Unexpected state transition for ${roomId}: ${status}`);
           }
 
           if (status === "SUBSCRIBED") {
             // Update quota usage
             this.quotaMonitoring.messageCount++;
-            if (subscriptionState) {
-              subscriptionState.quotaUsage++;
-            }
 
             // Track user presence
             await channel.track({
@@ -289,9 +255,6 @@ class EnhancedRealtimeChatService {
               isOptimistic: false,
               fingerprint: `subscription_${roomId}`,
               state: "confirmed",
-              priority: "normal",
-              quotaImpact: 1,
-              lastHealthCheck: Date.now(),
             };
             trackPerformanceMetrics(cacheEntry, "subscription_established");
 
@@ -373,7 +336,6 @@ class EnhancedRealtimeChatService {
           // For initial load, we need to replace all messages
           callback({ type: "initial", items: formattedMessages });
         } else {
-          console.warn(`[RealtimeChat] No message callback registered for room ${roomId}`);
         }
       }
     } catch (error) {
@@ -460,25 +422,18 @@ class EnhancedRealtimeChatService {
         isOptimistic: false,
         fingerprint,
         state: "confirmed",
-        priority: this.determineMessagePriority(newMessage),
-        quotaImpact: 1,
-        lastHealthCheck: Date.now(),
       });
 
       // Update quota monitoring
       this.quotaMonitoring.messageCount++;
-      const subscriptionState = this.subscriptionStates.get(roomId);
-      if (subscriptionState) {
-        subscriptionState.quotaUsage++;
-      }
       fingerprints.add(fingerprint);
 
       this.messageCache.set(roomId, cache);
       this.messageFingerprints.set(roomId, fingerprints);
 
-      // Enhanced batch updates with priority handling
+      // Simple batch updates
       if (!tempId) {
-        this.batchMessageUpdateWithPriority(roomId, newMessage);
+        this.batchMessageUpdate(roomId, newMessage);
       }
 
       // Cleanup old messages periodically
@@ -491,19 +446,17 @@ class EnhancedRealtimeChatService {
   }
 
   /**
-   * Enhanced batch message updates with priority and adaptive batching
+   * Simple batch message updates
    */
-  private batchMessageUpdateWithPriority(roomId: string, message: ChatMessage): void {
-    // Get or create priority queue for room
-    let priorityQueue = this.priorityQueues.get(roomId);
-    if (!priorityQueue) {
-      priorityQueue = { high: [], normal: [], low: [] };
-      this.priorityQueues.set(roomId, priorityQueue);
+  private batchMessageUpdate(roomId: string, message: ChatMessage): void {
+    // Get or create batch for room
+    let batch = this.batchedUpdates.get(roomId);
+    if (!batch) {
+      batch = [];
+      this.batchedUpdates.set(roomId, batch);
     }
 
-    // Determine message priority
-    const priority = this.determineMessagePriority(message);
-    priorityQueue[priority].push(message);
+    batch.push(message);
 
     // Clear existing timeout
     const existingTimeout = this.updateTimeouts.get(roomId);
@@ -511,73 +464,36 @@ class EnhancedRealtimeChatService {
       clearTimeout(existingTimeout);
     }
 
-    // Calculate adaptive batch window based on message volume
-    const totalMessages = priorityQueue.high.length + priorityQueue.normal.length + priorityQueue.low.length;
-    const adaptiveWindow = this.adaptiveBatching.enabled
-      ? Math.min(this.adaptiveBatching.dynamicWindowMs, this.batchWindowMs * Math.max(1, totalMessages / 10))
-      : this.batchWindowMs;
-
     // Set new timeout for batch processing
     const timeout = setTimeout(() => {
-      this.processPriorityQueue(roomId);
+      this.processBatch(roomId);
       this.updateTimeouts.delete(roomId);
-    }, adaptiveWindow);
+    }, this.batchWindowMs);
 
     this.updateTimeouts.set(roomId, timeout);
 
-    // Process immediately if high priority queue is full or critical message
-    if (priorityQueue.high.length >= 5 || (priority === "high" && this.isCriticalMessage(message))) {
+    // Process immediately if batch is large
+    if (batch.length >= 10) {
       clearTimeout(timeout);
-      this.processPriorityQueue(roomId);
+      this.processBatch(roomId);
       this.updateTimeouts.delete(roomId);
     }
   }
 
   /**
-   * Process priority queue in order: high -> normal -> low
+   * Process batch of messages
    */
-  private processPriorityQueue(roomId: string): void {
-    const priorityQueue = this.priorityQueues.get(roomId);
-    if (!priorityQueue) return;
+  private processBatch(roomId: string): void {
+    const batch = this.batchedUpdates.get(roomId);
+    if (!batch || batch.length === 0) return;
 
-    const allMessages = [
-      ...priorityQueue.high,
-      ...priorityQueue.normal.slice(0, this.adaptiveBatching.maxBatchSize - priorityQueue.high.length),
-      ...priorityQueue.low.slice(
-        0,
-        Math.max(0, this.adaptiveBatching.maxBatchSize - priorityQueue.high.length - priorityQueue.normal.length),
-      ),
-    ];
-
-    if (allMessages.length > 0) {
-      const callback = this.messageCallbacks.get(roomId);
-      if (callback) {
-        const startTime = Date.now();
-        callback({ type: "new", items: allMessages });
-        const processingTime = Date.now() - startTime;
-
-        // Adjust adaptive batching based on performance
-        if (this.adaptiveBatching.enabled && processingTime > this.adaptiveBatching.performanceThreshold) {
-          this.adaptiveBatching.dynamicWindowMs = Math.min(1000, this.adaptiveBatching.dynamicWindowMs * 1.1);
-        } else if (processingTime < this.adaptiveBatching.performanceThreshold / 2) {
-          this.adaptiveBatching.dynamicWindowMs = Math.max(100, this.adaptiveBatching.dynamicWindowMs * 0.9);
-        }
-      }
-
-      // Clear processed messages
-      priorityQueue.high = [];
-      priorityQueue.normal = priorityQueue.normal.slice(allMessages.length - priorityQueue.high.length);
-      priorityQueue.low = priorityQueue.low.slice(
-        Math.max(0, allMessages.length - priorityQueue.high.length - priorityQueue.normal.length),
-      );
+    const callback = this.messageCallbacks.get(roomId);
+    if (callback) {
+      callback({ type: "new", items: [...batch] });
     }
-  }
 
-  /**
-   * Standard batch update for backward compatibility
-   */
-  private batchMessageUpdate(roomId: string, message: ChatMessage): void {
-    this.batchMessageUpdateWithPriority(roomId, message);
+    // Clear processed batch
+    this.batchedUpdates.set(roomId, []);
   }
 
   // Handle message updates (edits, reactions)
@@ -753,7 +669,6 @@ class EnhancedRealtimeChatService {
       // If we have an active channel, allow sending regardless of state tracking
       // This handles cases where state tracking is out of sync with actual channel status
       if (activeChannel) {
-        console.log(`[RealtimeChat] Channel active for room ${roomId}, proceeding with send`);
       } else if (subscriptionState) {
         // If no active channel but we have state, check if it's in a valid state
         const allowedStates = ["SUBSCRIBED", "CONNECTING"];
@@ -803,9 +718,6 @@ class EnhancedRealtimeChatService {
 
       // Update quota and performance metrics
       this.quotaMonitoring.messageCount++;
-      if (subscriptionState) {
-        subscriptionState.quotaUsage++;
-      }
 
       // Track performance metrics
       const cacheEntry: MessageCacheEntry = {
@@ -814,9 +726,6 @@ class EnhancedRealtimeChatService {
         isOptimistic: false,
         fingerprint: `send_${Date.now()}`,
         state: "sent",
-        priority: this.determineMessagePriority({ messageType, content } as ChatMessage),
-        quotaImpact: 1,
-        lastHealthCheck: Date.now(),
       };
       trackPerformanceMetrics(cacheEntry, "message_sent", { latency: sendLatency });
 
@@ -827,8 +736,6 @@ class EnhancedRealtimeChatService {
           last_activity: new Date().toISOString(),
         })
         .eq("id", roomId);
-
-      console.log(`[RealtimeChat] Message sent successfully to room ${roomId}`);
     } catch (error: any) {
       const classifiedError =
         error instanceof AppError
@@ -965,8 +872,6 @@ class EnhancedRealtimeChatService {
 
     const delay = Math.min(Math.pow(2, attempts) * 1000, 30000); // Cap at 30 seconds
 
-    console.log(`[RealtimeChat] Scheduling retry for ${roomId} with delay ${delay}ms`);
-
     const timeout = setTimeout(() => {
       this.attemptReconnection(roomId);
     }, delay);
@@ -1078,7 +983,6 @@ class EnhancedRealtimeChatService {
       this.optimisticMessages.delete(roomId);
       this.messageFingerprints.delete(roomId);
       this.batchedUpdates.delete(roomId);
-      this.priorityQueues.delete(roomId);
       this.subscriptionFilters.delete(roomId);
       this.subscriptionStates.delete(roomId);
 
@@ -1097,8 +1001,6 @@ class EnhancedRealtimeChatService {
         clearTimeout(reconnectTimeout);
         this.reconnectTimeouts.delete(roomId);
       }
-
-      console.log(`[RealtimeChat] Left room ${roomId} successfully`);
     } catch (error) {
       console.error(`[RealtimeChat] Error leaving room ${roomId}:`, error);
     }
@@ -1117,7 +1019,6 @@ class EnhancedRealtimeChatService {
         const channel = this.channels.get(roomId);
         if (channel) {
           await channel.unsubscribe();
-          console.log(`[RealtimeChat] Paused room ${roomId}`);
         }
       } catch (error) {
         console.error(`[RealtimeChat] Error pausing room ${roomId}:`, error);
@@ -1189,12 +1090,10 @@ class EnhancedRealtimeChatService {
       this.healthCheckIntervals.clear();
 
       // Clear enhanced data structures
-      this.priorityQueues.clear();
       this.subscriptionFilters.clear();
       this.subscriptionStates.clear();
 
       this.connectionStatus = "disconnected";
-      console.log("[RealtimeChat] Cleanup completed");
     } catch (error) {
       console.error("[RealtimeChat] Error during cleanup:", error);
     }
@@ -1259,7 +1158,6 @@ class EnhancedRealtimeChatService {
     const optimisticMessages = this.optimisticMessages.get(roomId);
     if (optimisticMessages) {
       optimisticMessages.delete(tempId);
-      console.log(`[RealtimeChat] Replaced optimistic message ${tempId} with real message ${realMessage.id}`);
     }
 
     // Notify callback about the replacement with proper event type
@@ -1318,9 +1216,6 @@ class EnhancedRealtimeChatService {
       isOptimistic: true,
       fingerprint,
       state: "optimistic",
-      priority: this.determineMessagePriority(optimisticMessage),
-      quotaImpact: 1,
-      lastHealthCheck: Date.now(),
     });
     this.messageCache.set(roomId, cache);
   }
@@ -1340,7 +1235,6 @@ class EnhancedRealtimeChatService {
         const subscriptionState = this.subscriptionStates.get(roomId);
 
         if (subscriptionState) {
-          subscriptionState.healthCheckCount++;
           subscriptionState.lastStateChange = Date.now();
         }
 
@@ -1397,37 +1291,12 @@ class EnhancedRealtimeChatService {
     const isValid = validTransitions[currentStatus]?.includes(newStatus) || false;
 
     if (!isValid) {
-      console.warn(`[RealtimeChat] Invalid state transition from ${currentStatus} to ${newStatus}`);
     }
 
     return isValid;
   }
 
-  /**
-   * Message priority and classification methods
-   */
-  private determineMessagePriority(message: ChatMessage): "high" | "normal" | "low" {
-    // High priority: voice messages, system messages, replies
-    if (message.messageType === "voice" || message.messageType === "system" || message.replyTo) {
-      return "high";
-    }
-
-    // Low priority: typing indicators, presence updates
-    if (message.messageType === "typing" || message.messageType === "presence") {
-      return "low";
-    }
-
-    // Normal priority: regular text messages
-    return "normal";
-  }
-
-  private isCriticalMessage(message: ChatMessage): boolean {
-    return (
-      message.messageType === "system" ||
-      message.messageType === "voice" ||
-      !!(message.content && message.content.includes("@everyone"))
-    );
-  }
+  // Priority system removed - all messages are processed equally
 
   /**
    * Enhanced subscription filtering
@@ -1460,8 +1329,7 @@ class EnhancedRealtimeChatService {
       totalRetryCount: 0,
       performanceMetrics: {
         averageBatchSize: 0,
-        adaptiveBatchingEnabled: this.adaptiveBatching.enabled,
-        currentBatchWindow: this.adaptiveBatching.dynamicWindowMs,
+        batchWindow: this.batchWindowMs,
       },
     };
 
@@ -1476,23 +1344,18 @@ class EnhancedRealtimeChatService {
 
       analytics.subscriptionsByStatus[state.status] = (analytics.subscriptionsByStatus[state.status] || 0) + 1;
 
-      totalHealthChecks += state.healthCheckCount;
       totalRetries += state.retryCount;
     }
 
     // Calculate averages
-    if (this.subscriptionStates.size > 0) {
-      analytics.averageHealthCheckCount = totalHealthChecks / this.subscriptionStates.size;
-    }
     analytics.totalRetryCount = totalRetries;
 
     // Calculate average batch sizes
     let totalBatchSize = 0;
     let batchCount = 0;
-    for (const queue of this.priorityQueues.values()) {
-      const size = queue.high.length + queue.normal.length + queue.low.length;
-      if (size > 0) {
-        totalBatchSize += size;
+    for (const batch of this.batchedUpdates.values()) {
+      if (batch.length > 0) {
+        totalBatchSize += batch.length;
         batchCount++;
       }
     }
@@ -1514,8 +1377,6 @@ class EnhancedRealtimeChatService {
         status: state.status,
         lastStateChange: state.lastStateChange,
         retryCount: state.retryCount,
-        healthCheckCount: state.healthCheckCount,
-        quotaUsage: state.quotaUsage,
         uptime: Date.now() - state.lastStateChange,
       })),
       quotaStatus: {
@@ -1543,16 +1404,8 @@ class EnhancedRealtimeChatService {
     return Array.from(this.channels.keys());
   }
 
-  // Set subscription priority for message processing
-  setSubscriptionPriority(roomId: string, priority: "high" | "normal" | "low"): void {
-    // Update priority in cache entries
-    const cache = this.messageCache.get(roomId);
-    if (cache) {
-      for (const entry of cache.values()) {
-        entry.priority = priority;
-      }
-    }
-  }
+  // Set subscription priority for message processing (deprecated - priority system removed)
+  setSubscriptionPriority(roomId: string, priority: "high" | "normal" | "low"): void {}
 
   /**
    * Detect the transport method being used by Supabase realtime

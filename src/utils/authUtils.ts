@@ -89,14 +89,6 @@ export const useAuthState = () => {
 
   // Enhanced debug logging for chatroom debugging
   if (__DEV__) {
-    console.log({
-      isAuthenticated,
-      userId: user?.id?.slice(-8) || "none",
-      isGuestMode,
-      isLoading,
-      canAccessChat: isAuthenticated && !!user && !isGuestMode,
-      needsSignIn: !isAuthenticated || !user || isGuestMode,
-    });
   }
 
   return {

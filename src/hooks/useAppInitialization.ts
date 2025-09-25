@@ -227,7 +227,6 @@ export function useAppInitialization() {
             baseDelay: RN_0814_CONFIG.RETRY_BASE_DELAY,
             retryableErrors: ["timeout", "network"],
             onRetry: (attempt, error) => {
-              console.warn("Font load retry", { attempt, error });
               setState((prev) => ({
                 ...prev,
                 warnings: [...prev.warnings, `Font loading retry ${attempt}`],

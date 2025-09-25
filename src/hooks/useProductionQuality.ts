@@ -145,7 +145,6 @@ export function useProductionQuality(
 
       // Check for memory leaks
       if (memoryLeakDetector.current.size > 0) {
-        console.warn(`[${componentName}] Potential memory leak detected: ${memoryLeakDetector.current.size} objects`);
       }
 
       // Cleanup subscriptions
@@ -390,7 +389,6 @@ export function useProductionQuality(
     (message: string) => {
       // Implementation would use AccessibilityInfo.announceForAccessibility
       if (__DEV__) {
-        console.log(`[${componentName}] Accessibility announcement: ${message}`);
       }
     },
     [componentName],
@@ -406,7 +404,6 @@ export function useProductionQuality(
       const result = await uiValidator.validateAccessibility(componentName);
 
       if (!result.passed) {
-        console.warn(`[${componentName}] Accessibility validation failed`);
       }
 
       if (enableMonitoring) {
@@ -448,7 +445,7 @@ export function useProductionQuality(
       const memoryUsage = await performanceMonitor.trackMemoryUsage();
 
       if (memoryUsage > 0.8) {
-        console.warn(`[${componentName}] High memory usage: ${(memoryUsage * 100).toFixed(1)}%`);
+        console.warn(`High memory usage: ${(memoryUsage * 100).toFixed(1)}%`);
 
         // Clear cache to free memory
         cache.current.clear();

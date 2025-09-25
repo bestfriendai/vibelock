@@ -22,7 +22,7 @@
           <div class="fl pad1y space-right2">
             <span class="strong">0% </span>
             <span class="quiet">Statements</span>
-            <span class="fraction">0/29</span>
+            <span class="fraction">0/25</span>
           </div>
 
           <div class="fl pad1y space-right2">
@@ -40,7 +40,7 @@
           <div class="fl pad1y space-right2">
             <span class="strong">0% </span>
             <span class="quiet">Lines</span>
-            <span class="fraction">0/29</span>
+            <span class="fraction">0/25</span>
           </div>
         </div>
         <p class="quiet">
@@ -150,13 +150,7 @@
 <a name='L92'></a><a href='#L92'>92</a>
 <a name='L93'></a><a href='#L93'>93</a>
 <a name='L94'></a><a href='#L94'>94</a>
-<a name='L95'></a><a href='#L95'>95</a>
-<a name='L96'></a><a href='#L96'>96</a>
-<a name='L97'></a><a href='#L97'>97</a>
-<a name='L98'></a><a href='#L98'>98</a>
-<a name='L99'></a><a href='#L99'>99</a>
-<a name='L100'></a><a href='#L100'>100</a>
-<a name='L101'></a><a href='#L101'>101</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L95'></a><a href='#L95'>95</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -213,6 +207,11 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -221,20 +220,9 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -311,8 +299,6 @@ export async function <span class="fstat-no" title="function not covered" >gener
       }
 &nbsp;
       const safeError = <span class="cstat-no" title="statement not covered" >errorData || { message: "Unknown error" };</span>
-<span class="cstat-no" title="statement not covered" >      console.warn("[AssetGenerationService] Error response:", safeError);</span>
-&nbsp;
 <span class="cstat-no" title="statement not covered" >      throw new Error(`Image generation API error: ${response.status} ${JSON.stringify(safeError)}`);</span>
     }
 &nbsp;
@@ -323,18 +309,14 @@ export async function <span class="fstat-no" title="function not covered" >gener
 <span class="cstat-no" title="statement not covered" >      throw new Error("Failed to parse API response");</span>
     }
 &nbsp;
-<span class="cstat-no" title="statement not covered" >    console.log("[AssetGenerationService] Image generated successfully");</span>
-&nbsp;
     // Return the image data from the response with proper null checks
 <span class="cstat-no" title="statement not covered" >    if (result?.success &amp;&amp; result?.data?.imageUrl) {</span>
 <span class="cstat-no" title="statement not covered" >      return result.data.imageUrl as string;</span>
     } else {
-<span class="cstat-no" title="statement not covered" >      console.warn("[AssetGenerationService] Invalid response format:", result);</span>
       const errorMessage = <span class="cstat-no" title="statement not covered" >result?.error?.message || result?.message || "Invalid response format from API";</span>
 <span class="cstat-no" title="statement not covered" >      throw new Error(errorMessage);</span>
     }
   } catch (error) {
-<span class="cstat-no" title="statement not covered" >    console.warn("Image Generation Error:", error);</span>
 <span class="cstat-no" title="statement not covered" >    throw error;</span>
   }
 }
@@ -365,7 +347,7 @@ export function <span class="fstat-no" title="function not covered" >convertAspe
     <div class="footer quiet pad2 space-top1 center small">
       Code coverage generated by
       <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-      at 2025-09-22T05:54:41.144Z
+      at 2025-09-23T19:47:23.968Z
     </div>
     <script src="../prettify.js"></script>
     <script>

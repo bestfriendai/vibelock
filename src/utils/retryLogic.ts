@@ -1,12 +1,24 @@
+/**
+ * Configuration options for retry operations
+ */
 interface RetryOptions {
+  /** Maximum number of retry attempts (default: 3) */
   maxAttempts?: number;
+  /** Base delay in milliseconds between retries (default: 1000) */
   baseDelay?: number;
+  /** Maximum delay in milliseconds between retries (default: 10000) */
   maxDelay?: number;
+  /** Whether to add random jitter to delays (default: true) */
   jitter?: boolean;
+  /** Array of error patterns that should trigger retries (empty = all errors) */
   retryableErrors?: string[];
+  /** Callback function called before each retry attempt */
   onRetry?: (attempt: number, error: Error) => void;
 }
 
+/**
+ * Default retry configuration options
+ */
 const DEFAULT_OPTIONS: Required<RetryOptions> = {
   maxAttempts: 3,
   baseDelay: 1000,
@@ -16,7 +28,16 @@ const DEFAULT_OPTIONS: Required<RetryOptions> = {
   onRetry: () => {},
 };
 
+/**
+ * Custom error class for retry operation failures
+ */
 export class RetryError extends Error {
+  /**
+   * Creates a new RetryError instance
+   * @param message - Error message describing the failure
+   * @param attempts - Number of attempts made before failure
+   * @param lastError - The last error that occurred
+   */
   constructor(
     message: string,
     public attempts: number,
@@ -27,6 +48,14 @@ export class RetryError extends Error {
   }
 }
 
+/**
+ * Calculates the delay duration for a retry attempt using exponential backoff
+ * @param attempt - Current attempt number (1-based)
+ * @param baseDelay - Base delay in milliseconds
+ * @param maxDelay - Maximum delay in milliseconds
+ * @param jitter - Whether to apply random jitter
+ * @returns Calculated delay in milliseconds
+ */
 function calculateDelay(attempt: number, baseDelay: number, maxDelay: number, jitter: boolean): number {
   const exponentialDelay = Math.min(baseDelay * Math.pow(2, attempt - 1), maxDelay);
 
@@ -37,6 +66,12 @@ function calculateDelay(attempt: number, baseDelay: number, maxDelay: number, ji
   return exponentialDelay;
 }
 
+/**
+ * Determines if an error should trigger a retry based on configured patterns
+ * @param error - The error to check
+ * @param retryableErrors - Array of error patterns to match against
+ * @returns True if the error should trigger a retry
+ */
 function isRetryableError(error: Error, retryableErrors: string[]): boolean {
   if (retryableErrors.length === 0) return true;
 
@@ -47,6 +82,13 @@ function isRetryableError(error: Error, retryableErrors: string[]): boolean {
   });
 }
 
+/**
+ * Executes an async function with automatic retry logic
+ * @param fn - Async function to execute with retry logic
+ * @param options - Retry configuration options
+ * @returns Promise that resolves with the function result or rejects with RetryError
+ * @throws {RetryError} When all retry attempts fail
+ */
 export async function withRetry<T>(fn: () => Promise<T>, options: RetryOptions = {}): Promise<T> {
   const opts = { ...DEFAULT_OPTIONS, ...options };
   let lastError: Error = new Error("No attempts made");
@@ -71,23 +113,44 @@ export async function withRetry<T>(fn: () => Promise<T>, options: RetryOptions =
   throw new RetryError(`Failed after ${opts.maxAttempts} attempts: ${lastError.message}`, opts.maxAttempts, lastError);
 }
 
+/**
+ * Creates a retry wrapper function with pre-configured default options
+ * @param defaultOptions - Default retry options to apply to all wrapped functions
+ * @returns Function that wraps async functions with retry logic
+ */
 export function createRetryWrapper(defaultOptions: RetryOptions = {}) {
   return <T>(fn: () => Promise<T>, overrideOptions: RetryOptions = {}) => {
     return withRetry(fn, { ...defaultOptions, ...overrideOptions });
   };
 }
 
+/**
+ * Manages retry operations with state tracking and rate limiting
+ */
 export class RetryManager {
   private retryCount = new Map<string, number>();
   private lastAttempt = new Map<string, number>();
 
+  /**
+   * Creates a new RetryManager instance
+   * @param options - Default retry options for this manager
+   */
   constructor(private options: RetryOptions = {}) {}
 
+  /**
+   * Executes an async function with retry logic and rate limiting
+   * @param key - Unique identifier for tracking retry attempts
+   * @param fn - Async function to execute
+   * @param options - Override retry options for this execution
+   * @returns Promise that resolves with the function result
+   * @throws {RetryError} When all retry attempts fail
+   */
   async execute<T>(key: string, fn: () => Promise<T>, options: RetryOptions = {}): Promise<T> {
     const attempts = this.retryCount.get(key) || 0;
     const lastTime = this.lastAttempt.get(key) || 0;
     const now = Date.now();
 
+    // Reset counter if more than 60 seconds have passed since last attempt
     if (now - lastTime < 60000) {
       this.retryCount.set(key, attempts + 1);
     } else {
@@ -106,6 +169,10 @@ export class RetryManager {
     }
   }
 
+  /**
+   * Resets retry tracking for a specific key or all keys
+   * @param key - Optional specific key to reset, or reset all if undefined
+   */
   reset(key?: string) {
     if (key) {
       this.retryCount.delete(key);

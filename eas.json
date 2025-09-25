@@ -30,7 +30,7 @@
         "resourceClass": "medium"
       },
       "android": {
-        "resourceClass": "m-medium",
+        "resourceClass": "medium",
         "buildType": "app-bundle"
       }
     },

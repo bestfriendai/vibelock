@@ -363,7 +363,6 @@ class MessageStatusService {
       if (deliveredIds.length > 0 && this.supportsDelivered) {
         // Note: delivered_at column doesn't exist in current schema
         // Keeping this code for future when column is added
-        console.log(`Delivered status updates disabled - column not yet available`);
         this.supportsDelivered = false; // Disable for now
       }
 
@@ -415,7 +414,6 @@ class MessageStatusService {
           if (this.supportsStatus) {
             // Note: status column doesn't exist in current schema
             // Keeping this code for future when column is added
-            console.log("[MessageStatus] Status column support disabled");
             this.supportsStatus = false; // Disable for now
           } else {
             this.showCapabilityWarning();

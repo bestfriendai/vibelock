@@ -91,7 +91,9 @@ export class MemoryManager {
   trackComponent(componentName: string, instanceId: string): void {
     const existing = this.componentInstances.get(instanceId);
     if (existing && !existing.unmountTime) {
-      console.warn(`Component ${componentName} (${instanceId}) is already tracked and not unmounted`);
+      console.warn(`Component ${componentName} is already tracked and not unmounted`);
+      // Clean up the existing instance before tracking new one
+      this.componentInstances.delete(instanceId);
     }
 
     this.componentInstances.set(instanceId, {
@@ -434,7 +436,7 @@ export class MemoryManager {
         performanceMonitor.recordMetric("memoryLeaks", {
           count: leaks.length,
           high: highSeverityLeaks.length,
-          types: [...new Set(leaks.map((l) => l.type))],
+          types: Array.from(new Set(leaks.map((l) => l.type))),
         });
       }
 
@@ -525,7 +527,7 @@ export class MemoryManager {
 
         if (growth > 10 * 1024 * 1024) {
           // 10MB growth
-          console.warn(`Memory leak detected: ${(growth / 1024 / 1024).toFixed(2)} MB growth`);
+          console.warn(`Memory growth detected: ${(growth / 1024 / 1024).toFixed(2)} MB growth`);
         }
       }
     }
@@ -540,7 +542,7 @@ export class MemoryManager {
     if (!this.memoryAlerts.has(alertKey)) {
       this.memoryAlerts.add(alertKey);
 
-      console.warn(`⚠️ Memory ${level}: ${(percentage * 100).toFixed(1)}% usage`);
+      console.warn(`${level} memory pressure: ${(percentage * 100).toFixed(1)}% usage`);
 
       performanceMonitor.recordMetric("memoryPressure", {
         level,

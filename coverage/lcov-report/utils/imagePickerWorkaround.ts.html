@@ -22,7 +22,7 @@
           <div class="fl pad1y space-right2">
             <span class="strong">0% </span>
             <span class="quiet">Statements</span>
-            <span class="fraction">0/38</span>
+            <span class="fraction">0/30</span>
           </div>
 
           <div class="fl pad1y space-right2">
@@ -40,7 +40,7 @@
           <div class="fl pad1y space-right2">
             <span class="strong">0% </span>
             <span class="quiet">Lines</span>
-            <span class="fraction">0/35</span>
+            <span class="fraction">0/27</span>
           </div>
         </div>
         <p class="quiet">
@@ -203,19 +203,7 @@
 <a name='L145'></a><a href='#L145'>145</a>
 <a name='L146'></a><a href='#L146'>146</a>
 <a name='L147'></a><a href='#L147'>147</a>
-<a name='L148'></a><a href='#L148'>148</a>
-<a name='L149'></a><a href='#L149'>149</a>
-<a name='L150'></a><a href='#L150'>150</a>
-<a name='L151'></a><a href='#L151'>151</a>
-<a name='L152'></a><a href='#L152'>152</a>
-<a name='L153'></a><a href='#L153'>153</a>
-<a name='L154'></a><a href='#L154'>154</a>
-<a name='L155'></a><a href='#L155'>155</a>
-<a name='L156'></a><a href='#L156'>156</a>
-<a name='L157'></a><a href='#L157'>157</a>
-<a name='L158'></a><a href='#L158'>158</a>
-<a name='L159'></a><a href='#L159'>159</a>
-<a name='L160'></a><a href='#L160'>160</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L148'></a><a href='#L148'>148</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -255,8 +243,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -280,14 +266,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -310,12 +291,8 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -352,7 +329,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -414,8 +390,6 @@ export async function <span class="fstat-no" title="function not covered" >launc
 &nbsp;
   // First attempt with full options
 <span class="cstat-no" title="statement not covered" >  try {</span>
-<span class="cstat-no" title="statement not covered" >    console.log("🖼️ Attempting ImagePicker with full options...");</span>
-&nbsp;
     // Add a small delay to ensure permissions are fully processed
 <span class="cstat-no" title="statement not covered" >    await new Promise(<span class="fstat-no" title="function not covered" >(r</span>esolve) =&gt; <span class="cstat-no" title="statement not covered" >setTimeout(resolve, 100))</span>;</span>
 &nbsp;
@@ -438,15 +412,10 @@ export async function <span class="fstat-no" title="function not covered" >launc
     }
 &nbsp;
     const result = <span class="cstat-no" title="statement not covered" >await ImagePicker.launchImageLibraryAsync(pickerOptions);</span>
-<span class="cstat-no" title="statement not covered" >    console.log("✅ ImagePicker succeeded on first attempt");</span>
 <span class="cstat-no" title="statement not covered" >    return result;</span>
   } catch (error: any) {
-<span class="cstat-no" title="statement not covered" >    console.warn("❌ ImagePicker first attempt failed:", error);</span>
-&nbsp;
     // Check if this is the specific PHPhotosErrorDomain 3164 error
 <span class="cstat-no" title="statement not covered" >    if (error?.message?.includes("PHPhotosErrorDomain") &amp;&amp; error?.message?.includes("3164")) {</span>
-<span class="cstat-no" title="statement not covered" >      console.log("🔄 Detected PHPhotosErrorDomain 3164, attempting workaround...");</span>
-&nbsp;
       // Try progressively simpler configurations
       const fallbackConfigs = <span class="cstat-no" title="statement not covered" >[</span>
         // Attempt 1: Remove editing and multiple selection
@@ -468,15 +437,11 @@ export async function <span class="fstat-no" title="function not covered" >launc
 &nbsp;
 <span class="cstat-no" title="statement not covered" >      for (let i = <span class="cstat-no" title="statement not covered" >0;</span> i &lt; Math.min(maxRetries, fallbackConfigs.length); i++) {</span>
 <span class="cstat-no" title="statement not covered" >        try {</span>
-<span class="cstat-no" title="statement not covered" >          console.log(`🔄 Retry attempt ${i + 1} with simplified config...`);</span>
 <span class="cstat-no" title="statement not covered" >          await new Promise(<span class="fstat-no" title="function not covered" >(r</span>esolve) =&gt; <span class="cstat-no" title="statement not covered" >setTimeout(resolve, retryDelay))</span>;</span>
 &nbsp;
           const fallbackResult = <span class="cstat-no" title="statement not covered" >await ImagePicker.launchImageLibraryAsync(fallbackConfigs[i]);</span>
-<span class="cstat-no" title="statement not covered" >          console.log(`✅ ImagePicker succeeded on retry attempt ${i + 1}`);</span>
 <span class="cstat-no" title="statement not covered" >          return fallbackResult;</span>
         } catch (retryError) {
-<span class="cstat-no" title="statement not covered" >          console.warn(`❌ Retry attempt ${i + 1} failed:`, retryError);</span>
-&nbsp;
           // If this is the last retry, continue to throw the original error
 <span class="cstat-no" title="statement not covered" >          if (i === Math.min(maxRetries, fallbackConfigs.length) - 1) {</span>
 <span class="cstat-no" title="statement not covered" >            break;</span>
@@ -511,7 +476,6 @@ export function <span class="fstat-no" title="function not covered" >showPHPhoto
         text: "Open Settings",
         onPress: <span class="fstat-no" title="function not covered" >()</span> =&gt; {
           // Note: Linking.openSettings() should be called from the component
-<span class="cstat-no" title="statement not covered" >          console.log("User requested to open settings");</span>
         },
       },
     ],
@@ -542,7 +506,7 @@ export function <span class="fstat-no" title="function not covered" >getPHPhotos
     <div class="footer quiet pad2 space-top1 center small">
       Code coverage generated by
       <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-      at 2025-09-22T05:54:40.932Z
+      at 2025-09-23T19:47:23.762Z
     </div>
     <script src="../prettify.js"></script>
     <script>

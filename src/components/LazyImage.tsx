@@ -50,6 +50,9 @@ export default function LazyImage({
   useEffect(() => {
     if (priority === "high" || isInView) return;
 
+    let interval: NodeJS.Timeout;
+    let timeout: NodeJS.Timeout;
+
     const checkVisibility = () => {
       if (viewRef.current) {
         try {
@@ -60,6 +63,9 @@ export default function LazyImage({
 
               if (isVisible && !isInView) {
                 setIsInView(true);
+                // Clear interval once visible
+                if (interval) clearInterval(interval);
+                if (timeout) clearTimeout(timeout);
               }
             } catch (error) {}
           });
@@ -68,10 +74,15 @@ export default function LazyImage({
     };
 
     // Check visibility on mount and periodically
-    const interval = setInterval(checkVisibility, 500);
+    interval = setInterval(checkVisibility, 500);
+    // Also check after a short delay to catch initial render
+    timeout = setTimeout(checkVisibility, 100);
     checkVisibility();
 
-    return () => clearInterval(interval);
+    return () => {
+      if (interval) clearInterval(interval);
+      if (timeout) clearTimeout(timeout);
+    };
   }, [isInView, priority]);
 
   const handleLoad = () => {

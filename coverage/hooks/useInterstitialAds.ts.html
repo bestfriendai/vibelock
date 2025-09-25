@@ -22,7 +22,7 @@
           <div class="fl pad1y space-right2">
             <span class="strong">0% </span>
             <span class="quiet">Statements</span>
-            <span class="fraction">0/61</span>
+            <span class="fraction">0/54</span>
           </div>
 
           <div class="fl pad1y space-right2">
@@ -40,7 +40,7 @@
           <div class="fl pad1y space-right2">
             <span class="strong">0% </span>
             <span class="quiet">Lines</span>
-            <span class="fraction">0/54</span>
+            <span class="fraction">0/47</span>
           </div>
         </div>
         <p class="quiet">
@@ -191,14 +191,7 @@
 <a name='L133'></a><a href='#L133'>133</a>
 <a name='L134'></a><a href='#L134'>134</a>
 <a name='L135'></a><a href='#L135'>135</a>
-<a name='L136'></a><a href='#L136'>136</a>
-<a name='L137'></a><a href='#L137'>137</a>
-<a name='L138'></a><a href='#L138'>138</a>
-<a name='L139'></a><a href='#L139'>139</a>
-<a name='L140'></a><a href='#L140'>140</a>
-<a name='L141'></a><a href='#L141'>141</a>
-<a name='L142'></a><a href='#L142'>142</a>
-<a name='L143'></a><a href='#L143'>143</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L136'></a><a href='#L136'>136</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -285,7 +278,6 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -296,30 +288,24 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -408,13 +394,13 @@ export const useInterstitialAds = <span class="cstat-no" title="statement not co
 &nbsp;
 <span class="cstat-no" title="statement not covered" >        attempts++;</span>
 <span class="cstat-no" title="statement not covered" >        if (attempts &lt;= maxRetries) {</span>
-<span class="cstat-no" title="statement not covered" >          console.log(`Retrying ${placement} ad (attempt ${attempts + 1}/${maxRetries + 1})`);</span>
+<span class="cstat-no" title="statement not covered" >          console.log(`[useInterstitialAds] Retrying ad show, attempt ${attempts}`);</span>
 <span class="cstat-no" title="statement not covered" >          await new Promise(<span class="fstat-no" title="function not covered" >(r</span>esolve) =&gt; <span class="cstat-no" title="statement not covered" >setTimeout(resolve, 1000 * attempts))</span>;</span>
         }
       } catch (error) {
 <span class="cstat-no" title="statement not covered" >        attempts++;</span>
         const errorMessage = <span class="cstat-no" title="statement not covered" >error instanceof Error ? error.message : String(error);</span>
-<span class="cstat-no" title="statement not covered" >        console.warn(`Failed to show ${placement} interstitial ad (attempt ${attempts}/${maxRetries + 1}):`, error);</span>
+<span class="cstat-no" title="statement not covered" >        console.error(`[useInterstitialAds] Error showing ad for placement: ${placement}`, error);</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >        setAdMetrics(<span class="fstat-no" title="function not covered" >(p</span>rev) =&gt; (<span class="cstat-no" title="statement not covered" >{</span></span>
           ...prev,
@@ -424,7 +410,6 @@ export const useInterstitialAds = <span class="cstat-no" title="statement not co
 &nbsp;
         // Apply SDK 54 specific workarounds
 <span class="cstat-no" title="statement not covered" >        if (isSDK54CompatibilityError(error) &amp;&amp; attempts &lt;= maxRetries) {</span>
-<span class="cstat-no" title="statement not covered" >          console.log("Applying SDK 54 compatibility workaround for interstitial ad...");</span>
 <span class="cstat-no" title="statement not covered" >          await new Promise(<span class="fstat-no" title="function not covered" >(r</span>esolve) =&gt; <span class="cstat-no" title="statement not covered" >setTimeout(resolve, 2000 * attempts))</span>;</span>
         } else <span class="cstat-no" title="statement not covered" >if (attempts &lt;= maxRetries) {</span>
 <span class="cstat-no" title="statement not covered" >          await new Promise(<span class="fstat-no" title="function not covered" >(r</span>esolve) =&gt; <span class="cstat-no" title="statement not covered" >setTimeout(resolve, 1000 * attempts))</span>;</span>
@@ -437,31 +422,25 @@ export const useInterstitialAds = <span class="cstat-no" title="statement not co
 &nbsp;
   const showAdAfterPostCreation = <span class="cstat-no" title="statement not covered" >useCallback(<span class="fstat-no" title="function not covered" >as</span>ync (): Promise&lt;boolean&gt; =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    if (!canUseAdMob() || isPremium) {</span>
-<span class="cstat-no" title="statement not covered" >      console.log("Skipping post creation ad: Premium user or Expo Go environment");</span>
 <span class="cstat-no" title="statement not covered" >      return false;</span>
     }
 &nbsp;
-<span class="cstat-no" title="statement not covered" >    console.log("Attempting to show interstitial ad after post creation");</span>
 <span class="cstat-no" title="statement not covered" >    return await showAdWithRetry("postCreation");</span>
   }, [isPremium, showAdWithRetry]);
 &nbsp;
   const showAdAfterChatExit = <span class="cstat-no" title="statement not covered" >useCallback(<span class="fstat-no" title="function not covered" >as</span>ync (): Promise&lt;boolean&gt; =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    if (!canUseAdMob() || isPremium) {</span>
-<span class="cstat-no" title="statement not covered" >      console.log("Skipping chat exit ad: Premium user or Expo Go environment");</span>
 <span class="cstat-no" title="statement not covered" >      return false;</span>
     }
 &nbsp;
-<span class="cstat-no" title="statement not covered" >    console.log("Attempting to show interstitial ad after chat exit");</span>
 <span class="cstat-no" title="statement not covered" >    return await showAdWithRetry("chatExit");</span>
   }, [isPremium, showAdWithRetry]);
 &nbsp;
   const showGeneralInterstitialAd = <span class="cstat-no" title="statement not covered" >useCallback(<span class="fstat-no" title="function not covered" >as</span>ync (): Promise&lt;boolean&gt; =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    if (!canUseAdMob() || isPremium) {</span>
-<span class="cstat-no" title="statement not covered" >      console.log("Skipping general ad: Premium user or Expo Go environment");</span>
 <span class="cstat-no" title="statement not covered" >      return false;</span>
     }
 &nbsp;
-<span class="cstat-no" title="statement not covered" >    console.log("Attempting to show general interstitial ad");</span>
 <span class="cstat-no" title="statement not covered" >    return await showAdWithRetry("general");</span>
   }, [isPremium, showAdWithRetry]);
 &nbsp;
@@ -491,7 +470,7 @@ export default useInterstitialAds;
     <div class="footer quiet pad2 space-top1 center small">
       Code coverage generated by
       <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-      at 2025-09-22T05:54:41.144Z
+      at 2025-09-23T19:47:23.968Z
     </div>
     <script src="../prettify.js"></script>
     <script>

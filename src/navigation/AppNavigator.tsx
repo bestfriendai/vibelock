@@ -38,6 +38,9 @@ import LocationSettingsScreen from "../screens/LocationSettingsScreen";
 
 // Import stores
 import useAuthStore from "../state/authStore";
+import { useShallow } from "../utils/zustandOptimization";
+
+// Zustand optimization: Using shallow selectors to prevent unnecessary re-renders
 
 // Stable wrapper components to prevent unnecessary re-renders
 const ChatRoomScreenWithErrorBoundary = React.memo((props: any) => {
@@ -108,66 +111,111 @@ type SerializedReview = Omit<import("../types").Review, "createdAt" | "updatedAt
   updatedAt: string | Date;
 };
 
-// Navigation types for React Navigation v7
+/**
+ * Root stack navigation parameters for React Navigation v7
+ */
 export type RootStackParamList = {
+  /** Sign in screen */
   SignIn: undefined;
+  /** Sign up screen */
   SignUp: undefined;
+  /** Forgot password screen */
   ForgotPassword: undefined;
+  /** Reset password screen */
   ResetPassword: undefined;
+  /** Onboarding screen */
   Onboarding: undefined;
+  /** Authentication testing screen (development only) */
   AuthTest: undefined;
+  /** Main tab navigation */
   MainTabs: undefined;
+  /** Person profile screen */
   PersonProfile: {
     firstName: string;
     city: string;
     state: string;
   };
+  /** Create review screen */
   CreateReview: undefined;
+  /** Chat room screen */
   ChatRoom: {
     roomId: string;
     roomName?: string;
     roomType?: "private" | "group";
   };
+  /** Chat room list screen */
   ChatRoomList: undefined;
+  /** Create chat room screen */
   CreateChatRoom: undefined;
+  /** Review detail screen */
   ReviewDetail: {
     review?: SerializedReview;
     reviewId?: string;
   };
 };
 
+/**
+ * Tab navigation parameters
+ */
 export type TabParamList = {
+  /** Browse stack navigation */
   BrowseStack: undefined;
+  /** Search stack navigation */
   SearchStack: undefined;
+  /** Create action tab (centered button) */
   CreateAction: undefined;
+  /** Chatrooms stack navigation */
   ChatroomsStack: undefined;
+  /** Settings stack navigation */
   SettingsStack: undefined;
 };
 
+/**
+ * Browse stack navigation parameters
+ */
 export type BrowseStackParamList = {
+  /** Browse screen */
   Browse: undefined;
+  /** Review detail screen */
   ReviewDetail: {
     review?: SerializedReview;
     reviewId?: string;
   };
 };
 
+/**
+ * Search stack navigation parameters
+ */
 export type SearchStackParamList = {
+  /** Search screen */
   Search: undefined;
+  /** Review detail screen */
   ReviewDetail: {
     review?: SerializedReview;
     reviewId?: string;
   };
 };
 
+/**
+ * Chatrooms stack navigation parameters
+ */
 export type ChatroomsStackParamList = {
+  /** Chatrooms screen */
   Chatrooms: undefined;
 };
 
+/**
+ * Settings stack navigation parameters
+ */
 export type SettingsStackParamList = {
+  /** Settings screen */
   Settings: undefined;
+  /** Notifications screen */
   Notifications: undefined;
+  /** Delete account screen */
   DeleteAccount: undefined;
+  /** Location settings screen */
+  /** Location settings screen */
   LocationSettings: undefined;
 };
 
@@ -222,7 +270,8 @@ const SettingsStack = createNativeStackNavigator<SettingsStackParamList>();
 
 function CreateTabButtonWrapper() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { isGuestMode } = useAuthStore();
+
+  const isGuestMode = useShallow(useAuthStore, (state) => state.isGuestMode);
 
   return (
     <View style={{ flex: 1, alignItems: "center", justifyContent: "center", marginBottom: 8 }}>
@@ -448,7 +497,9 @@ function TabNavigator() {
 
 // Main App Navigator
 export default function AppNavigator() {
-  const { isAuthenticated, isGuestMode } = useAuthStore();
+  // Use optimized shallow selectors to prevent unnecessary re-renders
+  const isAuthenticated = useShallow(useAuthStore, (state: any) => state.isAuthenticated);
+  const isGuestMode = useShallow(useAuthStore, (state: any) => state.isGuestMode);
   const { colors } = useTheme();
   const standardHeader = useStandardHeader();
 

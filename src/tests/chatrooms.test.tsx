@@ -1,6 +1,3 @@
-import React from "react";
-import { render } from "@testing-library/react-native";
-import { NavigationContainer } from "@react-navigation/native";
 import ChatroomsScreen from "../screens/ChatroomsScreen";
 
 // Simple test to verify syntax errors are fixed

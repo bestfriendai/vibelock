@@ -22,7 +22,7 @@
           <div class="fl pad1y space-right2">
             <span class="strong">0% </span>
             <span class="quiet">Statements</span>
-            <span class="fraction">0/150</span>
+            <span class="fraction">0/146</span>
           </div>
 
           <div class="fl pad1y space-right2">
@@ -40,7 +40,7 @@
           <div class="fl pad1y space-right2">
             <span class="strong">0% </span>
             <span class="quiet">Lines</span>
-            <span class="fraction">0/139</span>
+            <span class="fraction">0/135</span>
           </div>
         </div>
         <p class="quiet">
@@ -382,11 +382,7 @@
 <a name='L324'></a><a href='#L324'>324</a>
 <a name='L325'></a><a href='#L325'>325</a>
 <a name='L326'></a><a href='#L326'>326</a>
-<a name='L327'></a><a href='#L327'>327</a>
-<a name='L328'></a><a href='#L328'>328</a>
-<a name='L329'></a><a href='#L329'>329</a>
-<a name='L330'></a><a href='#L330'>330</a>
-<a name='L331'></a><a href='#L331'>331</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L327'></a><a href='#L327'>327</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -424,7 +420,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -459,7 +454,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -705,9 +699,7 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -752,7 +744,6 @@ class SupabaseTestSuite {
 &nbsp;
   // Run all tests
 <span class="fstat-no" title="function not covered" >  as</span>ync runAllTests(): Promise&lt;TestSuiteResult&gt; {
-<span class="cstat-no" title="statement not covered" >    console.log("🧪 Starting Supabase Integration Test Suite");</span>
 <span class="cstat-no" title="statement not covered" >    this.startTime = Date.now();</span>
 <span class="cstat-no" title="statement not covered" >    this.results = [];</span>
 &nbsp;
@@ -789,7 +780,6 @@ class SupabaseTestSuite {
       duration,
     };
 &nbsp;
-<span class="cstat-no" title="statement not covered" >    console.log("🧪 Test Suite Complete:", summary);</span>
 <span class="cstat-no" title="statement not covered" >    return summary;</span>
   }
 &nbsp;
@@ -978,7 +968,7 @@ class SupabaseTestSuite {
         duration,
       });
 &nbsp;
-<span class="cstat-no" title="statement not covered" >      console.log(`✅ ${name}: ${message} (${duration}ms)`);</span>
+<span class="cstat-no" title="statement not covered" >      console.log(`✅ ${name} (${duration}ms): ${message}`);</span>
     } catch (error: any) {
       const duration = <span class="cstat-no" title="statement not covered" >Date.now() - startTime;</span>
       const errorMessage = <span class="cstat-no" title="statement not covered" >error instanceof Error ? error.message : String(error);</span>
@@ -991,7 +981,7 @@ class SupabaseTestSuite {
         error,
       });
 &nbsp;
-<span class="cstat-no" title="statement not covered" >      console.warn(`❌ ${name}: ${errorMessage} (${duration}ms)`);</span>
+<span class="cstat-no" title="statement not covered" >      console.error(`❌ ${name} (${duration}ms): ${errorMessage}`);</span>
     }
   }
 &nbsp;
@@ -1034,10 +1024,8 @@ class SupabaseTestSuite {
 <span class="cstat-no" title="statement not covered" >      await testChannel.subscribe();</span>
 <span class="cstat-no" title="statement not covered" >      await supabase.removeChannel(testChannel);</span>
 &nbsp;
-<span class="cstat-no" title="statement not covered" >      console.log("✅ Quick health check passed");</span>
 <span class="cstat-no" title="statement not covered" >      return true;</span>
     } catch (error) {
-<span class="cstat-no" title="statement not covered" >      console.warn("❌ Quick health check failed:", error);</span>
 <span class="cstat-no" title="statement not covered" >      return false;</span>
     }
   }
@@ -1055,7 +1043,7 @@ export default supabaseTestSuite;
     <div class="footer quiet pad2 space-top1 center small">
       Code coverage generated by
       <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-      at 2025-09-22T05:54:40.932Z
+      at 2025-09-23T19:47:23.762Z
     </div>
     <script src="../prettify.js"></script>
     <script>

@@ -12,6 +12,7 @@
     "allowUnusedLabels": false,
     "allowUnreachableCode": false,
     "skipLibCheck": true,
+    "target": "es2018",
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"],

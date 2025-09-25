@@ -181,7 +181,7 @@ export function detectPolyfillConflicts(): PropertyConflict[] {
 export function applyPropertyWorkarounds(): void {
   try {
     // Workaround for react-native-reanimated property conflicts
-    if (global._WORKLET) {
+    if ((global as any)._WORKLET) {
       // Add specific workarounds for worklet runtime
     }
 

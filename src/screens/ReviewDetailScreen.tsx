@@ -57,14 +57,6 @@ export default function ReviewDetailScreen() {
   const routeParams = route.params as any;
 
   // Debug logging to validate route parameters
-  console.log("ReviewDetailScreen params:", {
-    from: route.name,
-    params: route.params || {},
-    reviewId: route.params?.reviewId,
-    review: route.params?.review ? { id: route.params.review?.id } : null,
-    allParams: route.params,
-  });
-
   // Extract reviewId with proper fallback logic
   const reviewId = routeParams?.reviewId || routeParams?.review?.id;
   // All hooks declared at the top level - no conditional hooks

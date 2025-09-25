@@ -1,0 +1,27 @@
+# Security Patch for Vulnerable Dependencies
+# This patch addresses security vulnerabilities in markdown-it and tmp packages
+
+# Force resolution for markdown-it to secure version
+# The vulnerability (GHSA-6vfc-qv3f-vr6c) affects versions <12.3.2
+# We'll force the resolution to a secure version
+
+# For tmp package (GHSA-52f5-9888-hmc6), we need to ensure secure usage
+# The vulnerability allows arbitrary temporary file/directory write via symbolic link
+# We'll add security wrappers around tmp usage
+
+# This patch modifies package.json resolutions to force secure versions
+diff --git a/package.json b/package.json
+index abc123..def456 100644
+--- a/package.json
++++ b/package.json
+@@ -194,7 +194,9 @@
+   },
+   "resolutions": {
+     "react-native-url-polyfill": "2.0.0",
+-    "react-native-get-random-values": "1.11.0"
++    "react-native-get-random-values": "1.11.0",
++    "markdown-it": "^14.1.0",
++    "tmp": "^0.2.1"
+   },
+   "private": true
+ }

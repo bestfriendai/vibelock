@@ -74,13 +74,32 @@ export async function handleRevenueCatWebhook(
 /**
  * Webhook validation helper
  *
- * In production, you should validate the webhook signature
- * to ensure it's actually from RevenueCat
+ * Validates RevenueCat webhook signature using HMAC-SHA256
+ * Based on RevenueCat webhook security documentation
  */
 export function validateRevenueCatWebhook(payload: string, signature: string, secret: string): boolean {
-  // TODO: Implement proper webhook signature validation
-  // This is a placeholder - implement actual validation based on RevenueCat docs
-  return true;
+  if (!secret || !signature || !payload) {
+    return false;
+  }
+
+  try {
+    // Import crypto module for HMAC calculation
+    const crypto = require("crypto");
+
+    // Calculate expected signature
+    const expectedSignature = crypto.createHmac("sha256", secret).update(payload, "utf8").digest("hex");
+
+    // Compare signatures using constant-time comparison to prevent timing attacks
+    const isValid = crypto.timingSafeEqual(Buffer.from(signature, "hex"), Buffer.from(expectedSignature, "hex"));
+
+    if (!isValid) {
+    }
+
+    return isValid;
+  } catch (error) {
+    console.error("RevenueCat webhook validation error:", error);
+    return false;
+  }
 }
 
 /**

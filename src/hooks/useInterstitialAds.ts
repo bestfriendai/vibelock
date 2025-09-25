@@ -66,7 +66,6 @@ export const useInterstitialAds = () => {
 
         attempts++;
         if (attempts <= maxRetries) {
-          console.log(`[useInterstitialAds] Retrying ad show, attempt ${attempts}`);
           await new Promise((resolve) => setTimeout(resolve, 1000 * attempts));
         }
       } catch (error) {

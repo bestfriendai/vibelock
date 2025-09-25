@@ -13,7 +13,7 @@ const compat = new FlatCompat({
 });
 
 // Load legacy config
-const legacyConfig = require("./.eslintrc.js");
+const legacyConfig = require("./.eslintrc.cjs");
 
 export default [
   // Optional global ignores

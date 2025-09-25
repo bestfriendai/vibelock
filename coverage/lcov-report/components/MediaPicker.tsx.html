@@ -22,7 +22,7 @@
           <div class="fl pad1y space-right2">
             <span class="strong">0% </span>
             <span class="quiet">Statements</span>
-            <span class="fraction">0/143</span>
+            <span class="fraction">0/139</span>
           </div>
 
           <div class="fl pad1y space-right2">
@@ -40,7 +40,7 @@
           <div class="fl pad1y space-right2">
             <span class="strong">0% </span>
             <span class="quiet">Lines</span>
-            <span class="fraction">0/133</span>
+            <span class="fraction">0/129</span>
           </div>
         </div>
         <p class="quiet">
@@ -547,12 +547,7 @@
 <a name='L489'></a><a href='#L489'>489</a>
 <a name='L490'></a><a href='#L490'>490</a>
 <a name='L491'></a><a href='#L491'>491</a>
-<a name='L492'></a><a href='#L492'>492</a>
-<a name='L493'></a><a href='#L493'>493</a>
-<a name='L494'></a><a href='#L494'>494</a>
-<a name='L495'></a><a href='#L495'>495</a>
-<a name='L496'></a><a href='#L496'>496</a>
-<a name='L497'></a><a href='#L497'>497</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L492'></a><a href='#L492'>492</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -673,7 +668,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -717,7 +711,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -770,9 +763,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -827,7 +818,6 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -1167,7 +1157,6 @@ export const MediaPicker: React.FC&lt;MediaPickerProps&gt; = <span class="cstat-
 <span class="cstat-no" title="statement not covered" >        return false;</span>
       }
     } catch (error) {
-<span class="cstat-no" title="statement not covered" >      console.warn("Permission request failed", error);</span>
 <span class="cstat-no" title="statement not covered" >      Alert.alert("Error", "Failed to request permissions. Please try again.");</span>
 <span class="cstat-no" title="statement not covered" >      return false;</span>
     }
@@ -1213,7 +1202,6 @@ export const MediaPicker: React.FC&lt;MediaPickerProps&gt; = <span class="cstat-
         }
       }
     } catch (error) {
-<span class="cstat-no" title="statement not covered" >      console.warn("Camera error:", error);</span>
 <span class="cstat-no" title="statement not covered" >      Alert.alert("Error", "Failed to take photo. Please try again.");</span>
     } finally {
 <span class="cstat-no" title="statement not covered" >      setIsLoading(false);</span>
@@ -1266,8 +1254,6 @@ export const MediaPicker: React.FC&lt;MediaPickerProps&gt; = <span class="cstat-
         }
       }
     } catch (error: any) {
-<span class="cstat-no" title="statement not covered" >      console.warn("Gallery error:", error);</span>
-&nbsp;
       // Use the enhanced error handling for PHPhotosErrorDomain issues
 <span class="cstat-no" title="statement not covered" >      if (isPHPhotosError3164(error)) {</span>
 <span class="cstat-no" title="statement not covered" >        Alert.alert("Photo Library Access Issue", getPHPhotosErrorMessage(error), [</span>
@@ -1323,7 +1309,6 @@ export const MediaPicker: React.FC&lt;MediaPickerProps&gt; = <span class="cstat-
 <span class="cstat-no" title="statement not covered" >        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);</span>
       }
     } catch (error) {
-<span class="cstat-no" title="statement not covered" >      console.warn("Document picker error:", error);</span>
 <span class="cstat-no" title="statement not covered" >      Alert.alert("Error", "Failed to pick document. Please try again.");</span>
     } finally {
 <span class="cstat-no" title="statement not covered" >      setIsLoading(false);</span>
@@ -1553,7 +1538,7 @@ export default MediaPicker;
     <div class="footer quiet pad2 space-top1 center small">
       Code coverage generated by
       <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-      at 2025-09-22T05:54:40.932Z
+      at 2025-09-23T19:47:23.762Z
     </div>
     <script src="../prettify.js"></script>
     <script>

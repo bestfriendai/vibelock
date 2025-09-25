@@ -139,7 +139,6 @@ export default function CreateReviewScreen() {
           setSocialMedia({});
 
           if (__DEV__) {
-            console.log("Loaded draft from AsyncStorage");
           }
         }
       } catch (error) {

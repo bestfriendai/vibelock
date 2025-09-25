@@ -160,9 +160,7 @@ export function usePerformanceOptimization(options: PerformanceOptions) {
     // Check memory threshold
     const threshold = options.thresholds?.memoryUsage || 0.8;
     if (percentage > threshold) {
-      console.warn(
-        `[usePerformanceOptimization] High memory usage in ${options.componentName}: ${percentage.toFixed(1)}%`,
-      );
+      console.warn(`Memory usage high: ${(percentage * 100).toFixed(1)}%`);
 
       // Trigger cleanup if critical
       if (percentage > 0.9) {
@@ -326,8 +324,6 @@ export function usePerformanceOptimization(options: PerformanceOptions) {
         });
         break;
     }
-
-    console.log(`[usePerformanceOptimization] Auto-optimization applied for ${options.componentName}: ${issueType}`);
   };
 
   // Save performance metrics for analysis
