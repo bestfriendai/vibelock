@@ -20,12 +20,7 @@ echo "📦 Installing CocoaPods dependencies..."
 cd ios
 
 # For M1/M2 Macs, ensure we're using the right architecture
-if [[ $(uname -m) == 'arm64' ]]; then
-    echo "🖥️ Detected Apple Silicon Mac, configuring for arm64..."
-    arch -x86_64 pod install
-else
-    pod install
-fi
+pod install
 
 cd ..
 

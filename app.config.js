@@ -141,8 +141,7 @@ export default {
         "READ_EXTERNAL_STORAGE",
         "WRITE_EXTERNAL_STORAGE",
       ],
-      // Dynamic google-services.json handling via EAS secrets
-      // Falls back to local file for development builds
+      // Firebase configuration
       googleServicesFile: process.env.GOOGLE_SERVICES_JSON || "./google-services.json",
     },
     plugins: [
@@ -181,14 +180,6 @@ export default {
           ios: {
             deploymentTarget: "15.1",
             useFrameworks: "static",
-            modularHeaders: [
-              "FirebaseCore",
-              "FirebaseCoreInternal",
-              "GoogleUtilities",
-              "Purchases",
-              "PurchasesCoreSwift",
-              "PurchasesHybridCommon",
-            ],
           },
         },
       ],
@@ -208,6 +199,7 @@ export default {
       "expo-sqlite",
       "expo-video",
       "expo-web-browser",
+      "./plugins/withFirebaseConfig",
       // Conditional AdMob plugin loading based on build environment
       ...(isExpoGo
         ? []
