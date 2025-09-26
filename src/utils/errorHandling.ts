@@ -1,4 +1,4 @@
-// Enhanced error handling utilities for Supabase integrations with Sentry integration
+// Enhanced error handling utilities for Supabase integrations
 import { handleSupabaseError } from "../config/supabase";
 
 // Lazy import to avoid circular dependencies and ensure error reporting is initialized
@@ -76,7 +76,7 @@ export enum ErrorType {
   PREVIEW_GENERATION_ERROR = "PREVIEW_GENERATION_ERROR",
 }
 
-// Enhanced error class with more context and Sentry integration
+// Enhanced error class with more context
 export class AppError extends Error {
   public readonly type: ErrorType;
   public readonly code?: string;
@@ -113,8 +113,8 @@ export class AppError extends Error {
       // Ignore prototype errors in React Native environments
     }
 
-    // Automatically report to Sentry in production
-    this.reportToSentry();
+    // Automatically report error in production
+    this.reportError();
   }
 
   private generateUserMessage(): string {
@@ -204,9 +204,9 @@ export class AppError extends Error {
   }
 
   /**
-   * Report error to Sentry (async to avoid blocking)
+   * Report error (async to avoid blocking)
    */
-  private reportToSentry(): void {
+  private reportError(): void {
     // Use setTimeout to avoid blocking the main thread
     setTimeout(async () => {
       try {
@@ -324,7 +324,7 @@ export const parseSupabaseError = (error: any): AppError => {
   return new AppError(error?.message || "Unknown error", ErrorType.UNKNOWN, "UNKNOWN", undefined, false);
 };
 
-// Enhanced retry function with better error handling and Sentry integration
+// Enhanced retry function with better error handling
 export const retryWithBackoff = async <T>(
   fn: () => Promise<T>,
   maxRetries: number = 3,
@@ -339,7 +339,7 @@ export const retryWithBackoff = async <T>(
     try {
       const result = await fn();
 
-      // Report successful retry to Sentry if there were previous failures
+      // Report successful retry if there were previous failures
       if (attempt > 0) {
         const errorReporting = await getErrorReportingService();
         if (errorReporting) {
@@ -375,7 +375,7 @@ export const retryWithBackoff = async <T>(
 
       // Don't retry on the last attempt or if error is not retryable
       if (attempt === maxRetries - 1 || !canRetry) {
-        // Report final failure to Sentry
+        // Report final failure
         const errorReporting = await getErrorReportingService();
         if (errorReporting) {
           errorReporting.reportError(
@@ -416,7 +416,7 @@ export const retryWithBackoff = async <T>(
   throw lastError!;
 };
 
-// Utility to safely execute async operations with error handling and Sentry integration
+// Utility to safely execute async operations with error handling
 export const safeAsync = async <T>(
   operation: () => Promise<T>,
   fallback?: T,
@@ -439,7 +439,7 @@ export const safeAsync = async <T>(
     if (onError) {
       onError(appError);
     } else {
-      // Report to Sentry if no custom error handler
+      // Report error if no custom error handler
       const errorReporting = await getErrorReportingService();
       if (errorReporting) {
         errorReporting.reportError(appError, context);
@@ -578,7 +578,7 @@ export const checkNetworkStatus = async (): Promise<boolean> => {
 
     const isOnline = response.ok || response.status === 204;
 
-    // Report network status to Sentry
+    // Report network status
     const errorReporting = await getErrorReportingService();
     if (errorReporting) {
       errorReporting.addBreadcrumb({
@@ -595,7 +595,7 @@ export const checkNetworkStatus = async (): Promise<boolean> => {
 
     return isOnline;
   } catch (error: any) {
-    // Report network error to Sentry
+    // Report network error
     const errorReporting = await getErrorReportingService();
     if (errorReporting) {
       errorReporting.reportError(

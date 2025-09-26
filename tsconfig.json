@@ -1,33 +1,4 @@
 {
-  "extends": "expo/tsconfig.base",
-  "compilerOptions": {
-    "strict": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
-    "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": false,
-    "noImplicitOverride": true,
-    "noPropertyAccessFromIndexSignature": false,
-    "noUncheckedSideEffectImports": true,
-    "allowUnusedLabels": false,
-    "allowUnreachableCode": false,
-    "skipLibCheck": true,
-    "target": "es2018",
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["src/*"],
-      "@/components/*": ["src/components/*"],
-      "@/screens/*": ["src/screens/*"],
-      "@/services/*": ["src/services/*"],
-      "@/utils/*": ["src/utils/*"],
-      "@/types/*": ["src/types/*"],
-      "@/state/*": ["src/state/*"],
-      "@/providers/*": ["src/providers/*"],
-      "@/contexts/*": ["src/contexts/*"],
-      "@/constants/*": ["src/constants/*"],
-      "@/config/*": ["src/config/*"],
-      "@/navigation/*": ["src/navigation/*"]
-    }
-  },
-  "exclude": ["node_modules", "supabase/functions", "__tests__", "backup"]
+  "compilerOptions": {},
+  "extends": "expo/tsconfig.base"
 }

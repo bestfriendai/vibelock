@@ -32,12 +32,6 @@ export interface EnvironmentConfig {
   EXPO_PUBLIC_ADMOB_APP_OPEN_IOS?: string;
   EXPO_PUBLIC_ADMOB_TEST_MODE?: string;
 
-  // Sentry Configuration
-  EXPO_PUBLIC_SENTRY_DSN?: string;
-  EXPO_PUBLIC_ENABLE_PERFORMANCE_MONITORING?: string;
-  EXPO_PUBLIC_ERROR_SAMPLE_RATE?: string;
-  EXPO_PUBLIC_PERFORMANCE_SAMPLE_RATE?: string;
-
   // Firebase (Legacy)
   EXPO_PUBLIC_FIREBASE_PROJECT_ID?: string;
   EXPO_PUBLIC_FIREBASE_API_KEY?: string;
@@ -289,15 +283,6 @@ export class EnvironmentValidator {
 
     if (!isDev && testMode) {
       result.warnings.push("AdMob test mode enabled in production build");
-    }
-
-    // Check for Sentry configuration completeness
-    const sentryDsn = getEnvVar("EXPO_PUBLIC_SENTRY_DSN");
-    const sentryOrg = getEnvVar("SENTRY_ORG");
-    const sentryProject = getEnvVar("SENTRY_PROJECT");
-
-    if (sentryDsn && (!sentryOrg || !sentryProject)) {
-      result.warnings.push("Sentry DSN configured but missing org/project for source maps");
     }
   }
 

@@ -2,7 +2,6 @@ import React, { Component, ReactNode } from "react";
 import { View, Text, Pressable, StyleSheet, ScrollView, Alert, AppState, AppStateStatus } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../providers/ThemeProvider";
-import * as Sentry from "@sentry/react-native";
 import { errorReportingService } from "../services/errorReporting";
 import { compatibilityChecker } from "../utils/compatibilityUtils";
 import { AppError, ErrorType } from "../utils/errorHandling";
@@ -222,11 +221,11 @@ class ErrorBoundaryClass extends Component<Props, State> {
   }
 
   override componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    Sentry.captureException(error, {
-      extra: {
-        componentStack: errorInfo.componentStack,
-      },
+    // Log error to console instead of Sentry
+    console.error("[ErrorBoundary] Component error caught:", error, {
+      componentStack: errorInfo.componentStack,
     });
+
     this.setState({ errorInfo });
     if (__DEV__) {
       this.logDevelopmentError(error, errorInfo);

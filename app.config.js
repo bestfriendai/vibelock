@@ -152,21 +152,7 @@ export default {
           microphonePermission: "Allow $(PRODUCT_NAME) to access your microphone.",
         },
       ],
-      // Conditional Sentry plugin loading based on build environment
-      ...(isExpoGo
-        ? []
-        : [
-            [
-              "@sentry/react-native/expo",
-              {
-                organization: process.env.SENTRY_ORG || "lockerroom",
-                project: process.env.SENTRY_PROJECT || "lockerroom-app",
-                authToken: process.env.SENTRY_AUTH_TOKEN,
-                url: "https://sentry.io/",
-                note: "Use 'eas secret:create' to set SENTRY_AUTH_TOKEN for automated uploads",
-              },
-            ],
-          ]),
+
       [
         "expo-build-properties",
         {
@@ -203,7 +189,6 @@ export default {
       "expo-sqlite",
       "expo-video",
       "expo-web-browser",
-      "./plugins/withFirebaseConfig",
       // Conditional AdMob plugin loading based on build environment
       ...(isExpoGo
         ? []
@@ -282,17 +267,6 @@ export default {
         isProduction,
         buildProfile: process.env.EAS_BUILD_PROFILE || "development",
         platform: process.env.EXPO_PUBLIC_PLATFORM || "unknown",
-      },
-      // Sentry configuration
-      sentry: {
-        dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
-        environment: isProduction ? "production" : isDevelopmentBuild ? "staging" : "development",
-        enableInExpoDevelopment: false,
-        enableAutoSessionTracking: true,
-        enableNativeCrashHandling: true,
-        enablePerformanceMonitoring: !isExpoGo,
-        tracesSampleRate: isProduction ? 0.1 : 0.2,
-        sampleRate: isProduction ? 0.1 : 1.0,
       },
     },
     owner: "trappat",
