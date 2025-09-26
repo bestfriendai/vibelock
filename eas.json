@@ -8,12 +8,10 @@
       "distribution": "internal",
       "ios": {
         "simulator": false,
-        "buildConfiguration": "Debug",
-        "bundleIdentifier": "com.lockerroomtalk.app"
+        "buildConfiguration": "Debug"
       },
       "android": {
-        "buildType": "apk",
-        "package": "com.lockerroomtalk.app"
+        "buildType": "apk"
       },
       "cache": {
         "disabled": true
