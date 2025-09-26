@@ -452,6 +452,31 @@ class AdMobService {
 
     return this.showInterstitialAd();
   }
+
+  /**
+   * Track ad-related events (stub implementation)
+   */
+  trackEvent(eventName: string, parameters?: { [key: string]: any }) {
+    console.log('AdMob Event:', eventName, parameters);
+  }
+
+  /**
+   * Get unit ID for different ad types (for backward compatibility)
+   */
+  getUnitId(adType: string): string | undefined {
+    switch (adType) {
+      case "banner_browse":
+      case "banner_chat":
+      case "banner":
+        return this.getBannerAdUnitId();
+      case "interstitial":
+        return this.getInterstitialAdUnitId();
+      case "app_open":
+        return this.getAppOpenAdUnitId();
+      default:
+        return undefined;
+    }
+  }
 }
 
 export const adMobService = new AdMobService();

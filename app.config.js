@@ -180,6 +180,10 @@ export default {
           ios: {
             deploymentTarget: "15.1",
             useFrameworks: "static",
+            // Fix for React Native Firebase modular header issues
+            xcodeproj: {
+              CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES: "YES",
+            },
           },
         },
       ],

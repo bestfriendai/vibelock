@@ -5,7 +5,7 @@ import { mapFieldsToCamelCase, mapFieldsToSnakeCase } from "../utils/fieldMappin
 export interface SubscriptionData {
   id: string;
   userId: string;
-  tier: "free" | "premium" | "pro";
+  tier: "basic" | "plus" | "elite";
   status: "active" | "canceled" | "expired" | "trial";
   revenuecatCustomerId?: string;
   revenuecatSubscriptionId?: string;
@@ -61,7 +61,7 @@ export class SubscriptionService {
    */
   async updateUserSubscription(userId: string, subscriptionData: Partial<SubscriptionData>): Promise<void> {
     const updates = {
-      subscription_tier: subscriptionData.tier || "free",
+      subscription_tier: subscriptionData.tier || "basic",
       subscription_expires_at: subscriptionData.currentPeriodEnd?.toISOString() || null,
       updated_at: new Date().toISOString(),
     };
@@ -88,9 +88,9 @@ export class SubscriptionService {
         throw new Error(`Failed to get user subscription: ${error.message}`);
       }
 
-      const tier = data.subscription_tier || "free";
+      const tier = data.subscription_tier || "basic";
       const expiresAt = data.subscription_expires_at ? new Date(data.subscription_expires_at) : null;
-      const isActive = tier !== "free" && (!expiresAt || expiresAt > new Date());
+      const isActive = tier !== "basic" && (!expiresAt || expiresAt > new Date());
 
       return { tier, expiresAt, isActive };
     });
@@ -101,7 +101,7 @@ export class SubscriptionService {
    */
   async hasPremiumAccess(userId: string): Promise<boolean> {
     const subscription = await this.getUserSubscription(userId);
-    return subscription.isActive && ["premium", "pro"].includes(subscription.tier);
+    return subscription.isActive && ["plus", "elite"].includes(subscription.tier);
   }
 
   /**
@@ -187,7 +187,7 @@ export class SubscriptionService {
     if (!hasActiveSubscription) {
       return {
         userId,
-        tier: "free",
+        tier: "basic",
         status: "expired",
       };
     }
@@ -208,17 +208,19 @@ export class SubscriptionService {
   /**
    * Map RevenueCat entitlement to subscription tier
    */
-  private mapEntitlementToTier(entitlementId: string): "free" | "premium" | "pro" {
-    const entitlementMap: Record<string, "premium" | "pro"> = {
-      premium: "premium",
-      pro: "pro",
-      premium_monthly: "premium",
-      premium_annual: "premium",
-      pro_monthly: "pro",
-      pro_annual: "pro",
+  private mapEntitlementToTier(entitlementId: string): "basic" | "plus" | "elite" {
+    const entitlementMap: Record<string, "plus" | "elite"> = {
+      premium: "plus",
+      pro: "elite",
+      premium_monthly: "plus",
+      premium_annual: "plus",
+      pro_monthly: "elite",
+      pro_annual: "elite",
+      plus: "plus",
+      elite: "elite",
     };
 
-    return entitlementMap[entitlementId] || "premium";
+    return entitlementMap[entitlementId] || "plus";
   }
 
   /**
@@ -248,7 +250,7 @@ export class SubscriptionService {
   private async handleSubscriptionExpired(userId: string, eventData: any): Promise<void> {
     const subscriptionData: Partial<SubscriptionData> = {
       userId,
-      tier: "free",
+      tier: "basic",
       status: "expired",
     };
 
@@ -260,7 +262,7 @@ export class SubscriptionService {
    * Handle billing issues
    */
   private async handleBillingIssue(userId: string, eventData: any): Promise<void> {
-    await this.logSubscriptionEvent(userId, "purchase_failed", { userId, tier: "free" }, eventData);
+    await this.logSubscriptionEvent(userId, "purchase_failed", { userId, tier: "basic" }, eventData);
   }
 
   /**
@@ -286,7 +288,7 @@ export class SubscriptionService {
       const { count: totalSubscribers } = await supabase
         .from("users")
         .select("*", { count: "exact", head: true })
-        .neq("subscription_tier", "free")
+        .neq("subscription_tier", "basic")
         .gt("subscription_expires_at", new Date().toISOString());
 
       // Get new subscribers in period

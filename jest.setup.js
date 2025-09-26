@@ -197,7 +197,6 @@ jest.mock("react-native-url-polyfill/auto", () => {
 
 // Mock Firebase modules (only mock what's actually installed)
 jest.mock("@react-native-firebase/app", () => ({}));
-jest.mock("@react-native-firebase/analytics", () => ({}));
 
 // Mock Expo modules
 jest.mock("expo-constants", () => ({
