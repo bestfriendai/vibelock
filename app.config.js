@@ -32,7 +32,7 @@ export default {
     orientation: "portrait",
     userInterfaceStyle: "automatic",
     newArchEnabled: true,
-    icon: "./assets/LockerRoomLogo.png",
+    icon: "./assets/icon.png",
     splash: {
       image: "./assets/splash-screen.png",
       resizeMode: "contain",
@@ -45,7 +45,7 @@ export default {
     },
     ios: {
       supportsTablet: true,
-      icon: "./assets/LockerRoomLogo.png",
+      icon: "./assets/icon.png",
       bundleIdentifier: "com.lockerroomtalk.app",
       buildNumber: "1",
       googleMobileAdsAppId: "ca-app-pub-9512493666273460~7181904608",
@@ -114,7 +114,7 @@ export default {
     },
     android: {
       edgeToEdgeEnabled: true,
-      icon: "./assets/LockerRoomLogo.png",
+      icon: "./assets/icon.png",
       adaptiveIcon: {
         foregroundImage: "./assets/LockerRoomLogo.png",
         backgroundColor: "#000000",

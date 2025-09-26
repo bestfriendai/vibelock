@@ -33,7 +33,8 @@
     "performance:test": "npm run test:production && npm run analyze:bundle",
     "production:check": "npm run verify:production && npm run test:production && npm run verify:typescript",
     "test:monetization": "node scripts/test-monetization.js",
-    "verify:monetization": "npm run test:monetization"
+    "verify:monetization": "npm run test:monetization",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@expo/metro-runtime": "~6.1.2",
@@ -135,6 +136,7 @@
     "jest-expo": "~54.0.12",
     "npm-force-resolutions": "^0.0.10",
     "patch-package": "^8.0.0",
+    "postinstall-postinstall": "^2.1.0",
     "prettier": "^3.6.2",
     "react-test-renderer": "19.1.0",
     "revenuecat-mcp": "^1.0.0",
