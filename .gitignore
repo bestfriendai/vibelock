@@ -1,16 +1,12 @@
-# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
-
-# dependencies
+# Dependencies
 node_modules/
 
 # Expo
 .expo/
 dist/
 web-build/
-expo-env.d.ts
 
 # Native
-.kotlin/
 *.orig.*
 *.jks
 *.p8
@@ -21,7 +17,7 @@ expo-env.d.ts
 # Metro
 .metro-health-check*
 
-# debug
+# Debug
 npm-debug.*
 yarn-debug.*
 yarn-error.*
@@ -30,31 +26,39 @@ yarn-error.*
 .DS_Store
 *.pem
 
+# local env files
+.env*.local
+.env
+
 # typescript
 *.tsbuildinfo
 
-# VSCode settings with sensitive data
-.vscode/settings.json
+# IDE
+.vscode/
+.idea/
 
-# iOS & Android
-ios/
-android/
+# Build artifacts
+build/
+*.ipa
+*.apk
+*.aab
 
-# Environment files
-.env
-.env.local
-.env.*
-!.env.example
+# Logs
+logs
+*.log
 
-# Security - Never commit these
-google-services.json
-GoogleService-Info.plist
-*.keystore
-.clinerules/byterover-rules.md
-.kilocode/rules/byterover-rules.md
-.roo/rules/byterover-rules.md
-.windsurf/rules/byterover-rules.md
-.cursor/rules/byterover-rules.mdc
-.kiro/steering/byterover-rules.md
-.qoder/rules/byterover-rules.md
-.augment/rules/byterover-rules.md
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+
+# Temporary folders
+tmp/
+temp/
+
+# Keep package-lock.json for consistent builds
+# !package-lock.json

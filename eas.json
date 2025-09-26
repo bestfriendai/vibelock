@@ -6,6 +6,7 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
+      "prebuildCommand": "npm run lockfile:update",
       "ios": {
         "simulator": false,
         "buildConfiguration": "Debug"
@@ -13,34 +14,41 @@
       "android": {
         "buildType": "apk"
       },
-      "cache": {
-        "disabled": true
-      },
       "env": {
-        "NPM_CONFIG_CACHE": "/tmp/npm-cache",
-        "NPM_CONFIG_FUND": "false",
-        "NPM_CONFIG_AUDIT": "false"
+        "NODE_ENV": "development"
       }
     },
     "development-simulator": {
       "developmentClient": true,
       "distribution": "internal",
+      "prebuildCommand": "npm run lockfile:update",
       "ios": {
         "simulator": true,
         "buildConfiguration": "Debug"
+      },
+      "env": {
+        "NODE_ENV": "development"
       }
     },
     "preview": {
       "distribution": "internal",
+      "prebuildCommand": "npm run lockfile:update",
       "ios": {
         "simulator": false,
         "buildConfiguration": "Release"
+      },
+      "env": {
+        "NODE_ENV": "production"
       }
     },
     "production": {
+      "prebuildCommand": "npm run lockfile:update",
       "ios": {
         "simulator": false,
         "buildConfiguration": "Release"
+      },
+      "env": {
+        "NODE_ENV": "production"
       }
     }
   },
